@@ -3818,6 +3818,7 @@
                                     <th class="py-2.5 px-3">NISN</th>
                                     <th class="py-2.5 px-3">Wali</th>
                                     <th class="py-2.5 px-3">Program Pilihan</th>
+                                    <th class="py-2.5 px-3">No. WhatsApp</th>
                                     <th class="py-2.5 px-3">Status</th>
                                     <th class="py-2.5 px-3">Tanggal</th>
                                     <th class="py-2.5 px-3 text-center">Aksi</th>
@@ -4564,7 +4565,9 @@
             filteredPPDBData = mockPPDBData.filter(item => {
                 const matchesSearch = !query ||
                     (item.nama && item.nama.toLowerCase().includes(query)) ||
-                    (item.nisn && String(item.nisn).toLowerCase().includes(query));
+                    (item.nisn && String(item.nisn).toLowerCase().includes(query)) ||
+                    (item.wali && item.wali.toLowerCase().includes(query)) ||
+                    (item.program && item.program.toLowerCase().includes(query));
 
                 const itemStatus = item.status || "Pending";
                 const matchesStatus = selectedStatus === "ALL" ||
@@ -4610,7 +4613,8 @@
                     <td class="py-3 px-3 font-bold text-slate-800">${escapeHtml(item.nama)}</td>
                     <td class="py-3 px-3 font-mono text-slate-600">${escapeHtml(item.nisn)}</td>
                     <td class="py-3 px-3 text-slate-600">${escapeHtml(item.wali || '-')}</td>
-                    <td class="py-3 px-3 text-brand-700 font-semibold">${escapeHtml(item.program)}</td>
+                    <td class="py-3 px-3 text-brand-700 font-semibold">${escapeHtml(item.program || '-')}</td>
+                    <td class="py-3 px-3 font-mono text-slate-600">${escapeHtml(item.whatsapp || '-')}</td>
                     <td class="py-3 px-3">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${statusBadgeClass}">${escapeHtml(status)}</span>
                     </td>
@@ -4637,7 +4641,8 @@
                     </div>
                     <div class="pt-2 border-t border-slate-200/60 text-xs space-y-1 text-slate-600">
                         <div><strong class="text-slate-500">Wali:</strong> ${escapeHtml(item.wali || '-')}</div>
-                        <div><strong class="text-slate-500">Program:</strong> <span class="text-brand-700 font-semibold">${escapeHtml(item.program)}</span></div>
+                        <div><strong class="text-slate-500">Program:</strong> <span class="text-brand-700 font-semibold">${escapeHtml(item.program || '-')}</span></div>
+                        <div><strong class="text-slate-500">No. WA:</strong> <span class="font-mono text-slate-700">${escapeHtml(item.whatsapp || '-')}</span></div>
                     </div>
                     <div class="pt-2 flex justify-end">
                         <button type="button" onclick="viewAdminPPDBDetail(${index})" class="w-full py-1.5 bg-white hover:bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-slate-200 transition shadow-sm text-center">
@@ -4656,8 +4661,8 @@
             document.getElementById('modal-ppdb-nama').innerText = item.nama || '-';
             document.getElementById('modal-ppdb-nisn').innerText = item.nisn || '-';
             document.getElementById('modal-ppdb-wali').innerText = item.wali || '-';
-            document.getElementById('modal-ppdb-whatsapp').innerText = item.whatsapp || '-';
             document.getElementById('modal-ppdb-program').innerText = item.program || '-';
+            document.getElementById('modal-ppdb-whatsapp').innerText = item.whatsapp || '-';
             document.getElementById('modal-ppdb-tanggal').innerText = item.tanggalDaftar || '-';
 
             const status = item.status || "Pending";
@@ -4675,7 +4680,7 @@
                 let cleanPhone = String(item.whatsapp || "").replace(/\D/g, "");
                 if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
                 if (cleanPhone) {
-                    waLink.href = `https://wa.me/${cleanPhone}?text=Assalamu'alaikum%20Wali%20dari%20${encodeURIComponent(item.nama)}`;
+                    waLink.href = `https://wa.me/${cleanPhone}?text=Assalamu'alaikum%20Calon%20Santri%20${encodeURIComponent(item.nama)}`;
                     waLink.classList.remove('hidden');
                 } else {
                     waLink.classList.add('hidden');
