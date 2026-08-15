@@ -12,6 +12,8 @@ POST /api/ppdb
 ## Target admin API
 
 ```text
+GET    /api/admin/ppdb
+
 POST   /api/admin/news
 PUT    /api/admin/news/:id
 DELETE /api/admin/news/:id
@@ -53,6 +55,7 @@ Error:
 | `getBanner` | `getBannerData()` |
 | `checkStatus` | `checkStatusPendaftar()` |
 | `submitPPDB` | `submitPendaftaran()` |
+| `getPPDB` | `getPendaftarData()` |
 | `saveBerita` | `simpanBerita()` |
 | `saveBanner` | `simpanBanner()` |
 | `deleteBanner` | `hapusBanner()` |

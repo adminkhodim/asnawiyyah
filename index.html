@@ -3524,16 +3524,16 @@
                     </div>
 
                     <!-- 3. Tombol Icon Grid: Data Pendaftaran PPDB -->
-                    <div onclick="switchTab('ppdb')" class="bg-white hover:bg-blue-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-blue-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                    <div onclick="showAdminView('ppdb')" class="bg-white hover:bg-blue-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-blue-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
                         <div class="flex justify-between items-start">
                             <div class="w-12 h-12 bg-blue-50 text-blue-700 group-hover:bg-blue-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
                                 <i class="fa-solid fa-user-graduate"></i>
                             </div>
-                            <span class="text-[9px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md uppercase">PPDB</span>
+                            <span id="admin-hub-ppdb-count" class="text-[9px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md uppercase">0 Pendaftar</span>
                         </div>
                         <div>
                             <h4 class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-blue-700 transition">Data Pendaftar PPDB</h4>
-                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Lihat formulir dan status seleksi santri.</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola dan pantau data pendaftar PPDB.</p>
                         </div>
                     </div>
 
@@ -3744,6 +3744,106 @@
                 </section>
             </div>
 
+            <!-- ================= VIEW 4: MODUL DATA PENDAFTAR PPDB ================= -->
+            <div id="admin-view-ppdb" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="showAdminView('hub')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Menu Admin">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-blue-700 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800">Data Pendaftar PPDB</h2>
+                        </div>
+                    </div>
+                    <button type="button" onclick="loadAdminPPDBData()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold border border-blue-100 transition flex items-center space-x-1.5 active:scale-95">
+                        <i class="fa-solid fa-rotate text-xs"></i>
+                        <span class="hidden sm:inline">Refresh Data</span>
+                    </button>
+                </div>
+
+                <!-- CARDS RINGKASAN PPDB -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Pendaftar</span>
+                        <div id="admin-ppdb-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800">0</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase">Menunggu Seleksi</span>
+                        <div id="admin-ppdb-stat-pending" class="text-lg md:text-xl font-extrabold text-amber-800">0</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase">Diterima</span>
+                        <div id="admin-ppdb-stat-diterima" class="text-lg md:text-xl font-extrabold text-emerald-800">0</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-rose-100 bg-rose-50/30 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-rose-700 uppercase">Ditolak</span>
+                        <div id="admin-ppdb-stat-ditolak" class="text-lg md:text-xl font-extrabold text-rose-800">0</div>
+                    </div>
+                </div>
+
+                <!-- FITUR SEARCH & FILTER -->
+                <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="admin-ppdb-search" oninput="filterAdminPPDBList()" placeholder="Cari berdasarkan Nama atau NISN..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="admin-ppdb-filter-status" onchange="filterAdminPPDBList()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            <option value="ALL">Semua Status</option>
+                            <option value="Pending">Menunggu (Pending)</option>
+                            <option value="Diterima">Diterima</option>
+                            <option value="Ditolak">Ditolak</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- DAFTAR PENDAFTAR TABLE & MOBILE LIST -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-list-check text-blue-600 mr-2"></i> Daftar Calon Santri
+                        </h3>
+                        <span id="admin-ppdb-list-count" class="text-[11px] font-bold text-blue-800 bg-blue-50 px-2.5 py-0.5 rounded-lg">0 Data</span>
+                    </div>
+
+                    <!-- DESKTOP TABLE VIEW (MD UP) -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-100">
+                                    <th class="py-2.5 px-3">No</th>
+                                    <th class="py-2.5 px-3">Nama Santri</th>
+                                    <th class="py-2.5 px-3">NISN</th>
+                                    <th class="py-2.5 px-3">Wali</th>
+                                    <th class="py-2.5 px-3">Program Pilihan</th>
+                                    <th class="py-2.5 px-3">Status</th>
+                                    <th class="py-2.5 px-3">Tanggal</th>
+                                    <th class="py-2.5 px-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-ppdb-table-tbody" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- MOBILE CARD LIST VIEW (SM DOWN) -->
+                    <div id="admin-ppdb-mobile-list" class="block md:hidden space-y-3">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+
+                    <!-- EMPTY / LOADING STATE CONTAINER -->
+                    <div id="admin-ppdb-empty-state" class="hidden py-8 text-center space-y-2">
+                        <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-500" id="admin-ppdb-empty-text">Belum ada data pendaftar PPDB.</p>
+                    </div>
+                </section>
+            </div>
+
         </div>
 
     </main>
@@ -3852,6 +3952,78 @@
             <div class="flex space-x-2 pt-1">
                 <button onclick="closeAdminLoginModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs transition">Batal</button>
                 <button onclick="verifyAdminPIN()" class="flex-1 bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL DETAIL PENDAFTAR PPDB ==================== -->
+    <div id="adminPPDBDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Detail Pendaftar PPDB</h3>
+                        <p class="text-[10px] text-slate-400">Informasi lengkap berkas calon santri</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminPPDBDetailModal()" class="w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-5 overflow-y-auto space-y-4 text-xs">
+                <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/60 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold text-blue-600 uppercase block">Status Pendaftaran</span>
+                        <span id="modal-ppdb-status-badge" class="inline-block mt-0.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800">Pending</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Tanggal Daftar</span>
+                        <span id="modal-ppdb-tanggal" class="text-xs font-semibold text-slate-700">-</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Nama Lengkap Santri</span>
+                        <span id="modal-ppdb-nama" class="font-bold text-slate-800 text-sm block">-</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">NISN (10 Digit)</span>
+                        <span id="modal-ppdb-nisn" class="font-bold text-slate-800 text-sm block">-</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Nama Ayah / Ibu / Wali</span>
+                        <span id="modal-ppdb-wali" class="font-bold text-slate-800 block">-</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Program Pilihan</span>
+                        <span id="modal-ppdb-program" class="font-bold text-brand-700 block">-</span>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase block mb-0.5">Nomor WhatsApp Wali</span>
+                        <span id="modal-ppdb-whatsapp" class="font-bold text-slate-800 block">-</span>
+                    </div>
+                    <a id="modal-ppdb-wa-link" href="#" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span>Hubungi WA</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 text-right">
+                <button type="button" onclick="closeAdminPPDBDetailModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
+                    Tutup
+                </button>
             </div>
         </div>
     </div>
@@ -4273,6 +4445,7 @@
                 showAdminView('hub');
                 renderAdminNewsList();
                 renderAdminBannerList();
+                loadAdminPPDBData();
                 return;
             }
             document.getElementById('admin-pin-input').value = "";
@@ -4294,6 +4467,7 @@
                 showAdminView('hub');
                 renderAdminNewsList();
                 renderAdminBannerList();
+                loadAdminPPDBData();
             } else {
                 showToast("PIN Keamanan Salah!");
                 document.getElementById('admin-pin-input').value = "";
@@ -4310,12 +4484,14 @@
             const hubView = document.getElementById('admin-menu-hub');
             const beritaView = document.getElementById('admin-view-berita');
             const bannerView = document.getElementById('admin-view-banner');
+            const ppdbView = document.getElementById('admin-view-ppdb');
 
             if (!hubView || !beritaView || !bannerView) return;
 
             hubView.classList.add('hidden');
             beritaView.classList.add('hidden');
             bannerView.classList.add('hidden');
+            if (ppdbView) ppdbView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -4323,10 +4499,194 @@
             } else if (viewName === 'banner') {
                 bannerView.classList.remove('hidden');
                 renderAdminBannerList();
+            } else if (viewName === 'ppdb') {
+                if (ppdbView) ppdbView.classList.remove('hidden');
+                loadAdminPPDBData();
             } else {
                 hubView.classList.remove('hidden');
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==================== DASHBOARD ADMIN: MANAJEMEN DATA PPDB ====================
+        let mockPPDBData = [];
+        let filteredPPDBData = [];
+
+        async function loadAdminPPDBData() {
+            if (!isApiConfigured()) {
+                renderAdminPPDBList();
+                return;
+            }
+
+            try {
+                const response = await apiGet("getPPDB");
+                if (response && response.status === "success" && Array.isArray(response.data)) {
+                    mockPPDBData = response.data;
+                } else if (Array.isArray(response)) {
+                    mockPPDBData = response;
+                }
+
+                const hubBadge = document.getElementById('admin-hub-ppdb-count');
+                if (hubBadge) hubBadge.innerText = `${mockPPDBData.length} Pendaftar`;
+
+                updateAdminPPDBSummaryStats();
+                filterAdminPPDBList();
+            } catch (err) {
+                console.error("Gagal memuat data PPDB:", err);
+                showToast("❌ Gagal memuat data PPDB: " + err.message);
+                renderAdminPPDBList();
+            }
+        }
+
+        function updateAdminPPDBSummaryStats() {
+            const total = mockPPDBData.length;
+            const pending = mockPPDBData.filter(d => (d.status || 'Pending').toLowerCase() === 'pending').length;
+            const diterima = mockPPDBData.filter(d => (d.status || '').toLowerCase() === 'diterima').length;
+            const ditolak = mockPPDBData.filter(d => (d.status || '').toLowerCase() === 'ditolak').length;
+
+            const statTotal = document.getElementById('admin-ppdb-stat-total');
+            const statPending = document.getElementById('admin-ppdb-stat-pending');
+            const statDiterima = document.getElementById('admin-ppdb-stat-diterima');
+            const statDitolak = document.getElementById('admin-ppdb-stat-ditolak');
+
+            if (statTotal) statTotal.innerText = total;
+            if (statPending) statPending.innerText = pending;
+            if (statDiterima) statDiterima.innerText = diterima;
+            if (statDitolak) statDitolak.innerText = ditolak;
+        }
+
+        function filterAdminPPDBList() {
+            const searchInput = document.getElementById('admin-ppdb-search');
+            const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+            const statusFilter = document.getElementById('admin-ppdb-filter-status');
+            const selectedStatus = statusFilter ? statusFilter.value : "ALL";
+
+            filteredPPDBData = mockPPDBData.filter(item => {
+                const matchesSearch = !query ||
+                    (item.nama && item.nama.toLowerCase().includes(query)) ||
+                    (item.nisn && String(item.nisn).toLowerCase().includes(query));
+
+                const itemStatus = item.status || "Pending";
+                const matchesStatus = selectedStatus === "ALL" ||
+                    itemStatus.toLowerCase() === selectedStatus.toLowerCase();
+
+                return matchesSearch && matchesStatus;
+            });
+
+            renderAdminPPDBList();
+        }
+
+        function renderAdminPPDBList() {
+            const tbody = document.getElementById('admin-ppdb-table-tbody');
+            const mobileList = document.getElementById('admin-ppdb-mobile-list');
+            const emptyState = document.getElementById('admin-ppdb-empty-state');
+            const countBadge = document.getElementById('admin-ppdb-list-count');
+
+            if (countBadge) countBadge.innerText = `${filteredPPDBData.length} Data`;
+
+            if (!tbody || !mobileList) return;
+
+            tbody.innerHTML = "";
+            mobileList.innerHTML = "";
+
+            if (filteredPPDBData.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+            }
+
+            filteredPPDBData.forEach((item, index) => {
+                const status = item.status || "Pending";
+                let statusBadgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+                if (status.toLowerCase() === "diterima") statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                if (status.toLowerCase() === "ditolak") statusBadgeClass = "bg-rose-100 text-rose-800 border-rose-200";
+
+                // Desktop Table Row
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-3 font-bold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-3 font-bold text-slate-800">${escapeHtml(item.nama)}</td>
+                    <td class="py-3 px-3 font-mono text-slate-600">${escapeHtml(item.nisn)}</td>
+                    <td class="py-3 px-3 text-slate-600">${escapeHtml(item.wali || '-')}</td>
+                    <td class="py-3 px-3 text-brand-700 font-semibold">${escapeHtml(item.program)}</td>
+                    <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${statusBadgeClass}">${escapeHtml(status)}</span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-400 text-[11px]">${escapeHtml(item.tanggalDaftar || '-')}</td>
+                    <td class="py-3 px-3 text-center">
+                        <button type="button" onclick="viewAdminPPDBDetail(${index})" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold border border-blue-100 transition shadow-sm" title="Lihat Detail">
+                            <i class="fa-solid fa-eye mr-1"></i> Detail
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Mobile Card
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">#${index + 1} • ${escapeHtml(item.tanggalDaftar || '-')}</span>
+                            <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(item.nama)}</h4>
+                            <span class="text-xs font-mono text-slate-500">NISN: ${escapeHtml(item.nisn)}</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${statusBadgeClass}">${escapeHtml(status)}</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/60 text-xs space-y-1 text-slate-600">
+                        <div><strong class="text-slate-500">Wali:</strong> ${escapeHtml(item.wali || '-')}</div>
+                        <div><strong class="text-slate-500">Program:</strong> <span class="text-brand-700 font-semibold">${escapeHtml(item.program)}</span></div>
+                    </div>
+                    <div class="pt-2 flex justify-end">
+                        <button type="button" onclick="viewAdminPPDBDetail(${index})" class="w-full py-1.5 bg-white hover:bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-slate-200 transition shadow-sm text-center">
+                            <i class="fa-solid fa-eye mr-1"></i> Lihat Detail Lengkap
+                        </button>
+                    </div>
+                `;
+                mobileList.appendChild(card);
+            });
+        }
+
+        function viewAdminPPDBDetail(index) {
+            const item = filteredPPDBData[index];
+            if (!item) return;
+
+            document.getElementById('modal-ppdb-nama').innerText = item.nama || '-';
+            document.getElementById('modal-ppdb-nisn').innerText = item.nisn || '-';
+            document.getElementById('modal-ppdb-wali').innerText = item.wali || '-';
+            document.getElementById('modal-ppdb-whatsapp').innerText = item.whatsapp || '-';
+            document.getElementById('modal-ppdb-program').innerText = item.program || '-';
+            document.getElementById('modal-ppdb-tanggal').innerText = item.tanggalDaftar || '-';
+
+            const status = item.status || "Pending";
+            const badge = document.getElementById('modal-ppdb-status-badge');
+            if (badge) {
+                badge.innerText = status;
+                let statusClass = "bg-amber-100 text-amber-800";
+                if (status.toLowerCase() === "diterima") statusClass = "bg-emerald-100 text-emerald-800";
+                if (status.toLowerCase() === "ditolak") statusClass = "bg-rose-100 text-rose-800";
+                badge.className = `inline-block mt-0.5 px-2.5 py-0.5 rounded-md text-xs font-bold ${statusClass}`;
+            }
+
+            const waLink = document.getElementById('modal-ppdb-wa-link');
+            if (waLink) {
+                let cleanPhone = String(item.whatsapp || "").replace(/\D/g, "");
+                if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
+                if (cleanPhone) {
+                    waLink.href = `https://wa.me/${cleanPhone}?text=Assalamu'alaikum%20Wali%20dari%20${encodeURIComponent(item.nama)}`;
+                    waLink.classList.remove('hidden');
+                } else {
+                    waLink.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('adminPPDBDetailModal').classList.remove('hidden');
+        }
+
+        function closeAdminPPDBDetailModal() {
+            document.getElementById('adminPPDBDetailModal').classList.add('hidden');
         }
 
         // Helper membaca file ke Base64

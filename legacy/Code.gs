@@ -39,6 +39,12 @@ function doPost(e) {
       );
     }
 
+    if (action === "getPPDB") {
+      return createJsonResponse(
+        getPendaftarData()
+      );
+    }
+
     // ========================================================
     // ADMIN API
     //
@@ -266,6 +272,52 @@ function submitPendaftaran(payload) {
 }
 
 
+// ============================================================
+// ADMIN API: GET ALL PENDAFTAR PPDB
+// ============================================================
+
+function getPendaftarData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const pendaftarSheet = ss.getSheetByName("Pendaftar");
+    if (!pendaftarSheet) {
+      return {
+        status: "success",
+        data: []
+      };
+    }
+
+    const data = pendaftarSheet.getDataRange().getValues();
+    const listPendaftar = [];
+
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+
+      listPendaftar.push({
+        tanggalDaftar: formatDate(data[i][0]),
+        nama: String(data[i][1] || ""),
+        nisn: String(data[i][2] || ""),
+        wali: String(data[i][3] || ""),
+        whatsapp: String(data[i][4] || ""),
+        program: String(data[i][5] || ""),
+        status: String(data[i][6] || "Pending")
+      });
+    }
+
+    return {
+      status: "success",
+      data: listPendaftar
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      message: err.toString(),
+      data: []
+    };
+  }
+}
+
+
 function formatDate(dateString) {
   try {
     const d = new Date(dateString);
@@ -371,6 +423,12 @@ function doGet(e) {
     if (action === "getBanner") {
       return createJsonResponse(
         getBannerData()
+      );
+    }
+
+    if (action === "getPPDB") {
+      return createJsonResponse(
+        getPendaftarData()
       );
     }
 
