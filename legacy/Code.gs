@@ -666,3 +666,260 @@ function toggleStatusBanner(bannerId, newStatus) {
     return { success: false, message: err.toString() };
   }
 }
+// ============================================================================
+// PROGRAM DATA SOURCE v2.0 — PHASE 4B-1: BACKEND FOUNDATION
+// Pure domain abstractions, error models, contracts, and service skeletons.
+// (Zero persistence I/O, zero HTTP coupling, zero auth implementation in 4B-1).
+// ============================================================================
+
+/**
+ * Domain Status Enum
+ */
+const ProgramStatus = Object.freeze({
+  DRAFT: "draft",
+  PUBLISHED: "published",
+  ARCHIVED: "archived"
+});
+
+/**
+ * Domain Error Codes (HTTP-Agnostic)
+ */
+const ProgramErrorCode = Object.freeze({
+  VALIDATION_ERROR: "VALIDATION_ERROR",
+  NOT_FOUND: "NOT_FOUND",
+  CONCURRENCY_CONFLICT: "CONCURRENCY_CONFLICT",
+  SERIALIZATION_ERROR: "SERIALIZATION_ERROR",
+  PERSISTENCE_ERROR: "PERSISTENCE_ERROR",
+  AUTHENTICATION_ERROR: "UNAUTHORIZED_TOKEN",
+  AUTHORIZATION_ERROR: "FORBIDDEN_ACTION"
+});
+
+/**
+ * Base HTTP-Agnostic Domain Error
+ */
+class DomainError extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.name = "DomainError";
+    this.code = code;
+    this.details = details;
+  }
+}
+
+class ValidationError extends DomainError {
+  constructor(message, details = null) {
+    super(ProgramErrorCode.VALIDATION_ERROR, message, details);
+    this.name = "ValidationError";
+  }
+}
+
+class NotFoundError extends DomainError {
+  constructor(message = "Program data not found", details = null) {
+    super(ProgramErrorCode.NOT_FOUND, message, details);
+    this.name = "NotFoundError";
+  }
+}
+
+class ConcurrencyConflictError extends DomainError {
+  constructor(message = "Optimistic concurrency conflict detected. Record has been updated by another user.", details = null) {
+    super(ProgramErrorCode.CONCURRENCY_CONFLICT, message, details);
+    this.name = "ConcurrencyConflictError";
+  }
+}
+
+class SerializationError extends DomainError {
+  constructor(message = "Failed to serialize/deserialize program JSON payload (Fail-Closed)", details = null) {
+    super(ProgramErrorCode.SERIALIZATION_ERROR, message, details);
+    this.name = "SerializationError";
+  }
+}
+
+class PersistenceError extends DomainError {
+  constructor(message = "Persistence layer error", details = null) {
+    super(ProgramErrorCode.PERSISTENCE_ERROR, message, details);
+    this.name = "PersistenceError";
+  }
+}
+
+class AuthenticationError extends DomainError {
+  constructor(message = "Authentication required or token invalid", details = null) {
+    super(ProgramErrorCode.AUTHENTICATION_ERROR, message, details);
+    this.name = "AuthenticationError";
+  }
+}
+
+class AuthorizationError extends DomainError {
+  constructor(message = "Insufficient permissions for requested action", details = null) {
+    super(ProgramErrorCode.AUTHORIZATION_ERROR, message, details);
+    this.name = "AuthorizationError";
+  }
+}
+
+/**
+ * Domain Contract Interfaces & Helper Factories (Conceptual Value Objects)
+ */
+function createActorContext(userId, role, authenticatedAt = new Date().toISOString(), requestId = "") {
+  if (!userId || !role) {
+    throw new ValidationError("ActorContext requires valid userId and role");
+  }
+  return Object.freeze({
+    userId: String(userId),
+    role: String(role),
+    authenticatedAt: String(authenticatedAt),
+    requestId: String(requestId)
+  });
+}
+
+function createAuditMetadata(actorContext, isPublishing = false) {
+  const now = new Date().toISOString();
+  const meta = {
+    updated_at: now,
+    updated_by: actorContext ? actorContext.userId : "system"
+  };
+  if (isPublishing) {
+    meta.published_at = now;
+    meta.published_by = actorContext ? actorContext.userId : "system";
+  }
+  return meta;
+}
+
+/**
+ * Abstract ProgramRepository Interface (Pure Data-Access Contract)
+ * Completely decoupled from HTTP, token, PIN, browser, or SpreadsheetApp.
+ */
+class ProgramRepository {
+  findPublished() {
+    throw new Error("ProgramRepository.findPublished() must be implemented by subclass");
+  }
+
+  findAll() {
+    throw new Error("ProgramRepository.findAll() must be implemented by subclass");
+  }
+
+  findById(id) {
+    throw new Error("ProgramRepository.findById() must be implemented by subclass");
+  }
+
+  save(record) {
+    throw new Error("ProgramRepository.save() must be implemented by subclass");
+  }
+
+  updateStatus(id, status, metadata) {
+    throw new Error("ProgramRepository.updateStatus() must be implemented by subclass");
+  }
+}
+
+/**
+ * GoogleSheetsProgramAdapter Skeleton
+ * Implements ProgramRepository contract structure without executing SpreadsheetApp I/O in Phase 4B-1.
+ */
+class GoogleSheetsProgramAdapter extends ProgramRepository {
+  constructor() {
+    super();
+    this.sheetName = "Programs";
+  }
+
+  findPublished() {
+    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+  }
+
+  findAll() {
+    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+  }
+
+  findById(id) {
+    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+  }
+
+  save(record) {
+    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+  }
+
+  updateStatus(id, status, metadata) {
+    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+  }
+}
+
+/**
+ * ProgramService Skeleton
+ * Application service orchestrating business rules and lifecycle logic.
+ */
+class ProgramService {
+  constructor(programRepository) {
+    if (!programRepository) {
+      throw new ValidationError("ProgramService requires a valid ProgramRepository instance");
+    }
+    this.repository = programRepository;
+  }
+
+  getPublishedPrograms() {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.getPublishedPrograms() disabled in Phase 4B-1.");
+  }
+
+  getAllPrograms(actorContext) {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.getAllPrograms() disabled in Phase 4B-1.");
+  }
+
+  getProgramById(id, actorContext) {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.getProgramById() disabled in Phase 4B-1.");
+  }
+
+  saveProgram(input, actorContext) {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.saveProgram() disabled in Phase 4B-1.");
+  }
+
+  publishProgram(id, version, actorContext) {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.publishProgram() disabled in Phase 4B-1.");
+  }
+
+  unpublishProgram(id, version, actorContext) {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.unpublishProgram() disabled in Phase 4B-1.");
+  }
+
+  archiveProgram(id, version, actorContext) {
+    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.archiveProgram() disabled in Phase 4B-1.");
+  }
+}
+
+/**
+ * Serialization Boundary Helpers (FAIL-CLOSED logic, no static fallback)
+ */
+function serializeProgramPayload(detailObj) {
+  try {
+    if (detailObj === undefined || detailObj === null) {
+      throw new Error("Detail payload is null or undefined");
+    }
+    return JSON.stringify(detailObj);
+  } catch (err) {
+    throw new SerializationError("Failed to serialize program detail object: " + err.message);
+  }
+}
+
+function deserializeProgramPayload(jsonString) {
+  if (!jsonString || typeof jsonString !== "string") {
+    throw new SerializationError("Cannot deserialize empty or non-string cell payload (Fail-Closed)");
+  }
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed || typeof parsed !== "object") {
+      throw new Error("Parsed payload is not an object");
+    }
+    return parsed;
+  } catch (err) {
+    throw new SerializationError("Cell JSON payload is corrupted or invalid (Fail-Closed): " + err.message);
+  }
+}
+
+/**
+ * Optimistic Concurrency Verification Helper
+ */
+function checkOptimisticVersion(storedVersion, expectedVersion) {
+  const sVer = Number(storedVersion);
+  const eVer = Number(expectedVersion);
+  if (isNaN(sVer) || isNaN(eVer) || sVer !== eVer) {
+    throw new ConcurrencyConflictError(
+      `Optimistic concurrency version mismatch (stored: ${storedVersion}, expected: ${expectedVersion})`
+    );
+  }
+  return sVer + 1;
+}
