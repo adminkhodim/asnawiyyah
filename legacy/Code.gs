@@ -1668,3 +1668,643 @@ function checkOptimisticVersion(storedVersion, expectedVersion) {
   }
   return sVer + 1;
 }
+
+// ============================================================================
+// PROGRAM DATA SOURCE v2.0 — PHASE 4B-4: MIGRATION & SEEDING TOOLING
+// Isolated Migration Engine with Extraction, Validation, Snapshot, Seeding,
+// Re-read, Structural Reconciliation, Rollback, and Observability.
+// (NO RUNTIME CUTOVER, NO AUTOMATIC EXECUTION ON PAGE LOAD/API REQUESTS).
+// ============================================================================
+
+/**
+ * A. SOURCE EXTRACTION
+ * Returns the exact canonical PROGRAM_DATA v1.0 records.
+ */
+function getCanonicalMigrationSource() {
+  return [
+    {
+      id: "tahfidz-anak",
+      name: "Pesantren Tahfidz Anak",
+      badge: "Anak-Anak",
+      image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1000&auto=format&fit=crop",
+      description: "Program khusus hafalan Al-Qur'an untuk anak-anak dengan metode seru dan menyenangkan.",
+      highlights: [
+        "Metode Muri-Q & Tajwid Aisyah",
+        "Target 30 Juz Mutqin Usia Belia",
+        "Pendampingan Pengasuh 24 Jam"
+      ],
+      detail: {
+        tagline: "Mencetak Generasi Rabbani Berjiwa Qur'ani Sejak Dini",
+        summary: "Program Pesantren Tahfidz Anak didesain khusus untuk membentuk karakter santri usia sekolah dasar agar mencintai Al-Qur'an melalui suasana belajar yang hangat, ramah anak, dan terstruktur. Fokus utama kami tidak hanya hafalan, tetapi juga pembentukan akhlakul karimah.",
+        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoTitle: "Dokumentasi Kegiatan Santri Tahfidz Anak PPTQ Asnawiyyah",
+        keunggulan: [
+          { title: "Metode Seru & Ramah Anak", desc: "Menghafal dengan pendekatan fun learning, muraja'ah bersama, dan metode visual audio yang efektif.", icon: "fa-heart", iconBg: "bg-red-50 text-red-600" },
+          { title: "Target Mutqin 30 Juz", desc: "Kurikulum bertahap yang disesuaikan dengan kemampuan anak tanpa tekanan psikologis berlebih.", icon: "fa-book-quran", iconBg: "bg-emerald-50 text-emerald-600" },
+          { title: "Fasilitas Khusus Anak", desc: "Kamar tidur ber-AC, tempat bermain edukatif, serta asupan gizi seimbang untuk tumbuh kembang.", icon: "fa-child", iconBg: "bg-amber-50 text-amber-600" }
+        ],
+        targetOutput: [
+          "Hafal 30 Juz Al-Qur'an dengan Tajwid & Makhraj yang Benar",
+          "Memiliki Kebiasaan Shalat Fardhu & Sunnah Berjamaah",
+          "Mampu Membaca Doa-Doa Harian & Adab Islama",
+          "Karakter Mandiri, Disiplin, dan Santun kepada Orang Tua",
+          "Khatam Ziyadah & Muraja'ah Rutin Setiap Pekan",
+          "Berprestasi dalam Musabaqah Hifdzil Qur'an (MHQ)"
+        ],
+        gallery: [
+          { image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop", caption: "Setoran Hafalan Pagi Bersama Ustadz", sliderId: "anak-1" },
+          { image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop", caption: "Kegiatan Olahraga & Edukasi Luar Ruangan", sliderId: "anak-2" },
+          { image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop", caption: "Suasana Asrama yang Nyaman & Bersih", sliderId: "anak-3" }
+        ],
+        fasilitas: [
+          { text: "Gedung Asrama AC & Kasur Busa Berkualitas", icon: "fa-bed", iconColor: "text-emerald-600" },
+          { text: "Makan 3x Sehari Menu Seimbang & Higienis", icon: "fa-utensils", iconColor: "text-amber-600" },
+          { text: "Klinik Poskestren & Layanan Kesehatan Santri", icon: "fa-notes-medical", iconColor: "text-blue-600" }
+        ],
+        prosedur: {
+          items: [
+            { step: "01", title: "Pendaftaran Online", desc: "Mengisi formulir calon santri melalui situs resmi PPDB." },
+            { step: "02", title: "Tes Pemetaan (Observasi)", desc: "Tes kelancaran membaca Al-Qur'an dan wawancara orang tua." },
+            { step: "03", title: "Pengumuman Hasil", desc: "Pengumuman kelulusan melalui WhatsApp & Akun PPDB." },
+            { step: "04", title: "Daftar Ulang & Masuk Asrama", desc: "Penyelesaian administrasi dan kedatangan santri baru." }
+          ],
+          image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=800&auto=format&fit=crop",
+          imageAlt: "Prosedur PPDB Asnawiyyah"
+        },
+        persyaratan: [
+          { title: "Berusia 7 - 12 Tahun", desc: "Lulus atau sedang menempuh tingkat SD/MI sederajat.", icon: "fa-cake-candles" },
+          { title: "Fotokopi Akta & KK", desc: "Menyerahkan dokumen administrasi kependudukan lengkap 2 lembar.", icon: "fa-file-lines" },
+          { title: "Pas Foto Terbaru", desc: "Foto berwarna 3x4 sebanyak 4 lembar berlatar biru.", icon: "fa-image" },
+          { title: "Surat Sehat Dokter", desc: "Bebas dari penyakit menular atau kondisi kronis tertentu.", icon: "fa-file-medical" }
+        ],
+        biaya: {
+          pendaftaran: { nominal: "Rp 250.000", note: "Sekali saat pendaftaran" },
+          syahriyah: { nominal: "Rp 1.200.000", note: "Per bulan (Asrama + Makan + Pendidikan)" }
+        },
+        cta: {
+          title: "Ingin Anak Anda Hafal Al-Qur'an Sejak Dini?",
+          description: "Segera daftarkan putra/putri Anda. Kuota terbatas untuk 30 santri baru setiap angkatan.",
+          waLink: "https://wa.me/6281234567890?text=Halo%20Admin%2C%20saya%20ingin%20bertanya%20tentang%20Program%20Tahfidz%20Anak",
+          waBtnClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
+          waText: "Konsultasi PPDB via WhatsApp"
+        }
+      }
+    },
+    {
+      id: "dewasa-putra",
+      name: "Pesantren Dewasa Putra",
+      badge: "Dewasa Putra",
+      image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1000&auto=format&fit=crop",
+      description: "Program intensif tahfidz dan pendalaman kitab kuning untuk santri dewasa putra.",
+      highlights: [
+        "Kombinasi Tahfidz & Dirasah Islamiyah",
+        "Sanad Al-Qur'an s/d Rasulullah SAW",
+        "Lingkungan Kondusif & Bebas Gadget"
+      ],
+      detail: {
+        tagline: "Membentuk Huffazh Berwawasan Luas & Berakhlak Qur'ani",
+        summary: "Program Dewasa Putra dirancang bagi lulusan SMP/SMA/Mahasiswa/Umum yang ingin fokus menghafal Al-Qur'an 30 Juz secara intensif disertai dengan pengusaan ilmu tajwid sanad, bahasa Arab dasar, dan pemahaman kitab-kitab turats (kitab kuning).",
+        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoTitle: "Suasana Belajar & Setoran Santri Dewasa Putra",
+        keunggulan: [
+          { title: "Bimbingan Muqri' Bersanad", desc: "Diampu langsung oleh ustadz pengajar yang memiliki sanad Al-Qur'an muttashil.", icon: "fa-certificate", iconBg: "bg-emerald-50 text-emerald-600" },
+          { title: "Kurikulum Terintegrasi", desc: "Perpaduan efisien antara program Ziyadah (hafalan baru), Muraja'ah, dan Kajian Fiqih/Nahwu.", icon: "fa-book", iconBg: "bg-blue-50 text-blue-600" },
+          { title: "Disiplin & Kemandirian High-Level", desc: "Pola hidup terstruktur untuk melatih kedisiplinan, kepemimpinan, dan mental da'i.", icon: "fa-user-shield", iconBg: "bg-amber-50 text-amber-600" }
+        ],
+        targetOutput: [
+          "Setoran 30 Juz Lulus Ujian Imtihan Sanad / Syahadah",
+          "Menguasai Ilmu Tajwid Qira'at Imam 'Ashim Riwayat Hafsh",
+          "Memahami Fiqih Ibadah Dasar & Bahasa Arab Praktis",
+          "Kesiapan Menjadi Imam Masjid & Pengajar Al-Qur'an",
+          "Tradisi Muraja'ah Mandiri Minimal 1-2 Juz Per Hari",
+          "Karakter Beradab, Tawadhu, dan Berjiwa Kepemimpinan"
+        ],
+        gallery: [
+          { image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop", caption: "Halaqah Tahfidz Pagi di Masjid Utama", sliderId: "putra-1" },
+          { image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=800&auto=format&fit=crop", caption: "Kajian Kitab Kuning Bersama Pengasuh", sliderId: "putra-2" },
+          { image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop", caption: "Kegiatan Rihlah & Olahraga Sunnah", sliderId: "putra-3" }
+        ],
+        fasilitas: [
+          { text: "Asrama Khusus Putra dengan Lemari & Kasur Mandiri", icon: "fa-building", iconColor: "text-emerald-600" },
+          { text: "Masjid Utama 2 Lantai untuk Halaqah & Shalat", icon: "fa-mosque", iconColor: "text-blue-600" },
+          { text: "Perpustakaan Kitab Turats & Ruang Baca", icon: "fa-book-open", iconColor: "text-amber-600" }
+        ],
+        prosedur: {
+          items: [
+            { step: "01", title: "Pendaftaran Online", desc: "Mengisi biodata diri dan memilih opsi program dewasa putra." },
+            { step: "02", title: "Tes Tahsin & Al-Qur'an", desc: "Ujian kelancaran membaca Al-Qur'an secara virtual/luring." },
+            { step: "03", title: "Wawancara Komitmen", desc: "Wawancara komitmen menghafal dan menaati tata tertib pesantren." },
+            { step: "04", title: "Daftar Ulang", desc: "Penyelesaian administrasi dan orientasi kehidupan asrama." }
+          ],
+          image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop",
+          imageAlt: "Prosedur PPDB Dewasa Putra"
+        },
+        persyaratan: [
+          { title: "Usia Minimal 13 Tahun", desc: "Lulusan SMP/SMA/Mahasiswa/Umum yang bertekad kuat.", icon: "fa-user" },
+          { title: "Lancar Membaca Al-Qur'an", desc: "Memiliki dasar tajwid & makhraj membaca Al-Qur'an yang cukup.", icon: "fa-book-quran" },
+          { title: "Dokumen Identitas", desc: "Fotokopi KTP/Kartu Pelajar, KK, dan ijazah terakhir.", icon: "fa-id-card" },
+          { title: "Surat Komitmen Waktu", desc: "Bersedia mengikuti seluruh rangkaian program tanpa gangguan.", icon: "fa-clock" }
+        ],
+        biaya: {
+          pendaftaran: { nominal: "Rp 300.000", note: "Sekali saat pendaftaran & tes" },
+          syahriyah: { nominal: "Rp 1.100.000", note: "Per bulan (Asrama + Makan 3x + Bimbingan)" }
+        },
+        cta: {
+          title: "Siap Menjadi Hafiz Al-Qur'an Berpendidikan & Bersanad?",
+          description: "Segera daftarkan diri Anda atau putra Anda. Gelombang pendaftaran aktif dibuka.",
+          waLink: "https://wa.me/6281234567890?text=Halo%20Admin%2C%20saya%20ingin%20bertanya%20tentang%20Program%20Dewasa%20Putra",
+          waBtnClass: "bg-blue-600 hover:bg-blue-700 text-white",
+          waText: "Daftar Dewasa Putra via WA"
+        }
+      }
+    },
+    {
+      id: "dewasa-putri",
+      name: "Pesantren Dewasa Putri",
+      badge: "Dewasa Putri",
+      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1000&auto=format&fit=crop",
+      description: "Program intensif tahfidz Al-Qur'an dan fiqih wanita untuk santri dewasa putri.",
+      highlights: [
+        "Asrama Khusus & Steril Khusus Putri",
+        "Bimbingan Musyrifah Hafizhah Bersanad",
+        "Kajian Nisa'iyyah & Keterampilan Muslimah"
+      ],
+      detail: {
+        tagline: "Mencetak Haafizhah Shalihat, Pendidik Generasi Masa Depan",
+        summary: "Program Dewasa Putri difokuskan untuk membantu mahasiswi/alumni/umum menghafal Al-Qur'an dalam lingkungan asrama putri yang sangat aman, privat, dan kondusif. Didampingi ustadzah haafizhah bersanad serta dibekali pemahaman fikih wanita.",
+        video: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        videoTitle: "Profil & Kegiatan Asrama Tahfidz Dewasa Putri",
+        keunggulan: [
+          { title: "Privasi & Keamanan Terjaga", desc: "Lingkungan kompleks putri terpisah penuh dengan sistem keamanan 24 jam.", icon: "fa-lock", iconBg: "bg-rose-50 text-rose-600" },
+          { title: "Musyrifah Pengajar Khusus Putri", desc: "Halaqah setoran dan muraja'ah diampu oleh ustadzah lulusan Al-Azhar & Pesantren Sanad.", icon: "fa-user-graduate", iconBg: "bg-purple-50 text-purple-600" },
+          { title: "Kajian Fiqih An-Nisa'", desc: "Kajian rutin hukum-hukum wanita, kepengurusan rumah tangga muslimah, & adab.", icon: "fa-hands-praying", iconBg: "bg-emerald-50 text-emerald-600" }
+        ],
+        targetOutput: [
+          "Khatam Hafalan 30 Juz Lulus Syahadah & Ujian Ziyadah",
+          "Pemahaman Tajwid Rasm Utsmani & Fiqih Wanita (Fiqh An-Nisa')",
+          "Kebiasaan Ibadah Sunnah, Shalat Malam, & Dzikir Al-Ma'tsurat",
+          "Keterampilan Tata Kelola Kebersihan, Tata Busana, & Adab",
+          "Kemampuan Menjadi Pengajar Al-Qur'an di Rumah / Lembaga",
+          "Karakter Anggun, Guarded, dan Berilmu Syar'i"
+        ],
+        gallery: [
+          { image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop", caption: "Halaqah Setoran Putri Bersama Ustadzah", sliderId: "putri-1" },
+          { image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=800&auto=format&fit=crop", caption: "Kajian Rutin Fiqih Wanita di Aula Putri", sliderId: "putri-2" },
+          { image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop", caption: "Taman Asrama Putri yang Asri", sliderId: "putri-3" }
+        ],
+        fasilitas: [
+          { text: "Asrama Putri Privat Khusus Ber-AC & Kamar Mandi Dalam", icon: "fa-house-lock", iconColor: "text-purple-600" },
+          { text: "Dapur Mandiri & Katering Pilihan Sehat", icon: "fa-utensils", iconColor: "text-rose-600" },
+          { text: "Aula Pertemuan & Ruang Belajar Nyaman", icon: "fa-chair", iconColor: "text-emerald-600" }
+        ],
+        prosedur: {
+          items: [
+            { step: "01", title: "Pendaftaran Online", desc: "Mengisi formulir calon santri putri di portal PPDB." },
+            { step: "02", title: "Tes Tahsin Virtual", desc: "Ujian kelancaran membaca Al-Qur'an oleh Tim Ustadzah." },
+            { step: "03", title: "Wawancara Orang Tua/Wali", desc: "Wawancara kesiapan serta komitmen asrama." },
+            { step: "04", title: "Masuk Asrama Putri", desc: "Penyelesaian registrasi dan penempatan kamar." }
+          ],
+          image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop",
+          imageAlt: "Prosedur PPDB Dewasa Putri"
+        },
+        persyaratan: [
+          { title: "Usia Minimal 13 Tahun", desc: "SMP/SMA/Mahasiswi/Umum yang berkeinginan kuat.", icon: "fa-user" },
+          { title: "Lancar Membaca Al-Qur'an", desc: "Memiliki dasar tajwid membaca Al-Qur'an yang baik.", icon: "fa-book-quran" },
+          { title: "Dokumen Administrasi", desc: "Fotokopi KTP/KK/Kartu Pelajar & Pas Foto Jilbab Rapi.", icon: "fa-file-lines" },
+          { title: "Izin Orang Tua/Suami", desc: "Mendapat persetujuan tertulis dari wali resmi.", icon: "fa-file-signature" }
+        ],
+        biaya: {
+          pendaftaran: { nominal: "Rp 300.000", note: "Sekali saat pendaftaran & tes" },
+          syahriyah: { nominal: "Rp 1.150.000", note: "Per bulan (Asrama AC + Makan 3x + Bimbingan)" }
+        },
+        cta: {
+          title: "Wujudkan Cita-Cita Menjadi Haafizhah Qur'an?",
+          description: "Daftarkan diri Anda di Pesantren Dewasa Putri PPTQ Asnawiyyah.",
+          waLink: "https://wa.me/6281234567890?text=Halo%20Admin%2C%20saya%20ingin%20bertanya%20tentang%20Program%20Dewasa%20Putri",
+          waBtnClass: "bg-purple-600 hover:bg-purple-700 text-white",
+          waText: "Daftar Dewasa Putri via WA"
+        }
+      }
+    }
+  ];
+}
+
+/**
+ * B. CONTRACT VALIDATION
+ * Validates source objects against the PROGRAM DATA CONTRACT.
+ * Throws ValidationError if any required field or nested structure is invalid.
+ */
+function validateMigrationSource(sourceArray) {
+  if (!Array.isArray(sourceArray) || sourceArray.length === 0) {
+    throw new ValidationError("Migration source array is empty or invalid.");
+  }
+
+  const seenIds = new Set();
+  const requiredTopFields = ["id", "name", "badge", "image", "description", "highlights", "detail"];
+
+  for (let idx = 0; idx < sourceArray.length; idx++) {
+    const item = sourceArray[idx];
+    if (!item || typeof item !== "object") {
+      throw new ValidationError(`Source item at index ${idx} is not an object.`);
+    }
+
+    // Top-level field validation
+    for (let f of requiredTopFields) {
+      if (item[f] === undefined || item[f] === null || item[f] === "") {
+        throw new ValidationError(`Source item '${item.id || idx}' missing required top-level field '${f}'.`);
+      }
+    }
+
+    // ID Uniqueness Check
+    if (seenIds.has(item.id)) {
+      throw new ValidationError(`Duplicate canonical program ID '${item.id}' detected in migration source.`);
+    }
+    seenIds.add(item.id);
+
+    // Highlights array check
+    if (!Array.isArray(item.highlights) || item.highlights.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' must have a non-empty highlights array.`);
+    }
+
+    // Nested Detail structure check
+    const d = item.detail;
+    if (!d || typeof d !== "object") {
+      throw new ValidationError(`Source program '${item.id}' detail payload is invalid.`);
+    }
+
+    const requiredDetailFields = [
+      "tagline", "summary", "video", "videoTitle",
+      "keunggulan", "targetOutput", "gallery", "fasilitas",
+      "prosedur", "persyaratan", "biaya", "cta"
+    ];
+
+    for (let df of requiredDetailFields) {
+      if (d[df] === undefined || d[df] === null) {
+        throw new ValidationError(`Source program '${item.id}' detail payload missing field '${df}'.`);
+      }
+    }
+
+    // Check nested arrays & objects
+    if (!Array.isArray(d.keunggulan) || d.keunggulan.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' detail.keunggulan must be non-empty array.`);
+    }
+    if (!Array.isArray(d.targetOutput) || d.targetOutput.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' detail.targetOutput must be non-empty array.`);
+    }
+    if (!Array.isArray(d.gallery) || d.gallery.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' detail.gallery must be non-empty array.`);
+    }
+    if (!Array.isArray(d.fasilitas) || d.fasilitas.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' detail.fasilitas must be non-empty array.`);
+    }
+    if (!d.prosedur || !Array.isArray(d.prosedur.items) || d.prosedur.items.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' detail.prosedur.items must be non-empty array.`);
+    }
+    if (!Array.isArray(d.persyaratan) || d.persyaratan.length === 0) {
+      throw new ValidationError(`Source program '${item.id}' detail.persyaratan must be non-empty array.`);
+    }
+    if (!d.biaya || !d.biaya.pendaftaran || !d.biaya.syahriyah) {
+      throw new ValidationError(`Source program '${item.id}' detail.biaya must contain pendaftaran and syahriyah objects.`);
+    }
+    if (!d.cta || !d.cta.title || !d.cta.waLink) {
+      throw new ValidationError(`Source program '${item.id}' detail.cta must contain title and waLink.`);
+    }
+  }
+
+  return true;
+}
+
+/**
+ * C. SNAPSHOT / BACKUP
+ * Creates an in-memory or tab backup of the existing Programs sheet state.
+ */
+function createMigrationSnapshot(sheetName = "Programs") {
+  let ss = null;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {
+    throw new PersistenceError("SpreadsheetApp is unavailable for migration snapshot: " + e.message);
+  }
+
+  const sheet = ss ? ss.getSheetByName(sheetName) : null;
+  if (!sheet) {
+    return Object.freeze({
+      exists: false,
+      sheetName: sheetName,
+      rows: []
+    });
+  }
+
+  const data = sheet.getDataRange().getValues();
+  // Deep clone row values array
+  const clonedRows = JSON.parse(JSON.stringify(data));
+
+  return Object.freeze({
+    exists: true,
+    sheetName: sheetName,
+    rows: clonedRows
+  });
+}
+
+/**
+ * D. SHEET PREPARATION
+ * Prepares the Programs sheet and validates/creates the 16-column header schema.
+ * Note: Sheet creation is authorized ONLY within explicit migration tooling.
+ */
+function prepareProgramsSheet(sheetName = "Programs", options = { dryRun: false }) {
+  if (options && options.dryRun) {
+    Logger.log("[DRY-RUN] [SHEET_PREPARED] Would discover/create sheet '" + sheetName + "'");
+    return true;
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new PersistenceError("Active spreadsheet unavailable.");
+  }
+
+  let sheet = ss.getSheetByName(sheetName);
+  const expectedHeaders = [
+    "id", "name", "badge", "image", "description",
+    "highlights_json", "detail_json", "status", "sort_order",
+    "created_at", "updated_at", "created_by", "updated_by",
+    "published_at", "published_by", "version"
+  ];
+
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    sheet.appendRow(expectedHeaders);
+  } else {
+    const values = sheet.getDataRange().getValues();
+    if (!values || values.length === 0) {
+      sheet.appendRow(expectedHeaders);
+    } else {
+      const headerRow = values[0];
+      if (headerRow.length < expectedHeaders.length) {
+        throw new PersistenceError(`Existing sheet '${sheetName}' header schema mismatch (fewer than 16 columns).`);
+      }
+    }
+  }
+
+  return sheet;
+}
+
+/**
+ * E. CONTROLLED SEEDING
+ * Writes canonical source records into the Programs sheet.
+ */
+function seedProgramsData(sourceArray, options = { dryRun: false, force: false }, sheetName = "Programs") {
+  if (options && options.dryRun) {
+    Logger.log("[DRY-RUN] [SEED_STARTED] Would seed " + sourceArray.length + " canonical records into '" + sheetName + "'");
+    return true;
+  }
+
+  const sheet = prepareProgramsSheet(sheetName, options);
+  const existingValues = sheet.getDataRange().getValues();
+  const existingIds = new Set();
+
+  for (let r = 1; r < existingValues.length; r++) {
+    if (existingValues[r][0]) {
+      existingIds.add(String(existingValues[r][0]).trim());
+    }
+  }
+
+  // Idempotency check: if IDs already exist and force is false, reject
+  const duplicateIds = sourceArray.filter(item => existingIds.has(item.id));
+  if (duplicateIds.length > 0 && !(options && options.force)) {
+    throw new PersistenceError(
+      "Migration idempotency conflict: canonical ID(s) [" + duplicateIds.map(d => d.id).join(", ") + "] already exist in sheet. Use force=true to overwrite."
+    );
+  }
+
+  const nowIso = new Date().toISOString();
+  const migrationIdentity = "migration:v2.0";
+
+  for (let idx = 0; idx < sourceArray.length; idx++) {
+    const item = sourceArray[idx];
+    const sortOrder = idx + 1;
+    const highlightsJson = serializeProgramPayload(item.highlights);
+    const detailJson = serializeProgramPayload(item.detail);
+
+    const rowData = [
+      item.id,
+      item.name,
+      item.badge,
+      item.image,
+      item.description,
+      highlightsJson,
+      detailJson,
+      ProgramStatus.PUBLISHED, // Initial status = "published"
+      sortOrder,
+      nowIso,
+      nowIso,
+      migrationIdentity,
+      migrationIdentity,
+      nowIso,
+      migrationIdentity,
+      1 // Initial version = 1
+    ];
+
+    // Check if updating existing or appending new
+    let targetRowIdx = -1;
+    for (let r = 1; r < existingValues.length; r++) {
+      if (String(existingValues[r][0]).trim() === item.id) {
+        targetRowIdx = r + 1;
+        break;
+      }
+    }
+
+    if (targetRowIdx > 0) {
+      sheet.getRange(targetRowIdx, 1, 1, 16).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+  }
+
+  return true;
+}
+
+/**
+ * F. RE-READ VERIFICATION
+ * Reads back persisted rows via GoogleSheetsProgramAdapter and deserializes cell JSON.
+ */
+function verifySeededRecords(sheetName = "Programs") {
+  const adapter = new GoogleSheetsProgramAdapter(sheetName);
+  const persistedRecords = adapter.findAll();
+  return persistedRecords;
+}
+
+/**
+ * G. STRUCTURAL RECONCILIATION
+ * Deep structural comparison of all canonical content fields between source and re-read persisted objects.
+ * Throws ValidationError if any property mismatches.
+ */
+function reconcileMigrationData(sourceArray, persistedArray) {
+  if (!Array.isArray(persistedArray) || persistedArray.length < sourceArray.length) {
+    throw new ValidationError(
+      `Reconciliation failed: expected at least ${sourceArray.length} records, but re-read ${persistedArray ? persistedArray.length : 0} records.`
+    );
+  }
+
+  const persistedMap = new Map();
+  persistedArray.forEach(rec => persistedMap.set(rec.id, rec));
+
+  const compareKeys = [
+    "id", "name", "badge", "image", "description"
+  ];
+
+  for (let source of sourceArray) {
+    const target = persistedMap.get(source.id);
+    if (!target) {
+      throw new ValidationError(`Reconciliation failed: record ID '${source.id}' not found in re-read persisted data.`);
+    }
+
+    // Top level scalar comparison
+    for (let key of compareKeys) {
+      if (String(source[key]).trim() !== String(target[key]).trim()) {
+        throw new ValidationError(`Reconciliation mismatch on '${source.id}.${key}': source='${source[key]}', persisted='${target[key]}'.`);
+      }
+    }
+
+    // Highlights array structural comparison
+    if (JSON.stringify(source.highlights) !== JSON.stringify(target.highlights)) {
+      throw new ValidationError(`Reconciliation mismatch on '${source.id}.highlights': JSON payload differs.`);
+    }
+
+    // Detail object deep structural comparison
+    if (JSON.stringify(source.detail) !== JSON.stringify(target.detail)) {
+      throw new ValidationError(`Reconciliation mismatch on '${source.id}.detail': JSON payload differs.`);
+    }
+  }
+
+  return true;
+}
+
+/**
+ * H. ROLLBACK CAPABILITY
+ * Restores the Programs sheet to the exact state saved in the snapshot.
+ */
+function rollbackMigration(snapshot, sheetName = "Programs") {
+  let ss = null;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {
+    throw new PersistenceError("SpreadsheetApp unavailable for rollback: " + e.message);
+  }
+
+  if (!ss) throw new PersistenceError("Spreadsheet object null during rollback.");
+
+  const sheet = ss.getSheetByName(sheetName);
+
+  if (!snapshot || !snapshot.exists) {
+    // If sheet didn't exist before migration, clear or delete sheet
+    if (sheet) {
+      sheet.clear();
+    }
+  } else {
+    // Restore exact snapshot rows
+    if (sheet) {
+      sheet.clear();
+      if (snapshot.rows && snapshot.rows.length > 0) {
+        sheet.getRange(1, 1, snapshot.rows.length, snapshot.rows[0].length).setValues(snapshot.rows);
+      }
+    }
+  }
+
+  Logger.log("[ROLLBACK_COMPLETED] Sheet '" + sheetName + "' successfully restored from pre-migration snapshot.");
+  return true;
+}
+
+/**
+ * MASTER MIGRATION TOOLING ORCHESTRATOR
+ * Controlled explicit tool execution with dry-run, validation, snapshot, seeding, reconciliation, and rollback.
+ * (NO AUTOMATIC EXECUTION).
+ */
+function runMigrationTooling(options = { dryRun: false, force: false, sheetName: "Programs" }) {
+  const migrationId = "migration:v2.0:" + new Date().getTime();
+  const isDryRun = Boolean(options && options.dryRun);
+  const sheetName = (options && options.sheetName) || "Programs";
+
+  Logger.log(`[START] [${migrationId}] Mode: ${isDryRun ? "DRY-RUN" : "EXECUTION"}`);
+
+  let snapshot = null;
+  try {
+    // 1. Source Extraction
+    const sourceArray = getCanonicalMigrationSource();
+    Logger.log(`[SOURCE_EXTRACTED] [${migrationId}] Loaded ${sourceArray.length} canonical records.`);
+
+    // 2. Contract Validation
+    validateMigrationSource(sourceArray);
+    Logger.log(`[SOURCE_VALIDATED] [${migrationId}] All canonical records satisfy contract schema.`);
+
+    if (isDryRun) {
+      Logger.log(`[DRY-RUN] [COMPLETED] [${migrationId}] Validation PASS. No changes made.`);
+      return {
+        status: "DRY_RUN_PASSED",
+        migrationId: migrationId,
+        recordCount: sourceArray.length,
+        message: "Dry-run validation successful. Zero database mutations performed."
+      };
+    }
+
+    // 3. Snapshot / Backup
+    snapshot = createMigrationSnapshot(sheetName);
+    Logger.log(`[SNAPSHOT_CREATED] [${migrationId}] Pre-migration snapshot taken (Sheet exists: ${snapshot.exists}).`);
+
+    // 4. Sheet Preparation
+    prepareProgramsSheet(sheetName, options);
+    Logger.log(`[SHEET_PREPARED] [${migrationId}] Sheet '${sheetName}' prepared.`);
+
+    // 5. Seeding
+    Logger.log(`[SEED_STARTED] [${migrationId}] Seeding ${sourceArray.length} records...`);
+    seedProgramsData(sourceArray, options, sheetName);
+    Logger.log(`[SEED_COMPLETED] [${migrationId}] Records written to sheet.`);
+
+    // 6. Re-Read Verification
+    Logger.log(`[RECONCILIATION_STARTED] [${migrationId}] Re-reading persisted records...`);
+    const persistedArray = verifySeededRecords(sheetName);
+
+    // 7. Structural Reconciliation
+    reconcileMigrationData(sourceArray, persistedArray);
+    Logger.log(`[RECONCILIATION_PASSED] [${migrationId}] Structural reconciliation 100% matched.`);
+
+    Logger.log(`[MIGRATION_SUCCESS] [${migrationId}] Migration completed and verified successfully.`);
+    return {
+      status: "MIGRATION_SUCCESS",
+      migrationId: migrationId,
+      recordCount: sourceArray.length,
+      message: "Migration completed, verified, and structurally reconciled with 100% precision."
+    };
+
+  } catch (err) {
+    Logger.log(`[FAILED] [${migrationId}] Migration failed: ${err.message}`);
+
+    if (snapshot && !isDryRun) {
+      Logger.log(`[ROLLBACK_STARTED] [${migrationId}] Initiating automated rollback...`);
+      try {
+        rollbackMigration(snapshot, sheetName);
+        return {
+          status: "MIGRATION_FAILED_ROLLED_BACK",
+          migrationId: migrationId,
+          error: err.message,
+          message: "Migration failed during execution. Pre-migration state was successfully restored."
+        };
+      } catch (rbErr) {
+        Logger.log(`[ROLLBACK_ERROR] [${migrationId}] Critical: Rollback failed: ${rbErr.message}`);
+        return {
+          status: "MIGRATION_FAILED_ROLLBACK_ERROR",
+          migrationId: migrationId,
+          error: err.message,
+          rollbackError: rbErr.message,
+          message: "CRITICAL: Migration failed and rollback encountered an error."
+        };
+      }
+    }
+
+    return {
+      status: "MIGRATION_FAILED_PRE_MUTATION",
+      migrationId: migrationId,
+      error: err.message,
+      message: "Migration failed during validation before any sheet mutation occurred."
+    };
+  }
+}
