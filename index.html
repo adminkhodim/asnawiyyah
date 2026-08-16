@@ -581,84 +581,8 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-8">
-                        <!-- Program 1: Anak-anak -->
-                        <div
-                            class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-                            <div class="relative h-48 overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80"
-                                    alt="Tahfidz Anak"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                <span
-                                    class="absolute top-4 left-4 bg-emerald-800/90 text-white text-xs font-semibold px-3 py-1 rounded-full backdrop-blur">
-                                    Usia 6 - 12 Tahun
-                                </span>
-                            </div>
-                            <div class="p-6 space-y-3">
-                                <h3 class="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition">
-                                    Tahfidz Cilik & Madrasah Ibtidaiyah</h3>
-                                <p class="text-xs text-slate-500 leading-relaxed">
-                                    Fokus penanaman hafalan juz amma, makharijul huruf yang ramah anak, serta
-                                    pembentukan adab dasar sejak usia dini.
-                                </p>
-                                <ul class="text-xs text-slate-600 space-y-1.5 pt-2">
-                                    <li class="flex items-center gap-2">✓ Target Hafalan 5–10 Juz</li>
-                                    <li class="flex items-center gap-2">✓ Metode Fun Tahfidz & Kisah Nabi</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Program 2: Santri Putra -->
-                        <div
-                            class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-                            <div class="relative h-48 overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80"
-                                    alt="Pesantren Putra"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                <span
-                                    class="absolute top-4 left-4 bg-slate-900/90 text-white text-xs font-semibold px-3 py-1 rounded-full backdrop-blur">
-                                    SMP - SMA / MTs - MA
-                                </span>
-                            </div>
-                            <div class="p-6 space-y-3">
-                                <h3 class="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition">
-                                    Kulliyatul Mu'allimin Putra</h3>
-                                <p class="text-xs text-slate-500 leading-relaxed">
-                                    Pendidikan intensif terpadu meliputi tahfidz 30 juz, pendalaman nahwu-sharaf, kajian
-                                    fiqih, dan kepemimpinan pemuda.
-                                </p>
-                                <ul class="text-xs text-slate-600 space-y-1.5 pt-2">
-                                    <li class="flex items-center gap-2">✓ Ijazah Sanad Tahfidz & Formal</li>
-                                    <li class="flex items-center gap-2">✓ Lingkungan Bahasa Arab Aktif</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Program 3: Santri Putri -->
-                        <div
-                            class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-                            <div class="relative h-48 overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=600&q=80"
-                                    alt="Pesantren Putri"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                <span
-                                    class="absolute top-4 left-4 bg-emerald-700/90 text-white text-xs font-semibold px-3 py-1 rounded-full backdrop-blur">
-                                    SMP - SMA / MTs - MA
-                                </span>
-                            </div>
-                            <div class="p-6 space-y-3">
-                                <h3 class="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition">
-                                    Ma'had Tahfidz Khusus Putri</h3>
-                                <p class="text-xs text-slate-500 leading-relaxed">
-                                    Program komprehensif berorientasi pada ketahanan hafalan Qur'an, fiqih nisaiyyah,
-                                    serta pembekalan keterampilan muslimah.
-                                </p>
-                                <ul class="text-xs text-slate-600 space-y-1.5 pt-2">
-                                    <li class="flex items-center gap-2">✓ Kompleks Asrama Khusus & Asri</li>
-                                    <li class="flex items-center gap-2">✓ Program Pengkaderan Da'iyah</li>
-                                </ul>
-                            </div>
-                        </div>
+                    <div id="beranda-program-showcase" class="grid grid-cols-3 gap-8">
+                        <!-- Rendered dynamically from PROGRAM_DATA -->
                     </div>
                 </section>
 
@@ -1741,81 +1665,17 @@
                 </div>
 
                 <!-- Grid 3 Kolom Card (Ukuran Ratio Carousel Banner aspect-[21/9]) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
-
-                    <!-- 1. Pesantren Tahfidz Anak -->
-                    <div onclick="switchTab('tahfidz-anak')"
-                        class="relative aspect-[21/9] md:aspect-[16/10] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm group border border-slate-100 transition hover:shadow-lg flex flex-col justify-end p-3 md:p-5 cursor-pointer">
-                        <img src="https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop"
-                            alt="Pesantren Tahfidz Anak"
-                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                        <div class="relative z-10 space-y-1">
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="bg-amber-500 text-brand-dark text-[8px] md:text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase inline-block shadow">Anak-Anak</span>
-                                <span class="text-[10px] text-amber-300 font-bold">selengkapnya <i
-                                        class="fa-solid fa-chevron-right text-[8px]"></i></span>
-                            </div>
-                            <h3 class="text-base md:text-2xl font-bold text-white leading-snug">Pesantren Tahfidz Anak
-                            </h3>
-                            <p class="text-[10px] md:text-xs text-emerald-100 line-clamp-1 leading-normal">Pembentukan
-                                karakter dan hafalan Al-Qur'an sejak dini dengan metode fun & intensif.</p>
-                        </div>
-                    </div>
-
-                    <!-- 2. Pesantren Dewasa Putra -->
-                    <div onclick="switchTab('dewasa-putra')"
-                        class="relative aspect-[21/9] md:aspect-[16/10] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm group border border-slate-100 transition hover:shadow-lg flex flex-col justify-end p-3 md:p-5 cursor-pointer">
-                        <img src="https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop"
-                            alt="Pesantren Dewasa Putra"
-                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                        <div class="relative z-10 space-y-1">
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="bg-brand-600 text-white text-[8px] md:text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase inline-block shadow">Dewasa
-                                    Putra</span>
-                                <span class="text-[10px] text-amber-300 font-bold">selengkapnya <i
-                                        class="fa-solid fa-chevron-right text-[8px]"></i></span>
-                            </div>
-                            <h3 class="text-base md:text-2xl font-bold text-white leading-snug">Pesantren Dewasa Putra
-                            </h3>
-                            <p class="text-[10px] md:text-xs text-emerald-100 line-clamp-1 leading-normal">Pendalaman
-                                kitab kuning, tahsin Al-Qur'an, dan kajian syariah intensif khusus santri putra.</p>
-                        </div>
-                    </div>
-
-                    <!-- 3. Pesantren Dewasa Putri -->
-                    <div onclick="switchTab('dewasa-putri')"
-                        class="relative aspect-[21/9] md:aspect-[16/10] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm group border border-slate-100 transition hover:shadow-lg flex flex-col justify-end p-3 md:p-5 cursor-pointer">
-                        <img src="https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop"
-                            alt="Pesantren Dewasa Putri"
-                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                        <div class="relative z-10 space-y-1">
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="bg-purple-600 text-white text-[8px] md:text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase inline-block shadow">Dewasa
-                                    Putri</span>
-                                <span class="text-[10px] text-amber-300 font-bold">selengkapnya <i
-                                        class="fa-solid fa-chevron-right text-[8px]"></i></span>
-                            </div>
-                            <h3 class="text-base md:text-2xl font-bold text-white leading-snug">Pesantren Dewasa Putri
-                            </h3>
-                            <p class="text-[10px] md:text-xs text-emerald-100 line-clamp-1 leading-normal">Program
-                                tahfidz, fikih wanita, dan pendalaman ilmu syariah dalam lingkungan asrama putri yang
-                                asri.</p>
-                        </div>
-                    </div>
-
+                <div id="program-pilihan-grid" class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
+                    <!-- Rendered dynamically from PROGRAM_DATA -->
                 </div>
 
             </div>
         </div>
 
-        <!-- ==================== TABS DETAIL: PESANTREN TAHFIDZ ANAK ==================== -->
-        <div id="page-tahfidz-anak" class="tab-content hidden space-y-6">
+        <!-- ==================== TABS DETAIL: PROGRAM (RENDERED VIA PROGRAM_DATA) ==================== -->
+        <div id="page-tahfidz-anak" class="tab-content hidden space-y-6"></div>
+        <div id="page-dewasa-putra" class="tab-content hidden space-y-6"></div>
+        <div id="page-dewasa-putri" class="tab-content hidden space-y-6"></div>
             <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-8">
 
                 <!-- BARIS KEMBALI & HEADER UTAMA (RINGKAS & HEMAT SPACE) -->
@@ -1890,7 +1750,8 @@
                             </div>
                             <h4 class="text-sm md:text-lg font-bold text-slate-800">Metode Bimbingan Intensif</h4>
                             <p class="text-[11px] text-slate-500 leading-relaxed">Pendampingan <i>talaqqi</i> dan
-                                <i>muraja'ah</i> secara privat atau kelompok kecil agar hafalan kuat.</p>
+                                <i>muraja'ah</i> secara privat atau kelompok kecil agar hafalan kuat.
+                            </p>
                         </div>
                         <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
                             <div
@@ -5075,8 +4936,688 @@
         let isAdminLoggedIn = false;
         let isLoggedIn = true;
 
+        // ==================== PROGRAM DATA SOURCE (CANONICAL v1.0) ====================
+        const PROGRAM_DATA = [
+            {
+                id: "tahfidz-anak",
+                name: "Pesantren Tahfidz Anak",
+                badge: "Anak-Anak",
+                berandaBadgeStyle: "bg-emerald-800/90 text-white",
+                pilihanBadgeStyle: "bg-amber-500 text-brand-dark",
+                headerBadge: "Usia Sekolah Dasar / MI (6 – 12 Tahun)",
+                headerTheme: "from-brand-900 via-brand-800 to-emerald-800",
+                headerIcon: "fa-child-reaching",
+                image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop",
+                description: "Pembentukan karakter dan hafalan Al-Qur'an sejak dini dengan metode fun & intensif.",
+                highlights: [
+                    "Target Hafalan 5–10 Juz",
+                    "Metode Fun Tahfidz & Kisah Nabi"
+                ],
+                detail: {
+                    tagline: "\"Membentuk Generasi Qur'ani Sejak Dini dengan Metode Khas, Ramah Anak, dan Berakhlak Mulia\"",
+                    summary: "Program khusus anak-anak yang memadukan pendidikan tahfidz Al-Qur'an intensif dengan pembentukan karakter/adab harian. Anak-anak dibimbing agar proses menghafal terasa menyenangkan (<span class=\"italic font-semibold text-brand-700\">fun & friendly environment</span>) tanpa mengabaikan kualitas tajwid dan keabsahan bacaan.",
+                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    videoTitle: "Video Pesantren Tahfidz Anak PPTQ Asnawiyyah",
+                    keunggulan: [
+                        {
+                            title: "Metode Bimbingan Intensif",
+                            desc: "Pendampingan <i>talaqqi</i> dan <i>muraja'ah</i> secara privat atau kelompok kecil agar hafalan kuat.",
+                            icon: "fa-book-quran",
+                            iconBg: "bg-brand-100 text-brand-700"
+                        },
+                        {
+                            title: "Kurikulum Adab & Fiqih Dasar",
+                            desc: "Selain menghafal, santri diajarkan tata cara ibadah harian, doa-doa, dan akhlakul karimah.",
+                            icon: "fa-hands-praying",
+                            iconBg: "bg-amber-100 text-amber-800"
+                        },
+                        {
+                            title: "Pendampingan Pengasuh",
+                            desc: "Pengawasan 24 jam oleh asatidz/asatidzah yang sabar dan berpengalaman mengasuh anak-anak.",
+                            icon: "fa-user-shield",
+                            iconBg: "bg-blue-100 text-blue-700"
+                        }
+                    ],
+                    targetOutput: [
+                        "Memiliki Aqidah yang benar.",
+                        "Mampu membaca Al Quran dengan baik dan benar.",
+                        "Memiliki hafalan Al-Quran dengan tahsin yang benar.",
+                        "Menguasai ilmu dasar Tahsin dan Tajwid Al-Qur'an.",
+                        "Mampu menghafal Dzikir serta doa-doa harian.",
+                        "Memiliki pondasi logika, pengetahuan umum dan kecakapan berbahasa yang baik."
+                    ],
+                    gallery: [
+                        {
+                            image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop",
+                            caption: "Suasana Bimbingan Tahfidz Anak PPTQ Asnawiyyah",
+                            sliderId: "tahfidz-photo-slider"
+                        }
+                    ],
+                    fasilitas: [
+                        { text: "Asrama yang aman, bersih, dan ramah anak.", icon: "fa-bed", iconColor: "text-brand-700" },
+                        { text: "Ruang kelas / halaqah hafalan yang nyaman.", icon: "fa-chalkboard-user", iconColor: "text-brand-700" },
+                        { text: "Area bermain, olahraga, & refreshing pekanan.", icon: "fa-icons", iconColor: "text-brand-700" }
+                    ],
+                    prosedur: {
+                        items: [
+                            "Berusia Minimal 6 Tahun (Kelas 1 SD/MI)",
+                            "Melakukan registrasi pendaftaran secara Online terlebih dahulu melalui sistem PPDB kami.",
+                            "Validasi dan kelengkapan persyaratan dilaksanakan di kantor PPTQ Asnawiyyah setelah berhasil mendaftar secara Online.",
+                            "Ta'aruf wali satri dan masuk pesantren sesuai tanggal masuk yang telah ditentukan."
+                        ],
+                        image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop",
+                        imageAlt: "Santri Anak PPTQ Asnawiyyah"
+                    },
+                    persyaratan: [
+                        {
+                            title: "Fotocopy Akta Kelahiran",
+                            desc: "Menyerahkan Fotocopy Akta Kelahiran sebanyak 1 lembar, serta menunjukkan Akta Kelahiran yang asli.",
+                            icon: "fa-copy"
+                        },
+                        {
+                            title: "Fotocopy Kartu Keluarga",
+                            desc: "Menyerahkan Fotocopy Kartu Keluarga Terbaru sebanyak 2 lembar.",
+                            icon: "fa-copy"
+                        },
+                        {
+                            title: "Pas Foto",
+                            desc: "Menyerahkan Pas foto berwarna Berpeci (PA) Berjilbab (PI) dengan ukuran 3x4 dan 2x3 Sebanyak 2 Lembar.",
+                            icon: "fa-camera"
+                        },
+                        {
+                            title: "Membayar Biaya Pendaftaran",
+                            desc: "Membayar biaya pendaftaran sebesar Rp.",
+                            icon: "fa-money-bill"
+                        }
+                    ],
+                    biaya: {
+                        pendaftaran: {
+                            nominal: "Rp.7.500.000",
+                            items: [
+                                "Pendaftaran",
+                                "Peralatan Tidur (Kasur)",
+                                "Peralatan Mandi",
+                                "Sewa Locker",
+                                "Seragam Pondok (6 Stel)",
+                                "Dana Pengembangan Pendidikan",
+                                "Syahriyah Bulan pertama",
+                                "Jariyah Pesantren"
+                            ]
+                        },
+                        syahriyah: {
+                            nominal: "Rp.900.000",
+                            items: [
+                                "Makan 3x",
+                                "Pendidikan",
+                                "Kebersihan",
+                                "Kesehatan",
+                                "Listrik & Air"
+                            ],
+                            excludedItems: [
+                                "Uang Saku"
+                            ]
+                        }
+                    },
+                    cta: {
+                        title: "Pendaftaran Santri Baru Telah Dibuka",
+                        description: "Segera daftarkan putra/putri Anda untuk mendapatkan bimbingan hafalan Al-Qur'an terbaik sejak dini.",
+                        waLink: "https://wa.me/6281234567890?text=Assalamu'alaikum,%20saya%20ingin%20konsultasi%20mengenai%20Program%20Tahfidz%20Anak%20PPTQ%20Asnawiyyah",
+                        waBtnClass: "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/30",
+                        waText: "Konsultasi via WhatsApp Admin Tahfidz Anak"
+                    }
+                }
+            },
+            {
+                id: "dewasa-putra",
+                name: "Pesantren Dewasa Putra",
+                badge: "Dewasa Putra",
+                berandaBadgeStyle: "bg-slate-900/90 text-white",
+                pilihanBadgeStyle: "bg-brand-600 text-white",
+                headerBadge: "Lulusan SMA / MA / Mahasiswa / Umum (Dewasa)",
+                headerTheme: "from-brand-900 via-brand-800 to-emerald-800",
+                headerIcon: "fa-user-graduate",
+                image: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop",
+                description: "Pendalaman kitab kuning, tahsin Al-Qur'an, dan kajian syariah intensif khusus santri putra.",
+                highlights: [
+                    "Ijazah Sanad Tahfidz & Formal",
+                    "Lingkungan Bahasa Arab Aktif"
+                ],
+                detail: {
+                    tagline: "\"Mendidik Generasi Muda Putra yang Berjiwa Al-Qur'an, Menguasai Literasi Syariah, dan Berakhlak Mulia\"",
+                    summary: "Program karantina dan pembinaan intensif khusus santri putra dewasa yang memadukan tahfidz Al-Qur'an 30 juz, tahsin ber-sanad, pendalaman kitab turats (kitab kuning), serta pembentukan jiwa kepemimpinan Islam dan kedisiplinan beribadah.",
+                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    videoTitle: "Video Pesantren Dewasa Putra PPTQ Asnawiyyah",
+                    keunggulan: [
+                        {
+                            title: "Tahfidz & Tahsin Sanad",
+                            desc: "Setoran hafalan harian yang teratur dan bimbingan membaca Al-Qur'an dengan tajwid ber-sanad.",
+                            icon: "fa-book-quran",
+                            iconBg: "bg-brand-100 text-brand-700"
+                        },
+                        {
+                            title: "Kajian Kitab Turats",
+                            desc: "Pendalaman Fiqih, Nahwu-Shorof, Hadits, dan Tafsir Al-Qur'an secara bersistem dan mutashil.",
+                            icon: "fa-scroll",
+                            iconBg: "bg-amber-100 text-amber-800"
+                        },
+                        {
+                            title: "Kemandirian & Kepemimpinan",
+                            desc: "Pembekalan mental, kepemimpinan, dan kesiapan untuk berkhidmat kepada masyarakat luas.",
+                            icon: "fa-compass-drafting",
+                            iconBg: "bg-blue-100 text-blue-700"
+                        }
+                    ],
+                    targetOutput: [
+                        "Memiliki Aqidah Ahlussunnah wal Jama'ah yang lurus dan kuat.",
+                        "Mampu membaca dan menghafal Al-Qur'an secara tartil, fasih, dan ber-sanad.",
+                        "Menguasai dasar-dasar ilmu syariah dan literatur kitab kuning.",
+                        "Istiqamah dalam shalat berjamaah, zikir, dan wirid harian pesantren.",
+                        "Memiliki karakter kepemimpinan, kemandirian, dan etika Islami.",
+                        "Siap menjadi teladan serta pembimbing keagamaan di lingkungan masyarakat."
+                    ],
+                    gallery: [
+                        {
+                            image: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=1200&auto=format&fit=crop",
+                            caption: "Suasana Pengajian Kitab & Tahfidz Dewasa Putra PPTQ Asnawiyyah",
+                            sliderId: "dewasa-putra-photo-slider"
+                        }
+                    ],
+                    fasilitas: [
+                        { text: "Asrama khusus putra yang kondusif dan tertib.", icon: "fa-building", iconColor: "text-brand-700" },
+                        { text: "Masjid utama & ruang halaqah khusus santri dewasa.", icon: "fa-mosque", iconColor: "text-brand-700" },
+                        { text: "Perpustakaan kitab turats & fasilitas pendukung.", icon: "fa-book", iconColor: "text-brand-700" }
+                    ],
+                    prosedur: {
+                        items: [
+                            "Lulusan SMA / MA / Sederajat atau Usia Dewasa",
+                            "Melakukan registrasi pendaftaran secara Online terlebih dahulu melalui sistem PPDB kami.",
+                            "Validasi berkas dan tes wawancara / tes baca Al-Qur'an di kantor sekretariat PPTQ Asnawiyyah.",
+                            "Orientasi santri baru dan penempatan kamar asrama sesuai jadwal yang ditentukan."
+                        ],
+                        image: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop",
+                        imageAlt: "Santri Putra PPTQ Asnawiyyah"
+                    },
+                    persyaratan: [
+                        {
+                            title: "Fotocopy KTP & Kartu Keluarga",
+                            desc: "Menyerahkan Fotocopy KTP pendaftar dan Kartu Keluarga masing-masing sebanyak 2 lembar.",
+                            icon: "fa-address-card"
+                        },
+                        {
+                            title: "Fotocopy Ijazah Terakhir",
+                            desc: "Menyerahkan Fotocopy Ijazah SMA/MA/Sederajat atau pendidikan terakhir sebanyak 2 lembar.",
+                            icon: "fa-graduation-cap"
+                        },
+                        {
+                            title: "Pas Foto",
+                            desc: "Menyerahkan Pas foto berwarna berpeci/kemeja putih ukuran 3x4 dan 2x3 sebanyak 2 lembar.",
+                            icon: "fa-camera"
+                        },
+                        {
+                            title: "Membayar Biaya Pendaftaran",
+                            desc: "Membayar biaya pendaftaran sesuai ketentuan yang berlaku.",
+                            icon: "fa-money-bill"
+                        }
+                    ],
+                    biaya: {
+                        pendaftaran: {
+                            nominal: "Rp.1.665.000",
+                            items: [
+                                "Pendaftaran",
+                                "Peralatan Tidur (Kasur)",
+                                "Peralatan Mandi",
+                                "Sewa Locker",
+                                "Seragam Pondok (6 Stel)",
+                                "Dana Pengembangan Pendidikan",
+                                "Syahriyah Bulan pertama",
+                                "Jariyah Pesantren"
+                            ]
+                        },
+                        syahriyah: {
+                            nominal: "Rp.380.000",
+                            items: [
+                                "Makan 3x",
+                                "Pendidikan",
+                                "Kebersihan",
+                                "Kesehatan",
+                                "Listrik & Air"
+                            ],
+                            excludedItems: [
+                                "Uang Saku"
+                            ]
+                        }
+                    },
+                    cta: {
+                        title: "Pendaftaran Santri Baru Telah Dibuka",
+                        description: "Bergabunglah bersama keluarga besar santri Dewasa Putra PPTQ Asnawiyyah untuk menjadi muhafizh Al-Qur'an berkarakter mulia.",
+                        waLink: "https://wa.me/6281234567890?text=Assalamu'alaikum,%20saya%20ingin%20konsultasi%20mengenai%20Program%20Pesantren%20Dewasa%20Putra%20PPTQ%20Asnawiyyah",
+                        waBtnClass: "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/30",
+                        waText: "Konsultasi via WhatsApp Admin Dewasa Putra"
+                    }
+                }
+            },
+            {
+                id: "dewasa-putri",
+                name: "Pesantren Dewasa Putri",
+                badge: "Dewasa Putri",
+                berandaBadgeStyle: "bg-emerald-700/90 text-white",
+                pilihanBadgeStyle: "bg-purple-600 text-white",
+                headerBadge: "Lulusan SMA / MA / Mahasiswi / Umum (Dewasa)",
+                headerTheme: "from-brand-900 via-brand-800 to-purple-950",
+                headerIcon: "fa-person-dress",
+                headerCategoryColor: "text-purple-700",
+                image: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop",
+                description: "Program tahfidz, fikih wanita, dan pendalaman ilmu syariah dalam lingkungan asrama putri yang asri.",
+                highlights: [
+                    "Kompleks Asrama Khusus & Asri",
+                    "Program Pengkaderan Da'iyah"
+                ],
+                detail: {
+                    tagline: "\"Mencetak Muslimah Muhafizhah yang Bersyahsiyah Islamiyah, Menguasai Fikih Wanita, dan Berakhlak Mulia\"",
+                    summary: "Program khusus santriwati dewasa yang dirancang untuk percepatan hafalan Al-Qur'an, perbaikan kualitas bacaan (tahsin), kajian fikih nisa (fikih wanita), serta pembekalan adab dan kemandirian muslimah dalam lingkungan asrama putri yang asri dan terjaga.",
+                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    videoTitle: "Video Pesantren Dewasa Putri PPTQ Asnawiyyah",
+                    keunggulan: [
+                        {
+                            title: "Tahfidz & Tahsin Sanad",
+                            desc: "Metode <i>talaqqi</i> intensif bersama Ibu Nyai dan Asatidzah terpercaya secara disiplin.",
+                            icon: "fa-book-quran",
+                            iconBg: "bg-purple-100 text-purple-700"
+                        },
+                        {
+                            title: "Kajian Fikih Nisa & Adab",
+                            desc: "Pendalaman hukum-hukum kewanitaan, ibadah harian, serta etika kepribadian muslimah.",
+                            icon: "fa-person-breastfeeding",
+                            iconBg: "bg-amber-100 text-amber-800"
+                        },
+                        {
+                            title: "Lingkungan Steril & Asri",
+                            desc: "Asrama khusus putri dengan privasi terjaga, aman, dan iklim belajar yang menyenangkan.",
+                            icon: "fa-shield-cat",
+                            iconBg: "bg-emerald-100 text-emerald-700"
+                        }
+                    ],
+                    targetOutput: [
+                        "Memiliki Aqidah yang lurus dan pemahaman syariat yang benar.",
+                        "Mampu membaca dan menghafal Al-Qur'an secara fasih dan tartil.",
+                        "Menguasai Fikih Wanita (Fikih Nisa) dan tata cara ibadah praktis muslimah.",
+                        "Mampu mengamalkan doa-doa harian, zikir, dan wirid rutin santri.",
+                        "Memiliki kepribadian muslimah yang anggun, mandiri, dan berakhlakul karimah.",
+                        "Siap membina keluarga Qur'ani serta berperan aktif dalam syiar kebaikan."
+                    ],
+                    gallery: [
+                        {
+                            image: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1200&auto=format&fit=crop",
+                            caption: "Suasana Bimbingan Tahfidz & Fikih Nisa Dewasa Putri PPTQ Asnawiyyah",
+                            sliderId: "dewasa-putri-photo-slider"
+                        }
+                    ],
+                    fasilitas: [
+                        { text: "Asrama putri yang bersih, nyaman, dan terjaga.", icon: "fa-house-user", iconColor: "text-purple-700" },
+                        { text: "Majlis halaqah & ruang kelas khusus santriwati.", icon: "fa-chalkboard-user", iconColor: "text-purple-700" },
+                        { text: "Dapur mandiri & area penunjang kegiatan putri.", icon: "fa-kitchen-set", iconColor: "text-purple-700" }
+                    ],
+                    prosedur: {
+                        items: [
+                            "Lulusan SMA / MA / Sederajat atau Usia Dewasa",
+                            "Melakukan registrasi pendaftaran secara Online terlebih dahulu melalui sistem PPDB kami.",
+                            "Validasi berkas dan tes wawancara / tes baca Al-Qur'an secara luring/daring.",
+                            "Orientasi santriwati baru dan penempatan asrama putri sesuai jadwal yang ditentukan."
+                        ],
+                        image: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop",
+                        imageAlt: "Santriwati Putri PPTQ Asnawiyyah"
+                    },
+                    persyaratan: [
+                        {
+                            title: "Fotocopy KTP & Kartu Keluarga",
+                            desc: "Menyerahkan Fotocopy KTP pendaftar dan Kartu Keluarga masing-masing sebanyak 2 lembar.",
+                            icon: "fa-address-card"
+                        },
+                        {
+                            title: "Fotocopy Ijazah Terakhir",
+                            desc: "Menyerahkan Fotocopy Ijazah SMA/MA/Sederajat atau pendidikan terakhir sebanyak 2 lembar.",
+                            icon: "fa-graduation-cap"
+                        },
+                        {
+                            title: "Pas Foto",
+                            desc: "Menyerahkan Pas foto berwarna berjilbab ukuran 3x4 dan 2x3 sebanyak 2 lembar.",
+                            icon: "fa-camera"
+                        },
+                        {
+                            title: "Membayar Biaya Pendaftaran",
+                            desc: "Membayar biaya pendaftaran sesuai ketentuan yang berlaku.",
+                            icon: "fa-money-bill"
+                        }
+                    ],
+                    biaya: {
+                        pendaftaran: {
+                            nominal: "Rp.1.800.000",
+                            items: [
+                                "Pendaftaran",
+                                "Peralatan Tidur (Kasur)",
+                                "Peralatan Mandi",
+                                "Sewa Locker",
+                                "Seragam Pondok Putri (6 Stel)",
+                                "Dana Pengembangan Pendidikan",
+                                "Syahriyah Bulan pertama",
+                                "Jariyah Pesantren"
+                            ]
+                        },
+                        syahriyah: {
+                            nominal: "Rp.405.000",
+                            items: [
+                                "Makan 3x",
+                                "Pendidikan & Bimbingan Asatidzah",
+                                "Kebersihan",
+                                "Kesehatan",
+                                "Listrik & Air"
+                            ],
+                            excludedItems: [
+                                "Uang Saku"
+                            ]
+                        }
+                    },
+                    cta: {
+                        title: "Pendaftaran Santriwati Baru Telah Dibuka",
+                        description: "Raih mahkota hafizhah dan ilmu syariah bersama keluarga besar santriwati Dewasa Putri PPTQ Asnawiyyah.",
+                        waLink: "https://wa.me/6281234567890?text=Assalamu'alaikum,%20saya%20ingin%20konsultasi%20mengenai%20Program%20Pesantren%20Dewasa%20Putri%20PPTQ%20Asnawiyyah",
+                        waBtnClass: "bg-purple-700 hover:bg-purple-600 text-white border-purple-400/30",
+                        waText: "Konsultasi via WhatsApp Admin Dewasa Putri"
+                    }
+                }
+            }
+        ];
+
+        // ==================== PROGRAM DATA RENDERERS ====================
+        function getProgramById(programId) {
+            return PROGRAM_DATA.find(item => item.id === programId);
+        }
+
+        function renderProgramShowcaseBeranda() {
+            const container = document.getElementById('beranda-program-showcase');
+            if (!container) return;
+
+            container.innerHTML = PROGRAM_DATA.map(prog => `
+                <div onclick="switchTab('${prog.id}')"
+                    class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <div class="relative h-48 overflow-hidden">
+                        <img src="${prog.image}" alt="${prog.name}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <span
+                            class="absolute top-4 left-4 ${prog.berandaBadgeStyle} text-xs font-semibold px-3 py-1 rounded-full backdrop-blur">
+                            ${prog.badge}
+                        </span>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <h3 class="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition">
+                            ${prog.name}</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            ${prog.description}
+                        </p>
+                        <ul class="text-xs text-slate-600 space-y-1.5 pt-2">
+                            ${prog.highlights.slice(0, 3).map(item => `<li class="flex items-center gap-2">✓ ${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProgramPilihanGrid() {
+            const container = document.getElementById('program-pilihan-grid');
+            if (!container) return;
+
+            container.innerHTML = PROGRAM_DATA.map(prog => `
+                <div onclick="switchTab('${prog.id}')"
+                    class="relative aspect-[21/9] md:aspect-[16/10] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm group border border-slate-100 transition hover:shadow-lg flex flex-col justify-end p-3 md:p-5 cursor-pointer">
+                    <img src="${prog.image}" alt="${prog.name}"
+                        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                    <div class="relative z-10 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="${prog.pilihanBadgeStyle} text-[8px] md:text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase inline-block shadow">${prog.badge}</span>
+                            <span class="text-[10px] text-amber-300 font-bold">selengkapnya <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+                        </div>
+                        <h3 class="text-base md:text-2xl font-bold text-white leading-snug">${prog.name}</h3>
+                        <p class="text-[10px] md:text-xs text-emerald-100 line-clamp-1 leading-normal">${prog.description}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAllProgramDetails() {
+            PROGRAM_DATA.forEach(prog => {
+                const pageEl = document.getElementById(`page-${prog.id}`);
+                if (!pageEl) return;
+
+                const d = prog.detail;
+                const categoryColor = prog.headerCategoryColor || 'text-brand-700';
+
+                pageEl.innerHTML = `
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+
+                        <!-- BARIS KEMBALI & HEADER UTAMA -->
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-1">
+                            <div class="flex items-center space-x-2.5">
+                                <button onclick="switchTab('program-pilihan')"
+                                    class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                                    title="Kembali">
+                                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                                </button>
+                                <span class="text-[11px] font-extrabold ${categoryColor} uppercase tracking-wider">Program Unggulan</span>
+                            </div>
+                            <button onclick="switchTab('ppdb')"
+                                class="hidden md:flex px-3.5 py-1.5 bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs rounded-lg shadow transition items-center space-x-1.5">
+                                <span>Daftar PPDB</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+
+                        <!-- A. HEADER & TAGLINE PROGRAM -->
+                        <section class="relative bg-gradient-to-r ${prog.headerTheme} text-white p-6 md:p-8 rounded-3xl overflow-hidden shadow-md">
+                            <div class="absolute -right-8 -bottom-8 text-white/5 text-9xl pointer-events-none">
+                                <i class="fa-solid ${prog.headerIcon}"></i>
+                            </div>
+                            <div class="relative z-10 space-y-2.5">
+                                <span class="${prog.pilihanBadgeStyle} text-[10px] font-extrabold px-3 py-1 rounded-full uppercase inline-block shadow">${prog.headerBadge}</span>
+                                <h1 class="text-xl md:text-3xl font-extrabold leading-tight">${prog.name}</h1>
+                                <p class="text-xs md:text-sm text-amber-300 font-semibold italic">
+                                    ${d.tagline}
+                                </p>
+                            </div>
+                        </section>
+
+                        <!-- B. DESKRIPSI SINGKAT PROGRAM -->
+                        <section class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                            <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+                                ${d.summary}
+                            </p>
+                        </section>
+
+                        <!-- C. VIDEO CHANNEL YOUTUBE -->
+                        <section class="space-y-2">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                                <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Video Profil Kegiatan
+                            </h3>
+                            <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md border border-slate-200 bg-black">
+                                <iframe class="w-full h-full" src="${d.video}" title="${d.videoTitle}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </section>
+
+                        <!-- D. KEUNGGULAN & METODE PEMBELAJARAN -->
+                        <section class="space-y-3">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                                <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Keunggulan & Metode Pembelajaran
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${d.keunggulan.map(k => `
+                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
+                                        <div class="w-9 h-9 ${k.iconBg} rounded-xl flex items-center justify-center text-sm font-bold mb-2">
+                                            <i class="fa-solid ${k.icon}"></i>
+                                        </div>
+                                        <h4 class="text-sm md:text-lg font-bold text-slate-800">${k.title}</h4>
+                                        <p class="text-[11px] text-slate-500 leading-relaxed">${k.desc}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <!-- E. TARGET CAPAIAN SANTRI -->
+                        <section class="bg-emerald-700 text-white p-5 md:p-6 rounded-3xl shadow-sm space-y-4">
+                            <h3 class="text-base font-bold text-center">Target Output Santri</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                ${d.targetOutput.map(out => `
+                                    <div class="flex items-start space-x-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
+                                        <i class="fa-solid fa-square-check text-amber-400 mt-0.5 text-base shrink-0"></i>
+                                        <span>${out}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <!-- F. GALERI FOTO -->
+                        <section class="space-y-3">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                                <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Galeri Dokumentasi Kegiatan
+                            </h3>
+                            <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md bg-slate-900">
+                                <div id="${d.gallery[0].sliderId}" class="w-full h-full relative">
+                                    <img src="${d.gallery[0].image}" alt="${d.gallery[0].caption}" class="absolute inset-0 w-full h-full object-cover">
+                                </div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4 md:p-6">
+                                    <p class="text-xs md:text-sm font-bold text-white"><i class="fa-solid fa-camera mr-2 text-amber-400"></i> ${d.gallery[0].caption}</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- G. FASILITAS -->
+                        <section class="space-y-3">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                                <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Fasilitas Santri
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                ${d.fasilitas.map(f => `
+                                    <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center space-x-3">
+                                        <i class="${f.icon} ${f.iconColor || 'text-brand-700'} text-lg"></i>
+                                        <span class="text-xs font-semibold text-slate-700">${f.text}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <!-- H. PROSEDUR PENDAFTARAN -->
+                        <section class="bg-slate-50 p-5 md:p-6 rounded-3xl border border-slate-100 space-y-4">
+                            <h3 class="text-base font-bold text-slate-800 text-center">Prosedur Pendaftaran</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                <div class="space-y-3">
+                                    ${d.prosedur.items.map((p, idx) => `
+                                        <div class="flex items-start space-x-3">
+                                            <i class="fa-solid fa-check text-brand-700 font-bold text-sm mt-0.5 shrink-0"></i>
+                                            <p class="text-xs text-slate-700 ${idx === 0 ? 'font-semibold' : ''}">${p}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="rounded-2xl overflow-hidden border border-slate-200 aspect-[4/3]">
+                                    <img src="${d.prosedur.image}" alt="${d.prosedur.imageAlt}" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- I. PERSYARATAN PENDAFTARAN -->
+                        <section class="space-y-4">
+                            <h3 class="text-base font-bold text-slate-800 text-center">Persyaratan Pendaftaran</h3>
+                            <div class="space-y-3 max-w-2xl mx-auto">
+                                ${d.persyaratan.map(req => `
+                                    <div class="flex items-start space-x-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <div class="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center text-lg shrink-0">
+                                            <i class="fa-solid ${req.icon}"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs md:text-sm font-bold text-slate-800">${req.title}</h4>
+                                            <p class="text-[11px] text-slate-500 mt-0.5">${req.desc}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <!-- J. BIAYA PENDIDIKAN -->
+                        <section class="space-y-4">
+                            <h3 class="text-base font-bold text-slate-800 text-center">Biaya Pendidikan</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <!-- Biaya Pendaftaran -->
+                                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Pendaftaran</h4>
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya.pendaftaran.nominal}</div>
+                                    </div>
+                                    <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
+                                        ${d.biaya.pendaftaran.items.map(item => `
+                                            <div class="flex items-center space-x-2.5 text-slate-700">
+                                                <i class="fa-solid fa-check text-emerald-600 font-bold"></i>
+                                                <span>${item}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Biaya Bulanan -->
+                                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya.syahriyah.nominal}</div>
+                                    </div>
+                                    <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
+                                        ${d.biaya.syahriyah.items.map(item => `
+                                            <div class="flex items-center space-x-2.5 text-slate-700">
+                                                <i class="fa-solid fa-check text-emerald-600 font-bold"></i>
+                                                <span>${item}</span>
+                                            </div>
+                                        `).join('')}
+                                        ${d.biaya.syahriyah.excludedItems.map(item => `
+                                            <div class="flex items-center space-x-2.5 text-slate-400 line-through">
+                                                <i class="fa-solid fa-xmark text-rose-500 font-bold"></i>
+                                                <span>${item}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- K. CALL TO ACTION (CTA) -->
+                        <section class="bg-gradient-to-r ${prog.headerTheme} text-white p-6 md:p-8 rounded-3xl shadow-lg text-center space-y-4">
+                            <h3 class="text-lg md:text-xl font-bold">${d.cta.title}</h3>
+                            <p class="text-xs text-emerald-100 max-w-md mx-auto leading-relaxed">
+                                ${d.cta.description}
+                            </p>
+                            <div class="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
+                                <button onclick="switchTab('ppdb')"
+                                    class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-brand-dark font-extrabold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-file-signature"></i>
+                                    <span>Daftar Sekarang ke Form PPDB</span>
+                                </button>
+                                <a href="${d.cta.waLink}" target="_blank"
+                                    class="w-full sm:w-auto ${d.cta.waBtnClass} font-bold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2 border">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span>${d.cta.waText}</span>
+                                </a>
+                            </div>
+                        </section>
+
+                    </div>
+                `;
+            });
+        }
+
+        function renderProgramAllViews() {
+            renderProgramShowcaseBeranda();
+            renderProgramPilihanGrid();
+            renderAllProgramDetails();
+        }
+
         // ==================== INISIALISASI UTAMA (SINGLE ONLOAD) ====================
         window.onload = function () {
+            renderProgramAllViews();
             loadNews();
             loadBanners();
             if (typeof renderCalendar === 'function') {
