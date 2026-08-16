@@ -66,6 +66,13 @@ function doPost(e) {
       );
     }
 
+    if (action === "uploadMedia") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(
+        uploadMediaToDrive(payload.data || payload, token)
+      );
+    }
+
     if (action === "deleteBanner") {
 
       const bannerId =
@@ -678,6 +685,111 @@ function toggleStatusBanner(bannerId, newStatus) {
     return { success: false, message: "ID Banner tidak ditemukan" };
   } catch (err) {
     return { success: false, message: err.toString() };
+  }
+}
+
+// 5. Upload Media Tunggal ke Google Drive (Khusus Admin/Editor Terautentikasi)
+function uploadMediaToDrive(formData, token) {
+  try {
+    // 1. Validasi Autentikasi Sesi Admin
+    if (!token) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 401,
+        message: "Sesi admin tidak ditemukan. Silakan login kembali."
+      };
+    }
+
+    const session = verifySessionToken(token);
+    if (!session || !session.valid) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 401,
+        message: "Sesi admin tidak valid atau telah kedaluwarsa. Silakan login kembali."
+      };
+    }
+
+    // 2. Validasi Otorisasi Role (ADMIN atau EDITOR)
+    const role = String(session.role || "").toLowerCase();
+    if (role !== "admin" && role !== "editor") {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 403,
+        message: "Akses ditolak: Anda tidak memiliki izin untuk mengunggah media."
+      };
+    }
+
+    // 3. Validasi Payload File
+    const fileData = (formData && formData.file) || formData;
+    if (!fileData || !fileData.base64 || !fileData.name) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Data file (base64 dan nama file) wajib dikirimkan."
+      };
+    }
+
+    // 4. Strict MIME Type Whitelist (Hanya Gambar)
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const rawMime = String(fileData.mimeType || "").trim().toLowerCase();
+    if (!allowedMimes.includes(rawMime)) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Format file tidak didukung. Hanya gambar (JPG, PNG, WEBP, GIF) yang diperbolehkan."
+      };
+    }
+
+    // 5. Decode Base64 & Validasi Ukuran Binary (Maksimal 5 MB)
+    var decodedData = Utilities.base64Decode(fileData.base64);
+    if (!decodedData || decodedData.length === 0) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Data biner file kosong atau tidak valid."
+      };
+    }
+
+    const maxBytes = 5 * 1024 * 1024; // 5 MB
+    if (decodedData.length > maxBytes) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Ukuran file melebihi batas maksimal 5 MB."
+      };
+    }
+
+    // 6. Simpan File ke Google Drive
+    var folder = DriveApp.getFolderById(FOLDER_ID);
+    var cleanName = String(fileData.name || "media.jpg").replace(/[^a-zA-Z0-9._-]/g, "_");
+    var prefix = String(fileData.prefix || "PROGRAM").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    var blob = Utilities.newBlob(
+      decodedData,
+      rawMime,
+      prefix + "_" + new Date().getTime() + "_" + cleanName
+    );
+    var newFile = folder.createFile(blob);
+    newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+
+    return {
+      success: true,
+      status: "success",
+      statusCode: 200,
+      url: fileUrl,
+      fileUrl: fileUrl,
+      fileId: newFile.getId(),
+      message: "Media berhasil diunggah ke Google Drive!"
+    };
+  } catch (err) {
+    return { success: false, status: "error", message: err.toString() };
   }
 }
 // ============================================================================

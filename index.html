@@ -3954,13 +3954,44 @@
                 </div>
 
                 <!-- PANEL 2: MEDIA & VIDEO -->
-                <div id="admin-prog-panel-media" class="admin-prog-panel hidden space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Gambar Cover / Header</label>
-                        <input type="url" id="admin-prog-image" required
-                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                            placeholder="https://images.unsplash.com/photo-...">
+                <div id="admin-prog-panel-media" class="admin-prog-panel hidden space-y-4">
+                    <!-- 1. COVER / HEADER IMAGE UPLOAD -->
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase">Gambar Cover / Header Program</label>
+                                <p class="text-[10px] text-slate-400">Pilih file gambar untuk diunggah langsung ke Google Drive (Format: JPG, PNG, WEBP)</p>
+                            </div>
+                            <span id="admin-prog-cover-upload-status" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                                <i class="fa-solid fa-check mr-1"></i> Tersimpan
+                            </span>
+                        </div>
+
+                        <!-- Choose File Input -->
+                        <div class="relative">
+                            <input type="file" id="admin-prog-cover-file" accept="image/*" onchange="handleAdminProgramCoverUpload(event)"
+                                class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer bg-white p-1 focus:outline-none">
+                        </div>
+
+                        <!-- Hidden URL Storage for Program Input Whitelist -->
+                        <input type="hidden" id="admin-prog-image" value="">
+
+                        <!-- LIVE PREVIEW COVER IMAGE -->
+                        <div class="pt-1">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Pratinjau Cover Program:</span>
+                            <div class="w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                                <img id="admin-prog-cover-preview-img" src="" alt="Pratinjau Cover" class="w-full h-full object-cover hidden">
+                                <span id="admin-prog-cover-preview-placeholder" class="text-xs text-slate-400 italic">Pilih file gambar untuk mengunggah dan melihat pratinjau</span>
+                                <!-- Spinner overlay while uploading -->
+                                <div id="admin-prog-cover-spinner" class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2">
+                                    <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-400"></i>
+                                    <span class="text-xs font-semibold">Mengunggah ke Google Drive...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- 2. VIDEO PROFIL YOUTUBE -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Embed Video YouTube</label>
@@ -3975,21 +4006,24 @@
                                 placeholder="Video Profil Kegiatan PPTQ Asnawiyyah">
                         </div>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
-                        <span class="text-[10px] font-bold text-slate-600 uppercase block">Galeri Foto Dokumentasi</span>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+                    <!-- 3. REPEATABLE GALLERY FOTO DOKUMENTASI -->
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
                             <div>
-                                <label class="block text-[9px] text-slate-400">URL Gambar Galeri</label>
-                                <input type="url" id="admin-prog-gallery-img"
-                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                                    placeholder="https://...">
+                                <span class="text-[11px] font-bold text-slate-700 uppercase block">Galeri Foto Dokumentasi</span>
+                                <p class="text-[10px] text-slate-400">Unggah foto-foto kegiatan santri ke Google Drive</p>
                             </div>
-                            <div>
-                                <label class="block text-[9px] text-slate-400">Keterangan / Caption Foto</label>
-                                <input type="text" id="admin-prog-gallery-caption"
-                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                                    placeholder="Suasana Halaqah Tahfidz Santri">
-                            </div>
+                            <button type="button" onclick="addAdminProgramGalleryItem()"
+                                class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                                <span>Tambah Foto Galeri</span>
+                            </button>
+                        </div>
+
+                        <!-- Gallery items dynamic container -->
+                        <div id="admin-prog-gallery-container" class="space-y-3">
+                            <!-- Dynamically generated gallery item cards -->
                         </div>
                     </div>
                 </div>
@@ -6409,6 +6443,231 @@
             if (activePanel) activePanel.classList.remove('hidden');
         }
 
+        // ==================== DASHBOARD ADMIN: MANAJEMEN PROGRAM MEDIA & GALLERY ====================
+        let adminProgramGalleryItems = [];
+
+        function renderAdminProgramGalleryItems() {
+            const container = document.getElementById('admin-prog-gallery-container');
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            if (adminProgramGalleryItems.length === 0) {
+                container.innerHTML = `
+                    <div class="py-6 text-center text-xs text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
+                        <i class="fa-solid fa-images text-2xl text-slate-300 mb-1.5 block"></i>
+                        Belum ada foto galeri. Klik <strong>Tambah Foto Galeri</strong> untuk mengunggah.
+                    </div>
+                `;
+                return;
+            }
+
+            adminProgramGalleryItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <span class="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md uppercase">
+                            Foto #${index + 1}
+                        </span>
+                        <button type="button" onclick="removeAdminProgramGalleryItem(${index})"
+                            class="text-xs text-rose-600 hover:text-rose-800 hover:underline font-semibold flex items-center space-x-1">
+                            <i class="fa-solid fa-trash-can text-[11px]"></i>
+                            <span>Hapus</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+                        <!-- Preview Thumbnail -->
+                        <div class="aspect-video rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                            <img src="${escapeHtml(item.image || '')}" alt="Galeri #${index + 1}"
+                                class="w-full h-full object-cover ${item.image ? '' : 'hidden'}" id="admin-prog-gal-img-${index}">
+                            <span class="text-[10px] text-slate-400 italic text-center p-2 ${item.image ? 'hidden' : ''}" id="admin-prog-gal-ph-${index}">
+                                Belum ada foto
+                            </span>
+                            ${item.isUploading ? `
+                                <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-xs flex flex-col items-center justify-center text-white space-y-1">
+                                    <i class="fa-solid fa-spinner fa-spin text-lg text-emerald-400"></i>
+                                    <span class="text-[9px] font-semibold">Mengunggah...</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- File Input & Caption -->
+                        <div class="md:col-span-2 space-y-2">
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Pilih File Foto (Drive)</label>
+                                <input type="file" accept="image/*" onchange="handleAdminProgramGalleryUpload(event, ${index})"
+                                    class="w-full text-xs text-slate-600 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 p-1 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Keterangan / Caption Foto</label>
+                                <input type="text" value="${escapeHtml(item.caption || '')}" oninput="updateAdminProgramGalleryCaption(${index}, this.value)"
+                                    placeholder="Contoh: Suasana Belajar Halaqah Tahfidz"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                            </div>
+                            ${item.image ? `
+                                <div class="text-[9px] text-emerald-700 font-semibold flex items-center space-x-1">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                    <span>Tersimpan di Google Drive</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function addAdminProgramGalleryItem(itemData = null) {
+            adminProgramGalleryItems.push(itemData || {
+                id: 'galeri-item-' + Date.now(),
+                image: '',
+                caption: '',
+                isUploading: false
+            });
+            renderAdminProgramGalleryItems();
+        }
+
+        function removeAdminProgramGalleryItem(index) {
+            adminProgramGalleryItems.splice(index, 1);
+            renderAdminProgramGalleryItems();
+        }
+
+        function updateAdminProgramGalleryCaption(index, caption) {
+            if (adminProgramGalleryItems[index]) {
+                adminProgramGalleryItems[index].caption = caption;
+            }
+        }
+
+        async function handleAdminProgramCoverUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const token = getAdminSessionToken();
+            if (!token) {
+                showToast("❌ Sesi admin tidak ditemukan. Silakan login kembali.");
+                return;
+            }
+
+            // Client-side file size check (5 MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("❌ Ukuran file maksimal 5 MB.");
+                event.target.value = '';
+                return;
+            }
+
+            // Client-side MIME check
+            const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+            if (!allowedMimes.includes(file.type.toLowerCase())) {
+                showToast("❌ Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF.");
+                event.target.value = '';
+                return;
+            }
+
+            const spinner = document.getElementById('admin-prog-cover-spinner');
+            const previewImg = document.getElementById('admin-prog-cover-preview-img');
+            const placeholder = document.getElementById('admin-prog-cover-preview-placeholder');
+            const statusBadge = document.getElementById('admin-prog-cover-upload-status');
+            const hiddenInput = document.getElementById('admin-prog-image');
+
+            if (spinner) spinner.classList.remove('hidden');
+            if (statusBadge) statusBadge.classList.add('hidden');
+
+            try {
+                const fileData = await readFileAsBase64(file);
+                fileData.prefix = "COVER";
+
+                const response = await apiPost("uploadMedia", { token, file: fileData });
+
+                if (response && (response.success || response.status === "success")) {
+                    const uploadedUrl = response.url || response.fileUrl || (response.data && response.data.url) || "";
+                    if (!uploadedUrl) throw new Error("Server tidak mengembalikan URL gambar.");
+
+                    if (hiddenInput) hiddenInput.value = uploadedUrl;
+                    if (previewImg) {
+                        previewImg.src = uploadedUrl;
+                        previewImg.classList.remove('hidden');
+                    }
+                    if (placeholder) placeholder.classList.add('hidden');
+                    if (statusBadge) {
+                        statusBadge.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Tersimpan di Drive`;
+                        statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800";
+                        statusBadge.classList.remove('hidden');
+                    }
+                    showToast("✅ Cover program berhasil diunggah ke Google Drive!");
+                } else {
+                    const errMsg = (response && response.message) || "Gagal mengunggah gambar ke Google Drive.";
+                    throw new Error(errMsg);
+                }
+            } catch (err) {
+                console.error("Gagal upload cover:", err);
+                showToast("❌ Gagal upload cover: " + err.message);
+                if (statusBadge) {
+                    statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Upload Gagal`;
+                    statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800";
+                    statusBadge.classList.remove('hidden');
+                }
+            } finally {
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        async function handleAdminProgramGalleryUpload(event, index) {
+            const file = event.target.files[0];
+            if (!file || !adminProgramGalleryItems[index]) return;
+
+            const token = getAdminSessionToken();
+            if (!token) {
+                showToast("❌ Sesi admin tidak ditemukan. Silakan login kembali.");
+                return;
+            }
+
+            // Client-side file size check (5 MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("❌ Ukuran file maksimal 5 MB.");
+                event.target.value = '';
+                return;
+            }
+
+            // Client-side MIME check
+            const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+            if (!allowedMimes.includes(file.type.toLowerCase())) {
+                showToast("❌ Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF.");
+                event.target.value = '';
+                return;
+            }
+
+            adminProgramGalleryItems[index].isUploading = true;
+            renderAdminProgramGalleryItems();
+
+            try {
+                const fileData = await readFileAsBase64(file);
+                fileData.prefix = "GALLERY";
+
+                const response = await apiPost("uploadMedia", { token, file: fileData });
+
+                if (response && (response.success || response.status === "success")) {
+                    const uploadedUrl = response.url || response.fileUrl || (response.data && response.data.url) || "";
+                    if (!uploadedUrl) throw new Error("Server tidak mengembalikan URL gambar.");
+
+                    adminProgramGalleryItems[index].image = uploadedUrl;
+                    showToast(`✅ Foto galeri #${index + 1} berhasil diunggah ke Google Drive!`);
+                } else {
+                    const errMsg = (response && response.message) || "Gagal mengunggah foto ke Google Drive.";
+                    throw new Error(errMsg);
+                }
+            } catch (err) {
+                console.error("Gagal upload foto galeri:", err);
+                showToast("❌ Gagal upload foto galeri: " + err.message);
+            } finally {
+                if (adminProgramGalleryItems[index]) {
+                    adminProgramGalleryItems[index].isUploading = false;
+                }
+                renderAdminProgramGalleryItems();
+            }
+        }
+
         function openAdminProgramEditor(programId) {
             const form = document.getElementById('adminProgramForm');
             if (form) form.reset();
@@ -6425,6 +6684,10 @@
             const idInput = document.getElementById('admin-prog-id');
             const saveBtnText = document.getElementById('admin-prog-save-btn-text');
             const publishBtn = document.getElementById('admin-prog-publish-btn');
+            const coverFileInput = document.getElementById('admin-prog-cover-file');
+            const coverPreviewImg = document.getElementById('admin-prog-cover-preview-img');
+            const coverPlaceholder = document.getElementById('admin-prog-cover-preview-placeholder');
+            const coverStatus = document.getElementById('admin-prog-cover-upload-status');
             const role = getAdminSessionRole();
             const isAdmin = (role === "admin");
 
@@ -6433,12 +6696,15 @@
                 else publishBtn.classList.add('hidden');
             }
 
+            if (coverFileInput) coverFileInput.value = '';
+
             switchAdminProgramTab('umum');
 
             if (!programId) {
                 // CREATE MODE
                 document.getElementById('admin-prog-mode').value = "create";
                 document.getElementById('admin-prog-server-version').value = "1";
+                document.getElementById('admin-prog-image').value = "";
                 if (titleEl) titleEl.innerText = "Tambah Program Baru";
                 if (statusBadge) {
                     statusBadge.innerText = "Draft (Baru)";
@@ -6450,6 +6716,14 @@
                     idInput.readOnly = false;
                     idInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
                 }
+                if (coverPreviewImg) coverPreviewImg.classList.add('hidden');
+                if (coverPlaceholder) coverPlaceholder.classList.remove('hidden');
+                if (coverStatus) coverStatus.classList.add('hidden');
+
+                // Inisialisasi galeri foto baru dengan 1 slot kosong
+                adminProgramGalleryItems = [];
+                addAdminProgramGalleryItem();
+
                 if (saveBtnText) saveBtnText.innerText = "Simpan Draft Baru";
             } else {
                 // EDIT MODE
@@ -6486,19 +6760,43 @@
                 document.getElementById('admin-prog-highlights').value = Array.isArray(existing.highlights) ? existing.highlights.join('\n') : "";
                 document.getElementById('admin-prog-image').value = existing.image || "";
 
+                // Cover Preview
+                if (existing.image) {
+                    if (coverPreviewImg) {
+                        coverPreviewImg.src = existing.image;
+                        coverPreviewImg.classList.remove('hidden');
+                    }
+                    if (coverPlaceholder) coverPlaceholder.classList.add('hidden');
+                    if (coverStatus) {
+                        coverStatus.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Tersimpan di Drive`;
+                        coverStatus.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800";
+                        coverStatus.classList.remove('hidden');
+                    }
+                } else {
+                    if (coverPreviewImg) coverPreviewImg.classList.add('hidden');
+                    if (coverPlaceholder) coverPlaceholder.classList.remove('hidden');
+                    if (coverStatus) coverStatus.classList.add('hidden');
+                }
+
                 const d = existing.detail || {};
                 document.getElementById('admin-prog-tagline').value = d.tagline || "";
                 document.getElementById('admin-prog-summary').value = d.summary || "";
                 document.getElementById('admin-prog-video').value = d.video || "";
                 document.getElementById('admin-prog-video-title').value = d.videoTitle || "";
 
-                if (d.gallery && Array.isArray(d.gallery) && d.gallery[0]) {
-                    document.getElementById('admin-prog-gallery-img').value = d.gallery[0].image || "";
-                    document.getElementById('admin-prog-gallery-caption').value = d.gallery[0].caption || "";
+                // Populate Repeatable Gallery
+                if (d.gallery && Array.isArray(d.gallery) && d.gallery.length > 0) {
+                    adminProgramGalleryItems = d.gallery.map((g, idx) => ({
+                        id: g.sliderId || 'galeri-' + (idx + 1),
+                        image: g.image || '',
+                        caption: g.caption || '',
+                        isUploading: false
+                    }));
                 } else {
-                    document.getElementById('admin-prog-gallery-img').value = "";
-                    document.getElementById('admin-prog-gallery-caption').value = "";
+                    adminProgramGalleryItems = [];
+                    addAdminProgramGalleryItem();
                 }
+                renderAdminProgramGalleryItems();
 
                 if (d.keunggulan && Array.isArray(d.keunggulan)) {
                     if (d.keunggulan[0]) {
@@ -6590,8 +6888,22 @@
             const targetOutput = document.getElementById('admin-prog-target-output').value.split('\n').map(s => s.trim()).filter(Boolean);
             const fasilitas = document.getElementById('admin-prog-fasilitas').value.split('\n').map(s => s.trim()).filter(Boolean).map(text => ({ text, icon: "fa-check", iconColor: "text-brand-700" }));
 
-            const galleryImg = document.getElementById('admin-prog-gallery-img').value.trim() || image;
-            const galleryCaption = document.getElementById('admin-prog-gallery-caption').value.trim() || 'Dokumentasi Santri';
+            // Map repeatable gallery items with fallback
+            let gallery = adminProgramGalleryItems
+                .filter(g => g.image && g.image.trim() !== '')
+                .map((g, idx) => ({
+                    sliderId: `galeri-${id || 'item'}-${idx + 1}`,
+                    image: g.image.trim(),
+                    caption: (g.caption || '').trim() || 'Dokumentasi Kegiatan Santri'
+                }));
+
+            if (gallery.length === 0 && image) {
+                gallery = [{
+                    sliderId: `galeri-${id || 'temp'}`,
+                    image: image,
+                    caption: 'Dokumentasi Santri'
+                }];
+            }
 
             const prosedurItems = document.getElementById('admin-prog-prosedur-items').value.split('\n').map(s => s.trim()).filter(Boolean);
             const prosedurImg = document.getElementById('admin-prog-prosedur-img').value.trim() || "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop";
@@ -6634,11 +6946,7 @@
                     keunggulan,
                     targetOutput,
                     fasilitas,
-                    gallery: [{
-                        sliderId: `galeri-${id || 'temp'}`,
-                        image: galleryImg,
-                        caption: galleryCaption
-                    }],
+                    gallery,
                     prosedur: {
                         items: prosedurItems,
                         image: prosedurImg,
@@ -6769,6 +7077,24 @@
                                     </div>
                                 ` : ''}
                             </div>
+                        </div>
+                    </section>` : ''}
+
+                    <!-- GALERI FOTO DOKUMENTASI -->
+                    ${Array.isArray(d.gallery) && d.gallery.length > 0 && d.gallery[0].image ? `
+                    <section class="space-y-3">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                            <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Galeri Foto Dokumentasi
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${d.gallery.filter(g => g.image).map(g => `
+                                <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 space-y-1.5 p-2">
+                                    <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+                                        <img src="${escapeHtml(g.image)}" alt="${escapeHtml(g.caption || '')}" class="w-full h-full object-cover">
+                                    </div>
+                                    ${g.caption ? `<p class="text-[11px] text-slate-600 text-center font-medium px-1">${escapeHtml(g.caption)}</p>` : ''}
+                                </div>
+                            `).join('')}
                         </div>
                     </section>` : ''}
                 </div>
