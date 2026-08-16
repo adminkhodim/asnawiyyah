@@ -3045,7 +3045,7 @@
                 </section>
 
                 <!-- ICON GRID MENU ADMIN -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
 
                     <!-- 1. Tombol Icon Grid: Manajemen Berita -->
                     <div onclick="showAdminView('berita')"
@@ -3107,6 +3107,26 @@
                                 Data Pendaftar PPDB</h4>
                             <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola dan pantau data
                                 pendaftar PPDB.</p>
+                        </div>
+                    </div>
+
+                    <!-- 4. Tombol Icon Grid: Manajemen Program Pesantren (CMS) -->
+                    <div onclick="showAdminView('program')"
+                        class="bg-white hover:bg-emerald-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-emerald-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <span id="admin-hub-program-count"
+                                class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">0
+                                Program</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition">
+                                Manajemen Program</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola data program unggulan & santri.</p>
                         </div>
                     </div>
 
@@ -3498,6 +3518,121 @@
                 </section>
             </div>
 
+            <!-- ================= VIEW 5: MODUL MANAJEMEN PROGRAM (CMS) ================= -->
+            <div id="admin-view-program" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div
+                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="showAdminView('hub')"
+                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                            title="Kembali ke Menu Admin">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span
+                                class="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest block">Dashboard
+                                Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800">Manajemen Program Pesantren (CMS)</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="openAdminProgramEditor(null)"
+                            class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Tambah Program</span>
+                        </button>
+                        <button type="button" onclick="loadAdminProgramList()"
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARDS RINGKASAN STATUS PROGRAM -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Program</span>
+                        <div id="admin-program-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800">0</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase">Published</span>
+                        <div id="admin-program-stat-published" class="text-lg md:text-xl font-extrabold text-emerald-800">0</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase">Draft</span>
+                        <div id="admin-program-stat-draft" class="text-lg md:text-xl font-extrabold text-amber-800">0</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase">Archived</span>
+                        <div id="admin-program-stat-archived" class="text-lg md:text-xl font-extrabold text-slate-700">0</div>
+                    </div>
+                </div>
+
+                <!-- FITUR SEARCH & FILTER -->
+                <div
+                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    <div class="relative flex-1">
+                        <i
+                            class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="admin-program-search" oninput="filterAdminProgramList()"
+                            placeholder="Cari berdasarkan Nama atau ID Program..."
+                            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="admin-program-filter-status" onchange="filterAdminProgramList()"
+                            class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            <option value="ALL">Semua Status</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- DAFTAR PROGRAM TABLE & MOBILE LIST -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-list-check text-emerald-700 mr-2"></i> Daftar Program Pesantren
+                        </h3>
+                        <span id="admin-program-list-count"
+                            class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg">0 Program</span>
+                    </div>
+
+                    <!-- DESKTOP TABLE VIEW -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr
+                                    class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-100">
+                                    <th class="py-2.5 px-3">Program</th>
+                                    <th class="py-2.5 px-3">Kategori</th>
+                                    <th class="py-2.5 px-3">Status</th>
+                                    <th class="py-2.5 px-3">Versi</th>
+                                    <th class="py-2.5 px-3">Terakhir Diperbarui</th>
+                                    <th class="py-2.5 px-3 text-center">Aksi & Lifecycle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-program-table-tbody" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- MOBILE CARD LIST VIEW -->
+                    <div id="admin-program-mobile-list" class="block md:hidden space-y-3">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+
+                    <!-- EMPTY / LOADING / ERROR STATE CONTAINER -->
+                    <div id="admin-program-state-container" class="hidden py-8 text-center space-y-2">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+                </section>
+            </div>
+
         </div>
 
     </main>
@@ -3709,6 +3844,339 @@
                 <button type="button" onclick="closeAdminPPDBDetailModal()"
                     class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
                     Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 4: EDITOR PROGRAM PESANTREN (CMS) ==================== -->
+    <div id="adminProgramEditorModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4 hidden">
+        <div
+            class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[92vh]">
+            <!-- Header Modal -->
+            <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-9 h-9 bg-emerald-100 text-emerald-800 rounded-xl flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 id="admin-program-editor-title" class="text-sm md:text-base font-bold text-slate-800">
+                                Editor Program Pesantren</h3>
+                            <span id="admin-editor-status-badge"
+                                class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase bg-slate-200 text-slate-700">Draft</span>
+                            <span id="admin-editor-version-badge"
+                                class="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">v1</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400">Kelola informasi publik, kurikulum, dan pembiayaan santri</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminProgramEditor()"
+                    class="w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="flex border-b border-slate-200 px-4 pt-2 bg-slate-50/70 overflow-x-auto shrink-0 gap-1">
+                <button type="button" onclick="switchAdminProgramTab('umum')" id="admin-prog-tab-btn-umum"
+                    class="admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-800 transition shrink-0">
+                    1. Umum
+                </button>
+                <button type="button" onclick="switchAdminProgramTab('media')" id="admin-prog-tab-btn-media"
+                    class="admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition shrink-0">
+                    2. Media & Video
+                </button>
+                <button type="button" onclick="switchAdminProgramTab('konten')" id="admin-prog-tab-btn-konten"
+                    class="admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition shrink-0">
+                    3. Konten & Keunggulan
+                </button>
+                <button type="button" onclick="switchAdminProgramTab('syarat')" id="admin-prog-tab-btn-syarat"
+                    class="admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition shrink-0">
+                    4. Prosedur & Syarat
+                </button>
+                <button type="button" onclick="switchAdminProgramTab('biaya')" id="admin-prog-tab-btn-biaya"
+                    class="admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition shrink-0">
+                    5. Biaya Pendidikan
+                </button>
+                <button type="button" onclick="switchAdminProgramTab('cta')" id="admin-prog-tab-btn-cta"
+                    class="admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition shrink-0">
+                    6. Call to Action
+                </button>
+            </div>
+
+            <!-- Form Content (Scrollable) -->
+            <form id="adminProgramForm" onsubmit="event.preventDefault();" class="p-5 overflow-y-auto space-y-4 text-xs flex-1">
+                <input type="hidden" id="admin-prog-mode" value="create">
+                <input type="hidden" id="admin-prog-server-version" value="1">
+
+                <!-- Alert Error / Conflict Notification inside Modal -->
+                <div id="admin-editor-alert" class="hidden p-3 rounded-xl border text-xs space-y-1"></div>
+
+                <!-- PANEL 1: UMUM -->
+                <div id="admin-prog-panel-umum" class="admin-prog-panel space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ID Program (Slug Unik)</label>
+                            <input type="text" id="admin-prog-id" required
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50"
+                                placeholder="contoh: tahfidz-anak">
+                            <p class="text-[10px] text-slate-400 mt-0.5">Gunakan huruf kecil dan tanda hubung (-)</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Kategori / Badge Singkat</label>
+                            <input type="text" id="admin-prog-badge" required
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                                placeholder="contoh: Anak-Anak / Dewasa Putra">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Lengkap Program</label>
+                        <input type="text" id="admin-prog-name" required
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                            placeholder="contoh: Pesantren Tahfidz Anak PPTQ Asnawiyyah">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deskripsi Singkat (Beranda & Kartu)</label>
+                        <textarea id="admin-prog-desc" rows="2" required
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                            placeholder="Ringkasan 1-2 kalimat untuk kartu beranda..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Poin Unggulan Singkat (Highlights Beranda)</label>
+                        <textarea id="admin-prog-highlights" rows="3" required
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none font-mono"
+                            placeholder="Target Hafalan 5–10 Juz&#10;Metode Fun Tahfidz & Kisah Nabi&#10;Bimbingan Akhlak"></textarea>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Tulis 1 poin per baris (akan otomatis dijadikan list).</p>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: MEDIA & VIDEO -->
+                <div id="admin-prog-panel-media" class="admin-prog-panel hidden space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Gambar Cover / Header</label>
+                        <input type="url" id="admin-prog-image" required
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                            placeholder="https://images.unsplash.com/photo-...">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Embed Video YouTube</label>
+                            <input type="url" id="admin-prog-video"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                                placeholder="https://www.youtube.com/embed/...">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Judul Video Profil</label>
+                            <input type="text" id="admin-prog-video-title"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                                placeholder="Video Profil Kegiatan PPTQ Asnawiyyah">
+                        </div>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                        <span class="text-[10px] font-bold text-slate-600 uppercase block">Galeri Foto Dokumentasi</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] text-slate-400">URL Gambar Galeri</label>
+                                <input type="url" id="admin-prog-gallery-img"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                                    placeholder="https://...">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Keterangan / Caption Foto</label>
+                                <input type="text" id="admin-prog-gallery-caption"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                                    placeholder="Suasana Halaqah Tahfidz Santri">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: KONTEN & KEUNGGULAN -->
+                <div id="admin-prog-panel-konten" class="admin-prog-panel hidden space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tagline Program (Header Detail)</label>
+                        <input type="text" id="admin-prog-tagline"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                            placeholder="Mendidik Generasi Qur'ani Berakhlakul Karimah">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ringkasan Lengkap Program (Summary)</label>
+                        <textarea id="admin-prog-summary" rows="3"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                            placeholder="Penjelasan komprehensif mengenai latar belakang, sasaran, dan sistem pembinaan program..."></textarea>
+                    </div>
+
+                    <!-- Keunggulan 3 Kolom -->
+                    <div class="space-y-2 pt-2 border-t border-slate-100">
+                        <span class="text-[10px] font-bold text-slate-600 uppercase block">3 Keunggulan & Metode Pembelajaran</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+                                <span class="font-bold text-[10px] text-emerald-800">Keunggulan 1</span>
+                                <input type="text" id="admin-prog-k1-title" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Judul (misal: Tahfidz Sanad)">
+                                <textarea id="admin-prog-k1-desc" rows="2" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]" placeholder="Penjelasan singkat..."></textarea>
+                            </div>
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+                                <span class="font-bold text-[10px] text-amber-800">Keunggulan 2</span>
+                                <input type="text" id="admin-prog-k2-title" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Judul (misal: Kajian Turats)">
+                                <textarea id="admin-prog-k2-desc" rows="2" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]" placeholder="Penjelasan singkat..."></textarea>
+                            </div>
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+                                <span class="font-bold text-[10px] text-blue-800">Keunggulan 3</span>
+                                <input type="text" id="admin-prog-k3-title" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Judul (misal: Bimbingan Adab)">
+                                <textarea id="admin-prog-k3-desc" rows="2" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]" placeholder="Penjelasan singkat..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Output Santri (1 baris per capaian)</label>
+                            <textarea id="admin-prog-target-output" rows="3" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Mampu menghafal 30 Juz Mutqin&#10;Menguasai Kaidah Tajwid & Makharijul Huruf&#10;Mampu membaca kitab kuning dasar"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fasilitas Santri (1 baris per fasilitas)</label>
+                            <textarea id="admin-prog-fasilitas" rows="3" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Asrama santri yang bersih dan nyaman&#10;Majlis halaqah berpendingin udara&#10;Perpustakaan kitab salaf"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 4: PROSEDUR & SYARAT -->
+                <div id="admin-prog-panel-syarat" class="admin-prog-panel hidden space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Langkah Prosedur Pendaftaran (1 baris per tahap)</label>
+                        <textarea id="admin-prog-prosedur-items" rows="4" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Melakukan registrasi online melalui portal PPDB&#10;Menyerahkan berkas persyaratan di kantor sekretariat&#10;Mengikuti tes wawancara dan tes baca Al-Qur'an&#10;Ta'aruf dan penempatan asrama santri baru"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Gambar Ilustrasi Prosedur</label>
+                        <input type="url" id="admin-prog-prosedur-img" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="https://images.unsplash.com/...">
+                    </div>
+                    <div class="pt-2 border-t border-slate-100">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Persyaratan Berkas (Format: Judul | Deskripsi, 1 per baris)</label>
+                        <textarea id="admin-prog-persyaratan" rows="4" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Fotocopy Kartu Keluarga | Menyerahkan fotocopy Kartu Keluarga terbaru sebanyak 2 lembar.&#10;Fotocopy Akta Kelahiran | Menyerahkan fotocopy Akta Kelahiran sebanyak 2 lembar.&#10;Pas Foto Berwarna | Menyerahkan pas foto ukuran 3x4 sebanyak 3 lembar."></textarea>
+                    </div>
+                </div>
+
+                <!-- PANEL 5: BIAYA PENDIDIKAN -->
+                <div id="admin-prog-panel-biaya" class="admin-prog-panel hidden space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Biaya Pendaftaran -->
+                        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                            <span class="text-[10px] font-bold text-slate-700 uppercase block">1. Biaya Pendaftaran / Awal</span>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Nominal Pendaftaran</label>
+                                <input type="text" id="admin-prog-biaya-daftar-nominal" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800" placeholder="Rp.7.500.000">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Catatan / Note</label>
+                                <input type="text" id="admin-prog-biaya-daftar-note" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Dibayarkan sekali saat daftar ulang">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Rincian Komponen Biaya Awal (1 baris per item)</label>
+                                <textarea id="admin-prog-biaya-daftar-items" rows="4" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono" placeholder="Pendaftaran & Administrasi&#10;Peralatan Kasur & Lemari&#10;Seragam Pondok (6 Stel)&#10;Syahriyah Bulan Pertama"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Biaya Bulanan / Syahriyah -->
+                        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                            <span class="text-[10px] font-bold text-slate-700 uppercase block">2. Biaya Syahriyah (Bulanan)</span>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Nominal Syahriyah</label>
+                                <input type="text" id="admin-prog-biaya-syahriyah-nominal" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800" placeholder="Rp.900.000">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Catatan / Note</label>
+                                <input type="text" id="admin-prog-biaya-syahriyah-note" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Iuran rutin bulanan santri">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Komponen Termasuk (1 baris per item)</label>
+                                <textarea id="admin-prog-biaya-syahriyah-items" rows="3" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono" placeholder="Makan 3x Sehari&#10;Bimbingan & Pendidikan Asatidz&#10;Listrik, Air & Kebersihan"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400">Komponen Tidak Termasuk (1 baris per item)</label>
+                                <textarea id="admin-prog-biaya-syahriyah-excluded" rows="1" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono" placeholder="Uang Saku Pribadi"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 6: CALL TO ACTION -->
+                <div id="admin-prog-panel-cta" class="admin-prog-panel hidden space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Judul Banner Ajakan (CTA)</label>
+                        <input type="text" id="admin-prog-cta-title" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="Pendaftaran Santri Baru Telah Dibuka">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deskripsi Ajakan (CTA Description)</label>
+                        <textarea id="admin-prog-cta-desc" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="Segera daftarkan putra/putri Anda untuk mendapatkan bimbingan hafalan Al-Qur'an terbaik..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Link WhatsApp Konsultasi</label>
+                            <input type="url" id="admin-prog-cta-wa-link" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="https://wa.me/6281234567890?text=...">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Teks Tombol WhatsApp</label>
+                            <input type="text" id="admin-prog-cta-wa-text" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="Konsultasi via WhatsApp Admin">
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Modal Footer Controls -->
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2.5 shrink-0">
+                <button type="button" onclick="closeAdminProgramEditor()"
+                    class="w-full sm:w-auto px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
+                    Tutup
+                </button>
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <button type="button" onclick="previewAdminProgramForm()"
+                        class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-eye text-xs"></i>
+                        <span>Preview Local</span>
+                    </button>
+                    <button type="button" id="admin-prog-save-btn" onclick="submitAdminProgramForm(false)"
+                        class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i>
+                        <span id="admin-prog-save-btn-text">Simpan Draft</span>
+                    </button>
+                    <button type="button" id="admin-prog-publish-btn" onclick="submitAdminProgramForm(true)"
+                        class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Publikasikan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 5: PREVIEW PROGRAM PESANTREN ==================== -->
+    <div id="adminProgramPreviewModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4 hidden">
+        <div
+            class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[92vh]">
+            <!-- Header Modal -->
+            <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 uppercase">Local Preview</span>
+                    <h3 class="text-sm font-bold text-slate-800">Pratinjau Tampilan Detail Program</h3>
+                </div>
+                <button type="button" onclick="closeAdminProgramPreview()"
+                    class="w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <!-- Body Preview Content -->
+            <div id="admin-program-preview-body" class="p-4 md:p-6 overflow-y-auto space-y-6 flex-1">
+                <!-- Rendered dynamically by JavaScript -->
+            </div>
+            <!-- Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 text-right shrink-0">
+                <button type="button" onclick="closeAdminProgramPreview()"
+                    class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
+                    Kembali ke Editor
                 </button>
             </div>
         </div>
@@ -5009,17 +5477,32 @@
             document.getElementById('adminLoginModal').classList.add('hidden');
         }
 
-        function verifyAdminPIN() {
+        async function verifyAdminPIN() {
             const inputPin = document.getElementById('admin-pin-input').value.trim();
             if (inputPin === ADMIN_PIN) {
                 isAdminLoggedIn = true;
                 closeAdminLoginModal();
                 showToast("Login Admin Berhasil!");
+
+                // Attempt to acquire server session token via admin.login
+                try {
+                    if (isApiConfigured()) {
+                        const loginRes = await apiPost("admin.login", { pin: inputPin });
+                        if (loginRes && loginRes.success && loginRes.data && loginRes.data.token) {
+                            sessionStorage.setItem("asnawiyyah_admin_token", loginRes.data.token);
+                            sessionStorage.setItem("asnawiyyah_admin_role", loginRes.data.role || "admin");
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Could not obtain server session token:", e);
+                }
+
                 switchTab('admin');
                 showAdminView('hub');
                 renderAdminNewsList();
                 renderAdminBannerList();
                 loadAdminPPDBData();
+                loadAdminProgramList();
             } else {
                 showToast("PIN Keamanan Salah!");
                 document.getElementById('admin-pin-input').value = "";
@@ -5028,6 +5511,8 @@
 
         function logoutAdmin() {
             isAdminLoggedIn = false;
+            sessionStorage.removeItem("asnawiyyah_admin_token");
+            sessionStorage.removeItem("asnawiyyah_admin_role");
             showToast("Keluar dari Mode Admin.");
             switchTab('beranda');
         }
@@ -5037,6 +5522,7 @@
             const beritaView = document.getElementById('admin-view-berita');
             const bannerView = document.getElementById('admin-view-banner');
             const ppdbView = document.getElementById('admin-view-ppdb');
+            const programView = document.getElementById('admin-view-program');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -5044,6 +5530,7 @@
             beritaView.classList.add('hidden');
             bannerView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
+            if (programView) programView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -5054,6 +5541,9 @@
             } else if (viewName === 'ppdb') {
                 if (ppdbView) ppdbView.classList.remove('hidden');
                 loadAdminPPDBData();
+            } else if (viewName === 'program') {
+                if (programView) programView.classList.remove('hidden');
+                loadAdminProgramList();
             } else {
                 hubView.classList.remove('hidden');
             }
@@ -5632,6 +6122,866 @@
             } catch (err) {
                 console.error("Gagal menghapus banner:", err);
                 showToast("❌ Gagal menghapus banner: " + err.message);
+            }
+        }
+
+        // ==================== DASHBOARD ADMIN: MANAJEMEN PROGRAM PESANTREN (CMS) ====================
+        let adminProgramData = [];
+        let filteredAdminProgramData = [];
+        let adminProgramFilterStatus = "ALL";
+        let adminProgramSearchQuery = "";
+
+        function getAdminSessionToken() {
+            return sessionStorage.getItem("asnawiyyah_admin_token") || "";
+        }
+
+        function getAdminSessionRole() {
+            return sessionStorage.getItem("asnawiyyah_admin_role") || "admin";
+        }
+
+        async function loadAdminProgramList() {
+            const stateContainer = document.getElementById('admin-program-state-container');
+            const tbody = document.getElementById('admin-program-table-tbody');
+            const mobileList = document.getElementById('admin-program-mobile-list');
+            const countBadge = document.getElementById('admin-program-list-count');
+            const hubCount = document.getElementById('admin-hub-program-count');
+
+            if (!isApiConfigured()) {
+                if (stateContainer) {
+                    stateContainer.className = "py-8 text-center text-xs text-rose-600 bg-rose-50/50 rounded-2xl border border-rose-100 space-y-2";
+                    stateContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl"></i><p>API Endpoint belum dikonfigurasi.</p>`;
+                    stateContainer.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (stateContainer) {
+                stateContainer.className = "py-8 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2 animate-pulse";
+                stateContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl text-emerald-600"></i><p>Memuat daftar program dari server...</p>`;
+                stateContainer.classList.remove('hidden');
+            }
+
+            try {
+                const token = getAdminSessionToken();
+                const response = await apiPost("program.list", { token });
+
+                if (!response || typeof response !== "object") {
+                    throw new Error("Format respons API tidak valid.");
+                }
+
+                if (response.success !== true) {
+                    const errObj = response.error || {};
+                    const errCode = errObj.code || "SERVER_ERROR";
+                    const errMsg = errObj.message || "Gagal memuat daftar program.";
+                    const reqId = errObj.requestId || response.requestId || "";
+                    if (stateContainer) {
+                        stateContainer.className = "py-8 text-center text-xs text-rose-600 bg-rose-50/70 rounded-2xl border border-rose-200 space-y-2";
+                        stateContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-rose-500"></i><p class="font-bold">[${escapeHtml(errCode)}] ${escapeHtml(errMsg)}</p>${reqId ? `<span class="text-[10px] text-slate-400 font-mono block">Ref ID: ${escapeHtml(reqId)}</span>` : ''}`;
+                        stateContainer.classList.remove('hidden');
+                    }
+                    if (tbody) tbody.innerHTML = "";
+                    if (mobileList) mobileList.innerHTML = "";
+                    return;
+                }
+
+                adminProgramData = Array.isArray(response.data) ? response.data : [];
+
+                if (hubCount) hubCount.innerText = `${adminProgramData.length} Program`;
+                if (countBadge) countBadge.innerText = `${adminProgramData.length} Program`;
+
+                updateAdminProgramSummaryStats();
+                filterAdminProgramList();
+
+            } catch (err) {
+                console.error("Gagal memuat program CMS:", err);
+                if (stateContainer) {
+                    stateContainer.className = "py-8 text-center text-xs text-rose-600 bg-rose-50/70 rounded-2xl border border-rose-200 space-y-2";
+                    stateContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-rose-500"></i><p class="font-bold">Gagal memuat program dari server.</p><p class="text-[11px] text-rose-500">${escapeHtml(err.message)}</p>`;
+                    stateContainer.classList.remove('hidden');
+                }
+                if (tbody) tbody.innerHTML = "";
+                if (mobileList) mobileList.innerHTML = "";
+            }
+        }
+
+        function updateAdminProgramSummaryStats() {
+            const statTotal = document.getElementById('admin-program-stat-total');
+            const statPub = document.getElementById('admin-program-stat-published');
+            const statDraft = document.getElementById('admin-program-stat-draft');
+            const statArch = document.getElementById('admin-program-stat-archived');
+
+            let pubCount = 0;
+            let draftCount = 0;
+            let archCount = 0;
+
+            adminProgramData.forEach(p => {
+                const s = String(p.status || "").toLowerCase();
+                if (s === "published") pubCount++;
+                else if (s === "draft") draftCount++;
+                else if (s === "archived") archCount++;
+            });
+
+            if (statTotal) statTotal.innerText = adminProgramData.length;
+            if (statPub) statPub.innerText = pubCount;
+            if (statDraft) statDraft.innerText = draftCount;
+            if (statArch) statArch.innerText = archCount;
+        }
+
+        function filterAdminProgramList() {
+            const searchInput = document.getElementById('admin-program-search');
+            const filterSelect = document.getElementById('admin-program-filter-status');
+
+            adminProgramSearchQuery = searchInput ? searchInput.value.toLowerCase().trim() : "";
+            adminProgramFilterStatus = filterSelect ? filterSelect.value : "ALL";
+
+            filteredAdminProgramData = adminProgramData.filter(item => {
+                const matchStatus = (adminProgramFilterStatus === "ALL") || (String(item.status || "").toLowerCase() === adminProgramFilterStatus.toLowerCase());
+                const matchSearch = !adminProgramSearchQuery ||
+                    (item.name && item.name.toLowerCase().includes(adminProgramSearchQuery)) ||
+                    (item.id && item.id.toLowerCase().includes(adminProgramSearchQuery)) ||
+                    (item.badge && item.badge.toLowerCase().includes(adminProgramSearchQuery));
+                return matchStatus && matchSearch;
+            });
+
+            renderAdminProgramListTable(filteredAdminProgramData);
+        }
+
+        function renderAdminProgramListTable(list) {
+            const tbody = document.getElementById('admin-program-table-tbody');
+            const mobileList = document.getElementById('admin-program-mobile-list');
+            const stateContainer = document.getElementById('admin-program-state-container');
+            const countBadge = document.getElementById('admin-program-list-count');
+
+            if (countBadge) countBadge.innerText = `${list.length} Program`;
+
+            if (!tbody || !mobileList) return;
+
+            tbody.innerHTML = "";
+            mobileList.innerHTML = "";
+
+            if (list.length === 0) {
+                if (stateContainer) {
+                    stateContainer.className = "py-8 text-center text-xs text-slate-500 space-y-2";
+                    stateContainer.innerHTML = `<i class="fa-solid fa-folder-open text-slate-300 text-3xl"></i><p class="font-bold">Tidak ada program yang sesuai kriteria pencarian / filter.</p>`;
+                    stateContainer.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (stateContainer) stateContainer.classList.add('hidden');
+
+            const role = getAdminSessionRole();
+            const isAdmin = (role === "admin");
+
+            list.forEach((item, index) => {
+                const status = String(item.status || "draft").toLowerCase();
+                let statusBadgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+                let statusLabel = "Draft";
+
+                if (status === "published") {
+                    statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                    statusLabel = "Published";
+                } else if (status === "archived") {
+                    statusBadgeClass = "bg-slate-100 text-slate-700 border-slate-200";
+                    statusLabel = "Archived";
+                }
+
+                const updatedDateStr = item.updated_at ? new Date(item.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
+                const updatedByStr = item.updated_by || "system";
+
+                // Desktop Row
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition duration-150";
+                tr.innerHTML = `
+                    <td class="py-3 px-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                                <img src="${escapeHtml(item.image || '')}" alt="${escapeHtml(item.name || '')}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-slate-800 text-xs truncate">${escapeHtml(item.name || '-')}</h4>
+                                <span class="text-[10px] font-mono text-slate-400">ID: ${escapeHtml(item.id || '-')}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-3 text-slate-600 font-semibold text-[11px]">${escapeHtml(item.badge || '-')}</td>
+                    <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${statusBadgeClass}">${statusLabel}</span>
+                    </td>
+                    <td class="py-3 px-3 font-mono text-xs font-bold text-slate-600">v${escapeHtml(item.version || 1)}</td>
+                    <td class="py-3 px-3 text-[11px] text-slate-400">
+                        <div>${updatedDateStr}</div>
+                        <div class="text-[10px] text-slate-500">Oleh: ${escapeHtml(updatedByStr)}</div>
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <div class="flex items-center justify-center space-x-1.5">
+                            <button type="button" onclick="openAdminProgramEditor('${item.id}')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold border border-amber-200/80 transition shadow-sm" title="Edit Program">
+                                <i class="fa-solid fa-pen mr-1"></i> Edit
+                            </button>
+                            <button type="button" onclick="openAdminProgramPreview('${item.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition shadow-sm" title="Preview Tampilan">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            ${status === 'draft' ? `
+                                <button type="button" onclick="handleAdminProgramPublish('${item.id}', ${item.version || 1})" ${!isAdmin ? 'disabled title="Hanya Admin yang dapat mempublikasikan"' : 'title="Publikasikan Program"'} class="px-2.5 py-1 ${isAdmin ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'} rounded-lg text-xs font-semibold border transition shadow-sm">
+                                    <i class="fa-solid fa-paper-plane mr-1"></i> Publish
+                                </button>
+                            ` : ''}
+                            ${status === 'published' ? `
+                                <button type="button" onclick="handleAdminProgramUnpublish('${item.id}', ${item.version || 1})" ${!isAdmin ? 'disabled' : ''} class="px-2.5 py-1 ${isAdmin ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'} rounded-lg text-xs font-semibold border transition shadow-sm" title="Kembalikan ke Draft">
+                                    Unpublish
+                                </button>
+                                <button type="button" onclick="handleAdminProgramArchive('${item.id}', ${item.version || 1})" ${!isAdmin ? 'disabled' : ''} class="px-2.5 py-1 ${isAdmin ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'} rounded-lg text-xs font-semibold border transition shadow-sm" title="Arsipkan Program">
+                                    Arsipkan
+                                </button>
+                            ` : ''}
+                            ${status === 'archived' ? `
+                                <button type="button" onclick="handleAdminProgramUnpublish('${item.id}', ${item.version || 1})" ${!isAdmin ? 'disabled' : ''} class="px-2.5 py-1 ${isAdmin ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'} rounded-lg text-xs font-semibold border transition shadow-sm" title="Pulihkan ke Draft">
+                                    Pulihkan
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Mobile Card View
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
+                                <img src="${escapeHtml(item.image || '')}" alt="${escapeHtml(item.name || '')}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase">v${escapeHtml(item.version || 1)} • ${escapeHtml(item.badge || '')}</span>
+                                <h4 class="font-bold text-slate-800 text-xs truncate">${escapeHtml(item.name || '')}</h4>
+                                <span class="text-[10px] font-mono text-slate-400">ID: ${escapeHtml(item.id || '')}</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${statusBadgeClass}">${statusLabel}</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/60 text-[11px] text-slate-500 flex justify-between">
+                        <span>Update: ${updatedDateStr}</span>
+                        <span>Oleh: ${escapeHtml(updatedByStr)}</span>
+                    </div>
+                    <div class="pt-2 flex flex-wrap gap-1.5 justify-end">
+                        <button type="button" onclick="openAdminProgramEditor('${item.id}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold border border-amber-200">
+                            <i class="fa-solid fa-pen mr-1"></i> Edit
+                        </button>
+                        <button type="button" onclick="openAdminProgramPreview('${item.id}')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200">
+                            <i class="fa-solid fa-eye mr-1"></i> Preview
+                        </button>
+                        ${status === 'draft' && isAdmin ? `
+                            <button type="button" onclick="handleAdminProgramPublish('${item.id}', ${item.version || 1})" class="px-3 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> Publish
+                            </button>
+                        ` : ''}
+                        ${status === 'published' && isAdmin ? `
+                            <button type="button" onclick="handleAdminProgramUnpublish('${item.id}', ${item.version || 1})" class="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold shadow-sm">
+                                Unpublish
+                            </button>
+                            <button type="button" onclick="handleAdminProgramArchive('${item.id}', ${item.version || 1})" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold shadow-sm">
+                                Arsipkan
+                            </button>
+                        ` : ''}
+                        ${status === 'archived' && isAdmin ? `
+                            <button type="button" onclick="handleAdminProgramUnpublish('${item.id}', ${item.version || 1})" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm">
+                                Pulihkan
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                mobileList.appendChild(card);
+            });
+        }
+
+        function switchAdminProgramTab(tabName) {
+            document.querySelectorAll('.admin-prog-tab-btn').forEach(btn => {
+                btn.className = "admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition shrink-0";
+            });
+            document.querySelectorAll('.admin-prog-panel').forEach(panel => panel.classList.add('hidden'));
+
+            const activeBtn = document.getElementById(`admin-prog-tab-btn-${tabName}`);
+            const activePanel = document.getElementById(`admin-prog-panel-${tabName}`);
+
+            if (activeBtn) activeBtn.className = "admin-prog-tab-btn px-3.5 py-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-800 transition shrink-0";
+            if (activePanel) activePanel.classList.remove('hidden');
+        }
+
+        function openAdminProgramEditor(programId) {
+            const form = document.getElementById('adminProgramForm');
+            if (form) form.reset();
+
+            const alertBox = document.getElementById('admin-editor-alert');
+            if (alertBox) {
+                alertBox.className = "hidden p-3 rounded-xl border text-xs space-y-1";
+                alertBox.innerHTML = "";
+            }
+
+            const titleEl = document.getElementById('admin-program-editor-title');
+            const statusBadge = document.getElementById('admin-editor-status-badge');
+            const versionBadge = document.getElementById('admin-editor-version-badge');
+            const idInput = document.getElementById('admin-prog-id');
+            const saveBtnText = document.getElementById('admin-prog-save-btn-text');
+            const publishBtn = document.getElementById('admin-prog-publish-btn');
+            const role = getAdminSessionRole();
+            const isAdmin = (role === "admin");
+
+            if (publishBtn) {
+                if (isAdmin) publishBtn.classList.remove('hidden');
+                else publishBtn.classList.add('hidden');
+            }
+
+            switchAdminProgramTab('umum');
+
+            if (!programId) {
+                // CREATE MODE
+                document.getElementById('admin-prog-mode').value = "create";
+                document.getElementById('admin-prog-server-version').value = "1";
+                if (titleEl) titleEl.innerText = "Tambah Program Baru";
+                if (statusBadge) {
+                    statusBadge.innerText = "Draft (Baru)";
+                    statusBadge.className = "text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase bg-amber-100 text-amber-800";
+                }
+                if (versionBadge) versionBadge.innerText = "v1";
+                if (idInput) {
+                    idInput.disabled = false;
+                    idInput.readOnly = false;
+                    idInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
+                }
+                if (saveBtnText) saveBtnText.innerText = "Simpan Draft Baru";
+            } else {
+                // EDIT MODE
+                const existing = adminProgramData.find(p => p.id === programId);
+                if (!existing) {
+                    showToast("❌ Program tidak ditemukan dalam memori CMS.");
+                    return;
+                }
+
+                document.getElementById('admin-prog-mode').value = "edit";
+                document.getElementById('admin-prog-server-version').value = String(existing.version || 1);
+
+                if (titleEl) titleEl.innerText = `Edit Program: ${existing.name}`;
+                if (statusBadge) {
+                    const st = String(existing.status || "draft").toLowerCase();
+                    statusBadge.innerText = st.toUpperCase();
+                    if (st === "published") statusBadge.className = "text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase bg-emerald-100 text-emerald-800";
+                    else if (st === "draft") statusBadge.className = "text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase bg-amber-100 text-amber-800";
+                    else statusBadge.className = "text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase bg-slate-200 text-slate-700";
+                }
+                if (versionBadge) versionBadge.innerText = `v${existing.version || 1}`;
+
+                if (idInput) {
+                    idInput.value = existing.id || "";
+                    idInput.disabled = true;
+                    idInput.readOnly = true;
+                    idInput.classList.add('bg-slate-100', 'cursor-not-allowed');
+                }
+
+                // Populate Fields
+                document.getElementById('admin-prog-badge').value = existing.badge || "";
+                document.getElementById('admin-prog-name').value = existing.name || "";
+                document.getElementById('admin-prog-desc').value = existing.description || "";
+                document.getElementById('admin-prog-highlights').value = Array.isArray(existing.highlights) ? existing.highlights.join('\n') : "";
+                document.getElementById('admin-prog-image').value = existing.image || "";
+
+                const d = existing.detail || {};
+                document.getElementById('admin-prog-tagline').value = d.tagline || "";
+                document.getElementById('admin-prog-summary').value = d.summary || "";
+                document.getElementById('admin-prog-video').value = d.video || "";
+                document.getElementById('admin-prog-video-title').value = d.videoTitle || "";
+
+                if (d.gallery && Array.isArray(d.gallery) && d.gallery[0]) {
+                    document.getElementById('admin-prog-gallery-img').value = d.gallery[0].image || "";
+                    document.getElementById('admin-prog-gallery-caption').value = d.gallery[0].caption || "";
+                } else {
+                    document.getElementById('admin-prog-gallery-img').value = "";
+                    document.getElementById('admin-prog-gallery-caption').value = "";
+                }
+
+                if (d.keunggulan && Array.isArray(d.keunggulan)) {
+                    if (d.keunggulan[0]) {
+                        document.getElementById('admin-prog-k1-title').value = d.keunggulan[0].title || "";
+                        document.getElementById('admin-prog-k1-desc').value = d.keunggulan[0].desc || "";
+                    }
+                    if (d.keunggulan[1]) {
+                        document.getElementById('admin-prog-k2-title').value = d.keunggulan[1].title || "";
+                        document.getElementById('admin-prog-k2-desc').value = d.keunggulan[1].desc || "";
+                    }
+                    if (d.keunggulan[2]) {
+                        document.getElementById('admin-prog-k3-title').value = d.keunggulan[2].title || "";
+                        document.getElementById('admin-prog-k3-desc').value = d.keunggulan[2].desc || "";
+                    }
+                }
+
+                document.getElementById('admin-prog-target-output').value = Array.isArray(d.targetOutput) ? d.targetOutput.join('\n') : "";
+                document.getElementById('admin-prog-fasilitas').value = Array.isArray(d.fasilitas) ? d.fasilitas.map(f => f.text || f).join('\n') : "";
+
+                if (d.prosedur) {
+                    document.getElementById('admin-prog-prosedur-items').value = Array.isArray(d.prosedur.items) ? d.prosedur.items.map(p => p.title ? `${p.title}: ${p.desc}` : p).join('\n') : "";
+                    document.getElementById('admin-prog-prosedur-img').value = d.prosedur.image || "";
+                }
+
+                if (Array.isArray(d.persyaratan)) {
+                    document.getElementById('admin-prog-persyaratan').value = d.persyaratan.map(r => `${r.title || ''} | ${r.desc || ''}`).join('\n');
+                }
+
+                if (d.biaya) {
+                    if (d.biaya.pendaftaran) {
+                        document.getElementById('admin-prog-biaya-daftar-nominal').value = d.biaya.pendaftaran.nominal || "";
+                        document.getElementById('admin-prog-biaya-daftar-note').value = d.biaya.pendaftaran.note || "";
+                        document.getElementById('admin-prog-biaya-daftar-items').value = Array.isArray(d.biaya.pendaftaran.items) ? d.biaya.pendaftaran.items.join('\n') : "";
+                    }
+                    if (d.biaya.syahriyah) {
+                        document.getElementById('admin-prog-biaya-syahriyah-nominal').value = d.biaya.syahriyah.nominal || "";
+                        document.getElementById('admin-prog-biaya-syahriyah-note').value = d.biaya.syahriyah.note || "";
+                        document.getElementById('admin-prog-biaya-syahriyah-items').value = Array.isArray(d.biaya.syahriyah.items) ? d.biaya.syahriyah.items.join('\n') : "";
+                        document.getElementById('admin-prog-biaya-syahriyah-excluded').value = Array.isArray(d.biaya.syahriyah.excludedItems) ? d.biaya.syahriyah.excludedItems.join('\n') : "";
+                    }
+                }
+
+                if (d.cta) {
+                    document.getElementById('admin-prog-cta-title').value = d.cta.title || "";
+                    document.getElementById('admin-prog-cta-desc').value = d.cta.description || "";
+                    document.getElementById('admin-prog-cta-wa-link').value = d.cta.waLink || "";
+                    document.getElementById('admin-prog-cta-wa-text').value = d.cta.waText || "";
+                }
+
+                if (saveBtnText) saveBtnText.innerText = "Simpan Perubahan";
+            }
+
+            document.getElementById('adminProgramEditorModal').classList.remove('hidden');
+        }
+
+        function closeAdminProgramEditor() {
+            document.getElementById('adminProgramEditorModal').classList.add('hidden');
+        }
+
+        function getProgramFromForm() {
+            const id = document.getElementById('admin-prog-id').value.trim().toLowerCase();
+            const name = document.getElementById('admin-prog-name').value.trim();
+            const badge = document.getElementById('admin-prog-badge').value.trim();
+            const image = document.getElementById('admin-prog-image').value.trim();
+            const description = document.getElementById('admin-prog-desc').value.trim();
+            const highlights = document.getElementById('admin-prog-highlights').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+            const keunggulan = [
+                {
+                    title: document.getElementById('admin-prog-k1-title').value.trim(),
+                    desc: document.getElementById('admin-prog-k1-desc').value.trim(),
+                    icon: "fa-book-quran",
+                    iconBg: "bg-brand-100 text-brand-700"
+                },
+                {
+                    title: document.getElementById('admin-prog-k2-title').value.trim(),
+                    desc: document.getElementById('admin-prog-k2-desc').value.trim(),
+                    icon: "fa-scroll",
+                    iconBg: "bg-amber-100 text-amber-800"
+                },
+                {
+                    title: document.getElementById('admin-prog-k3-title').value.trim(),
+                    desc: document.getElementById('admin-prog-k3-desc').value.trim(),
+                    icon: "fa-star-and-crescent",
+                    iconBg: "bg-emerald-100 text-emerald-800"
+                }
+            ].filter(k => k.title);
+
+            const targetOutput = document.getElementById('admin-prog-target-output').value.split('\n').map(s => s.trim()).filter(Boolean);
+            const fasilitas = document.getElementById('admin-prog-fasilitas').value.split('\n').map(s => s.trim()).filter(Boolean).map(text => ({ text, icon: "fa-check", iconColor: "text-brand-700" }));
+
+            const galleryImg = document.getElementById('admin-prog-gallery-img').value.trim() || image;
+            const galleryCaption = document.getElementById('admin-prog-gallery-caption').value.trim() || 'Dokumentasi Santri';
+
+            const prosedurItems = document.getElementById('admin-prog-prosedur-items').value.split('\n').map(s => s.trim()).filter(Boolean);
+            const prosedurImg = document.getElementById('admin-prog-prosedur-img').value.trim() || "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop";
+
+            const persyaratan = document.getElementById('admin-prog-persyaratan').value.split('\n').map(s => s.trim()).filter(Boolean).map(line => {
+                const parts = line.split('|').map(p => p.trim());
+                return {
+                    title: parts[0] || "Berkas Persyaratan",
+                    desc: parts[1] || parts[0] || "",
+                    icon: "fa-copy"
+                };
+            });
+
+            const biayaDaftarNominal = document.getElementById('admin-prog-biaya-daftar-nominal').value.trim() || "Rp.0";
+            const biayaDaftarNote = document.getElementById('admin-prog-biaya-daftar-note').value.trim();
+            const biayaDaftarItems = document.getElementById('admin-prog-biaya-daftar-items').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+            const biayaSyahriyahNominal = document.getElementById('admin-prog-biaya-syahriyah-nominal').value.trim() || "Rp.0";
+            const biayaSyahriyahNote = document.getElementById('admin-prog-biaya-syahriyah-note').value.trim();
+            const biayaSyahriyahItems = document.getElementById('admin-prog-biaya-syahriyah-items').value.split('\n').map(s => s.trim()).filter(Boolean);
+            const biayaSyahriyahExcluded = document.getElementById('admin-prog-biaya-syahriyah-excluded').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+            const ctaTitle = document.getElementById('admin-prog-cta-title').value.trim() || "Pendaftaran Santri Baru Dibuka";
+            const ctaDesc = document.getElementById('admin-prog-cta-desc').value.trim();
+            const ctaWaLink = document.getElementById('admin-prog-cta-wa-link').value.trim() || "https://wa.me/6281234567890";
+            const ctaWaText = document.getElementById('admin-prog-cta-wa-text').value.trim() || "Konsultasi via WA";
+
+            return {
+                id,
+                name,
+                badge,
+                image,
+                description,
+                highlights,
+                detail: {
+                    tagline: document.getElementById('admin-prog-tagline').value.trim(),
+                    summary: document.getElementById('admin-prog-summary').value.trim(),
+                    video: document.getElementById('admin-prog-video').value.trim(),
+                    videoTitle: document.getElementById('admin-prog-video-title').value.trim(),
+                    keunggulan,
+                    targetOutput,
+                    fasilitas,
+                    gallery: [{
+                        sliderId: `galeri-${id || 'temp'}`,
+                        image: galleryImg,
+                        caption: galleryCaption
+                    }],
+                    prosedur: {
+                        items: prosedurItems,
+                        image: prosedurImg,
+                        imageAlt: "Prosedur PPDB"
+                    },
+                    persyaratan,
+                    biaya: {
+                        pendaftaran: {
+                            nominal: biayaDaftarNominal,
+                            note: biayaDaftarNote,
+                            items: biayaDaftarItems
+                        },
+                        syahriyah: {
+                            nominal: biayaSyahriyahNominal,
+                            note: biayaSyahriyahNote,
+                            items: biayaSyahriyahItems,
+                            excludedItems: biayaSyahriyahExcluded
+                        }
+                    },
+                    cta: {
+                        title: ctaTitle,
+                        description: ctaDesc,
+                        waLink: ctaWaLink,
+                        waBtnClass: "bg-emerald-600 hover:bg-emerald-500 text-white",
+                        waText: ctaWaText
+                    }
+                }
+            };
+        }
+
+        function renderProgramDetailPreview(prog) {
+            const theme = getProgramUiTheme(prog);
+            const d = prog.detail || {};
+
+            return `
+                <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                    <!-- HEADER & TAGLINE -->
+                    <section class="relative bg-gradient-to-r ${theme.headerTheme} text-white p-6 md:p-8 rounded-3xl overflow-hidden shadow-md">
+                        <div class="absolute -right-8 -bottom-8 text-white/5 text-9xl pointer-events-none">
+                            <i class="fa-solid ${theme.headerIcon}"></i>
+                        </div>
+                        <div class="relative z-10 space-y-2.5">
+                            <span class="${theme.pilihanBadgeStyle} text-[10px] font-extrabold px-3 py-1 rounded-full uppercase inline-block shadow">${theme.headerBadge}</span>
+                            <h1 class="text-xl md:text-3xl font-extrabold leading-tight">${escapeHtml(prog.name || '')}</h1>
+                            <p class="text-xs md:text-sm text-amber-300 font-semibold italic">${escapeHtml(d.tagline || '')}</p>
+                        </div>
+                    </section>
+
+                    <!-- SUMMARY -->
+                    <section class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                        <p class="text-xs md:text-sm text-slate-600 leading-relaxed">${escapeHtml(d.summary || '')}</p>
+                    </section>
+
+                    <!-- VIDEO -->
+                    ${d.video ? `
+                    <section class="space-y-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                            <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Video Profil Kegiatan
+                        </h3>
+                        <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md border border-slate-200 bg-black">
+                            <iframe class="w-full h-full" src="${escapeHtml(d.video)}" title="${escapeHtml(d.videoTitle || '')}" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </section>` : ''}
+
+                    <!-- KEUNGGULAN -->
+                    ${Array.isArray(d.keunggulan) && d.keunggulan.length > 0 ? `
+                    <section class="space-y-3">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                            <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Keunggulan & Metode Pembelajaran
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${d.keunggulan.map(k => `
+                                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
+                                    <div class="w-9 h-9 ${k.iconBg || 'bg-brand-100 text-brand-700'} rounded-xl flex items-center justify-center text-sm font-bold mb-2">
+                                        <i class="fa-solid ${k.icon || 'fa-check'}"></i>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-800">${escapeHtml(k.title || '')}</h4>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">${escapeHtml(k.desc || '')}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>` : ''}
+
+                    <!-- TARGET OUTPUT -->
+                    ${Array.isArray(d.targetOutput) && d.targetOutput.length > 0 ? `
+                    <section class="bg-emerald-700 text-white p-5 md:p-6 rounded-3xl shadow-sm space-y-4">
+                        <h3 class="text-base font-bold text-center">Target Output Santri</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            ${d.targetOutput.map(out => `
+                                <div class="flex items-start space-x-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
+                                    <i class="fa-solid fa-square-check text-amber-400 mt-0.5 text-base shrink-0"></i>
+                                    <span>${escapeHtml(out)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>` : ''}
+
+                    <!-- BIAYA PENDIDIKAN -->
+                    ${d.biaya ? `
+                    <section class="space-y-4">
+                        <h3 class="text-base font-bold text-slate-800 text-center">Biaya Pendidikan</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                                <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Pendaftaran</h4>
+                                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${escapeHtml(d.biaya.pendaftaran ? d.biaya.pendaftaran.nominal : '-')}</div>
+                                ${d.biaya.pendaftaran && d.biaya.pendaftaran.items ? `
+                                    <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
+                                        ${d.biaya.pendaftaran.items.map(item => `
+                                            <div class="flex items-center space-x-2.5 text-slate-700">
+                                                <i class="fa-solid fa-check text-emerald-600 font-bold"></i>
+                                                <span>${escapeHtml(item)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                                <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
+                                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${escapeHtml(d.biaya.syahriyah ? d.biaya.syahriyah.nominal : '-')}</div>
+                                ${d.biaya.syahriyah && d.biaya.syahriyah.items ? `
+                                    <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
+                                        ${d.biaya.syahriyah.items.map(item => `
+                                            <div class="flex items-center space-x-2.5 text-slate-700">
+                                                <i class="fa-solid fa-check text-emerald-600 font-bold"></i>
+                                                <span>${escapeHtml(item)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </section>` : ''}
+                </div>
+            `;
+        }
+
+        function previewAdminProgramForm() {
+            const prog = getProgramFromForm();
+            const body = document.getElementById('admin-program-preview-body');
+            if (body) {
+                body.innerHTML = renderProgramDetailPreview(prog);
+            }
+            document.getElementById('adminProgramPreviewModal').classList.remove('hidden');
+        }
+
+        function openAdminProgramPreview(programId) {
+            const existing = adminProgramData.find(p => p.id === programId);
+            if (!existing) return;
+            const body = document.getElementById('admin-program-preview-body');
+            if (body) {
+                body.innerHTML = renderProgramDetailPreview(existing);
+            }
+            document.getElementById('adminProgramPreviewModal').classList.remove('hidden');
+        }
+
+        function closeAdminProgramPreview() {
+            document.getElementById('adminProgramPreviewModal').classList.add('hidden');
+        }
+
+        async function submitAdminProgramForm(shouldPublish = false) {
+            const alertBox = document.getElementById('admin-editor-alert');
+            const saveBtn = document.getElementById('admin-prog-save-btn');
+            const publishBtn = document.getElementById('admin-prog-publish-btn');
+            const mode = document.getElementById('admin-prog-mode').value;
+            const version = Number(document.getElementById('admin-prog-server-version').value) || 1;
+
+            if (alertBox) alertBox.classList.add('hidden');
+
+            const prog = getProgramFromForm();
+
+            // Client Validation Checks
+            if (!prog.id || !/^[a-z0-9-]+$/.test(prog.id)) {
+                if (alertBox) {
+                    alertBox.className = "p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs";
+                    alertBox.innerHTML = `<strong>Validasi Gagal:</strong> ID Program wajib diisi dengan format slug huruf kecil dan tanda hubung (-).`;
+                    alertBox.classList.remove('hidden');
+                }
+                switchAdminProgramTab('umum');
+                return;
+            }
+
+            if (!prog.name || prog.name.length < 3) {
+                if (alertBox) {
+                    alertBox.className = "p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs";
+                    alertBox.innerHTML = `<strong>Validasi Gagal:</strong> Nama Program wajib diisi (minimal 3 karakter).`;
+                    alertBox.classList.remove('hidden');
+                }
+                switchAdminProgramTab('umum');
+                return;
+            }
+
+            if (!prog.image) {
+                if (alertBox) {
+                    alertBox.className = "p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs";
+                    alertBox.innerHTML = `<strong>Validasi Gagal:</strong> URL Gambar Cover wajib diisi.`;
+                    alertBox.classList.remove('hidden');
+                }
+                switchAdminProgramTab('media');
+                return;
+            }
+
+            const token = getAdminSessionToken();
+            if (saveBtn) saveBtn.disabled = true;
+            if (publishBtn) publishBtn.disabled = true;
+
+            try {
+                let actionName = (mode === "create") ? "program.create" : "program.update";
+                let payload = {
+                    id: prog.id,
+                    name: prog.name,
+                    badge: prog.badge,
+                    image: prog.image,
+                    description: prog.description,
+                    highlights: prog.highlights,
+                    detail: prog.detail
+                };
+
+                if (mode === "edit") {
+                    payload.version = version;
+                }
+
+                const response = await apiPost(actionName, { token, payload });
+
+                if (!response || typeof response !== "object") {
+                    throw new Error("Format respons API tidak valid.");
+                }
+
+                if (response.success !== true) {
+                    const errObj = response.error || {};
+                    const errCode = errObj.code || "SERVER_ERROR";
+                    const errMsg = errObj.message || "Gagal menyimpan program.";
+                    const reqId = errObj.requestId || response.requestId || "";
+
+                    if (errCode === "CONCURRENCY_CONFLICT") {
+                        if (alertBox) {
+                            alertBox.className = "p-3.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-xs space-y-1";
+                            alertBox.innerHTML = `
+                                <div class="flex items-center space-x-2 font-bold text-amber-800">
+                                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                                    <span>Konflik Versi Data (Concurrency Conflict)</span>
+                                </div>
+                                <p>Program ini telah diperbarui oleh administrator lain. Perubahan formulir Anda tetap kami pertahankan di layar ini agar tidak hilang. Silakan periksa kembali sebelum menyimpan.</p>
+                                ${reqId ? `<span class="text-[10px] text-slate-400 font-mono block">Ref ID: ${escapeHtml(reqId)}</span>` : ''}
+                            `;
+                            alertBox.classList.remove('hidden');
+                        }
+                        showToast("⚠️ Terjadi konflik versi program. Silakan periksa notifikasi.");
+                        return;
+                    }
+
+                    if (errCode === "UNAUTHORIZED_TOKEN") {
+                        showToast("Sesi administrator telah berakhir. Silakan login kembali.");
+                        logoutAdmin();
+                        return;
+                    }
+
+                    throw new Error(`[${errCode}] ${errMsg}`);
+                }
+
+                const savedProgram = response.data;
+                const newVersion = savedProgram ? (savedProgram.version || version) : version;
+
+                // If publish is requested
+                if (shouldPublish) {
+                    const pubRes = await apiPost("program.publish", { token, id: prog.id, version: newVersion });
+                    if (pubRes && pubRes.success !== true) {
+                        const pErr = (pubRes.error && pubRes.error.message) || "Gagal mempublikasikan program.";
+                        showToast("⚠️ Data tersimpan sebagai draft, namun publikasi gagal: " + pErr);
+                    } else {
+                        showToast("Alhamdulillah! Program berhasil disimpan dan dipublikasikan.");
+                    }
+                } else {
+                    showToast("Alhamdulillah! Program berhasil disimpan.");
+                }
+
+                closeAdminProgramEditor();
+                await loadAdminProgramList();
+
+            } catch (err) {
+                console.error("Gagal menyimpan program CMS:", err);
+                if (alertBox) {
+                    alertBox.className = "p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs";
+                    alertBox.innerHTML = `<strong>Gagal:</strong> ${escapeHtml(err.message)}`;
+                    alertBox.classList.remove('hidden');
+                }
+                showToast("❌ " + err.message);
+            } finally {
+                if (saveBtn) saveBtn.disabled = false;
+                if (publishBtn) publishBtn.disabled = false;
+            }
+        }
+
+        async function handleAdminProgramPublish(id, version) {
+            if (!confirm(`Publikasikan program '${id}' ke publik?`)) return;
+            const token = getAdminSessionToken();
+            try {
+                const response = await apiPost("program.publish", { token, id, version });
+                if (response && response.success) {
+                    showToast("Alhamdulillah! Program berhasil dipublikasikan.");
+                    await loadAdminProgramList();
+                } else {
+                    const errMsg = (response && response.error && response.error.message) || "Gagal mempublikasikan program.";
+                    showToast("❌ " + errMsg);
+                }
+            } catch (err) {
+                console.error("Gagal publish program:", err);
+                showToast("❌ " + err.message);
+            }
+        }
+
+        async function handleAdminProgramUnpublish(id, version) {
+            if (!confirm(`Tarik program '${id}' kembali ke status Draft?`)) return;
+            const token = getAdminSessionToken();
+            try {
+                const response = await apiPost("program.unpublish", { token, id, version });
+                if (response && response.success) {
+                    showToast("Status program diubah menjadi Draft.");
+                    await loadAdminProgramList();
+                } else {
+                    const errMsg = (response && response.error && response.error.message) || "Gagal unpublish program.";
+                    showToast("❌ " + errMsg);
+                }
+            } catch (err) {
+                console.error("Gagal unpublish program:", err);
+                showToast("❌ " + err.message);
+            }
+        }
+
+        async function handleAdminProgramArchive(id, version) {
+            if (!confirm(`Arsipkan program '${id}'? Program tidak akan tampil di website publik.`)) return;
+            const token = getAdminSessionToken();
+            try {
+                const response = await apiPost("program.archive", { token, id, version });
+                if (response && response.success) {
+                    showToast("Program berhasil diarsipkan.");
+                    await loadAdminProgramList();
+                } else {
+                    const errMsg = (response && response.error && response.error.message) || "Gagal mengarsipkan program.";
+                    showToast("❌ " + errMsg);
+                }
+            } catch (err) {
+                console.error("Gagal archive program:", err);
+                showToast("❌ " + err.message);
             }
         }
 
