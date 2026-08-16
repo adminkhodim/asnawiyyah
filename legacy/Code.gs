@@ -810,33 +810,362 @@ class ProgramRepository {
 }
 
 /**
- * GoogleSheetsProgramAdapter Skeleton
- * Implements ProgramRepository contract structure without executing SpreadsheetApp I/O in Phase 4B-1.
+ * GoogleSheetsProgramAdapter Implementation
+ * Production-oriented Google Sheets Persistence Adapter satisfying the ProgramRepository contract.
+ * Features: Sheet discovery, Header validation, Row mapping, LockService critical section,
+ * Optimistic Concurrency, and Fail-Closed JSON serialization.
  */
 class GoogleSheetsProgramAdapter extends ProgramRepository {
-  constructor() {
+  constructor(customSheetName = "Programs") {
     super();
-    this.sheetName = "Programs";
+    this.sheetName = customSheetName;
+    this.expectedHeaders = [
+      "id", "name", "badge", "image", "description",
+      "highlights_json", "detail_json", "status", "sort_order",
+      "created_at", "updated_at", "created_by", "updated_by",
+      "published_at", "published_by", "version"
+    ];
   }
 
+  /**
+   * Internal helper: Discovers the "Programs" sheet and validates the 16-column header schema.
+   * Throws PersistenceError if sheet does not exist or header schema is invalid.
+   */
+  _getProgramsSheet() {
+    let ss = null;
+    try {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    } catch (e) {
+      throw new PersistenceError("SpreadsheetApp active spreadsheet is unavailable: " + e.message);
+    }
+    if (!ss) {
+      throw new PersistenceError("Active spreadsheet object is null.");
+    }
+
+    const sheet = ss.getSheetByName(this.sheetName);
+    if (!sheet) {
+      throw new PersistenceError(`Sheet '${this.sheetName}' not found in spreadsheet.`);
+    }
+
+    const dataRange = sheet.getDataRange();
+    const values = dataRange.getValues();
+    if (!values || values.length === 0) {
+      throw new PersistenceError(`Sheet '${this.sheetName}' is completely empty (missing header row).`);
+    }
+
+    const headerRow = values[0];
+    if (headerRow.length < this.expectedHeaders.length) {
+      throw new PersistenceError(
+        `Sheet '${this.sheetName}' header schema mismatch: expected at least ${this.expectedHeaders.length} columns, found ${headerRow.length}.`
+      );
+    }
+
+    // Verify critical column header names (case-insensitive trim match)
+    for (let colIdx = 0; colIdx < this.expectedHeaders.length; colIdx++) {
+      const expectedCol = this.expectedHeaders[colIdx];
+      const actualCol = String(headerRow[colIdx] || "").trim().toLowerCase();
+      if (actualCol !== expectedCol) {
+        throw new PersistenceError(
+          `Sheet '${this.sheetName}' header schema mismatch at column ${colIdx + 1}: expected '${expectedCol}', found '${actualCol}'.`
+        );
+      }
+    }
+
+    return sheet;
+  }
+
+  /**
+   * Internal Helper: Maps a spreadsheet row array (16 columns) to a ProgramRecord domain object.
+   * Enforces FAIL-CLOSED serialization boundary: invalid JSON throws SerializationError immediately.
+   */
+  _mapRowToRecord(row) {
+    if (!row || row.length < 16) {
+      throw new PersistenceError("Row data incomplete or truncated (fewer than 16 columns).");
+    }
+
+    const id = String(row[0] || "").trim();
+    if (!id) {
+      throw new PersistenceError("Program row missing required 'id' field.");
+    }
+
+    const name = String(row[1] || "").trim();
+    const badge = String(row[2] || "").trim();
+    const image = String(row[3] || "").trim();
+    const description = String(row[4] || "").trim();
+
+    // Deserialize highlights and detail (Fail-Closed!)
+    const highlights = deserializeProgramPayload(row[5]);
+    const detail = deserializeProgramPayload(row[6]);
+
+    const status = String(row[7] || ProgramStatus.DRAFT).trim().toLowerCase();
+    const sortOrder = Number(row[8]) || 0;
+    const createdAt = row[9] ? new Date(row[9]).toISOString() : new Date().toISOString();
+    const updatedAt = row[10] ? new Date(row[10]).toISOString() : new Date().toISOString();
+    const createdBy = String(row[11] || "system").trim();
+    const updatedBy = String(row[12] || "system").trim();
+    const publishedAt = row[13] ? new Date(row[13]).toISOString() : null;
+    const publishedBy = row[14] ? String(row[14]).trim() : null;
+    const version = Number(row[15]) || 1;
+
+    return Object.freeze({
+      id,
+      name,
+      badge,
+      image,
+      description,
+      highlights,
+      detail,
+      status,
+      sort_order: sortOrder,
+      created_at: createdAt,
+      updated_at: updatedAt,
+      created_by: createdBy,
+      updated_by: updatedBy,
+      published_at: publishedAt,
+      published_by: publishedBy,
+      version
+    });
+  }
+
+  /**
+   * Internal Helper: Maps a ProgramRecord domain object to a 16-element spreadsheet row array.
+   */
+  _mapRecordToRow(record) {
+    if (!record || !record.id) {
+      throw new ValidationError("Cannot map invalid record object to spreadsheet row.");
+    }
+
+    const highlightsJson = serializeProgramPayload(record.highlights || []);
+    const detailJson = serializeProgramPayload(record.detail || {});
+
+    return [
+      record.id,
+      record.name || "",
+      record.badge || "",
+      record.image || "",
+      record.description || "",
+      highlightsJson,
+      detailJson,
+      record.status || ProgramStatus.DRAFT,
+      Number(record.sort_order) || 0,
+      record.created_at || new Date().toISOString(),
+      record.updated_at || new Date().toISOString(),
+      record.created_by || "system",
+      record.updated_by || "system",
+      record.published_at || "",
+      record.published_by || "",
+      Number(record.version) || 1
+    ];
+  }
+
+  /**
+   * Reads and returns all records with status === "published", sorted by sort_order ASC.
+   * Fail-Closed: If any row fails JSON parsing, operation fails with SerializationError.
+   */
   findPublished() {
-    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+    const sheet = this._getProgramsSheet();
+    const values = sheet.getDataRange().getValues();
+    const records = [];
+
+    // Rows 1..N (Index 0 is header)
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      if (!row[0] || String(row[0]).trim() === "") continue; // Skip blank rows
+
+      const record = this._mapRowToRecord(row);
+      if (record.status === ProgramStatus.PUBLISHED) {
+        records.push(record);
+      }
+    }
+
+    // Sort by sort_order ASC, tie-breaker id ASC
+    records.sort((a, b) => {
+      if (a.sort_order !== b.sort_order) {
+        return a.sort_order - b.sort_order;
+      }
+      return a.id.localeCompare(b.id);
+    });
+
+    return records;
   }
 
+  /**
+   * Reads and returns all program records regardless of status.
+   * Fail-Closed: Invalid cell JSON throws SerializationError immediately.
+   */
   findAll() {
-    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+    const sheet = this._getProgramsSheet();
+    const values = sheet.getDataRange().getValues();
+    const records = [];
+
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      if (!row[0] || String(row[0]).trim() === "") continue;
+
+      const record = this._mapRowToRecord(row);
+      records.push(record);
+    }
+
+    records.sort((a, b) => {
+      if (a.sort_order !== b.sort_order) {
+        return a.sort_order - b.sort_order;
+      }
+      return a.id.localeCompare(b.id);
+    });
+
+    return records;
   }
 
+  /**
+   * Reads and returns a single program record by ID, or null if not found.
+   */
   findById(id) {
-    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+    if (!id || String(id).trim() === "") return null;
+    const targetId = String(id).trim();
+
+    const sheet = this._getProgramsSheet();
+    const values = sheet.getDataRange().getValues();
+
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      if (String(row[0] || "").trim() === targetId) {
+        return this._mapRowToRecord(row);
+      }
+    }
+
+    return null; // ID not found
   }
 
+  /**
+   * Inserts or updates a ProgramRecord atomically using LockService.getScriptLock().
+   * Enforces optimistic concurrency counter comparison on updates.
+   */
   save(record) {
-    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+    if (!record || !record.id) {
+      throw new ValidationError("ProgramRecord.id is required for save operation.");
+    }
+
+    let lock = null;
+    try {
+      lock = LockService.getScriptLock();
+    } catch (e) {
+      throw new PersistenceError("LockService is unavailable: " + e.message);
+    }
+
+    const hasLock = lock.tryLock(10000); // 10s critical section lock timeout
+    if (!hasLock) {
+      throw new PersistenceError("Failed to acquire script lock for write operation within 10 seconds.");
+    }
+
+    try {
+      const sheet = this._getProgramsSheet();
+      const values = sheet.getDataRange().getValues();
+      const targetId = String(record.id).trim();
+
+      let targetRowIndex = -1;
+      let storedRecord = null;
+
+      for (let r = 1; r < values.length; r++) {
+        if (String(values[r][0] || "").trim() === targetId) {
+          targetRowIndex = r + 1; // 1-indexed row number in Spreadsheet
+          storedRecord = this._mapRowToRecord(values[r]);
+          break;
+        }
+      }
+
+      if (targetRowIndex > 0 && storedRecord) {
+        // UPDATE EXISTING RECORD: Enforce Optimistic Concurrency Check
+        // Record version passed from service/client should equal (storedRecord.version)
+        const expectedVersion = Number(record.version) - 1; // Service increments version before saving
+        checkOptimisticVersion(storedRecord.version, expectedVersion);
+
+        const rowData = this._mapRecordToRow(record);
+        sheet.getRange(targetRowIndex, 1, 1, 16).setValues([rowData]);
+      } else {
+        // INSERT NEW RECORD
+        const rowData = this._mapRecordToRow(record);
+        sheet.appendRow(rowData);
+      }
+
+      return record;
+    } finally {
+      lock.releaseLock();
+    }
   }
 
-  updateStatus(id, status, metadata) {
-    throw new PersistenceError("Google Sheets adapter persistence operations are disabled in Phase 4B-1.");
+  /**
+   * Atomically updates status and audit metadata of a ProgramRecord using LockService.getScriptLock().
+   */
+  updateStatus(id, newStatus, metadata = {}) {
+    if (!id || String(id).trim() === "") {
+      throw new ValidationError("Program ID is required for updateStatus.");
+    }
+    if (!newStatus || !Object.values(ProgramStatus).includes(newStatus)) {
+      throw new ValidationError(`Invalid target ProgramStatus: '${newStatus}'.`);
+    }
+
+    let lock = null;
+    try {
+      lock = LockService.getScriptLock();
+    } catch (e) {
+      throw new PersistenceError("LockService is unavailable: " + e.message);
+    }
+
+    const hasLock = lock.tryLock(10000);
+    if (!hasLock) {
+      throw new PersistenceError("Failed to acquire script lock for updateStatus within 10 seconds.");
+    }
+
+    try {
+      const sheet = this._getProgramsSheet();
+      const values = sheet.getDataRange().getValues();
+      const targetId = String(id).trim();
+
+      let targetRowIndex = -1;
+      let storedRecord = null;
+
+      for (let r = 1; r < values.length; r++) {
+        if (String(values[r][0] || "").trim() === targetId) {
+          targetRowIndex = r + 1;
+          storedRecord = this._mapRowToRecord(values[r]);
+          break;
+        }
+      }
+
+      if (targetRowIndex <= 0 || !storedRecord) {
+        throw new NotFoundError(`Program with ID '${id}' not found.`);
+      }
+
+      // Increment version counter atomically
+      const nextVersion = storedRecord.version + 1;
+      const nowIso = new Date().toISOString();
+      const updatedBy = metadata.updated_by || (metadata.actorContext ? metadata.actorContext.userId : "system");
+
+      let publishedAt = storedRecord.published_at;
+      let publishedBy = storedRecord.published_by;
+
+      if (newStatus === ProgramStatus.PUBLISHED) {
+        publishedAt = metadata.published_at || nowIso;
+        publishedBy = metadata.published_by || updatedBy;
+      }
+
+      const updatedRecord = Object.freeze({
+        ...storedRecord,
+        status: newStatus,
+        version: nextVersion,
+        updated_at: metadata.updated_at || nowIso,
+        updated_by: updatedBy,
+        published_at: publishedAt,
+        published_by: publishedBy
+      });
+
+      const rowData = this._mapRecordToRow(updatedRecord);
+      sheet.getRange(targetRowIndex, 1, 1, 16).setValues([rowData]);
+
+      return true;
+    } finally {
+      lock.releaseLock();
+    }
   }
 }
 
