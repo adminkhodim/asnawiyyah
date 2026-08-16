@@ -113,6 +113,13 @@ function doPost(e) {
       );
     }
 
+    // ========================================================
+    // PROGRAM DATA SOURCE v2.0 API ROUTER (POST)
+    // ========================================================
+    if (action.startsWith("program.") || action === "admin.login") {
+      return handleProgramApiAction(action, payload, e);
+    }
+
     return createJsonResponse({
       status: "error",
       message: "Action tidak dikenal",
@@ -340,11 +347,11 @@ function simpanBerita(formData) {
       var folder = DriveApp.getFolderById(FOLDER_ID);
       var decodedData = Utilities.base64Decode(formData.file.base64);
       var blob = Utilities.newBlob(
-        decodedData, 
-        formData.file.mimeType, 
+        decodedData,
+        formData.file.mimeType,
         "BERITA_" + new Date().getTime() + "_" + formData.file.name
       );
-      
+
       var newFile = folder.createFile(blob);
       newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
@@ -356,7 +363,7 @@ function simpanBerita(formData) {
       sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
       sheet.appendRow(["Tanggal", "Judul", "Kategori", "Penulis", "Gambar_URL", "Ringkasan", "Isi"]);
     }
-    
+
     sheet.appendRow([
       new Date(),
       formData.judul,
@@ -449,6 +456,13 @@ function doGet(e) {
       );
     }
 
+    // ========================================================
+    // PROGRAM DATA SOURCE v2.0 API ROUTER (GET)
+    // ========================================================
+    if (action.startsWith("program.")) {
+      return handleProgramApiAction(action, null, e);
+    }
+
     return createJsonResponse({
       status: "error",
       message: "Action tidak dikenal",
@@ -486,14 +500,14 @@ function getKabarData() {
     if (!beritaSheet) {
       return { status: "error", message: "Sheet Berita tidak ditemukan", data: [] };
     }
-    
+
     const data = beritaSheet.getDataRange().getValues();
     const newsList = [];
-    
+
     // Baris 1 adalah Header, ambil mulai baris 2 (index 1) dari yang paling baru
     for (let i = data.length - 1; i >= 1; i--) {
       const judul = String(data[i][1] || "").trim();
-      if (judul !== "") { 
+      if (judul !== "") {
         newsList.push({
           tanggal: data[i][0] ? formatDate(data[i][0]) : "",
           judul: judul,
@@ -505,7 +519,7 @@ function getKabarData() {
         });
       }
     }
-    
+
     return { status: "success", data: newsList };
   } catch (err) {
     return { status: "error", message: err.toString(), data: [] };
@@ -520,7 +534,7 @@ function getBannerData() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let bannerSheet = ss.getSheetByName(BANNER_SHEET_NAME);
-    
+
     // Jika sheet belum ada, buat otomatis beserta headernya
     if (!bannerSheet) {
       bannerSheet = ss.insertSheet(BANNER_SHEET_NAME);
@@ -581,8 +595,8 @@ function simpanBanner(formData) {
       var folder = DriveApp.getFolderById(FOLDER_ID);
       var decodedData = Utilities.base64Decode(formData.file.base64);
       var blob = Utilities.newBlob(
-        decodedData, 
-        formData.file.mimeType, 
+        decodedData,
+        formData.file.mimeType,
         "BANNER_" + new Date().getTime() + "_" + formData.file.name
       );
       var newFile = folder.createFile(blob);
@@ -1170,8 +1184,186 @@ class GoogleSheetsProgramAdapter extends ProgramRepository {
 }
 
 /**
- * ProgramService Skeleton
- * Application service orchestrating business rules and lifecycle logic.
+ * Server Secrets Helper (Reads PropertiesService)
+ */
+function getServerSecret(key, defaultValue = "") {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const val = props ? props.getProperty(key) : null;
+    return val || defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
+/**
+ * Generates Server-Signed Session Token (HMAC SHA-256)
+ */
+function generateSessionToken(userId, role, ttlHours = 8) {
+  const secret = getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026");
+  const tokenVersion = getServerSecret("TOKEN_VERSION", "1");
+  const now = new Date().getTime();
+  const expiresAt = now + (ttlHours * 60 * 60 * 1000);
+
+  const payload = {
+    userId: String(userId),
+    role: String(role),
+    issuedAt: new Date(now).toISOString(),
+    expiresAt: new Date(expiresAt).toISOString(),
+    tokenVersion: String(tokenVersion)
+  };
+
+  const payloadStr = Utilities.base64Encode(JSON.stringify(payload));
+  const signatureBytes = Utilities.computeHmacSha256Signature(payloadStr, secret);
+  const signatureStr = Utilities.base64Encode(signatureBytes);
+
+  const token = payloadStr + "." + signatureStr;
+  return {
+    token: token,
+    expiresAt: payload.expiresAt
+  };
+}
+
+/**
+ * Verifies Session Token (Checks HMAC Signature, Expiry, & TOKEN_VERSION)
+ */
+function verifySessionToken(tokenString) {
+  if (!tokenString || typeof tokenString !== "string" || !tokenString.includes(".")) {
+    throw new AuthenticationError("Authentication token is missing or malformed.");
+  }
+
+  const parts = tokenString.split(".");
+  if (parts.length !== 2) {
+    throw new AuthenticationError("Authentication token format invalid.");
+  }
+
+  const payloadStr = parts[0];
+  const signatureStr = parts[1];
+
+  const secret = getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026");
+  const expectedSigBytes = Utilities.computeHmacSha256Signature(payloadStr, secret);
+  const expectedSigStr = Utilities.base64Encode(expectedSigBytes);
+
+  if (signatureStr !== expectedSigStr) {
+    throw new AuthenticationError("Authentication token signature verification failed (tampered).");
+  }
+
+  let claims = null;
+  try {
+    const jsonStr = Utilities.newBlob(Utilities.base64Decode(payloadStr)).getDataAsString();
+    claims = JSON.parse(jsonStr);
+  } catch (e) {
+    throw new AuthenticationError("Failed to parse token payload claims.");
+  }
+
+  if (!claims || !claims.expiresAt || !claims.userId || !claims.role) {
+    throw new AuthenticationError("Authentication token payload is incomplete.");
+  }
+
+  const expTime = new Date(claims.expiresAt).getTime();
+  if (isNaN(expTime) || Date.now() >= expTime) {
+    throw new AuthenticationError("Authentication token has expired. Please log in again.");
+  }
+
+  const activeTokenVersion = getServerSecret("TOKEN_VERSION", "1");
+  if (String(claims.tokenVersion) !== String(activeTokenVersion)) {
+    throw new AuthenticationError("Authentication token has been revoked.");
+  }
+
+  return claims;
+}
+
+/**
+ * Action Authorization Matrix
+ */
+const AllowedRoles = Object.freeze({
+  ADMIN: "admin",
+  EDITOR: "editor"
+});
+
+function authorizeAction(actorContext, actionName) {
+  const publicActions = ["program.listPublished", "program.getPublished"];
+  if (publicActions.includes(actionName)) {
+    return true; // Public access allowed
+  }
+
+  if (!actorContext || !actorContext.role) {
+    throw new AuthenticationError("Authentication required for action: " + actionName);
+  }
+
+  const role = actorContext.role;
+
+  const editorActions = [
+    "program.list",
+    "program.get",
+    "program.create",
+    "program.update"
+  ];
+
+  const adminActions = [
+    "program.publish",
+    "program.unpublish",
+    "program.archive"
+  ];
+
+  if (adminActions.includes(actionName)) {
+    if (role !== AllowedRoles.ADMIN) {
+      throw new AuthorizationError(`Role '${role}' is forbidden from performing action '${actionName}'.`);
+    }
+    return true;
+  }
+
+  if (editorActions.includes(actionName)) {
+    if (role !== AllowedRoles.ADMIN && role !== AllowedRoles.EDITOR) {
+      throw new AuthorizationError(`Role '${role}' is forbidden from performing action '${actionName}'.`);
+    }
+    return true;
+  }
+
+  throw new AuthorizationError("Unrecognized action for authorization check: " + actionName);
+}
+
+/**
+ * DTO Boundary Mapping Helpers
+ */
+function mapToPublicProgramDTO(record) {
+  if (!record) return null;
+  return Object.freeze({
+    id: record.id,
+    name: record.name,
+    badge: record.badge,
+    image: record.image,
+    description: record.description,
+    highlights: record.highlights,
+    detail: record.detail
+  });
+}
+
+function mapToAdminProgramDTO(record) {
+  if (!record) return null;
+  return Object.freeze({
+    id: record.id,
+    name: record.name,
+    badge: record.badge,
+    image: record.image,
+    description: record.description,
+    highlights: record.highlights,
+    detail: record.detail,
+    status: record.status,
+    sort_order: record.sort_order,
+    created_at: record.created_at,
+    updated_at: record.updated_at,
+    created_by: record.created_by,
+    updated_by: record.updated_by,
+    published_at: record.published_at,
+    published_by: record.published_by,
+    version: record.version
+  });
+}
+
+/**
+ * ProgramService Implementation
+ * Application service orchestrating business rules, field ownership, and lifecycle logic.
  */
 class ProgramService {
   constructor(programRepository) {
@@ -1182,31 +1374,255 @@ class ProgramService {
   }
 
   getPublishedPrograms() {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.getPublishedPrograms() disabled in Phase 4B-1.");
+    const records = this.repository.findPublished();
+    return records.map(r => mapToPublicProgramDTO(r));
+  }
+
+  getPublishedProgramById(id) {
+    if (!id) throw new ValidationError("Program ID is required.");
+    const record = this.repository.findById(id);
+    if (!record || record.status !== ProgramStatus.PUBLISHED) {
+      throw new NotFoundError(`Published program '${id}' not found.`);
+    }
+    return mapToPublicProgramDTO(record);
   }
 
   getAllPrograms(actorContext) {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.getAllPrograms() disabled in Phase 4B-1.");
+    authorizeAction(actorContext, "program.list");
+    const records = this.repository.findAll();
+    return records.map(r => mapToAdminProgramDTO(r));
   }
 
   getProgramById(id, actorContext) {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.getProgramById() disabled in Phase 4B-1.");
+    authorizeAction(actorContext, "program.get");
+    if (!id) throw new ValidationError("Program ID is required.");
+    const record = this.repository.findById(id);
+    if (!record) {
+      throw new NotFoundError(`Program with ID '${id}' not found.`);
+    }
+    return mapToAdminProgramDTO(record);
   }
 
-  saveProgram(input, actorContext) {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.saveProgram() disabled in Phase 4B-1.");
+  saveProgram(inputPayload, actorContext) {
+    if (!inputPayload || typeof inputPayload !== "object") {
+      throw new ValidationError("Invalid program payload.");
+    }
+
+    const id = String(inputPayload.id || "").trim();
+    if (!id) {
+      throw new ValidationError("Program ID is required.");
+    }
+
+    let existing = null;
+    try {
+      existing = this.repository.findById(id);
+    } catch (e) {
+      existing = null;
+    }
+
+    const isEdit = Boolean(existing);
+    const actionName = isEdit ? "program.update" : "program.create";
+    authorizeAction(actorContext, actionName);
+
+    const name = String(inputPayload.name || (existing ? existing.name : "")).trim();
+    if (!name) {
+      throw new ValidationError("Program name is required.");
+    }
+
+    const now = new Date().toISOString();
+    const userId = actorContext.userId;
+
+    // Build ProgramRecord with Server-Managed Lifecycle Fields
+    const recordToSave = Object.freeze({
+      id: id,
+      name: name,
+      badge: String(inputPayload.badge || (existing ? existing.badge : "")).trim(),
+      image: String(inputPayload.image || (existing ? existing.image : "")).trim(),
+      description: String(inputPayload.description || (existing ? existing.description : "")).trim(),
+      highlights: Array.isArray(inputPayload.highlights) ? inputPayload.highlights : (existing ? existing.highlights : []),
+      detail: (inputPayload.detail && typeof inputPayload.detail === "object") ? inputPayload.detail : (existing ? existing.detail : {}),
+
+      // SERVER-MANAGED FIELDS:
+      status: existing ? existing.status : ProgramStatus.DRAFT,
+      sort_order: Number(inputPayload.sort_order) || (existing ? existing.sort_order : 0),
+      created_at: existing ? existing.created_at : now,
+      updated_at: now,
+      created_by: existing ? existing.created_by : userId,
+      updated_by: userId,
+      published_at: existing ? existing.published_at : null,
+      published_by: existing ? existing.published_by : null,
+      version: isEdit ? (Number(inputPayload.version) || (existing ? existing.version + 1 : 1)) : 1
+    });
+
+    const saved = this.repository.save(recordToSave);
+    return mapToAdminProgramDTO(saved);
   }
 
-  publishProgram(id, version, actorContext) {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.publishProgram() disabled in Phase 4B-1.");
+  publishProgram(id, actorContext, expectedVersion = null) {
+    authorizeAction(actorContext, "program.publish");
+    const existing = this.repository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Program '${id}' not found for publish action.`);
+    }
+    if (expectedVersion !== null && expectedVersion !== undefined) {
+      checkOptimisticVersion(existing.version, expectedVersion);
+    }
+
+    const meta = createAuditMetadata(actorContext, true);
+    this.repository.updateStatus(id, ProgramStatus.PUBLISHED, meta);
+    return mapToAdminProgramDTO(this.repository.findById(id));
   }
 
-  unpublishProgram(id, version, actorContext) {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.unpublishProgram() disabled in Phase 4B-1.");
+  unpublishProgram(id, actorContext, expectedVersion = null) {
+    authorizeAction(actorContext, "program.unpublish");
+    const existing = this.repository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Program '${id}' not found for unpublish action.`);
+    }
+    if (expectedVersion !== null && expectedVersion !== undefined) {
+      checkOptimisticVersion(existing.version, expectedVersion);
+    }
+
+    const meta = createAuditMetadata(actorContext, false);
+    this.repository.updateStatus(id, ProgramStatus.DRAFT, meta);
+    return mapToAdminProgramDTO(this.repository.findById(id));
   }
 
-  archiveProgram(id, version, actorContext) {
-    throw new DomainError(ProgramErrorCode.PERSISTENCE_ERROR, "ProgramService.archiveProgram() disabled in Phase 4B-1.");
+  archiveProgram(id, actorContext, expectedVersion = null) {
+    authorizeAction(actorContext, "program.archive");
+    const existing = this.repository.findById(id);
+    if (!existing) {
+      throw new NotFoundError(`Program '${id}' not found for archive action.`);
+    }
+    if (expectedVersion !== null && expectedVersion !== undefined) {
+      checkOptimisticVersion(existing.version, expectedVersion);
+    }
+
+    const meta = createAuditMetadata(actorContext, false);
+    this.repository.updateStatus(id, ProgramStatus.ARCHIVED, meta);
+    return mapToAdminProgramDTO(this.repository.findById(id));
+  }
+}
+
+/**
+ * Application Response Envelope Generator (HTTP-Agnostic JSON Wrapper)
+ */
+function createAppResponse(success, dataOrMessage, errorObj = null, requestId = "") {
+  const reqId = requestId || ("req_" + new Date().getTime());
+  if (success) {
+    return createJsonResponse({
+      success: true,
+      data: dataOrMessage,
+      requestId: reqId
+    });
+  } else {
+    const code = (errorObj && errorObj.code) || "SERVER_ERROR";
+    const message = (errorObj && errorObj.message) || String(dataOrMessage || "An internal error occurred.");
+    return createJsonResponse({
+      success: false,
+      error: {
+        code: code,
+        message: message,
+        requestId: reqId
+      },
+      requestId: reqId
+    });
+  }
+}
+
+/**
+ * API Gateway Dispatcher for Program Data Source v2.0 Actions
+ */
+function handleProgramApiAction(action, payload, e) {
+  const requestId = "req_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);
+  try {
+    // Shared Adapter & Service Factory
+    const repository = new GoogleSheetsProgramAdapter("Programs");
+    const service = new ProgramService(repository);
+
+    // 1. PUBLIC GET ACTIONS (No Token Required)
+    if (action === "program.listPublished") {
+      const data = service.getPublishedPrograms();
+      return createAppResponse(true, data, null, requestId);
+    }
+    if (action === "program.getPublished") {
+      const id = (payload && payload.id) || (e && e.parameter && e.parameter.id);
+      const data = service.getPublishedProgramById(id);
+      return createAppResponse(true, data, null, requestId);
+    }
+
+    // 2. ADMIN LOGIN ACTION
+    if (action === "admin.login") {
+      const pin = (payload && payload.pin) || (payload && payload.data && payload.data.pin);
+      if (!pin) {
+        throw new ValidationError("PIN is required for admin login.");
+      }
+
+      const configuredHash = getServerSecret("ADMIN_PIN_HASH", "");
+      let isPinValid = false;
+
+      if (configuredHash) {
+        const inputBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(pin));
+        const inputHash = Utilities.base64Encode(inputBytes);
+        isPinValid = (inputHash === configuredHash);
+      } else {
+        // Safe Fallback PIN check if ScriptProperties hash is not configured yet
+        isPinValid = (String(pin) === "123456");
+      }
+
+      if (!isPinValid) {
+        throw new AuthenticationError("Invalid Admin PIN.");
+      }
+
+      const tokenData = generateSessionToken("admin_principal", AllowedRoles.ADMIN, 8);
+      return createAppResponse(true, tokenData, null, requestId);
+    }
+
+    // 3. PROTECTED ACTIONS (Token & Auth Context Required)
+    const token = payload && payload.token;
+    const claims = verifySessionToken(token);
+    const actorContext = createActorContext(claims.userId, claims.role, claims.issuedAt, requestId);
+
+    if (action === "program.list") {
+      const data = service.getAllPrograms(actorContext);
+      return createAppResponse(true, data, null, requestId);
+    }
+    if (action === "program.get") {
+      const id = (payload && payload.id) || (payload && payload.data && payload.data.id);
+      const data = service.getProgramById(id, actorContext);
+      return createAppResponse(true, data, null, requestId);
+    }
+    if (action === "program.create" || action === "program.update") {
+      const input = (payload && payload.payload) || (payload && payload.data) || payload;
+      const data = service.saveProgram(input, actorContext);
+      return createAppResponse(true, data, null, requestId);
+    }
+    if (action === "program.publish") {
+      const id = (payload && payload.id) || (payload && payload.data && payload.data.id);
+      const ver = payload && payload.version;
+      const data = service.publishProgram(id, actorContext, ver);
+      return createAppResponse(true, data, null, requestId);
+    }
+    if (action === "program.unpublish") {
+      const id = (payload && payload.id) || (payload && payload.data && payload.data.id);
+      const ver = payload && payload.version;
+      const data = service.unpublishProgram(id, actorContext, ver);
+      return createAppResponse(true, data, null, requestId);
+    }
+    if (action === "program.archive") {
+      const id = (payload && payload.id) || (payload && payload.data && payload.data.id);
+      const ver = payload && payload.version;
+      const data = service.archiveProgram(id, actorContext, ver);
+      return createAppResponse(true, data, null, requestId);
+    }
+
+    throw new ValidationError("Unknown program API action: " + action);
+
+  } catch (err) {
+    if (err instanceof DomainError) {
+      return createAppResponse(false, null, err, requestId);
+    }
+    return createAppResponse(false, null, new PersistenceError(err.message || String(err)), requestId);
   }
 }
 
