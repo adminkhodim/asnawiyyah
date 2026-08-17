@@ -702,7 +702,7 @@ function uploadMediaToDrive(formData, token) {
     }
 
     const session = verifySessionToken(token);
-    if (!session || !session.valid) {
+    if (!session || !session.userId || !session.role) {
       return {
         success: false,
         status: "error",
@@ -789,6 +789,12 @@ function uploadMediaToDrive(formData, token) {
       message: "Media berhasil diunggah ke Google Drive!"
     };
   } catch (err) {
+    if (err instanceof AuthenticationError) {
+      return { success: false, status: "error", statusCode: 401, message: err.message };
+    }
+    if (err instanceof AuthorizationError) {
+      return { success: false, status: "error", statusCode: 403, message: err.message };
+    }
     return { success: false, status: "error", message: err.toString() };
   }
 }
