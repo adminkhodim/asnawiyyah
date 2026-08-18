@@ -5324,7 +5324,32 @@
             if (typeof renderCalendar === 'function') {
                 renderCalendar();
             }
+            handleClientRouting();
         };
+
+        function handleClientRouting() {
+            const path = window.location.pathname;
+            if (path.startsWith('/berita/')) {
+                const slug = path.split('/berita/')[1];
+                if (slug) {
+                    setTimeout(() => bacaBerita(slug, true), 1000);
+                }
+            }
+            const params = new URLSearchParams(window.location.search);
+            const legacyId = params.get('id');
+            if (legacyId) {
+                setTimeout(() => bacaBerita(legacyId), 1000);
+            }
+        }
+
+        window.addEventListener('popstate', (e) => {
+            if (window.location.pathname.startsWith('/berita/')) {
+                const slug = window.location.pathname.split('/berita/')[1];
+                if (slug) bacaBerita(slug, true);
+            } else {
+                switchTab('beranda');
+            }
+        });
 
         // ==================== SISTEM TABS (NAVIGASI SPA) ====================
         function switchTab(tabId) {
@@ -5398,7 +5423,7 @@
             newsArray.forEach((news, idx) => {
                 const card = document.createElement('article');
                 card.className = "bg-slate-50 hover:bg-emerald-50/50 p-4 rounded-2xl border border-slate-100 hover:border-brand-100 flex flex-col gap-3 cursor-pointer group transition duration-200";
-                card.onclick = () => bacaBerita(idx);
+                card.onclick = () => bacaBerita(news.news_id);
 
                 const imgHtml = news.gambar
                     ? `<img src="${news.gambar}" alt="${news.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
@@ -5443,7 +5468,7 @@
                 topHeadline.forEach((news, idx) => {
                     const item = document.createElement('article');
                     item.className = `flex items-center justify-between gap-3 ${idx < topHeadline.length - 1 ? 'border-b border-slate-100 pb-4' : ''} cursor-pointer group`;
-                    item.onclick = () => bacaBerita(idx);
+                    item.onclick = () => bacaBerita(news.news_id);
 
                     const thumbSrc = news.gambar || defaultThumb;
 
@@ -5465,9 +5490,16 @@
             });
         }
 
-        function bacaBerita(index) {
-            const news = mockNewsData[index];
+        function bacaBerita(id, skipHistory = false) {
+            const news = mockNewsData.find(n => n.news_id === id || n.slug === id);
             if (!news) return;
+
+            if (!skipHistory) {
+                const canonicalUrl = `/berita/${news.slug}`;
+                if (window.location.pathname !== canonicalUrl) {
+                    window.history.pushState({ id: news.news_id }, news.judul, canonicalUrl);
+                }
+            }
 
             const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
             if (activeTabEl && activeTabEl.id !== 'page-detail-berita') {
@@ -5503,6 +5535,9 @@
         }
 
         function kembaliDariBerita() {
+            if (window.location.pathname.startsWith('/berita/')) {
+                window.history.pushState(null, '', '/');
+            }
             switchTab(previousTabBeforeNews || 'beranda');
         }
 
@@ -5930,10 +5965,10 @@
                         <p class="text-[10px] text-slate-400">${news.tanggal} • Oleh: ${news.penulis}</p>
                     </div>
                     <div class="flex items-center space-x-1.5 shrink-0">
-                        <button onclick="editAdminNews(${idx})" class="w-8 h-8 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center text-xs transition" title="Edit">
+                        <button onclick="editAdminNews('${news.news_id}')" class="w-8 h-8 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center text-xs transition" title="Edit">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button onclick="deleteAdminNews(${idx})" class="w-8 h-8 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg flex items-center justify-center text-xs transition" title="Hapus">
+                        <button onclick="deleteAdminNews('${news.news_id}')" class="w-8 h-8 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg flex items-center justify-center text-xs transition" title="Hapus">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -5962,8 +5997,11 @@
                     fileData = await readFileAsBase64(file);
                 }
 
+                const formId = document.getElementById('admin-news-id').value;
+                const token = getAdminSessionToken();
+
                 const payload = {
-                    id: document.getElementById('admin-news-id').value,
+                    news_id: formId,
                     judul: document.getElementById('admin-news-judul').value.trim(),
                     kategori: document.getElementById('admin-news-kategori').value,
                     penulis: document.getElementById('admin-news-penulis').value.trim(),
@@ -5976,7 +6014,8 @@
                     throw new Error("API backend belum dikonfigurasi.");
                 }
 
-                const response = await apiPost("saveBerita", payload);
+                const actionName = formId ? "updateBerita" : "saveBerita";
+                const response = await apiPost(actionName, { token, data: payload });
 
                 btn.disabled = false;
                 btnIcon.className = "fa-solid fa-paper-plane";
@@ -5999,18 +6038,18 @@
             }
         }
 
-        function editAdminNews(index) {
-            const news = mockNewsData[index];
+        function editAdminNews(id) {
+            const news = mockNewsData.find(n => n.news_id === id);
             if (!news) return;
 
-            document.getElementById('admin-news-id').value = index;
+            document.getElementById('admin-news-id').value = id;
             document.getElementById('admin-news-judul').value = news.judul;
             document.getElementById('admin-news-kategori').value = news.kategori;
             document.getElementById('admin-news-penulis').value = news.penulis;
             document.getElementById('admin-news-ringkasan').value = news.ringkasan;
             document.getElementById('admin-news-isi').value = news.isi;
 
-            document.getElementById('admin-form-title').innerHTML = `<i class="fa-solid fa-pen text-amber-600 mr-2"></i> Edit Berita: #${index + 1}`;
+            document.getElementById('admin-form-title').innerHTML = `<i class="fa-solid fa-pen text-amber-600 mr-2"></i> Edit Berita`;
             document.getElementById('admin-submit-text').innerText = "Simpan Perubahan Berita";
             document.getElementById('admin-cancel-edit-btn').classList.remove('hidden');
 
@@ -6025,13 +6064,22 @@
             document.getElementById('admin-cancel-edit-btn').classList.add('hidden');
         }
 
-        function deleteAdminNews(index) {
+        async function deleteAdminNews(id) {
             if (confirm("Apakah Anda yakin ingin menghapus berita ini?")) {
-                mockNewsData.splice(index, 1);
-                renderAdminNewsList();
-                renderNews(mockNewsData);
-                renderHeadlineNews(mockNewsData);
-                showToast("Berita berhasil dihapus.");
+                try {
+                    const token = getAdminSessionToken();
+                    if (!isApiConfigured()) throw new Error("API belum dikonfigurasi.");
+                    const response = await apiPost("deleteBerita", { token, data: { news_id: id } });
+                    if (response && response.success) {
+                        showToast("Berita berhasil dihapus.");
+                        loadNews(); // Refresh from backend
+                    } else {
+                        showToast("❌ Gagal menghapus: " + (response ? response.message : "Error"));
+                    }
+                } catch (e) {
+                    console.error("Gagal hapus:", e);
+                    showToast("❌ Terjadi kesalahan jaringan.");
+                }
             }
         }
 
