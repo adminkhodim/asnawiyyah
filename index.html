@@ -3126,7 +3126,8 @@
                             <h4
                                 class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition">
                                 Manajemen Program</h4>
-                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola data program unggulan & santri.</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola data program unggulan &
+                                santri.</p>
                         </div>
                     </div>
 
@@ -3533,7 +3534,8 @@
                             <span
                                 class="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest block">Dashboard
                                 Admin</span>
-                            <h2 class="text-sm md:text-base font-bold text-slate-800">Manajemen Program Pesantren (CMS)</h2>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800">Manajemen Program Pesantren (CMS)
+                            </h2>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -3554,19 +3556,24 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm space-y-1">
                         <span class="text-[10px] font-bold text-slate-400 uppercase">Total Program</span>
-                        <div id="admin-program-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800">0</div>
+                        <div id="admin-program-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800">0
+                        </div>
                     </div>
-                    <div class="bg-white p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm space-y-1">
+                    <div
+                        class="bg-white p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm space-y-1">
                         <span class="text-[10px] font-bold text-emerald-700 uppercase">Published</span>
-                        <div id="admin-program-stat-published" class="text-lg md:text-xl font-extrabold text-emerald-800">0</div>
+                        <div id="admin-program-stat-published"
+                            class="text-lg md:text-xl font-extrabold text-emerald-800">0</div>
                     </div>
                     <div class="bg-white p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 shadow-sm space-y-1">
                         <span class="text-[10px] font-bold text-amber-700 uppercase">Draft</span>
-                        <div id="admin-program-stat-draft" class="text-lg md:text-xl font-extrabold text-amber-800">0</div>
+                        <div id="admin-program-stat-draft" class="text-lg md:text-xl font-extrabold text-amber-800">0
+                        </div>
                     </div>
                     <div class="bg-white p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 shadow-sm space-y-1">
                         <span class="text-[10px] font-bold text-slate-500 uppercase">Archived</span>
-                        <div id="admin-program-stat-archived" class="text-lg md:text-xl font-extrabold text-slate-700">0</div>
+                        <div id="admin-program-stat-archived" class="text-lg md:text-xl font-extrabold text-slate-700">0
+                        </div>
                     </div>
                 </div>
 
@@ -3598,7 +3605,8 @@
                             <i class="fa-solid fa-list-check text-emerald-700 mr-2"></i> Daftar Program Pesantren
                         </h3>
                         <span id="admin-program-list-count"
-                            class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg">0 Program</span>
+                            class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg">0
+                            Program</span>
                     </div>
 
                     <!-- DESKTOP TABLE VIEW -->
@@ -3870,7 +3878,8 @@
                             <span id="admin-editor-version-badge"
                                 class="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">v1</span>
                         </div>
-                        <p class="text-[10px] text-slate-400">Kelola informasi publik, kurikulum, dan pembiayaan santri</p>
+                        <p class="text-[10px] text-slate-400">Kelola informasi publik, kurikulum, dan pembiayaan santri
+                        </p>
                     </div>
                 </div>
                 <button type="button" onclick="closeAdminProgramEditor()"
@@ -3908,7 +3917,8 @@
             </div>
 
             <!-- Form Content (Scrollable) -->
-            <form id="adminProgramForm" onsubmit="event.preventDefault();" class="p-5 overflow-y-auto space-y-4 text-xs flex-1">
+            <form id="adminProgramForm" onsubmit="event.preventDefault();"
+                class="p-5 overflow-y-auto space-y-4 text-xs flex-1">
                 <input type="hidden" id="admin-prog-mode" value="create">
                 <input type="hidden" id="admin-prog-server-version" value="1">
 
@@ -3919,37 +3929,43 @@
                 <div id="admin-prog-panel-umum" class="admin-prog-panel space-y-3">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ID Program (Slug Unik)</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ID Program (Slug
+                                Unik)</label>
                             <input type="text" id="admin-prog-id" required
                                 class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50"
                                 placeholder="contoh: tahfidz-anak">
                             <p class="text-[10px] text-slate-400 mt-0.5">Gunakan huruf kecil dan tanda hubung (-)</p>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Kategori / Badge Singkat</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Kategori / Badge
+                                Singkat</label>
                             <input type="text" id="admin-prog-badge" required
                                 class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                                 placeholder="contoh: Anak-Anak / Dewasa Putra">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Lengkap Program</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Lengkap
+                            Program</label>
                         <input type="text" id="admin-prog-name" required
                             class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                             placeholder="contoh: Pesantren Tahfidz Anak PPTQ Asnawiyyah">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deskripsi Singkat (Beranda & Kartu)</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deskripsi Singkat
+                            (Beranda & Kartu)</label>
                         <textarea id="admin-prog-desc" rows="2" required
                             class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                             placeholder="Ringkasan 1-2 kalimat untuk kartu beranda..."></textarea>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Poin Unggulan Singkat (Highlights Beranda)</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Poin Unggulan Singkat
+                            (Highlights Beranda)</label>
                         <textarea id="admin-prog-highlights" rows="3" required
                             class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none font-mono"
                             placeholder="Target Hafalan 5–10 Juz&#10;Metode Fun Tahfidz & Kisah Nabi&#10;Bimbingan Akhlak"></textarea>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Tulis 1 poin per baris (akan otomatis dijadikan list).</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Tulis 1 poin per baris (akan otomatis dijadikan
+                            list).</p>
                     </div>
                 </div>
 
@@ -3959,17 +3975,21 @@
                     <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
                         <div class="flex justify-between items-center">
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-700 uppercase">Gambar Cover / Header Program</label>
-                                <p class="text-[10px] text-slate-400">Pilih file gambar untuk diunggah langsung ke Google Drive (Format: JPG, PNG, WEBP)</p>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase">Gambar Cover /
+                                    Header Program</label>
+                                <p class="text-[10px] text-slate-400">Pilih file gambar untuk diunggah langsung ke
+                                    Google Drive (Format: JPG, PNG, WEBP)</p>
                             </div>
-                            <span id="admin-prog-cover-upload-status" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                            <span id="admin-prog-cover-upload-status"
+                                class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
                                 <i class="fa-solid fa-check mr-1"></i> Tersimpan
                             </span>
                         </div>
 
                         <!-- Choose File Input -->
                         <div class="relative">
-                            <input type="file" id="admin-prog-cover-file" accept="image/*" onchange="handleAdminProgramCoverUpload(event)"
+                            <input type="file" id="admin-prog-cover-file" accept="image/*"
+                                onchange="handleAdminProgramCoverUpload(event)"
                                 class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer bg-white p-1 focus:outline-none">
                         </div>
 
@@ -3978,12 +3998,18 @@
 
                         <!-- LIVE PREVIEW COVER IMAGE -->
                         <div class="pt-1">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Pratinjau Cover Program:</span>
-                            <div class="w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
-                                <img id="admin-prog-cover-preview-img" src="" alt="Pratinjau Cover" class="w-full h-full object-cover hidden">
-                                <span id="admin-prog-cover-preview-placeholder" class="text-xs text-slate-400 italic">Pilih file gambar untuk mengunggah dan melihat pratinjau</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Pratinjau Cover
+                                Program:</span>
+                            <div
+                                class="w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                                <img id="admin-prog-cover-preview-img" src="" alt="Pratinjau Cover"
+                                    class="w-full h-full object-cover hidden">
+                                <span id="admin-prog-cover-preview-placeholder"
+                                    class="text-xs text-slate-400 italic">Pilih file gambar untuk mengunggah dan melihat
+                                    pratinjau</span>
                                 <!-- Spinner overlay while uploading -->
-                                <div id="admin-prog-cover-spinner" class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2">
+                                <div id="admin-prog-cover-spinner"
+                                    class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2">
                                     <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-400"></i>
                                     <span class="text-xs font-semibold">Mengunggah ke Google Drive...</span>
                                 </div>
@@ -3994,13 +4020,15 @@
                     <!-- 2. VIDEO PROFIL YOUTUBE -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Embed Video YouTube</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Embed Video
+                                YouTube</label>
                             <input type="url" id="admin-prog-video"
                                 class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                                 placeholder="https://www.youtube.com/embed/...">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Judul Video Profil</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Judul Video
+                                Profil</label>
                             <input type="text" id="admin-prog-video-title"
                                 class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                                 placeholder="Video Profil Kegiatan PPTQ Asnawiyyah">
@@ -4011,8 +4039,10 @@
                     <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
                         <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
                             <div>
-                                <span class="text-[11px] font-bold text-slate-700 uppercase block">Galeri Foto Dokumentasi</span>
-                                <p class="text-[10px] text-slate-400">Unggah foto-foto kegiatan santri ke Google Drive</p>
+                                <span class="text-[11px] font-bold text-slate-700 uppercase block">Galeri Foto
+                                    Dokumentasi</span>
+                                <p class="text-[10px] text-slate-400">Unggah foto-foto kegiatan santri ke Google Drive
+                                </p>
                             </div>
                             <button type="button" onclick="addAdminProgramGalleryItem()"
                                 class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
@@ -4031,13 +4061,15 @@
                 <!-- PANEL 3: KONTEN & KEUNGGULAN -->
                 <div id="admin-prog-panel-konten" class="admin-prog-panel hidden space-y-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tagline Program (Header Detail)</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tagline Program (Header
+                            Detail)</label>
                         <input type="text" id="admin-prog-tagline"
                             class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                             placeholder="Mendidik Generasi Qur'ani Berakhlakul Karimah">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ringkasan Lengkap Program (Summary)</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ringkasan Lengkap
+                            Program (Summary)</label>
                         <textarea id="admin-prog-summary" rows="3"
                             class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                             placeholder="Penjelasan komprehensif mengenai latar belakang, sasaran, dan sistem pembinaan program..."></textarea>
@@ -4045,34 +4077,53 @@
 
                     <!-- Keunggulan 3 Kolom -->
                     <div class="space-y-2 pt-2 border-t border-slate-100">
-                        <span class="text-[10px] font-bold text-slate-600 uppercase block">3 Keunggulan & Metode Pembelajaran</span>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase block">3 Keunggulan & Metode
+                            Pembelajaran</span>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                             <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
                                 <span class="font-bold text-[10px] text-emerald-800">Keunggulan 1</span>
-                                <input type="text" id="admin-prog-k1-title" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Judul (misal: Tahfidz Sanad)">
-                                <textarea id="admin-prog-k1-desc" rows="2" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]" placeholder="Penjelasan singkat..."></textarea>
+                                <input type="text" id="admin-prog-k1-title"
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
+                                    placeholder="Judul (misal: Tahfidz Sanad)">
+                                <textarea id="admin-prog-k1-desc" rows="2"
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]"
+                                    placeholder="Penjelasan singkat..."></textarea>
                             </div>
                             <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
                                 <span class="font-bold text-[10px] text-amber-800">Keunggulan 2</span>
-                                <input type="text" id="admin-prog-k2-title" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Judul (misal: Kajian Turats)">
-                                <textarea id="admin-prog-k2-desc" rows="2" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]" placeholder="Penjelasan singkat..."></textarea>
+                                <input type="text" id="admin-prog-k2-title"
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
+                                    placeholder="Judul (misal: Kajian Turats)">
+                                <textarea id="admin-prog-k2-desc" rows="2"
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]"
+                                    placeholder="Penjelasan singkat..."></textarea>
                             </div>
                             <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
                                 <span class="font-bold text-[10px] text-blue-800">Keunggulan 3</span>
-                                <input type="text" id="admin-prog-k3-title" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Judul (misal: Bimbingan Adab)">
-                                <textarea id="admin-prog-k3-desc" rows="2" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]" placeholder="Penjelasan singkat..."></textarea>
+                                <input type="text" id="admin-prog-k3-title"
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
+                                    placeholder="Judul (misal: Bimbingan Adab)">
+                                <textarea id="admin-prog-k3-desc" rows="2"
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]"
+                                    placeholder="Penjelasan singkat..."></textarea>
                             </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Output Santri (1 baris per capaian)</label>
-                            <textarea id="admin-prog-target-output" rows="3" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Mampu menghafal 30 Juz Mutqin&#10;Menguasai Kaidah Tajwid & Makharijul Huruf&#10;Mampu membaca kitab kuning dasar"></textarea>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Output
+                                Santri (1 baris per capaian)</label>
+                            <textarea id="admin-prog-target-output" rows="3"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono"
+                                placeholder="Mampu menghafal 30 Juz Mutqin&#10;Menguasai Kaidah Tajwid & Makharijul Huruf&#10;Mampu membaca kitab kuning dasar"></textarea>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fasilitas Santri (1 baris per fasilitas)</label>
-                            <textarea id="admin-prog-fasilitas" rows="3" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Asrama santri yang bersih dan nyaman&#10;Majlis halaqah berpendingin udara&#10;Perpustakaan kitab salaf"></textarea>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fasilitas Santri (1
+                                baris per fasilitas)</label>
+                            <textarea id="admin-prog-fasilitas" rows="3"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono"
+                                placeholder="Asrama santri yang bersih dan nyaman&#10;Majlis halaqah berpendingin udara&#10;Perpustakaan kitab salaf"></textarea>
                         </div>
                     </div>
                 </div>
@@ -4080,16 +4131,57 @@
                 <!-- PANEL 4: PROSEDUR & SYARAT -->
                 <div id="admin-prog-panel-syarat" class="admin-prog-panel hidden space-y-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Langkah Prosedur Pendaftaran (1 baris per tahap)</label>
-                        <textarea id="admin-prog-prosedur-items" rows="4" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Melakukan registrasi online melalui portal PPDB&#10;Menyerahkan berkas persyaratan di kantor sekretariat&#10;Mengikuti tes wawancara dan tes baca Al-Qur'an&#10;Ta'aruf dan penempatan asrama santri baru"></textarea>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Langkah Prosedur
+                            Pendaftaran (1 baris per tahap)</label>
+                        <textarea id="admin-prog-prosedur-items" rows="4"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono"
+                            placeholder="Melakukan registrasi online melalui portal PPDB&#10;Menyerahkan berkas persyaratan di kantor sekretariat&#10;Mengikuti tes wawancara dan tes baca Al-Qur'an&#10;Ta'aruf dan penempatan asrama santri baru"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL Gambar Ilustrasi Prosedur</label>
-                        <input type="url" id="admin-prog-prosedur-img" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="https://images.unsplash.com/...">
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase">Gambar Ilustrasi Prosedur</label>
+                                <p class="text-[10px] text-slate-400">Pilih file gambar untuk diunggah langsung ke Google Drive (Format: JPG, PNG, WEBP)</p>
+                            </div>
+                            <span id="admin-prog-prosedur-upload-status"
+                                class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                                <i class="fa-solid fa-check mr-1"></i> Tersimpan
+                            </span>
+                        </div>
+                        <!-- Choose File Input -->
+                        <div class="relative">
+                            <input type="file" id="admin-prog-prosedur-file" accept="image/*"
+                                onchange="handleAdminProgramProsedurUpload(event)"
+                                class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer bg-white p-1 focus:outline-none">
+                        </div>
+
+                        <!-- Hidden input canonical for detail.prosedur.image -->
+                        <input type="hidden" id="admin-prog-prosedur-img" value="">
+
+                        <!-- LIVE PREVIEW PROSEDUR IMAGE -->
+                        <div class="pt-1">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Pratinjau Gambar Prosedur:</span>
+                            <div
+                                class="w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                                <img id="admin-prog-prosedur-preview-img" src="" alt="Pratinjau Prosedur"
+                                    class="w-full h-full object-cover hidden">
+                                <span id="admin-prog-prosedur-preview-placeholder"
+                                    class="text-xs text-slate-400 italic">Pilih file gambar untuk mengunggah dan melihat pratinjau</span>
+                                <!-- Spinner overlay while uploading -->
+                                <div id="admin-prog-prosedur-spinner"
+                                    class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2">
+                                    <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-400"></i>
+                                    <span class="text-xs font-semibold">Mengunggah ke Google Drive...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="pt-2 border-t border-slate-100">
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Persyaratan Berkas (Format: Judul | Deskripsi, 1 per baris)</label>
-                        <textarea id="admin-prog-persyaratan" rows="4" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono" placeholder="Fotocopy Kartu Keluarga | Menyerahkan fotocopy Kartu Keluarga terbaru sebanyak 2 lembar.&#10;Fotocopy Akta Kelahiran | Menyerahkan fotocopy Akta Kelahiran sebanyak 2 lembar.&#10;Pas Foto Berwarna | Menyerahkan pas foto ukuran 3x4 sebanyak 3 lembar."></textarea>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Persyaratan Berkas
+                            (Format: Judul | Deskripsi, 1 per baris)</label>
+                        <textarea id="admin-prog-persyaratan" rows="4"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono"
+                            placeholder="Fotocopy Kartu Keluarga | Menyerahkan fotocopy Kartu Keluarga terbaru sebanyak 2 lembar.&#10;Fotocopy Akta Kelahiran | Menyerahkan fotocopy Akta Kelahiran sebanyak 2 lembar.&#10;Pas Foto Berwarna | Menyerahkan pas foto ukuran 3x4 sebanyak 3 lembar."></textarea>
                     </div>
                 </div>
 
@@ -4098,39 +4190,58 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Biaya Pendaftaran -->
                         <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
-                            <span class="text-[10px] font-bold text-slate-700 uppercase block">1. Biaya Pendaftaran / Awal</span>
+                            <span class="text-[10px] font-bold text-slate-700 uppercase block">1. Biaya Pendaftaran /
+                                Awal</span>
                             <div>
                                 <label class="block text-[9px] text-slate-400">Nominal Pendaftaran</label>
-                                <input type="text" id="admin-prog-biaya-daftar-nominal" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800" placeholder="Rp.7.500.000">
+                                <input type="text" id="admin-prog-biaya-daftar-nominal"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800"
+                                    placeholder="Rp.7.500.000">
                             </div>
                             <div>
                                 <label class="block text-[9px] text-slate-400">Catatan / Note</label>
-                                <input type="text" id="admin-prog-biaya-daftar-note" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Dibayarkan sekali saat daftar ulang">
+                                <input type="text" id="admin-prog-biaya-daftar-note"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
+                                    placeholder="Dibayarkan sekali saat daftar ulang">
                             </div>
                             <div>
-                                <label class="block text-[9px] text-slate-400">Rincian Komponen Biaya Awal (1 baris per item)</label>
-                                <textarea id="admin-prog-biaya-daftar-items" rows="4" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono" placeholder="Pendaftaran & Administrasi&#10;Peralatan Kasur & Lemari&#10;Seragam Pondok (6 Stel)&#10;Syahriyah Bulan Pertama"></textarea>
+                                <label class="block text-[9px] text-slate-400">Rincian Komponen Biaya Awal (1 baris per
+                                    item)</label>
+                                <textarea id="admin-prog-biaya-daftar-items" rows="4"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
+                                    placeholder="Pendaftaran & Administrasi&#10;Peralatan Kasur & Lemari&#10;Seragam Pondok (6 Stel)&#10;Syahriyah Bulan Pertama"></textarea>
                             </div>
                         </div>
 
                         <!-- Biaya Bulanan / Syahriyah -->
                         <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
-                            <span class="text-[10px] font-bold text-slate-700 uppercase block">2. Biaya Syahriyah (Bulanan)</span>
+                            <span class="text-[10px] font-bold text-slate-700 uppercase block">2. Biaya Syahriyah
+                                (Bulanan)</span>
                             <div>
                                 <label class="block text-[9px] text-slate-400">Nominal Syahriyah</label>
-                                <input type="text" id="admin-prog-biaya-syahriyah-nominal" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800" placeholder="Rp.900.000">
+                                <input type="text" id="admin-prog-biaya-syahriyah-nominal"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800"
+                                    placeholder="Rp.900.000">
                             </div>
                             <div>
                                 <label class="block text-[9px] text-slate-400">Catatan / Note</label>
-                                <input type="text" id="admin-prog-biaya-syahriyah-note" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs" placeholder="Iuran rutin bulanan santri">
+                                <input type="text" id="admin-prog-biaya-syahriyah-note"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
+                                    placeholder="Iuran rutin bulanan santri">
                             </div>
                             <div>
-                                <label class="block text-[9px] text-slate-400">Komponen Termasuk (1 baris per item)</label>
-                                <textarea id="admin-prog-biaya-syahriyah-items" rows="3" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono" placeholder="Makan 3x Sehari&#10;Bimbingan & Pendidikan Asatidz&#10;Listrik, Air & Kebersihan"></textarea>
+                                <label class="block text-[9px] text-slate-400">Komponen Termasuk (1 baris per
+                                    item)</label>
+                                <textarea id="admin-prog-biaya-syahriyah-items" rows="3"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
+                                    placeholder="Makan 3x Sehari&#10;Bimbingan & Pendidikan Asatidz&#10;Listrik, Air & Kebersihan"></textarea>
                             </div>
                             <div>
-                                <label class="block text-[9px] text-slate-400">Komponen Tidak Termasuk (1 baris per item)</label>
-                                <textarea id="admin-prog-biaya-syahriyah-excluded" rows="1" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono" placeholder="Uang Saku Pribadi"></textarea>
+                                <label class="block text-[9px] text-slate-400">Komponen Tidak Termasuk (1 baris per
+                                    item)</label>
+                                <textarea id="admin-prog-biaya-syahriyah-excluded" rows="1"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
+                                    placeholder="Uang Saku Pribadi"></textarea>
                             </div>
                         </div>
                     </div>
@@ -4139,28 +4250,41 @@
                 <!-- PANEL 6: CALL TO ACTION -->
                 <div id="admin-prog-panel-cta" class="admin-prog-panel hidden space-y-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Judul Banner Ajakan (CTA)</label>
-                        <input type="text" id="admin-prog-cta-title" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="Pendaftaran Santri Baru Telah Dibuka">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Judul Banner Ajakan
+                            (CTA)</label>
+                        <input type="text" id="admin-prog-cta-title"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                            placeholder="Pendaftaran Santri Baru Telah Dibuka">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deskripsi Ajakan (CTA Description)</label>
-                        <textarea id="admin-prog-cta-desc" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="Segera daftarkan putra/putri Anda untuk mendapatkan bimbingan hafalan Al-Qur'an terbaik..."></textarea>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deskripsi Ajakan (CTA
+                            Description)</label>
+                        <textarea id="admin-prog-cta-desc" rows="2"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                            placeholder="Segera daftarkan putra/putri Anda untuk mendapatkan bimbingan hafalan Al-Qur'an terbaik..."></textarea>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Link WhatsApp Konsultasi</label>
-                            <input type="url" id="admin-prog-cta-wa-link" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="https://wa.me/6281234567890?text=...">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Link WhatsApp
+                                Konsultasi</label>
+                            <input type="url" id="admin-prog-cta-wa-link"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                                placeholder="https://wa.me/6281234567890?text=...">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Teks Tombol WhatsApp</label>
-                            <input type="text" id="admin-prog-cta-wa-text" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="Konsultasi via WhatsApp Admin">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Teks Tombol
+                                WhatsApp</label>
+                            <input type="text" id="admin-prog-cta-wa-text"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                                placeholder="Konsultasi via WhatsApp Admin">
                         </div>
                     </div>
                 </div>
             </form>
 
             <!-- Modal Footer Controls -->
-            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2.5 shrink-0">
+            <div
+                class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2.5 shrink-0">
                 <button type="button" onclick="closeAdminProgramEditor()"
                     class="w-full sm:w-auto px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
                     Tutup
@@ -4194,7 +4318,9 @@
             <!-- Header Modal -->
             <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <div class="flex items-center space-x-2.5">
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 uppercase">Local Preview</span>
+                    <span
+                        class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 uppercase">Local
+                        Preview</span>
                     <h3 class="text-sm font-bold text-slate-800">Pratinjau Tampilan Detail Program</h3>
                 </div>
                 <button type="button" onclick="closeAdminProgramPreview()"
@@ -6668,6 +6794,79 @@
             }
         }
 
+        async function handleAdminProgramProsedurUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const token = getAdminSessionToken();
+            if (!token) {
+                showToast("❌ Sesi admin tidak ditemukan. Silakan login kembali.");
+                return;
+            }
+
+            // Client-side file size check (5 MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("❌ Ukuran file maksimal 5 MB.");
+                event.target.value = '';
+                return;
+            }
+
+            // Client-side MIME check
+            const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+            if (!allowedMimes.includes(file.type.toLowerCase())) {
+                showToast("❌ Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF.");
+                event.target.value = '';
+                return;
+            }
+
+            const spinner = document.getElementById('admin-prog-prosedur-spinner');
+            const previewImg = document.getElementById('admin-prog-prosedur-preview-img');
+            const placeholder = document.getElementById('admin-prog-prosedur-preview-placeholder');
+            const statusBadge = document.getElementById('admin-prog-prosedur-upload-status');
+            const hiddenInput = document.getElementById('admin-prog-prosedur-img');
+
+            if (spinner) spinner.classList.remove('hidden');
+            if (statusBadge) statusBadge.classList.add('hidden');
+
+            try {
+                const fileData = await readFileAsBase64(file);
+                fileData.prefix = "PROSEDUR";
+
+                const response = await apiPost("uploadMedia", { token, file: fileData });
+
+                if (response && (response.success || response.status === "success")) {
+                    const uploadedUrl = response.url || response.fileUrl || (response.data && response.data.url) || "";
+                    if (!uploadedUrl) throw new Error("Server tidak mengembalikan URL gambar.");
+
+                    if (hiddenInput) hiddenInput.value = uploadedUrl;
+                    if (previewImg) {
+                        previewImg.src = uploadedUrl;
+                        previewImg.classList.remove('hidden');
+                    }
+                    if (placeholder) placeholder.classList.add('hidden');
+                    if (statusBadge) {
+                        statusBadge.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Tersimpan di Drive`;
+                        statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800";
+                        statusBadge.classList.remove('hidden');
+                    }
+                    showToast("✅ Gambar prosedur berhasil diunggah ke Google Drive!");
+                } else {
+                    const errMsg = (response && response.message) || "Gagal mengunggah gambar ke Google Drive.";
+                    throw new Error(errMsg);
+                }
+            } catch (err) {
+                console.error("Gagal upload gambar prosedur:", err);
+                showToast("❌ Gagal upload gambar prosedur: " + err.message);
+                if (statusBadge) {
+                    statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Upload Gagal`;
+                    statusBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800";
+                    statusBadge.classList.remove('hidden');
+                }
+            } finally {
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
         function openAdminProgramEditor(programId) {
             const form = document.getElementById('adminProgramForm');
             if (form) form.reset();
@@ -6688,6 +6887,10 @@
             const coverPreviewImg = document.getElementById('admin-prog-cover-preview-img');
             const coverPlaceholder = document.getElementById('admin-prog-cover-preview-placeholder');
             const coverStatus = document.getElementById('admin-prog-cover-upload-status');
+            const prosedurFileInput = document.getElementById('admin-prog-prosedur-file');
+            const prosedurPreviewImg = document.getElementById('admin-prog-prosedur-preview-img');
+            const prosedurPlaceholder = document.getElementById('admin-prog-prosedur-preview-placeholder');
+            const prosedurStatus = document.getElementById('admin-prog-prosedur-upload-status');
             const role = getAdminSessionRole();
             const isAdmin = (role === "admin");
 
@@ -6697,6 +6900,7 @@
             }
 
             if (coverFileInput) coverFileInput.value = '';
+            if (prosedurFileInput) prosedurFileInput.value = '';
 
             switchAdminProgramTab('umum');
 
@@ -6705,6 +6909,7 @@
                 document.getElementById('admin-prog-mode').value = "create";
                 document.getElementById('admin-prog-server-version').value = "1";
                 document.getElementById('admin-prog-image').value = "";
+                document.getElementById('admin-prog-prosedur-img').value = "";
                 if (titleEl) titleEl.innerText = "Tambah Program Baru";
                 if (statusBadge) {
                     statusBadge.innerText = "Draft (Baru)";
@@ -6719,6 +6924,10 @@
                 if (coverPreviewImg) coverPreviewImg.classList.add('hidden');
                 if (coverPlaceholder) coverPlaceholder.classList.remove('hidden');
                 if (coverStatus) coverStatus.classList.add('hidden');
+
+                if (prosedurPreviewImg) prosedurPreviewImg.classList.add('hidden');
+                if (prosedurPlaceholder) prosedurPlaceholder.classList.remove('hidden');
+                if (prosedurStatus) prosedurStatus.classList.add('hidden');
 
                 // Inisialisasi galeri foto baru dengan 1 slot kosong
                 adminProgramGalleryItems = [];
@@ -6818,7 +7027,30 @@
 
                 if (d.prosedur) {
                     document.getElementById('admin-prog-prosedur-items').value = Array.isArray(d.prosedur.items) ? d.prosedur.items.map(p => p.title ? `${p.title}: ${p.desc}` : p).join('\n') : "";
-                    document.getElementById('admin-prog-prosedur-img').value = d.prosedur.image || "";
+                    const pImg = d.prosedur.image || "";
+                    document.getElementById('admin-prog-prosedur-img').value = pImg;
+
+                    if (pImg) {
+                        if (prosedurPreviewImg) {
+                            prosedurPreviewImg.src = pImg;
+                            prosedurPreviewImg.classList.remove('hidden');
+                        }
+                        if (prosedurPlaceholder) prosedurPlaceholder.classList.add('hidden');
+                        if (prosedurStatus) {
+                            prosedurStatus.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Tersimpan di Drive`;
+                            prosedurStatus.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800";
+                            prosedurStatus.classList.remove('hidden');
+                        }
+                    } else {
+                        if (prosedurPreviewImg) prosedurPreviewImg.classList.add('hidden');
+                        if (prosedurPlaceholder) prosedurPlaceholder.classList.remove('hidden');
+                        if (prosedurStatus) prosedurStatus.classList.add('hidden');
+                    }
+                } else {
+                    document.getElementById('admin-prog-prosedur-img').value = "";
+                    if (prosedurPreviewImg) prosedurPreviewImg.classList.add('hidden');
+                    if (prosedurPlaceholder) prosedurPlaceholder.classList.remove('hidden');
+                    if (prosedurStatus) prosedurStatus.classList.add('hidden');
                 }
 
                 if (Array.isArray(d.persyaratan)) {
@@ -6888,7 +7120,7 @@
             const targetOutput = document.getElementById('admin-prog-target-output').value.split('\n').map(s => s.trim()).filter(Boolean);
             const fasilitas = document.getElementById('admin-prog-fasilitas').value.split('\n').map(s => s.trim()).filter(Boolean).map(text => ({ text, icon: "fa-check", iconColor: "text-brand-700" }));
 
-            // Map repeatable gallery items with fallback
+            // Map repeatable gallery items without fallback to cover (P1-FINDING-02)
             let gallery = adminProgramGalleryItems
                 .filter(g => g.image && g.image.trim() !== '')
                 .map((g, idx) => ({
@@ -6897,16 +7129,8 @@
                     caption: (g.caption || '').trim() || 'Dokumentasi Kegiatan Santri'
                 }));
 
-            if (gallery.length === 0 && image) {
-                gallery = [{
-                    sliderId: `galeri-${id || 'temp'}`,
-                    image: image,
-                    caption: 'Dokumentasi Santri'
-                }];
-            }
-
             const prosedurItems = document.getElementById('admin-prog-prosedur-items').value.split('\n').map(s => s.trim()).filter(Boolean);
-            const prosedurImg = document.getElementById('admin-prog-prosedur-img').value.trim() || "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop";
+            const prosedurImg = document.getElementById('admin-prog-prosedur-img').value.trim();
 
             const persyaratan = document.getElementById('admin-prog-persyaratan').value.split('\n').map(s => s.trim()).filter(Boolean).map(line => {
                 const parts = line.split('|').map(p => p.trim());
