@@ -5459,12 +5459,6 @@
             const splashScreen = document.getElementById('mobile-splash-screen');
             const logoContainer = document.getElementById('mobile-splash-logo-container');
 
-            // Cek apakah sudah pernah muncul di sesi ini
-            if (sessionStorage.getItem('splashShown')) {
-                splashScreen.style.display = 'none';
-                return;
-            }
-
             // Tampilkan animasi
             setTimeout(() => {
                 logoContainer.classList.remove('scale-110', 'opacity-0');
@@ -5476,10 +5470,9 @@
                 splashScreen.classList.add('opacity-0');
             }, 2000);
 
-            // Hapus dari DOM & simpan sesi
+            // Hapus dari DOM
             setTimeout(() => {
                 splashScreen.style.display = 'none';
-                sessionStorage.setItem('splashShown', 'true');
             }, 3000);
         }
 
