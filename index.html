@@ -5625,6 +5625,12 @@
                 switchTab('profil', false);
             } else if (path === '/pendidikan') {
                 switchTab('program-pilihan', false);
+            } else if (path === '/kehidupan-santri/jadwal-kegiatan') {
+                switchTab('jadwal-kegiatan', false);
+            } else if (path === '/kehidupan-santri/unit-kegiatan') {
+                switchTab('unit-kegiatan', false);
+            } else if (path === '/kehidupan-santri/poskestren') {
+                switchTab('poskestren', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -5648,6 +5654,12 @@
                 switchTab('profil', false);
             } else if (path === '/pendidikan') {
                 switchTab('program-pilihan', false);
+            } else if (path === '/kehidupan-santri/jadwal-kegiatan') {
+                switchTab('jadwal-kegiatan', false);
+            } else if (path === '/kehidupan-santri/unit-kegiatan') {
+                switchTab('unit-kegiatan', false);
+            } else if (path === '/kehidupan-santri/poskestren') {
+                switchTab('poskestren', false);
             } else {
                 switchTab('beranda', false);
             }
@@ -5660,8 +5672,14 @@
                 if (tabId === 'profil') targetUrl = '/tentang-kami/';
                 else if (tabId === 'kabar') targetUrl = '/berita/';
                 else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/';
+                else if (tabId === 'jadwal-kegiatan') targetUrl = '/kehidupan-santri/jadwal-kegiatan/';
+                else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
+                else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
                 
-                if (window.location.pathname !== targetUrl && (tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || tabId === 'beranda')) {
+                if (window.location.pathname !== targetUrl && (
+                    tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || 
+                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || 
+                    tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
             }
