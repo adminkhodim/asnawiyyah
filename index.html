@@ -223,11 +223,17 @@
                         </div>
                     </div>
 
-                    <!-- 5. Dropdown: Warta & Layanan -->
+                    <!-- 5. Berita -->
+                    <button onclick="navigateToNews()"
+                        class="px-3.5 py-2 rounded-xl font-bold text-emerald-100 hover:text-white hover:bg-brand-800 transition">
+                        Berita
+                    </button>
+
+                    <!-- 6. Dropdown: Layanan -->
                     <div class="relative group">
                         <button
                             class="px-3.5 py-2 rounded-xl font-bold text-emerald-100 hover:text-white hover:bg-brand-800 transition flex items-center space-x-1">
-                            <span>Warta & Layanan</span>
+                            <span>Layanan</span>
                             <i
                                 class="fa-solid fa-chevron-down text-[9px] ml-1 transition-transform duration-200 group-hover:rotate-180"></i>
                         </button>
@@ -235,10 +241,10 @@
                             class="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                             <div
                                 class="bg-white rounded-2xl shadow-xl border border-slate-100 p-2 space-y-1 text-slate-700">
-                                <button onclick="navigateToNews()"
+                                <button onclick="switchTab('layanan-hub')"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 hover:text-brand-700 transition flex items-center space-x-2.5">
-                                    <i class="fa-solid fa-newspaper text-brand-700 w-4"></i>
-                                    <span>Berita & Kabar Pondok</span>
+                                    <i class="fa-solid fa-layer-group text-emerald-600 w-4"></i>
+                                    <span>Pusat Layanan</span>
                                 </button>
                                 <button onclick="switchTab('galeri')"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-sky-50 hover:text-sky-700 transition flex items-center space-x-2.5">
@@ -2552,6 +2558,80 @@
                     </div>
                 </section>
 
+            </div>
+        </div>
+
+        <!-- ==================== TABS BARU: LAYANAN HUB ==================== -->
+        <div id="page-layanan-hub" class="tab-content hidden space-y-6">
+            <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+
+                <!-- Header Halaman -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2.5">
+                        <button onclick="switchTab('beranda')"
+                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                            title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-bold text-brand-700 uppercase tracking-widest block">Layanan</span>
+                            <h2 class="text-base md:text-lg font-bold text-slate-800">Pusat Layanan & Dokumentasi</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid 3 Kolom Card -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
+                    
+                    <!-- Galeri -->
+                    <div onclick="switchTab('galeri')"
+                        class="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between group cursor-pointer hover:bg-sky-50 hover:border-sky-100 transition h-full">
+                        <div class="mb-4">
+                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-photo-film"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition">Galeri Dokumentasi</h3>
+                            <p class="text-[10px] md:text-xs text-slate-500 mt-1 line-clamp-2">Kumpulan foto dan dokumentasi kegiatan santri dan pesantren.</p>
+                        </div>
+                        <div class="flex items-center text-sky-600 text-[10px] font-semibold mt-auto">
+                            <span>Lihat Galeri</span>
+                            <i class="fa-solid fa-arrow-right ml-1 transition-transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+
+                    <!-- Kalender -->
+                    <div onclick="switchTab('kalender')"
+                        class="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between group cursor-pointer hover:bg-amber-50 hover:border-amber-100 transition h-full">
+                        <div class="mb-4">
+                            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-800 group-hover:text-amber-700 transition">Kalender Masehi & Jawa</h3>
+                            <p class="text-[10px] md:text-xs text-slate-500 mt-1 line-clamp-2">Kalender akademik, penanggalan masehi, hijriah, dan jawa.</p>
+                        </div>
+                        <div class="flex items-center text-amber-600 text-[10px] font-semibold mt-auto">
+                            <span>Lihat Kalender</span>
+                            <i class="fa-solid fa-arrow-right ml-1 transition-transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+
+                    <!-- Portal Ibadah -->
+                    <div onclick="switchTab('ibadah')"
+                        class="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between group cursor-pointer hover:bg-emerald-50 hover:border-brand-200 transition h-full">
+                        <div class="mb-4">
+                            <div class="w-12 h-12 bg-emerald-100 text-brand-600 rounded-xl flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-book-quran"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-800 group-hover:text-brand-700 transition">Portal Ibadah</h3>
+                            <p class="text-[10px] md:text-xs text-slate-500 mt-1 line-clamp-2">Kumpulan wirid, dzikir, jadwal sholat, dan amalan yaumiyyah.</p>
+                        </div>
+                        <div class="flex items-center text-brand-600 text-[10px] font-semibold mt-auto">
+                            <span>Lihat Portal</span>
+                            <i class="fa-solid fa-arrow-right ml-1 transition-transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
@@ -5639,6 +5719,14 @@
                 switchTab('poskestren', false);
             } else if (path === '/kehidupan-santri/ikatan-alumni') {
                 switchTab('alumni', false);
+            } else if (path === '/layanan') {
+                switchTab('layanan-hub', false);
+            } else if (path === '/layanan/galeri') {
+                switchTab('galeri', false);
+            } else if (path === '/layanan/kalender') {
+                switchTab('kalender', false);
+            } else if (path === '/layanan/portal-ibadah') {
+                switchTab('ibadah', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -5676,6 +5764,14 @@
                 switchTab('poskestren', false);
             } else if (path === '/kehidupan-santri/ikatan-alumni') {
                 switchTab('alumni', false);
+            } else if (path === '/layanan') {
+                switchTab('layanan-hub', false);
+            } else if (path === '/layanan/galeri') {
+                switchTab('galeri', false);
+            } else if (path === '/layanan/kalender') {
+                switchTab('kalender', false);
+            } else if (path === '/layanan/portal-ibadah') {
+                switchTab('ibadah', false);
             } else {
                 switchTab('beranda', false);
             }
@@ -5695,11 +5791,16 @@
                 else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
                 else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
                 else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
+                else if (tabId === 'layanan-hub') targetUrl = '/layanan/';
+                else if (tabId === 'galeri') targetUrl = '/layanan/galeri/';
+                else if (tabId === 'kalender') targetUrl = '/layanan/kalender/';
+                else if (tabId === 'ibadah') targetUrl = '/layanan/portal-ibadah/';
                 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || 
                     tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' || 
                     tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'alumni' || 
+                    tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' || 
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
