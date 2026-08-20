@@ -83,6 +83,17 @@
 
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
 
+    <!-- ==================== MOBILE SPLASH SCREEN (LOGO OPENING) ==================== -->
+    <div id="mobile-splash-screen" class="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center transition-opacity duration-1000 md:hidden">
+        <div class="relative flex flex-col items-center transform scale-110 opacity-0 transition-all duration-1000 ease-out" id="mobile-splash-logo-container">
+            <!-- GANTI URL_IMGUR_ANDA_DI_SINI dengan link gambar dari Imgur -->
+            <img src="URL_IMGUR_ANDA_DI_SINI" alt="Asnawiyyah Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-sm">
+            <div class="mt-4 overflow-hidden">
+                <p class="text-xs font-bold text-slate-400 tracking-[0.3em] uppercase opacity-80">Asnawiyyah</p>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== HEADER DESKTOP (2-TIER INSTITUTIONAL NAV) ==================== -->
     <div class="hidden md:block sticky top-0 z-50 shadow-md">
 
@@ -5425,8 +5436,38 @@
             renderAllProgramDetails();
         }
 
+        // ==================== MOBILE SPLASH LOGIC ====================
+        function initMobileSplash() {
+            const splashScreen = document.getElementById('mobile-splash-screen');
+            const logoContainer = document.getElementById('mobile-splash-logo-container');
+            
+            // Cek apakah sudah pernah muncul di sesi ini
+            if (sessionStorage.getItem('splashShown')) {
+                splashScreen.style.display = 'none';
+                return;
+            }
+
+            // Tampilkan animasi
+            setTimeout(() => {
+                logoContainer.classList.remove('scale-110', 'opacity-0');
+                logoContainer.classList.add('scale-100', 'opacity-100');
+            }, 100);
+
+            // Hilangkan perlahan setelah 2 detik
+            setTimeout(() => {
+                splashScreen.classList.add('opacity-0');
+            }, 2000);
+
+            // Hapus dari DOM & simpan sesi
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+                sessionStorage.setItem('splashShown', 'true');
+            }, 3000);
+        }
+
         // ==================== INISIALISASI UTAMA (SINGLE ONLOAD) ====================
         window.onload = async function () {
+            initMobileSplash();
             initializeProgramRuntime();
             await loadNews();
             loadBanners();
