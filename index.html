@@ -6079,8 +6079,7 @@
                     btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat...`;
                 }
                 
-                const response = await fetch(`${SCRIPT_URL}?action=getPengaturan`);
-                const data = await response.json();
+                const data = await apiGet("getPengaturan");
                 
                 if (data && data.status === "success" && data.data) {
                     const config = data.data;
@@ -6110,20 +6109,13 @@
 
             try {
                 const payload = {
-                    action: "savePengaturan",
                     video_highlight: document.getElementById('input-video-highlight').value,
                     link_instagram: document.getElementById('input-link-instagram').value,
                     link_youtube: document.getElementById('input-link-youtube').value,
                     link_facebook: document.getElementById('input-link-facebook').value
                 };
 
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
+                const result = await apiPost("savePengaturan", payload);
                 if (result.success) {
                     showToast("Pengaturan profil berhasil disimpan!");
                     loadPengaturan(); // Refresh client side
@@ -6141,8 +6133,7 @@
         
         async function loadPengaturan() {
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getPengaturan`);
-                const data = await response.json();
+                const data = await apiGet("getPengaturan");
                 
                 if (data && data.status === "success" && data.data) {
                     const config = data.data;
