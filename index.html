@@ -5623,6 +5623,8 @@
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
+            } else if (path === '/pendidikan') {
+                switchTab('program-pilihan', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -5644,6 +5646,8 @@
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
+            } else if (path === '/pendidikan') {
+                switchTab('program-pilihan', false);
             } else {
                 switchTab('beranda', false);
             }
@@ -5655,8 +5659,9 @@
                 let targetUrl = '/';
                 if (tabId === 'profil') targetUrl = '/tentang-kami/';
                 else if (tabId === 'kabar') targetUrl = '/berita/';
+                else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/';
                 
-                if (window.location.pathname !== targetUrl && (tabId === 'profil' || tabId === 'kabar' || tabId === 'beranda')) {
+                if (window.location.pathname !== targetUrl && (tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
             }
