@@ -466,23 +466,17 @@
                             </div>
                         </div>
 
-                        <!-- Hero Showcase Frame (Kanan - 5 Kolom) -->
+                        <!-- Hero Showcase Frame (Kanan - 5 Kolom) — Dynamic from Banner Dataset -->
                         <div class="col-span-5 relative">
                             <div
                                 class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10 aspect-[4/3] bg-emerald-800">
-                                <img src="https://images.unsplash.com/photo-1585036156171-384164a8c675?auto=format&fit=crop&w=1000&q=80"
-                                    alt="Kegiatan Santri" class="w-full h-full object-cover">
-                                <div
-                                    class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
-                                    <div>
-                                        <span
-                                            class="px-2.5 py-1 rounded bg-emerald-500 text-xs font-bold text-slate-950 uppercase">Kegiatan
-                                            Utama</span>
-                                        <p class="text-sm font-medium text-white mt-1">Halaqah Tahfidz & Pengajian Kitab
-                                            Kuning Bersanad</p>
+                                <div id="hero-slider-container-desktop" class="w-full h-full relative">
+                                    <div class="w-full h-full flex items-center justify-center text-emerald-400/60 text-xs italic">
+                                        Memuat Banner...
                                     </div>
                                 </div>
                             </div>
+                            <div id="hero-dots-container-desktop" class="flex justify-center items-center space-x-2 mt-3"></div>
                         </div>
 
                     </div>
@@ -5699,24 +5693,27 @@
             const sliderPairs = [
                 {
                     slider: document.getElementById('hero-slider-container'),
-                    dots: document.getElementById('hero-dots-container')
+                    dots: document.getElementById('hero-dots-container'),
+                    type: 'mobile'
                 },
                 {
                     slider: document.getElementById('hero-slider-container-desktop'),
-                    dots: document.getElementById('hero-dots-container-desktop')
+                    dots: document.getElementById('hero-dots-container-desktop'),
+                    type: 'desktop'
                 }
             ];
 
             const activeBanners = mockBannerData.filter(b => b.status === "Aktif");
+            const labelMap = { ppdb: 'Pendaftaran', kabar: 'Berita', 'program-pilihan': 'Program', profil: 'Profil', galeri: 'Galeri', alumni: 'Alumni', beranda: 'Beranda', 'jadwal-kegiatan': 'Jadwal', 'unit-kegiatan': 'Unit', poskestren: 'Poskestren' };
 
-            sliderPairs.forEach(({ slider, dots }) => {
+            sliderPairs.forEach(({ slider, dots, type }) => {
                 if (!slider || !dots) return;
 
                 if (activeBanners.length === 0) {
-                    slider.innerHTML = `
-                        <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs italic bg-slate-100">
-                            Belum ada banner aktif.
-                        </div>`;
+                    const emptyClass = type === 'desktop'
+                        ? 'w-full h-full flex items-center justify-center text-emerald-400/60 text-xs italic'
+                        : 'w-full h-full flex items-center justify-center text-slate-400 text-xs italic bg-slate-100';
+                    slider.innerHTML = `<div class="${emptyClass}">Belum ada banner aktif.</div>`;
                     dots.innerHTML = "";
                     return;
                 }
@@ -5734,7 +5731,20 @@
                         slideDiv.onclick = () => window.open(banner.targetAksi, '_blank');
                     }
 
-                    slideDiv.innerHTML = `<img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">`;
+                    if (type === 'desktop') {
+                        const label = banner.tipeAksi === 'tab' ? (labelMap[banner.targetAksi] || banner.targetAksi || 'Info') : (banner.tipeAksi === 'url' ? 'Tautan' : 'Info');
+                        slideDiv.innerHTML = `
+                            <img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
+                                <div>
+                                    <span class="px-2.5 py-1 rounded bg-emerald-500 text-xs font-bold text-slate-950 uppercase">${label}</span>
+                                    <p class="text-sm font-medium text-white mt-1">${banner.nama}</p>
+                                </div>
+                            </div>`;
+                    } else {
+                        slideDiv.innerHTML = `<img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">`;
+                    }
+
                     slider.appendChild(slideDiv);
 
                     const dotBtn = document.createElement('button');
@@ -5759,28 +5769,33 @@
         }
 
         function setHeroSlide(index) {
-            const slides = document.querySelectorAll('.hero-slide');
-            const dots = document.querySelectorAll('.hero-dot');
-
-            if (!slides.length) return;
             currentHeroSlide = index;
 
-            slides.forEach((slide, i) => {
-                if (i === index) {
-                    slide.classList.remove('opacity-0');
-                    slide.classList.add('opacity-100');
-                } else {
-                    slide.classList.remove('opacity-100');
-                    slide.classList.add('opacity-0');
-                }
-            });
+            const containers = [
+                { slides: document.querySelectorAll('#hero-slider-container .hero-slide'), dots: document.querySelectorAll('#hero-dots-container .hero-dot') },
+                { slides: document.querySelectorAll('#hero-slider-container-desktop .hero-slide'), dots: document.querySelectorAll('#hero-dots-container-desktop .hero-dot') }
+            ];
 
-            dots.forEach((dot, i) => {
-                if (i === index) {
-                    dot.className = "hero-dot w-2.5 h-2.5 rounded-full bg-brand-700 transition-all duration-300";
-                } else {
-                    dot.className = "hero-dot w-2 h-2 rounded-full bg-slate-300 hover:bg-slate-400 transition-all duration-300";
-                }
+            containers.forEach(({ slides, dots }) => {
+                if (!slides.length) return;
+
+                slides.forEach((slide, i) => {
+                    if (i === index) {
+                        slide.classList.remove('opacity-0');
+                        slide.classList.add('opacity-100');
+                    } else {
+                        slide.classList.remove('opacity-100');
+                        slide.classList.add('opacity-0');
+                    }
+                });
+
+                dots.forEach((dot, i) => {
+                    if (i === index) {
+                        dot.className = "hero-dot w-2.5 h-2.5 rounded-full bg-brand-700 transition-all duration-300";
+                    } else {
+                        dot.className = "hero-dot w-2 h-2 rounded-full bg-slate-300 hover:bg-slate-400 transition-all duration-300";
+                    }
+                });
             });
         }
 
@@ -8084,6 +8099,20 @@
                 const el = document.getElementById(id);
                 if (el) el.innerText = formattedCountdown;
             });
+
+            // Update Current Date dynamically
+            if (typeof namaHariIndo !== 'undefined' && typeof namaBulanIndo !== 'undefined' && typeof getPasaranJawa !== 'undefined') {
+                const hari = namaHariIndo[now.getDay()];
+                const pasaran = getPasaranJawa(now);
+                const tgl = now.getDate();
+                const bln = namaBulanIndo[now.getMonth()];
+                const thn = now.getFullYear();
+                
+                ['home-current-date', 'home-current-date-desktop'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = `${hari} ${pasaran}, ${tgl} ${bln} ${thn}`;
+                });
+            }
         }
 
         setInterval(initHomePrayerWidget, 1000);
