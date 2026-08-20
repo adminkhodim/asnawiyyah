@@ -1,1 +1,9 @@
-{"cleanUrls":true,"rewrites":[{"source":"/berita/:slug","destination":"/api/og?slug=$slug"},{"source":"/berita","destination":"/index.html"},{"source":"/(.*)","destination":"/index.html"}]}
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/berita", "destination": "/index.html" },
+    { "source": "/berita/", "destination": "/index.html" },
+    { "source": "/berita/:slug", "destination": "/api/og?slug=$slug" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
