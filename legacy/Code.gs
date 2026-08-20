@@ -55,8 +55,38 @@ function doPost(e) {
     // ========================================================
 
     if (action === "saveBerita") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(
         simpanBerita(payload.data || payload)
+      );
+    }
+
+    if (action === "updateBerita") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        updateBerita(payload.data || payload)
+      );
+    }
+
+    if (action === "deleteBerita") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        deleteBeritaData(payload.data || payload)
       );
     }
 
@@ -345,7 +375,169 @@ function formatDate(dateString) {
 const FOLDER_ID = "1xKMwCsHJ9-XHUe2m9A6_NV4IBvqgW_WD"; // Ganti dengan ID folder Drive
 const SHEET_NAME = "Berita"; // Sesuaikan nama tab sheet
 
+function generateNewsId() {
+  const timestamp = new Date().getTime();
+  const randomStr = Math.random().toString(36).substring(2, 6).toLowerCase();
+  return "NWS_" + timestamp + "_" + randomStr;
+}
+
+function generateSlug(judul) {
+  const randomStr = Math.random().toString(36).substring(2, 6).toLowerCase();
+  if (!judul || String(judul).trim() === "") {
+    return "berita-" + randomStr;
+  }
+  let slug = String(judul).trim().toLowerCase();
+  slug = slug.replace(/[^a-z0-9\s-]/g, ""); // hanya karakter a-z, 0-9 dan -
+  slug = slug.replace(/\s+/g, "-");
+  slug = slug.replace(/-+/g, "-");
+  return slug + "-" + randomStr;
+}
+
+function generateUniqueIdentities(sheet, judul) {
+  let newsId, slug;
+  let isUnique = false;
+  let attempts = 0;
+  
+  // Baca semua existing ID/Slug
+  let existingNewsIds = new Set();
+  let existingSlugs = new Set();
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    for (let i = 0; i < data.length; i++) {
+      existingNewsIds.add(String(data[i][0] || "").trim());
+      existingSlugs.add(String(data[i][1] || "").trim());
+    }
+  }
+
+  while (!isUnique && attempts < 10) {
+    newsId = generateNewsId();
+    slug = generateSlug(judul);
+    if (!existingNewsIds.has(newsId) && !existingSlugs.has(slug)) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+  
+  if (!isUnique) {
+    throw new Error("Gagal meng-generate identity unik setelah 10 percobaan.");
+  }
+  return { newsId, slug };
+}
+
+// ==================== MIGRATION TOOL ====================
+function migrateBeritaIdentity() {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+  } catch (e) {
+    Logger.log("ABORT: Gagal mendapatkan lock. Sistem sedang sibuk.");
+    return { status: "error", message: "Gagal mendapatkan lock." };
+  }
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+       throw new Error("Sheet Berita tidak ditemukan.");
+    }
+    
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow === 0) {
+       throw new Error("Sheet kosong.");
+    }
+    
+    let data = sheet.getDataRange().getValues();
+    let headers = data[0];
+    
+    // Validate State
+    if (headers[0] === "news_id" && headers[1] === "slug") {
+      Logger.log("ABORT: Sheet sudah di-migrate (STATE B).");
+      return { status: "success", message: "Sudah di-migrate." };
+    }
+    
+    if (headers[0] !== "Tanggal" || headers[1] !== "Judul" || lastCol < 7) {
+      Logger.log("ABORT: Struktur tidak dikenali (UNKNOWN STATE).");
+      throw new Error("UNKNOWN STATE");
+    }
+    
+    // STATE A terdeteksi. Mulai migrasi.
+    let backupSheetName = SHEET_NAME + "_Backup_PreMigrate";
+    let existingBackup = ss.getSheetByName(backupSheetName);
+    if (existingBackup) {
+      ss.deleteSheet(existingBackup);
+    }
+    let backupSheet = sheet.copyTo(ss);
+    backupSheet.setName(backupSheetName);
+    backupSheet.hideSheet();
+    
+    // Insert Kolom A dan B
+    sheet.insertColumnsBefore(1, 2);
+    sheet.getRange(1, 1).setValue("news_id");
+    sheet.getRange(1, 2).setValue("slug");
+    
+    data = sheet.getDataRange().getValues();
+    
+    let existingNewsIds = new Set();
+    let existingSlugs = new Set();
+    let updates = []; 
+    
+    for (let i = 1; i < data.length; i++) {
+      let row = data[i];
+      let nId = String(row[0] || "").trim();
+      let slg = String(row[1] || "").trim();
+      let judul = row[3];
+      
+      let isBlank = (String(row[2]||"") === "" && String(row[3]||"") === "" && String(row[4]||"") === "" && String(row[5]||"") === "" && String(row[6]||"") === "");
+      if (isBlank) {
+        updates.push(["", ""]);
+        continue; // Blank row protection
+      }
+      
+      let finalNewsId = nId;
+      let finalSlug = slg;
+      
+      if (!finalNewsId || existingNewsIds.has(finalNewsId)) {
+        do { finalNewsId = generateNewsId(); } while (existingNewsIds.has(finalNewsId));
+      }
+      existingNewsIds.add(finalNewsId);
+      
+      if (!finalSlug || existingSlugs.has(finalSlug)) {
+        do { finalSlug = generateSlug(judul); } while (existingSlugs.has(finalSlug));
+      }
+      existingSlugs.add(finalSlug);
+      
+      if (String(judul||"").trim() === "") {
+        Logger.log("Migration warning: Empty title pada baris " + (i+1));
+      }
+      
+      updates.push([finalNewsId, finalSlug]);
+    }
+    
+    if (updates.length > 0) {
+      sheet.getRange(2, 1, updates.length, 2).setValues(updates);
+    }
+    
+    Logger.log("Migrasi selesai. " + updates.length + " baris diproses.");
+    return { status: "success", message: "Migrasi selesai." };
+    
+  } catch (err) {
+    Logger.log("ERROR MIGRATION: " + err.message);
+    return { status: "error", message: err.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function simpanBerita(formData) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+  } catch (e) {
+    return { success: false, message: "Sistem sedang sibuk. Silakan coba lagi. (Lock gagal)" };
+  }
+
   try {
     var fileUrl = "";
 
@@ -368,10 +560,20 @@ function simpanBerita(formData) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
-      sheet.appendRow(["Tanggal", "Judul", "Kategori", "Penulis", "Gambar_URL", "Ringkasan", "Isi"]);
+      sheet.appendRow(["news_id", "slug", "Tanggal", "Judul", "Kategori", "Penulis", "Gambar_URL", "Ringkasan", "Isi"]);
     }
+    
+    // Check if the sheet header represents STATE A (Legacy)
+    var header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (header[0] === "Tanggal") {
+       throw new Error("Migrasi identitas belum dilakukan. Harap jalankan migrasi terlebih dahulu.");
+    }
+    
+    var identities = generateUniqueIdentities(sheet, formData.judul);
 
     sheet.appendRow([
+      identities.newsId,
+      identities.slug,
       new Date(),
       formData.judul,
       formData.kategori,
@@ -384,6 +586,109 @@ function simpanBerita(formData) {
     return { success: true, message: "Berita berhasil dipublikasikan!" };
   } catch (error) {
     return { success: false, message: error.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function updateBerita(formData) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+  } catch (e) {
+    return { success: false, message: "Sistem sedang sibuk. Silakan coba lagi. (Lock gagal)" };
+  }
+
+  try {
+    var news_id = formData.news_id || formData.id;
+    if (!news_id) {
+       return { success: false, message: "ID Berita (news_id) wajib disertakan untuk update." };
+    }
+
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      return { success: false, message: "Sheet Berita tidak ditemukan." };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var targetRow = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === String(news_id).trim()) {
+        targetRow = i + 1; // 1-indexed for getRange
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return { success: false, message: "NOT_FOUND: Berita dengan ID tersebut tidak ditemukan." };
+    }
+
+    var fileUrl = data[targetRow - 1][6]; // Keep existing Gambar_URL by default
+    if (formData.file && formData.file.base64) {
+      var folder = DriveApp.getFolderById(FOLDER_ID);
+      var decodedData = Utilities.base64Decode(formData.file.base64);
+      var blob = Utilities.newBlob(decodedData, formData.file.mimeType, "BERITA_UPD_" + new Date().getTime() + "_" + formData.file.name);
+      var newFile = folder.createFile(blob);
+      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    }
+
+    var judul = formData.judul !== undefined ? formData.judul : data[targetRow - 1][3];
+    var kategori = formData.kategori !== undefined ? formData.kategori : data[targetRow - 1][4];
+    var penulis = formData.penulis !== undefined ? formData.penulis : data[targetRow - 1][5];
+    var ringkasan = formData.ringkasan !== undefined ? formData.ringkasan : data[targetRow - 1][7];
+    var isi = formData.isi !== undefined ? formData.isi : data[targetRow - 1][8];
+
+    // Array to update: D to I (Judul, Kategori, Penulis, Gambar_URL, Ringkasan, Isi)
+    sheet.getRange(targetRow, 4, 1, 6).setValues([[judul, kategori, penulis, fileUrl, ringkasan, isi]]);
+
+    return { success: true, message: "Berita berhasil diperbarui!" };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function deleteBeritaData(payload) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+  } catch (e) {
+    return { success: false, message: "Sistem sedang sibuk. Silakan coba lagi. (Lock gagal)" };
+  }
+
+  try {
+    var news_id = payload.news_id || payload.id;
+    if (!news_id) {
+       return { success: false, message: "ID Berita (news_id) wajib disertakan untuk hapus." };
+    }
+
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      return { success: false, message: "Sheet Berita tidak ditemukan." };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var targetRow = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === String(news_id).trim()) {
+        targetRow = i + 1; // 1-indexed for deleteRow
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return { success: false, message: "NOT_FOUND: Berita dengan ID tersebut tidak ditemukan." };
+    }
+
+    sheet.deleteRow(targetRow);
+
+    return { success: true, message: "Berita berhasil dihapus!" };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -510,20 +815,46 @@ function getKabarData() {
 
     const data = beritaSheet.getDataRange().getValues();
     const newsList = [];
+    
+    let isMigrated = false;
+    if (data.length > 0 && data[0][0] === "news_id" && data[0][1] === "slug") {
+      isMigrated = true;
+    }
 
     // Baris 1 adalah Header, ambil mulai baris 2 (index 1) dari yang paling baru
     for (let i = data.length - 1; i >= 1; i--) {
-      const judul = String(data[i][1] || "").trim();
-      if (judul !== "") {
-        newsList.push({
-          tanggal: data[i][0] ? formatDate(data[i][0]) : "",
-          judul: judul,
-          kategori: data[i][2] ? String(data[i][2]) : "Kabar",
-          penulis: data[i][3] ? String(data[i][3]) : "Admin",
-          gambar: data[i][4] ? String(data[i][4]) : "",
-          ringkasan: data[i][5] ? String(data[i][5]) : "",
-          isi: data[i][6] ? String(data[i][6]) : ""
-        });
+      if (isMigrated) {
+        const judul = String(data[i][3] || "").trim();
+        const news_id = String(data[i][0] || "").trim();
+        const slug = String(data[i][1] || "").trim();
+        if (judul !== "" || news_id !== "") {
+          newsList.push({
+            news_id: news_id,
+            slug: slug,
+            tanggal: data[i][2] ? formatDate(data[i][2]) : "",
+            judul: judul,
+            kategori: data[i][4] ? String(data[i][4]) : "Kabar",
+            penulis: "Admin",
+            gambar: data[i][6] ? String(data[i][6]) : "",
+            ringkasan: data[i][7] ? String(data[i][7]) : "",
+            isi: data[i][8] ? String(data[i][8]) : ""
+          });
+        }
+      } else {
+        const judul = String(data[i][1] || "").trim();
+        if (judul !== "") {
+          newsList.push({
+            news_id: "",
+            slug: "",
+            tanggal: data[i][0] ? formatDate(data[i][0]) : "",
+            judul: judul,
+            kategori: data[i][2] ? String(data[i][2]) : "Kabar",
+            penulis: data[i][3] ? String(data[i][3]) : "Admin",
+            gambar: data[i][4] ? String(data[i][4]) : "",
+            ringkasan: data[i][5] ? String(data[i][5]) : "",
+            isi: data[i][6] ? String(data[i][6]) : ""
+          });
+        }
       }
     }
 
@@ -1542,7 +1873,23 @@ class ProgramService {
     const actionName = isEdit ? "program.update" : "program.create";
     authorizeAction(actorContext, actionName);
 
-    const name = String(inputPayload.name || (existing ? existing.name : "")).trim();
+    // OPTIMISTIC CONCURRENCY VALIDATION
+    // Client wajib mengirim version saat melakukan edit.
+    if (
+      isEdit &&
+      inputPayload.version !== undefined &&
+      inputPayload.version !== null
+    ) {
+      checkOptimisticVersion(
+        existing.version,
+        Number(inputPayload.version)
+      );
+    }
+
+    const name = String(
+      inputPayload.name || (existing ? existing.name : "")
+    ).trim();
+
     if (!name) {
       throw new ValidationError("Program name is required.");
     }
@@ -1554,22 +1901,57 @@ class ProgramService {
     const recordToSave = Object.freeze({
       id: id,
       name: name,
-      badge: String(inputPayload.badge || (existing ? existing.badge : "")).trim(),
-      image: String(inputPayload.image || (existing ? existing.image : "")).trim(),
-      description: String(inputPayload.description || (existing ? existing.description : "")).trim(),
-      highlights: Array.isArray(inputPayload.highlights) ? inputPayload.highlights : (existing ? existing.highlights : []),
-      detail: (inputPayload.detail && typeof inputPayload.detail === "object") ? inputPayload.detail : (existing ? existing.detail : {}),
+      badge: String(
+        inputPayload.badge || (existing ? existing.badge : "")
+      ).trim(),
+      image: String(
+        inputPayload.image || (existing ? existing.image : "")
+      ).trim(),
+      description: String(
+        inputPayload.description || (existing ? existing.description : "")
+      ).trim(),
+      highlights: Array.isArray(inputPayload.highlights)
+        ? inputPayload.highlights
+        : (existing ? existing.highlights : []),
+      detail: (
+        inputPayload.detail &&
+        typeof inputPayload.detail === "object"
+      )
+        ? inputPayload.detail
+        : (existing ? existing.detail : {}),
 
-      // SERVER-MANAGED FIELDS:
-      status: existing ? existing.status : ProgramStatus.DRAFT,
-      sort_order: Number(inputPayload.sort_order) || (existing ? existing.sort_order : 0),
-      created_at: existing ? existing.created_at : now,
+      // SERVER-MANAGED FIELDS
+      status: existing
+        ? existing.status
+        : ProgramStatus.DRAFT,
+
+      sort_order: Number(inputPayload.sort_order) ||
+        (existing ? existing.sort_order : 0),
+
+      created_at: existing
+        ? existing.created_at
+        : now,
+
       updated_at: now,
-      created_by: existing ? existing.created_by : userId,
+
+      created_by: existing
+        ? existing.created_by
+        : userId,
+
       updated_by: userId,
-      published_at: existing ? existing.published_at : null,
-      published_by: existing ? existing.published_by : null,
-      version: isEdit ? (Number(inputPayload.version) || (existing ? existing.version + 1 : 1)) : 1
+
+      published_at: existing
+        ? existing.published_at
+        : null,
+
+      published_by: existing
+        ? existing.published_by
+        : null,
+
+      // SERVER-SIDE VERSION INCREMENT
+      version: isEdit
+        ? (Number(existing.version) + 1)
+        : 1
     });
 
     const saved = this.repository.save(recordToSave);

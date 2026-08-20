@@ -2577,136 +2577,17 @@
                     </div>
                 </div>
 
-                <!-- Filter Kategori Button Group -->
-                <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
-                    <button onclick="filterGaleri('all')" id="btn-galeri-all"
-                        class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-brand-700 text-white shadow-sm shrink-0 transition">
-                        Semua
-                    </button>
-                    <button onclick="filterGaleri('kegiatan')" id="btn-galeri-kegiatan"
-                        class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
-                        Kegiatan Santri
-                    </button>
-                    <button onclick="filterGaleri('event')" id="btn-galeri-event"
-                        class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
-                        Event Utama
-                    </button>
-                    <button onclick="filterGaleri('fasilitas')" id="btn-galeri-fasilitas"
-                        class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
-                        Fasilitas Kampus
-                    </button>
-                    <button onclick="filterGaleri('prestasi')" id="btn-galeri-prestasi"
-                        class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
-                        Prestasi
-                    </button>
+                <!-- Filter Kategori Button Group (Dinamis dari JS) -->
+                <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none" id="galeri-filter-container">
+                    <!-- Filter akan dimuat di sini -->
                 </div>
 
-                <!-- Grid Foto Dokumentasi -->
+                <!-- Grid Foto Dokumentasi (Dinamis dari JS) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="galeri-grid">
-
-                    <!-- Item 1: Kegiatan -->
-                    <div
-                        class="galeri-item galeri-kegiatan relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100">
-                        <img src="https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop"
-                            alt="Halaqah Hafalan Santri"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <span
-                                class="bg-amber-500 text-brand-dark text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1">Kegiatan
-                                Santri</span>
-                            <h4 class="text-xs font-bold text-white leading-snug">Setoran Pagi Halaqah Tahfidz</h4>
-                            <p class="text-[10px] text-emerald-200 mt-0.5"><i
-                                    class="fa-solid fa-calendar mr-1"></i>Harian Asrama</p>
-                        </div>
+                    <div class="col-span-full py-8 text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-spinner fa-spin text-brand-500 text-2xl mb-2 block"></i>
+                        Memuat foto galeri...
                     </div>
-
-                    <!-- Item 2: Event Utama -->
-                    <div
-                        class="galeri-item galeri-event relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100">
-                        <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop"
-                            alt="Asnawiyyah Bersholawat"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <span
-                                class="bg-purple-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1">Event
-                                Utama</span>
-                            <h4 class="text-xs font-bold text-white leading-snug">Pementasan Hadroh Az-Zahra</h4>
-                            <p class="text-[10px] text-emerald-200 mt-0.5"><i class="fa-solid fa-calendar mr-1"></i>Haul
-                                Pesantren</p>
-                        </div>
-                    </div>
-
-                    <!-- Item 3: Fasilitas -->
-                    <div
-                        class="galeri-item galeri-fasilitas relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100">
-                        <img src="https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop"
-                            alt="Masjid Utama Pesantren"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <span
-                                class="bg-blue-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1">Fasilitas
-                                Kampus</span>
-                            <h4 class="text-xs font-bold text-white leading-snug">Masjid Utama Kampus PPTQ Asnawiyyah
-                            </h4>
-                            <p class="text-[10px] text-emerald-200 mt-0.5"><i
-                                    class="fa-solid fa-location-dot mr-1"></i>Pilangwetan Demak</p>
-                        </div>
-                    </div>
-
-                    <!-- Item 4: Prestasi -->
-                    <div
-                        class="galeri-item galeri-prestasi relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100">
-                        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop"
-                            alt="Juara Lomba MTQ"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <span
-                                class="bg-orange-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1">Prestasi</span>
-                            <h4 class="text-xs font-bold text-white leading-snug">Juara Olimpiade & MTQ Tingkat
-                                Kabupaten</h4>
-                            <p class="text-[10px] text-emerald-200 mt-0.5"><i
-                                    class="fa-solid fa-trophy mr-1"></i>Prestasi Santri</p>
-                        </div>
-                    </div>
-
-                    <!-- Item 5: Kegiatan -->
-                    <div
-                        class="galeri-item galeri-kegiatan relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100">
-                        <img src="https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop"
-                            alt="Pementasan Teater SEMUT"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <span
-                                class="bg-amber-500 text-brand-dark text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1">Kegiatan
-                                Santri</span>
-                            <h4 class="text-xs font-bold text-white leading-snug">Pagelaran Seni Teater "SEMUT"</h4>
-                            <p class="text-[10px] text-emerald-200 mt-0.5"><i
-                                    class="fa-solid fa-masks-theater mr-1"></i>Panggung Kreasi</p>
-                        </div>
-                    </div>
-
-                    <!-- Item 6: Event Utama -->
-                    <div
-                        class="galeri-item galeri-event relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100">
-                        <img src="https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop"
-                            alt="Wisuda Khotmil Quran"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <span
-                                class="bg-purple-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1">Event
-                                Utama</span>
-                            <h4 class="text-xs font-bold text-white leading-snug">Wisuda Khotmil Qur'an & Imtihan</h4>
-                            <p class="text-[11px] text-emerald-200 mt-0.5"><i
-                                    class="fa-solid fa-graduation-cap mr-1"></i>Agenda Tahunan</p>
-                        </div>
-                    </div>
-
                 </div>
 
                 <!-- Section Video Highlight -->
@@ -3223,6 +3104,27 @@
                         </div>
                     </div>
 
+                    <!-- Manajemen Galeri -->
+                    <div onclick="showAdminView('galeri')"
+                        class="bg-white hover:bg-purple-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-purple-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-purple-50 text-purple-700 group-hover:bg-purple-600 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-camera-retro"></i>
+                            </div>
+                            <span id="admin-hub-galeri-count"
+                                class="text-[9px] font-extrabold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md uppercase">0
+                                Foto</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-purple-700 transition">
+                                Manajemen Galeri</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Atur foto dan dokumentasi
+                                pesantren.</p>
+                        </div>
+                    </div>
+
                     <!-- 3. Tombol Icon Grid: Data Pendaftaran PPDB -->
                     <div onclick="showAdminView('ppdb')"
                         class="bg-white hover:bg-blue-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-blue-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
@@ -3528,6 +3430,119 @@
 
                     <div id="admin-banner-list" class="space-y-3">
                         <!-- Card banner di-render dinamis oleh JavaScript -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- ================= VIEW 5: MANAJEMEN GALERI ================= -->
+            <div id="admin-view-galeri" class="hidden space-y-4">
+
+                <!-- Header Sub-View Galeri -->
+                <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button onclick="showAdminView('hub')"
+                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                            title="Kembali ke Menu Utama">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800">Manajemen Galeri</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulir Input Galeri -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <h3 id="admin-galeri-form-title" class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-camera text-purple-700 mr-2"></i> Tambah Foto Galeri
+                        </h3>
+                        <button type="button" id="admin-cancel-galeri-btn" onclick="resetAdminGaleriForm()" class="text-xs text-rose-600 hover:underline hidden font-semibold">
+                            Batal Edit
+                        </button>
+                    </div>
+
+                    <form id="adminGaleriForm" onsubmit="handleAdminGaleriSubmit(event)" class="space-y-4">
+                        <input type="hidden" id="admin-galeri-id" value="">
+                        <input type="hidden" id="admin-galeri-gambar-lama" value="">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Judul Foto -->
+                            <div class="space-y-1.5 md:col-span-2">
+                                <label class="text-xs font-semibold text-slate-600">Judul Foto <span class="text-rose-500">*</span></label>
+                                <input type="text" id="admin-galeri-judul" required placeholder="Contoh: Kegiatan Santri Pagi" class="w-full text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:bg-white transition">
+                            </div>
+
+                            <!-- Kategori (Datalist dinamis) -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-semibold text-slate-600">Kategori <span class="text-rose-500">*</span></label>
+                                <input list="kategori-galeri-list" id="admin-galeri-kategori" required placeholder="Pilih atau ketik baru..." class="w-full text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:bg-white transition">
+                                <datalist id="kategori-galeri-list">
+                                    <option value="Kegiatan Santri">
+                                    <option value="Event Utama">
+                                    <option value="Fasilitas Kampus">
+                                    <option value="Prestasi">
+                                </datalist>
+                                <p class="text-[10px] text-slate-400">Pilih dari daftar atau ketik kategori baru</p>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-semibold text-slate-600">Status <span class="text-rose-500">*</span></label>
+                                <select id="admin-galeri-status" class="w-full text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:bg-white transition appearance-none">
+                                    <option value="Aktif">Aktif (Tampil di Beranda)</option>
+                                    <option value="Draft">Draft (Disembunyikan)</option>
+                                </select>
+                            </div>
+
+                            <!-- Keterangan -->
+                            <div class="space-y-1.5 md:col-span-2">
+                                <label class="text-xs font-semibold text-slate-600">Keterangan Singkat</label>
+                                <input type="text" id="admin-galeri-keterangan" placeholder="Contoh: Harian Asrama" class="w-full text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-400 focus:bg-white transition">
+                            </div>
+
+                            <!-- Upload Gambar -->
+                            <div class="space-y-1.5 md:col-span-2">
+                                <label class="text-xs font-semibold text-slate-600">Upload Gambar <span id="req-galeri-img" class="text-rose-500">*</span></label>
+                                <div class="flex items-center gap-3">
+                                    <input type="file" id="admin-galeri-file" accept="image/png, image/jpeg, image/jpg" class="w-full text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition">
+                                </div>
+                                <p class="text-[10px] text-slate-400">Rekomendasi rasio 4:3 (Maks 1MB). Biarkan kosong jika tidak ingin mengubah gambar saat mode Edit.</p>
+                                <div id="galeri-preview-container" class="mt-2 hidden">
+                                    <p class="text-[10px] font-semibold text-slate-500 mb-1">Gambar Saat Ini:</p>
+                                    <img id="admin-galeri-preview-img" src="" class="h-24 rounded-lg object-cover border border-slate-200 shadow-sm" alt="Preview">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" id="admin-galeri-submit-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-save"></i>
+                                <span>Simpan Galeri</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Daftar Galeri -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-images text-slate-400 mr-2"></i> Daftar Foto Galeri
+                        </h3>
+                        <span id="admin-total-galeri" class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Memuat...</span>
+                    </div>
+
+                    <!-- Loader & Empty State -->
+                    <div id="admin-galeri-loader" class="text-center py-6 hidden">
+                        <i class="fa-solid fa-spinner fa-spin text-purple-600 text-2xl mb-2"></i>
+                        <p class="text-xs text-slate-500">Memuat data galeri...</p>
+                    </div>
+
+                    <!-- List Container -->
+                    <div id="admin-galeri-list" class="space-y-2.5">
+                        <!-- Items rendered by JS -->
                     </div>
                 </section>
             </div>
@@ -5482,6 +5497,7 @@
             initializeProgramRuntime();
             await loadNews();
             loadBanners();
+            loadGaleri();
             if (typeof renderCalendar === 'function') {
                 renderCalendar();
                 handleClientRouting();
@@ -5916,6 +5932,7 @@
             const bannerView = document.getElementById('admin-view-banner');
             const ppdbView = document.getElementById('admin-view-ppdb');
             const programView = document.getElementById('admin-view-program');
+            const galeriView = document.getElementById('admin-view-galeri');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -5924,6 +5941,7 @@
             bannerView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
             if (programView) programView.classList.add('hidden');
+            if (galeriView) galeriView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -5931,6 +5949,9 @@
             } else if (viewName === 'banner') {
                 bannerView.classList.remove('hidden');
                 renderAdminBannerList();
+            } else if (viewName === 'galeri') {
+                if (galeriView) galeriView.classList.remove('hidden');
+                renderAdminGaleriList();
             } else if (viewName === 'ppdb') {
                 if (ppdbView) ppdbView.classList.remove('hidden');
                 loadAdminPPDBData();
@@ -6528,6 +6549,201 @@
             } catch (err) {
                 console.error("Gagal menghapus banner:", err);
                 showToast("❌ Gagal menghapus banner: " + err.message);
+            }
+        }
+
+        // ==================== GALERI LOGIC (CLIENT & ADMIN) ====================
+        let mockGaleriData = [];
+        
+        async function loadGaleri() {
+            try {
+                if (!isApiConfigured()) {
+                    renderGaleriList();
+                    if(document.getElementById('admin-galeri-list')) renderAdminGaleriList();
+                    return;
+                }
+                
+                const loader = document.getElementById('admin-galeri-loader');
+                if (loader) loader.classList.remove('hidden');
+
+                const response = await apiGet("getGaleri");
+                if (loader) loader.classList.add('hidden');
+
+                if (response && response.status === "success") {
+                    mockGaleriData = response.data || [];
+                }
+                
+                renderGaleriList();
+                if(document.getElementById('admin-galeri-list')) renderAdminGaleriList();
+            } catch (err) {
+                console.error("Kesalahan jaringan saat memuat galeri:", err);
+                const loader = document.getElementById('admin-galeri-loader');
+                if (loader) loader.classList.add('hidden');
+            }
+        }
+
+        // ==================== DASHBOARD ADMIN: MANAJEMEN GALERI ====================
+        function renderAdminGaleriList() {
+            const listContainer = document.getElementById('admin-galeri-list');
+            const totalBadge = document.getElementById('admin-total-galeri');
+            const hubBadge = document.getElementById('admin-hub-galeri-count');
+
+            const activeCount = mockGaleriData.filter(g => g.status === "Aktif").length;
+            if (hubBadge) hubBadge.innerText = `${activeCount} Aktif`;
+            if (totalBadge) totalBadge.innerText = `${mockGaleriData.length} Foto`;
+
+            if (!listContainer) return;
+            listContainer.innerHTML = "";
+
+            if (mockGaleriData.length === 0) {
+                listContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Belum ada foto galeri. Silakan tambah foto baru.</div>`;
+                return;
+            }
+
+            mockGaleriData.forEach((galeri) => {
+                const card = document.createElement('div');
+                card.className = "p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2.5";
+
+                const statusBadge = galeri.status === "Aktif"
+                    ? `<span class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">Aktif</span>`
+                    : `<span class="text-[9px] font-extrabold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md uppercase">Draft</span>`;
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <img src="${galeri.gambar}" alt="${galeri.judul}" class="w-20 h-16 object-cover rounded-lg border border-slate-200 shrink-0 bg-slate-100">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[9px] font-extrabold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md uppercase shrink-0">${galeri.kategori}</span>
+                                ${statusBadge}
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mt-1 truncate" title="${galeri.judul}">${galeri.judul}</h4>
+                            <p class="text-[10px] text-slate-500 truncate">${galeri.keterangan || '-'}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2 border-t border-slate-100/60 mt-1">
+                        <button onclick="toggleAdminGaleriStatus('${galeri.id}', '${galeri.status === 'Aktif' ? 'Draft' : 'Aktif'}')" class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                            ${galeri.status === 'Aktif' ? '<i class="fa-solid fa-eye-slash mr-1"></i> Sembunyikan' : '<i class="fa-solid fa-eye mr-1"></i> Tampilkan'}
+                        </button>
+                        <button onclick='editAdminGaleri(${JSON.stringify(galeri)})' class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-brand-50 text-brand-700 hover:bg-brand-100 transition">
+                            <i class="fa-solid fa-pen mr-1"></i> Edit
+                        </button>
+                        <button onclick="deleteAdminGaleri('${galeri.id}')" class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Hapus
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        async function handleAdminGaleriSubmit(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('admin-galeri-id').value;
+            const judul = document.getElementById('admin-galeri-judul').value;
+            const kategori = document.getElementById('admin-galeri-kategori').value;
+            const keterangan = document.getElementById('admin-galeri-keterangan').value;
+            const status = document.getElementById('admin-galeri-status').value;
+            const oldImg = document.getElementById('admin-galeri-gambar-lama').value;
+            
+            const fileInput = document.getElementById('admin-galeri-file');
+            const file = fileInput.files[0];
+
+            if (!file && !oldImg) {
+                showToast("Mohon pilih gambar galeri terlebih dahulu!");
+                return;
+            }
+
+            const btn = document.getElementById('admin-galeri-submit-btn');
+            const originalBtnContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Menyimpan...';
+
+            try {
+                let fileData = null;
+                if (file) fileData = await readFileAsBase64(file);
+
+                const payload = {
+                    id: id,
+                    judul: judul,
+                    kategori: kategori,
+                    keterangan: keterangan,
+                    status: status,
+                    gambarLama: oldImg,
+                    file: fileData
+                };
+
+                const response = await apiPost("saveGaleri", payload);
+
+                if (response && response.success) {
+                    showToast("Galeri berhasil disimpan!");
+                    resetAdminGaleriForm();
+                    await loadGaleri();
+                } else {
+                    showToast("❌ Gagal menyimpan galeri: " + (response ? response.message : "Terjadi kesalahan"));
+                }
+            } catch (err) {
+                showToast("❌ Terjadi kesalahan: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnContent;
+            }
+        }
+
+        function editAdminGaleri(galeriData) {
+            document.getElementById('admin-galeri-id').value = galeriData.id;
+            document.getElementById('admin-galeri-judul').value = galeriData.judul;
+            document.getElementById('admin-galeri-kategori').value = galeriData.kategori;
+            document.getElementById('admin-galeri-keterangan').value = galeriData.keterangan;
+            document.getElementById('admin-galeri-status').value = galeriData.status;
+            document.getElementById('admin-galeri-gambar-lama').value = galeriData.gambar;
+
+            document.getElementById('admin-galeri-file').removeAttribute('required');
+            document.getElementById('req-galeri-img').classList.add('hidden');
+
+            const previewContainer = document.getElementById('galeri-preview-container');
+            const previewImg = document.getElementById('admin-galeri-preview-img');
+            previewContainer.classList.remove('hidden');
+            previewImg.src = galeriData.gambar;
+
+            document.getElementById('admin-galeri-form-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-purple-700 mr-2"></i> Edit Galeri';
+            document.getElementById('admin-cancel-galeri-btn').classList.remove('hidden');
+
+            window.scrollTo({ top: document.getElementById('adminGaleriForm').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function resetAdminGaleriForm() {
+            document.getElementById('adminGaleriForm').reset();
+            document.getElementById('admin-galeri-id').value = "";
+            document.getElementById('admin-galeri-gambar-lama').value = "";
+            document.getElementById('admin-galeri-file').setAttribute('required', 'true');
+            document.getElementById('req-galeri-img').classList.remove('hidden');
+            
+            document.getElementById('galeri-preview-container').classList.add('hidden');
+            document.getElementById('admin-galeri-preview-img').src = "";
+
+            document.getElementById('admin-galeri-form-title').innerHTML = '<i class="fa-solid fa-camera text-purple-700 mr-2"></i> Tambah Foto Galeri';
+            document.getElementById('admin-cancel-galeri-btn').classList.add('hidden');
+        }
+
+        async function toggleAdminGaleriStatus(galeriId, newStatus) {
+            try {
+                const response = await apiPost("toggleGaleri", { galeriId, newStatus });
+                showToast(response && response.message ? response.message : "Status diperbarui.");
+                if (response && response.success) await loadGaleri();
+            } catch (err) {
+                showToast("❌ Gagal mengubah status galeri: " + err.message);
+            }
+        }
+
+        async function deleteAdminGaleri(galeriId) {
+            if (!confirm("Apakah Anda yakin ingin menghapus foto ini?")) return;
+            try {
+                const response = await apiPost("deleteGaleri", { galeriId });
+                showToast(response && response.message ? response.message : "Galeri dihapus.");
+                if (response && response.success) await loadGaleri();
+            } catch (err) {
+                showToast("❌ Gagal menghapus galeri: " + err.message);
             }
         }
 
@@ -8184,21 +8400,72 @@
             if (activeBtn) activeBtn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl bg-white text-brand-900 shadow-sm transition";
         }
 
+        let currentGaleriFilter = "all";
+
+        function renderGaleriList() {
+            const gridContainer = document.getElementById('galeri-grid');
+            const filterContainer = document.getElementById('galeri-filter-container');
+            
+            if (!gridContainer || !filterContainer) return;
+
+            const activeGaleri = mockGaleriData.filter(g => g.status === "Aktif");
+            
+            if (activeGaleri.length === 0) {
+                filterContainer.innerHTML = '';
+                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-slate-50 rounded-2xl">Belum ada foto galeri.</div>`;
+                return;
+            }
+
+            // Generate filter buttons dynamically
+            const categories = new Set(activeGaleri.map(g => g.kategori).filter(Boolean));
+            let filterHtml = `
+                <button onclick="filterGaleri('all')" id="btn-galeri-all" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${currentGaleriFilter === 'all' ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} shrink-0 transition">Semua</button>
+            `;
+            
+            categories.forEach(cat => {
+                const safeCat = cat.replace(/\s+/g, '-').toLowerCase();
+                const isActive = currentGaleriFilter === safeCat;
+                filterHtml += `
+                    <button onclick="filterGaleri('${safeCat}')" id="btn-galeri-${safeCat}" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${isActive ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} shrink-0 transition" data-category="${cat}">${cat}</button>
+                `;
+            });
+            filterContainer.innerHTML = filterHtml;
+
+            // Generate grid
+            gridContainer.innerHTML = "";
+            let itemsFound = 0;
+
+            activeGaleri.forEach(galeri => {
+                const safeCat = (galeri.kategori || "").replace(/\s+/g, '-').toLowerCase();
+                
+                if (currentGaleriFilter !== 'all' && currentGaleriFilter !== safeCat) return;
+                
+                itemsFound++;
+
+                const bgColors = ["bg-amber-500", "bg-purple-600", "bg-blue-600", "bg-rose-500", "bg-emerald-600"];
+                const tagColor = bgColors[Math.abs(galeri.kategori.length) % bgColors.length];
+
+                const card = document.createElement('div');
+                card.className = "galeri-item relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100";
+                card.innerHTML = `
+                    <img src="${galeri.gambar}" alt="${galeri.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                        <span class="${tagColor} ${tagColor === 'bg-amber-500' ? 'text-brand-dark' : 'text-white'} text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1 shadow-sm">${galeri.kategori}</span>
+                        <h4 class="text-xs font-bold text-white leading-snug">${galeri.judul}</h4>
+                        <p class="text-[10px] text-emerald-200 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${galeri.keterangan || '-'}</p>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+
+            if (itemsFound === 0) {
+                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-slate-50 rounded-2xl">Tidak ada foto untuk kategori ini.</div>`;
+            }
+        }
+
         function filterGaleri(category) {
-            document.querySelectorAll('.btn-filter-galeri').forEach(btn => {
-                btn.className = "btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition";
-            });
-
-            const activeBtn = document.getElementById(`btn-galeri-${category}`);
-            if (activeBtn) activeBtn.className = "btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold bg-brand-700 text-white shadow-sm shrink-0 transition";
-
-            document.querySelectorAll('.galeri-item').forEach(item => {
-                if (category === 'all' || item.classList.contains(`galeri-${category}`)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+            currentGaleriFilter = category;
+            renderGaleriList();
         }
 
         // ==================== PORTAL IBADAH MODAL ====================
