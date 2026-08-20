@@ -5610,10 +5610,19 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         function handleClientRouting() {
+            // Cek URL fallback dari 404.html (GitHub Pages)
+            const params = new URLSearchParams(window.location.search);
+            const route = params.get('route');
+            if (route) {
+                window.history.replaceState({}, '', route);
+            }
+
             const path = window.location.pathname.replace(/\/+$/, '') || '/';
 
             if (path === '/berita') {
-                switchTab('kabar');
+                switchTab('kabar', false);
+            } else if (path === '/tentang-kami') {
+                switchTab('profil', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -5621,23 +5630,37 @@
                 }
             }
 
-            const params = new URLSearchParams(window.location.search);
             const legacyId = params.get('id');
             if (legacyId) {
                 bacaBerita(legacyId);
             }
         }
         window.addEventListener('popstate', (e) => {
-            if (window.location.pathname.startsWith('/berita/')) {
-                const slug = window.location.pathname.split('/berita/')[1];
+            const path = window.location.pathname.replace(/\/+$/, '') || '/';
+            if (path.startsWith('/berita/')) {
+                const slug = path.split('/berita/')[1];
                 if (slug) bacaBerita(slug, true);
+            } else if (path === '/berita') {
+                switchTab('kabar', false);
+            } else if (path === '/tentang-kami') {
+                switchTab('profil', false);
             } else {
-                switchTab('beranda');
+                switchTab('beranda', false);
             }
         });
 
         // ==================== SISTEM TABS (NAVIGASI SPA) ====================
-        function switchTab(tabId) {
+        function switchTab(tabId, updateUrl = true) {
+            if (updateUrl) {
+                let targetUrl = '/';
+                if (tabId === 'profil') targetUrl = '/tentang-kami/';
+                else if (tabId === 'kabar') targetUrl = '/berita/';
+                
+                if (window.location.pathname !== targetUrl && (tabId === 'profil' || tabId === 'kabar' || tabId === 'beranda')) {
+                    history.pushState({ tab: tabId }, '', targetUrl);
+                }
+            }
+
             document.querySelectorAll('.tab-content').forEach(el => {
                 el.classList.add('hidden');
                 el.classList.remove('block');
