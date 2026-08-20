@@ -5623,8 +5623,14 @@
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
-            } else if (path === '/pendidikan') {
+            } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
+            } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
+                switchTab('tahfidz-anak', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putra') {
+                switchTab('dewasa-putra', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putri') {
+                switchTab('dewasa-putri', false);
             } else if (path === '/kehidupan-santri/jadwal-kegiatan') {
                 switchTab('jadwal-kegiatan', false);
             } else if (path === '/kehidupan-santri/unit-kegiatan') {
@@ -5654,8 +5660,14 @@
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
-            } else if (path === '/pendidikan') {
+            } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
+            } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
+                switchTab('tahfidz-anak', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putra') {
+                switchTab('dewasa-putra', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putri') {
+                switchTab('dewasa-putri', false);
             } else if (path === '/kehidupan-santri/jadwal-kegiatan') {
                 switchTab('jadwal-kegiatan', false);
             } else if (path === '/kehidupan-santri/unit-kegiatan') {
@@ -5675,7 +5687,10 @@
                 let targetUrl = '/';
                 if (tabId === 'profil') targetUrl = '/tentang-kami/';
                 else if (tabId === 'kabar') targetUrl = '/berita/';
-                else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/';
+                else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/semua-program-pilihan/';
+                else if (tabId === 'tahfidz-anak') targetUrl = '/pendidikan/pesantren-tahfidz-anak/';
+                else if (tabId === 'dewasa-putra') targetUrl = '/pendidikan/pesantren-dewasa-putra/';
+                else if (tabId === 'dewasa-putri') targetUrl = '/pendidikan/pesantren-dewasa-putri/';
                 else if (tabId === 'jadwal-kegiatan') targetUrl = '/kehidupan-santri/jadwal-kegiatan/';
                 else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
                 else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
@@ -5683,6 +5698,7 @@
                 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || 
+                    tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' || 
                     tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'alumni' || 
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
