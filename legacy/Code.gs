@@ -150,6 +150,31 @@ function doPost(e) {
       );
     }
 
+    if (action === "saveGaleri") {
+      return createJsonResponse(simpanGaleri(payload));
+    }
+
+    if (action === "savePengaturan") {
+      return createJsonResponse(simpanPengaturan(payload.data || payload));
+    }
+
+    if (action === "deleteGaleri") {
+      const galeriId = payload.galeriId || payload.id || (payload.data && (payload.data.galeriId || payload.data.id));
+      if (!galeriId) {
+        return createJsonResponse({ status: "error", message: "ID Galeri wajib diisi" });
+      }
+      return createJsonResponse(hapusGaleri(galeriId));
+    }
+
+    if (action === "toggleGaleri") {
+      const galeriId = payload.galeriId || payload.id;
+      const newStatus = payload.newStatus || payload.status;
+      if (!galeriId || !newStatus) {
+        return createJsonResponse({ status: "error", message: "ID Galeri dan status wajib diisi" });
+      }
+      return createJsonResponse(toggleStatusGaleri(galeriId, newStatus));
+    }
+
     // ========================================================
     // PROGRAM DATA SOURCE v2.0 API ROUTER (POST)
     // ========================================================
@@ -745,6 +770,18 @@ function doGet(e) {
       );
     }
 
+    if (action === "getGaleri") {
+      return createJsonResponse(
+        getGaleriData()
+      );
+    }
+
+    if (action === "getPengaturan") {
+      return createJsonResponse(
+        getPengaturanData()
+      );
+    }
+
     if (action === "getPPDB") {
       return createJsonResponse(
         getPendaftarData()
@@ -866,6 +903,8 @@ function getKabarData() {
 
 // ==================== PENGELOLAAN BANNER SLIDER ====================
 const BANNER_SHEET_NAME = "Banner";
+const GALERI_SHEET_NAME = "Galeri";
+const PENGATURAN_SHEET_NAME = "Pengaturan";
 
 // 1. Mengambil Data Banner Aktif (Untuk Beranda & Admin)
 function getBannerData() {
@@ -1014,6 +1053,225 @@ function toggleStatusBanner(bannerId, newStatus) {
       }
     }
     return { success: false, message: "ID Banner tidak ditemukan" };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// ==================== PENGELOLAAN GALERI ====================
+
+// 1. Mengambil Data Galeri
+function getGaleriData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let galeriSheet = ss.getSheetByName(GALERI_SHEET_NAME);
+
+    // Jika sheet belum ada, buat otomatis beserta headernya
+    if (!galeriSheet) {
+      galeriSheet = ss.insertSheet(GALERI_SHEET_NAME);
+      galeriSheet.appendRow(["ID_Galeri", "Judul", "Kategori", "Keterangan", "Gambar_URL", "Status", "Timestamp"]);
+      // Tambahkan contoh awal
+      galeriSheet.appendRow([
+        "GLR_" + new Date().getTime(),
+        "Halaqah Hafalan Santri",
+        "Kegiatan Santri",
+        "Harian Asrama",
+        "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop",
+        "Aktif",
+        new Date().toISOString()
+      ]);
+    }
+
+    const data = galeriSheet.getDataRange().getValues();
+    const galeriList = [];
+
+    // Baca baris 2 sampai akhir
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0]) { // Pastikan ID tidak kosong
+        galeriList.push({
+          id: String(data[i][0]),
+          judul: String(data[i][1] || ""),
+          kategori: String(data[i][2] || ""),
+          keterangan: String(data[i][3] || ""),
+          gambar: String(data[i][4] || ""),
+          status: String(data[i][5] || "Aktif"),
+          timestamp: String(data[i][6] || "")
+        });
+      }
+    }
+
+    // Urutkan terbaru di atas (reverse)
+    galeriList.reverse();
+
+    return { status: "success", data: galeriList };
+  } catch (err) {
+    return { status: "error", message: err.toString(), data: [] };
+  }
+}
+
+// 2. Tambah / Edit Galeri
+function simpanGaleri(formData) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let galeriSheet = ss.getSheetByName(GALERI_SHEET_NAME);
+    if (!galeriSheet) {
+      getGaleriData(); // Buat sheet jika belum ada
+      galeriSheet = ss.getSheetByName(GALERI_SHEET_NAME);
+    }
+
+    var fileUrl = formData.gambarLama || "";
+
+    // Upload gambar baru ke Drive jika ada file yang diunggah
+    if (formData.file && formData.file.base64) {
+      var folder = DriveApp.getFolderById(FOLDER_ID);
+      var decodedData = Utilities.base64Decode(formData.file.base64);
+      var blob = Utilities.newBlob(
+        decodedData,
+        formData.file.mimeType,
+        "GALERI_" + new Date().getTime() + "_" + formData.file.name
+      );
+      var newFile = folder.createFile(blob);
+      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    }
+
+    const data = galeriSheet.getDataRange().getValues();
+    let isEdit = false;
+
+    // Jika Mode Edit (ID sudah ada)
+    if (formData.id) {
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(formData.id)) {
+          galeriSheet.getRange(i + 1, 2).setValue(formData.judul);
+          galeriSheet.getRange(i + 1, 3).setValue(formData.kategori);
+          galeriSheet.getRange(i + 1, 4).setValue(formData.keterangan);
+          if (fileUrl) galeriSheet.getRange(i + 1, 5).setValue(fileUrl);
+          galeriSheet.getRange(i + 1, 6).setValue(formData.status);
+          isEdit = true;
+          break;
+        }
+      }
+    }
+
+    // Jika Mode Tambah Baru
+    if (!isEdit) {
+      const newId = "GLR_" + new Date().getTime();
+      galeriSheet.appendRow([
+        newId,
+        formData.judul,
+        formData.kategori,
+        formData.keterangan,
+        fileUrl,
+        formData.status || "Aktif",
+        new Date().toISOString()
+      ]);
+    }
+
+    return { success: true, message: "Galeri berhasil disimpan", url: fileUrl };
+  } catch (err) {
+    return { success: false, message: "Gagal menyimpan galeri: " + err.message };
+  }
+}
+
+// 3. Hapus Galeri
+function hapusGaleri(galeriId) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const galeriSheet = ss.getSheetByName(GALERI_SHEET_NAME);
+    const data = galeriSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(galeriId)) {
+        galeriSheet.deleteRow(i + 1);
+        return { success: true, message: "Galeri berhasil dihapus" };
+      }
+    }
+    return { success: false, message: "ID Galeri tidak ditemukan" };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// 4. Toggle Status Galeri
+function toggleStatusGaleri(galeriId, newStatus) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const galeriSheet = ss.getSheetByName(GALERI_SHEET_NAME);
+    const data = galeriSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(galeriId)) {
+        galeriSheet.getRange(i + 1, 6).setValue(newStatus);
+        return { success: true, message: "Status galeri diubah ke: " + newStatus };
+      }
+    }
+    return { success: false, message: "ID Galeri tidak ditemukan" };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// ==================== PENGATURAN PROFIL ====================
+function getPengaturanData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    
+    if (!sheet) {
+      sheet = ss.insertSheet(PENGATURAN_SHEET_NAME);
+      sheet.appendRow(["Key", "Value", "Keterangan", "Update_Terakhir"]);
+      sheet.appendRow(["video_highlight", "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0", "URL Embed Youtube untuk Galeri", new Date().toISOString()]);
+      sheet.appendRow(["link_instagram", "https://instagram.com", "URL Profil Instagram", new Date().toISOString()]);
+      sheet.appendRow(["link_youtube", "https://youtube.com", "URL Channel YouTube", new Date().toISOString()]);
+      sheet.appendRow(["link_facebook", "https://facebook.com", "URL Halaman Facebook", new Date().toISOString()]);
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const config = {};
+    
+    for (let i = 1; i < data.length; i++) {
+      const key = String(data[i][0]).trim();
+      if (key) {
+        config[key] = String(data[i][1]).trim();
+      }
+    }
+    
+    return { status: "success", data: config };
+  } catch (err) {
+    return { status: "error", message: err.toString(), data: {} };
+  }
+}
+
+function simpanPengaturan(payload) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    if (!sheet) {
+      getPengaturanData();
+      sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    }
+    
+    const keysToUpdate = Object.keys(payload);
+    const data = sheet.getDataRange().getValues();
+    
+    for (let k of keysToUpdate) {
+      if (k === "action") continue;
+      
+      let foundRow = -1;
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === k) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      
+      if (foundRow > 0) {
+        sheet.getRange(foundRow, 2).setValue(payload[k]);
+        sheet.getRange(foundRow, 4).setValue(new Date().toISOString());
+      } else {
+        sheet.appendRow([k, payload[k], "", new Date().toISOString()]);
+      }
+    }
+    
+    return { success: true, message: "Pengaturan berhasil disimpan!" };
   } catch (err) {
     return { success: false, message: err.toString() };
   }

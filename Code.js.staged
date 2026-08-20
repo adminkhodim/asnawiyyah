@@ -131,6 +131,12 @@ function doPost(e) {
       );
     }
 
+    if (action === "savePengaturan") {
+      return createJsonResponse(
+        simpanPengaturan(payload.data || payload)
+      );
+    }
+
     if (action === "deleteGaleri") {
       const galeriId =
         payload.galeriId ||
@@ -782,6 +788,12 @@ function doGet(e) {
       );
     }
 
+    if (action === "getPengaturan") {
+      return createJsonResponse(
+        getPengaturanData()
+      );
+    }
+
     if (action === "getPPDB") {
       return createJsonResponse(
         getPendaftarData()
@@ -904,6 +916,7 @@ function getKabarData() {
 // ==================== PENGELOLAAN BANNER SLIDER ====================
 const BANNER_SHEET_NAME = "Banner";
 const GALERI_SHEET_NAME = "Galeri";
+const PENGATURAN_SHEET_NAME = "Pengaturan";
 
 // 1. Mengambil Data Banner Aktif (Untuk Beranda & Admin)
 function getBannerData() {
@@ -1203,6 +1216,74 @@ function toggleStatusGaleri(galeriId, newStatus) {
       }
     }
     return { success: false, message: "ID Galeri tidak ditemukan" };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// ==================== PENGATURAN PROFIL ====================
+function getPengaturanData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    
+    if (!sheet) {
+      sheet = ss.insertSheet(PENGATURAN_SHEET_NAME);
+      sheet.appendRow(["Key", "Value", "Keterangan", "Update_Terakhir"]);
+      sheet.appendRow(["video_highlight", "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0", "URL Embed Youtube untuk Galeri", new Date().toISOString()]);
+      sheet.appendRow(["link_instagram", "https://instagram.com", "URL Profil Instagram", new Date().toISOString()]);
+      sheet.appendRow(["link_youtube", "https://youtube.com", "URL Channel YouTube", new Date().toISOString()]);
+      sheet.appendRow(["link_facebook", "https://facebook.com", "URL Halaman Facebook", new Date().toISOString()]);
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const config = {};
+    
+    for (let i = 1; i < data.length; i++) {
+      const key = String(data[i][0]).trim();
+      if (key) {
+        config[key] = String(data[i][1]).trim();
+      }
+    }
+    
+    return { status: "success", data: config };
+  } catch (err) {
+    return { status: "error", message: err.toString(), data: {} };
+  }
+}
+
+function simpanPengaturan(payload) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    if (!sheet) {
+      getPengaturanData();
+      sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    }
+    
+    const keysToUpdate = Object.keys(payload);
+    const data = sheet.getDataRange().getValues();
+    
+    for (let k of keysToUpdate) {
+      if (k === "action") continue;
+      
+      let foundRow = -1;
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === k) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      
+      if (foundRow > 0) {
+        sheet.getRange(foundRow, 2).setValue(payload[k]);
+        sheet.getRange(foundRow, 4).setValue(new Date().toISOString());
+      } else {
+        sheet.appendRow([k, payload[k], "", new Date().toISOString()]);
+      }
+    }
+    
+    return { success: true, message: "Pengaturan berhasil disimpan!" };
   } catch (err) {
     return { success: false, message: err.toString() };
   }

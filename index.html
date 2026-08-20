@@ -3125,6 +3125,23 @@
                         </div>
                     </div>
 
+                    <!-- Pengaturan Profil -->
+                    <div onclick="showAdminView('pengaturan')"
+                        class="bg-white hover:bg-slate-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-slate-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-slate-50 text-slate-700 group-hover:bg-slate-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-gear"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-slate-700 transition">
+                                Pengaturan Profil</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Atur Tautan Video & Sosial Media.</p>
+                        </div>
+                    </div>
+
                     <!-- 3. Tombol Icon Grid: Data Pendaftaran PPDB -->
                     <div onclick="showAdminView('ppdb')"
                         class="bg-white hover:bg-blue-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-blue-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
@@ -3544,6 +3561,59 @@
                     <div id="admin-galeri-list" class="space-y-2.5">
                         <!-- Items rendered by JS -->
                     </div>
+                </section>
+            </div>
+
+            <!-- ================= VIEW 6: PENGATURAN PROFIL ================= -->
+            <div id="admin-view-pengaturan" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button onclick="showAdminView('hub')"
+                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                            title="Kembali ke Menu Utama">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800">Pengaturan Profil</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulir Pengaturan -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center mb-4">
+                        <i class="fa-solid fa-sliders text-slate-700 mr-2"></i> Tautan Profil
+                    </h3>
+                    <form id="form-pengaturan" onsubmit="submitPengaturan(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Video Highlight (Youtube Embed URL) <span class="text-red-500">*</span></label>
+                            <input type="url" id="input-video-highlight" required placeholder="https://www.youtube.com/embed/..."
+                                class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Instagram Profil URL</label>
+                            <input type="url" id="input-link-instagram" placeholder="https://instagram.com/..."
+                                class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">YouTube Channel URL</label>
+                            <input type="url" id="input-link-youtube" placeholder="https://youtube.com/..."
+                                class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Facebook Page URL</label>
+                            <input type="url" id="input-link-facebook" placeholder="https://facebook.com/..."
+                                class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                        </div>
+                        
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" id="btn-submit-pengaturan"
+                                class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition shadow-sm flex items-center active:scale-95">
+                                <i class="fa-solid fa-save mr-2"></i> Simpan Pengaturan
+                            </button>
+                        </div>
+                    </form>
                 </section>
             </div>
 
@@ -5498,6 +5568,7 @@
             await loadNews();
             loadBanners();
             loadGaleri();
+            loadPengaturan();
             if (typeof renderCalendar === 'function') {
                 renderCalendar();
                 handleClientRouting();
@@ -5933,6 +6004,7 @@
             const ppdbView = document.getElementById('admin-view-ppdb');
             const programView = document.getElementById('admin-view-program');
             const galeriView = document.getElementById('admin-view-galeri');
+            const pengaturanView = document.getElementById('admin-view-pengaturan');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -5942,6 +6014,7 @@
             if (ppdbView) ppdbView.classList.add('hidden');
             if (programView) programView.classList.add('hidden');
             if (galeriView) galeriView.classList.add('hidden');
+            if (pengaturanView) pengaturanView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -5952,6 +6025,9 @@
             } else if (viewName === 'galeri') {
                 if (galeriView) galeriView.classList.remove('hidden');
                 renderAdminGaleriList();
+            } else if (viewName === 'pengaturan') {
+                if (pengaturanView) pengaturanView.classList.remove('hidden');
+                loadAdminPengaturan();
             } else if (viewName === 'ppdb') {
                 if (ppdbView) ppdbView.classList.remove('hidden');
                 loadAdminPPDBData();
@@ -5991,6 +6067,106 @@
                 console.error("Gagal memuat data PPDB:", err);
                 showToast("❌ Gagal memuat data PPDB: " + err.message);
                 renderAdminPPDBList();
+            }
+        }
+
+        // ==================== DASHBOARD ADMIN: PENGATURAN PROFIL ====================
+        async function loadAdminPengaturan() {
+            try {
+                const btnSubmit = document.getElementById('btn-submit-pengaturan');
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat...`;
+                }
+                
+                const response = await fetch(`${SCRIPT_URL}?action=getPengaturan`);
+                const data = await response.json();
+                
+                if (data && data.status === "success" && data.data) {
+                    const config = data.data;
+                    document.getElementById('input-video-highlight').value = config.video_highlight || "";
+                    document.getElementById('input-link-instagram').value = config.link_instagram || "";
+                    document.getElementById('input-link-youtube').value = config.link_youtube || "";
+                    document.getElementById('input-link-facebook').value = config.link_facebook || "";
+                }
+            } catch (err) {
+                console.error("Gagal memuat pengaturan:", err);
+                showToast("Gagal memuat pengaturan profil.");
+            } finally {
+                const btnSubmit = document.getElementById('btn-submit-pengaturan');
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Simpan Pengaturan`;
+                }
+            }
+        }
+
+        async function submitPengaturan(e) {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btn-submit-pengaturan');
+            const originalBtnText = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
+
+            try {
+                const payload = {
+                    action: "savePengaturan",
+                    video_highlight: document.getElementById('input-video-highlight').value,
+                    link_instagram: document.getElementById('input-link-instagram').value,
+                    link_youtube: document.getElementById('input-link-youtube').value,
+                    link_facebook: document.getElementById('input-link-facebook').value
+                };
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast("Pengaturan profil berhasil disimpan!");
+                    loadPengaturan(); // Refresh client side
+                } else {
+                    showToast("Gagal menyimpan pengaturan: " + (result.message || "Unknown error"));
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Terjadi kesalahan koneksi.");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalBtnText;
+            }
+        }
+        
+        async function loadPengaturan() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getPengaturan`);
+                const data = await response.json();
+                
+                if (data && data.status === "success" && data.data) {
+                    const config = data.data;
+                    
+                    // Update iframe video highlight
+                    const iframeVideo = document.querySelector('iframe[title="Video Dokumentasi PPTQ Asnawiyyah"]');
+                    if (iframeVideo && config.video_highlight) {
+                        iframeVideo.src = config.video_highlight;
+                    }
+                    
+                    // Update social links
+                    const sosmedContainer = document.querySelector('.bg-slate-50.p-5.rounded-3xl.border.border-slate-100.text-center.space-y-3');
+                    if (sosmedContainer) {
+                        const igLink = sosmedContainer.querySelector('a[href*="instagram"]');
+                        const ytLink = sosmedContainer.querySelector('a[href*="youtube"]');
+                        const fbLink = sosmedContainer.querySelector('a[href*="facebook"]');
+                        
+                        if (igLink && config.link_instagram) igLink.href = config.link_instagram;
+                        if (ytLink && config.link_youtube) ytLink.href = config.link_youtube;
+                        if (fbLink && config.link_facebook) fbLink.href = config.link_facebook;
+                    }
+                }
+            } catch (err) {
+                console.error("Gagal memuat pengaturan klien:", err);
             }
         }
 
@@ -8446,9 +8622,9 @@
                 const tagColor = bgColors[Math.abs(galeri.kategori.length) % bgColors.length];
 
                 const card = document.createElement('div');
-                card.className = "galeri-item relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group border border-slate-100";
+                card.className = "galeri-item relative aspect-video rounded-2xl overflow-hidden shadow-sm group border border-slate-100 bg-slate-100";
                 card.innerHTML = `
-                    <img src="${galeri.gambar}" alt="${galeri.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <img src="${galeri.gambar}" alt="${galeri.judul}" class="w-full h-full object-contain group-hover:scale-105 transition duration-500">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                         <span class="${tagColor} ${tagColor === 'bg-amber-500' ? 'text-brand-dark' : 'text-white'} text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1 shadow-sm">${galeri.kategori}</span>
                         <h4 class="text-xs font-bold text-white leading-snug">${galeri.judul}</h4>
