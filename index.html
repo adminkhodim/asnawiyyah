@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Informasi PPTQ Asnawiyyah</title>
+    <title>PPTQ Asnawiyyah Pilangwetan | Official Website</title>
 
     <!-- Google Fonts: Plus Jakarta Sans & Amiri untuk aksen Islami -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,7 +221,7 @@
                             class="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                             <div
                                 class="bg-white rounded-2xl shadow-xl border border-slate-100 p-2 space-y-1 text-slate-700">
-                                <button onclick="switchTab('kabar')"
+                                <button onclick="navigateToNews()"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 hover:text-brand-700 transition flex items-center space-x-2.5">
                                     <i class="fa-solid fa-newspaper text-brand-700 w-4"></i>
                                     <span>Berita & Kabar Pondok</span>
@@ -1042,125 +1042,240 @@
         </div>
 
         <!-- ==================== TABS: PROFIL PESANTREN ==================== -->
-        <div id="page-profil" class="tab-content hidden space-y-6">
-            <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+<div id="page-profil" class="tab-content hidden space-y-8">
 
-                <!-- BARIS KEMBALI & HEADER UTAMA -->
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-1">
-                    <div class="flex items-center space-x-2.5">
-                        <button onclick="switchTab('beranda')"
-                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Beranda">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
-                        <div>
-                            <span class="text-[10px] font-bold text-brand-700 uppercase tracking-widest block">Tentang
-                                Pesantren</span>
-                            <h2 class="text-base md:text-lg font-bold text-slate-800">Profil PPTQ Asnawiyyah</h2>
-                        </div>
-                    </div>
-                    <button onclick="switchTab('ppdb')"
-                        class="hidden md:flex px-3.5 py-1.5 bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs rounded-lg shadow transition items-center space-x-1.5">
-                        <span>Daftar PPDB</span>
-                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </button>
+    <!-- PROFILE HEADER -->
+    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3">
+            <button
+                onclick="switchTab('beranda')"
+                class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+                title="Kembali ke Beranda">
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+            </button>
+
+            <div>
+                <span class="text-[10px] font-bold text-brand-700 uppercase tracking-[0.18em] block">
+                    Tentang Kami
+                </span>
+                <h2 class="text-base md:text-xl font-bold text-slate-800">
+                    Profil PPTQ Asnawiyyah
+                </h2>
+            </div>
+        </div>
+
+        <button
+            onclick="switchTab('ppdb')"
+            class="hidden md:inline-flex px-4 py-2 bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs rounded-xl shadow-sm transition items-center gap-2">
+            <span>Daftar PPDB</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+    </div>
+
+    <!-- IDENTITY HERO -->
+    <section class="relative overflow-hidden rounded-[2rem] text-white shadow-lg" style="background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #047857 100%);">
+
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/5"></div>
+        <div class="absolute -right-8 -bottom-20 w-72 h-72 rounded-full border-[32px] border-white/5"></div>
+
+        <div class="relative z-10 p-6 md:p-10">
+            <div class="flex flex-wrap items-center gap-2 mb-5">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-brand-950">
+                    <i class="fa-solid fa-location-dot text-[9px]"></i>
+                    Pilangwetan, Demak
+                </span>
+
+                <span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-50">
+                    Berdiri sejak 1981
+                </span>
+            </div>
+
+            <div class="max-w-4xl">
+                <p class="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-emerald-200 mb-3">
+                    Pondok Pesantren Tahfidzul Qur'an
+                </p>
+
+                <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight leading-tight">
+                    PPTQ Asnawiyyah
+                </h1>
+
+                <p class="mt-4 max-w-2xl text-sm md:text-base leading-relaxed text-emerald-50">
+                    Mencetak Generasi Qur'ani, Berakhlak Mulia, Unggul dalam Ilmu Syariah,
+                    dan Berwawasan Luas.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEJARAH -->
+    <section class="space-y-4">
+
+        <div class="flex items-center gap-3">
+            <span class="w-1.5 h-6 bg-brand-600 rounded-full"></span>
+
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                    Perjalanan Pesantren
+                </span>
+                <h3 class="text-lg md:text-xl font-bold text-slate-800">
+                    Sejarah Berdirinya
+                </h3>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-[180px_1fr] gap-5 md:gap-8">
+
+            <!-- YEAR -->
+            <div class="rounded-3xl bg-brand-50 border border-brand-100 p-5 md:p-6 h-fit">
+                <span class="block text-[10px] font-extrabold uppercase tracking-widest text-brand-700">
+                    Didirikan
+                </span>
+
+                <strong class="block mt-1 text-4xl md:text-5xl font-black tracking-tight text-brand-900">
+                    1981
+                </strong>
+
+                <p class="mt-2 text-xs leading-relaxed text-brand-700">
+                    5 Desember 1981
+                </p>
+            </div>
+
+            <!-- STORY -->
+            <div class="rounded-3xl bg-slate-50 border border-slate-100 p-5 md:p-7 space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+
+                <p>
+                    Pondok Pesantren Tahfidz Al-Qur'an (PPTQ) Asnawiyyah terletak di
+                    Desa Pilangwetan, Kecamatan Kebonagung, Kabupaten Demak, Jawa Tengah.
+                    Didirikan pada 5 Desember 1981 oleh KH. Muchozin (KH. Muhammad Muqadim)
+                    dan Ibu Nyai Hj. Siti Hajar Harni, AH, pesantren ini fokus pada
+                    pendidikan Al-Qur'an, tahfiz, serta memadukannya dengan pendidikan
+                    formal dari tingkat MI hingga MA dan program Takhassus.
+                </p>
+
+                <p>
+                    Pondok Pesantren Tahfidzul Qur'an (PPTQ) Asnawiyyah didirikan sebagai
+                    wujud ikhtiar dan dedikasi dalam melestarikan hafalan Al-Qur'an serta
+                    penanaman nilai-nilai syariat Islam berbasis Ahlussunnah wal Jama'ah
+                    An-Nahdliyyah di wilayah Demak, Jawa Tengah.
+                </p>
+
+                <p>
+                    Berawal dari halaqah sima'an dan bimbingan pengajian kitab kuning dalam
+                    skala terbatas, PPTQ Asnawiyyah terus berkembang menjadi lembaga
+                    pendidikan pesantren terpadu yang menaungi program Tahfidz Anak,
+                    Dewasa Putra, dan Dewasa Putri. Dengan memadukan kedisiplinan pembinaan
+                    hafalan Al-Qur'an dan pendidikan karakter, pesantren kini menjadi
+                    sarana mencetak generasi muhafizh yang siap berkhidmat di tengah masyarakat.
+                </p>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- VISI & MISI -->
+    <section class="space-y-4">
+
+        <div class="flex items-center gap-3">
+            <span class="w-1.5 h-6 bg-brand-600 rounded-full"></span>
+
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
+                    Arah Pendidikan
+                </span>
+                <h3 class="text-lg md:text-xl font-bold text-slate-800">
+                    Visi & Misi
+                </h3>
+            </div>
+        </div>
+
+        <!-- VISI -->
+        <div class="relative overflow-hidden rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-emerald-50 to-white p-6 md:p-8">
+
+            <div class="absolute right-5 top-5 text-brand-100 text-5xl pointer-events-none">
+                <i class="fa-solid fa-eye"></i>
+            </div>
+
+            <div class="relative z-10 max-w-3xl">
+                <span class="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-brand-800 shadow-sm">
+                    Visi Utama
+                </span>
+
+                <blockquote class="mt-4 text-base md:text-xl font-bold leading-relaxed text-brand-950">
+                    "Terwujudnya Generasi Qur'ani yang Beraqidah Lurus,
+                    Berakhlaqul Karimah, Unggul dalam Keilmuan Syariah,
+                    serta Mandiri dan Berwawasan Luas."
+                </blockquote>
+            </div>
+        </div>
+
+        <!-- MISI -->
+        <div class="rounded-3xl border border-slate-100 bg-slate-50 p-6 md:p-8">
+
+            <div class="flex items-center justify-between gap-4 mb-5">
+                <div>
+                    <span class="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+                        Misi Pesantren
+                    </span>
+                    <h4 class="mt-1 text-base md:text-lg font-bold text-slate-800">
+                        Ikhtiar Pendidikan & Pembinaan
+                    </h4>
                 </div>
 
-                <!-- BANNER HEADER PROFIL -->
-                <section
-                    class="relative bg-gradient-to-r from-brand-900 via-brand-800 to-emerald-800 text-white p-6 rounded-3xl overflow-hidden shadow-md space-y-2">
-                    <div class="absolute -right-6 -bottom-6 text-white/5 text-8xl pointer-events-none">
-                        <i class="fa-solid fa-mosque"></i>
-                    </div>
-                    <div class="relative z-10 space-y-1">
-                        <span
-                            class="bg-amber-500 text-brand-dark text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase inline-block shadow">Pilangwetan,
-                            Demak</span>
-                        <h1 class="text-lg md:text-2xl font-bold">Pondok Pesantren Tahfidzul Qur'an Asnawiyyah</h1>
-                        <p class="text-xs text-emerald-100 leading-relaxed italic">
-                            "Mencetak Generasi Qur'ani, Berakhlak Mulia, Unggul dalam Ilmu Syariah, dan Berwawasan Luas"
-                        </p>
-                    </div>
-                </section>
+                <div class="hidden sm:flex w-10 h-10 rounded-xl bg-white items-center justify-center text-brand-700 shadow-sm">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
 
-                <!-- 1. SEJARAH BERDIRINYA PESANTREN -->
-                <section class="space-y-3">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
-                        <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Sejarah Berdirinya
-                    </h3>
-                    <div
-                        class="bg-slate-50 p-5 rounded-3xl border border-slate-100 space-y-3 text-xs md:text-sm text-slate-600 leading-relaxed">
-                        <p>
-                            Pondok Pesantren Tahfidz Al-Qur'an (PPTQ) Asnawiyyah terletak di Desa Pilangwetan, Kecamatan
-                            Kebonagung, Kabupaten Demak, Jawa Tengah. Didirikan pada 5 Desember 1981 oleh KH. Muchozin
-                            (KH. Muhammad Muqadim) dan Ibu Nyai Hj. Siti Hajar Harni, AH, pesantren ini fokus pada
-                            pendidikan Al-Qur'an, tahfiz, serta memadukannya dengan pendidikan formal dari tingkat MI
-                            hingga MA dan program Takhassus.
-                        </p>
-                        <p>
-                            Pondok Pesantren Tahfidzul Qur'an (PPTQ) Asnawiyyah didirikan sebagai wujud ikhtiar dan
-                            dedikasi dalam melestarikan hafalan Al-Qur'an serta penanaman nilai-nilai syariat Islam
-                            berbasis Ahlussunnah wal Jama'ah An-Nahdliyyah di wilayah Demak, Jawa Tengah.
-                        </p>
-                        <p>
-                            Berawal dari halaqah sima'an dan bimbingan pengajian kitab kuning dalam skala terbatas, PPTQ
-                            Asnawiyyah terus berkembang menjadi lembaga pendidikan pesantren terpadu yang menaungi
-                            program Tahfidz Anak, Dewasa Putra, dan Dewasa Putri. Dengan memadukan kedisiplinan
-                            pembinaan hafalan Al-Qur'an dan pendidikan karakter, pesantren kini menjadi sarana mencetak
-                            generasi muhafizh yang siap berkhidmat di tengah masyarakat.
-                        </p>
-                    </div>
-                </section>
+            <div class="grid md:grid-cols-2 gap-3">
 
-                <!-- 2. VISI & MISI -->
-                <section class="space-y-3">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
-                        <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Visi & Misi
-                    </h3>
+                <div class="flex items-start gap-3 rounded-2xl bg-white border border-slate-100 p-4">
+                    <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-quran text-xs"></i>
+                    </span>
 
-                    <!-- Card Visi -->
-                    <div
-                        class="bg-gradient-to-r from-emerald-50 to-brand-50 p-5 rounded-3xl border border-brand-100 space-y-2">
-                        <span
-                            class="text-[10px] font-extrabold text-brand-800 bg-white px-2.5 py-0.5 rounded-full uppercase shadow-sm">Visi
-                            Utama</span>
-                        <p class="text-xs md:text-sm font-bold text-brand-900 leading-relaxed">
-                            "Terwujudnya Generasi Qur'ani yang Beraqidah Lurus, Berakhlaqul Karimah, Unggul dalam
-                            Keilmuan Syariah, serta Mandiri dan Berwawasan Luas."
-                        </p>
-                    </div>
+                    <p class="text-xs md:text-sm leading-relaxed text-slate-700">
+                        Menyelenggarakan bimbingan Tahfidzul Qur'an yang berkualitas
+                        dengan sanad bacaan muttashil.
+                    </p>
+                </div>
 
-                    <!-- Card Misi -->
-                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 space-y-3">
-                        <span
-                            class="text-[10px] font-extrabold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full uppercase">Misi
-                            Pesantren</span>
-                        <div class="space-y-2 text-xs md:text-sm text-slate-700">
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-circle-check text-brand-700 mt-0.5 shrink-0"></i>
-                                <span>Menyelenggarakan bimbingan Tahfidzul Qur'an yang berkualitas dengan sanad bacaan
-                                    muttashil.</span>
-                            </div>
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-circle-check text-brand-700 mt-0.5 shrink-0"></i>
-                                <span>Mendidik karakter dan adab santri berlandaskan ajaran Ahlussunnah wal
-                                    Jama'ah.</span>
-                            </div>
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-circle-check text-brand-700 mt-0.5 shrink-0"></i>
-                                <span>Mengkaji literatur kitab turats (kitab kuning) untuk memperdalam pemahaman fiqih
-                                    dan hukum Islam.</span>
-                            </div>
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-circle-check text-brand-700 mt-0.5 shrink-0"></i>
-                                <span>Membekali santri dengan wawasan kebahasaan, kepemimpinan, kemandirian, dan
-                                    keterampilan teknologi digital.</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                <div class="flex items-start gap-3 rounded-2xl bg-white border border-slate-100 p-4">
+                    <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-heart text-xs"></i>
+                    </span>
 
-                <!-- 3. STRUKTUR KEPENGURUSAN -->
+                    <p class="text-xs md:text-sm leading-relaxed text-slate-700">
+                        Mendidik karakter dan adab santri berlandaskan ajaran
+                        Ahlussunnah wal Jama'ah.
+                    </p>
+                </div>
+
+                <div class="flex items-start gap-3 rounded-2xl bg-white border border-slate-100 p-4">
+                    <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-book-open text-xs"></i>
+                    </span>
+
+                    <p class="text-xs md:text-sm leading-relaxed text-slate-700">
+                        Mengkaji literatur kitab turats (kitab kuning) untuk
+                        memperdalam pemahaman fiqih dan hukum Islam.
+                    </p>
+                </div>
+
+                <div class="flex items-start gap-3 rounded-2xl bg-white border border-slate-100 p-4">
+                    <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-laptop-code text-xs"></i>
+                    </span>
+
+                    <p class="text-xs md:text-sm leading-relaxed text-slate-700">
+                        Membekali santri dengan wawasan kebahasaan, kepemimpinan,
+                        kemandirian, dan keterampilan teknologi digital.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+<!-- 3. STRUKTUR KEPENGURUSAN -->
                 <section class="space-y-4">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
                         <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Struktur Kepengurusan Pesantren
@@ -5317,30 +5432,44 @@
         }
 
         // ==================== INISIALISASI UTAMA (SINGLE ONLOAD) ====================
-        window.onload = function () {
+        window.onload = async function () {
             initializeProgramRuntime();
-            loadNews();
+            await loadNews();
             loadBanners();
             if (typeof renderCalendar === 'function') {
                 renderCalendar();
-            }
+                handleClientRouting();
+}
         };
 
+        function navigateToNews() {
+            const target = '/berita/';
+
+            if (window.location.pathname !== target) {
+                history.pushState({}, '', target);
+            }
+
+            switchTab('kabar');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         function handleClientRouting() {
-            const path = window.location.pathname;
-            if (path.startsWith('/berita/')) {
+            const path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+            if (path === '/berita') {
+                switchTab('kabar');
+            } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
                     bacaBerita(slug, true);
                 }
             }
+
             const params = new URLSearchParams(window.location.search);
             const legacyId = params.get('id');
             if (legacyId) {
                 bacaBerita(legacyId);
             }
         }
-
         window.addEventListener('popstate', (e) => {
             if (window.location.pathname.startsWith('/berita/')) {
                 const slug = window.location.pathname.split('/berita/')[1];
@@ -5392,7 +5521,7 @@
         async function loadNews() {
             if (!isApiConfigured()) {
                 renderAllNewsViews(mockNewsData);
-                handleClientRouting();
+                // handleClientRouting(); // removed - routing after loadNews
                 return;
             }
 
@@ -5403,11 +5532,11 @@
                     mockNewsData = response.data;
                 }
                 renderAllNewsViews(mockNewsData);
-                handleClientRouting();
+                // handleClientRouting(); // removed - routing after loadNews
             } catch (err) {
                 console.error("Gagal memuat berita via API:", err);
                 renderAllNewsViews(mockNewsData);
-                handleClientRouting();
+                // handleClientRouting(); // removed - routing after loadNews
             }
         }
 
@@ -8087,3 +8216,4 @@
 </body>
 
 </html>
+
