@@ -3107,7 +3107,7 @@
         <div id="page-maulid-index" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
             <!-- Header -->
             <div class="flex items-center justify-between bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100">
-                <button type="button" onclick="switchTab('page-ibadah')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition active:scale-95">
+                <button type="button" onclick="switchTab('ibadah')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition active:scale-95">
                     <div class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-arrow-left text-xs"></i>
                     </div>
@@ -3129,7 +3129,7 @@
             <!-- Header -->
             <div class="flex items-center justify-between bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100">
                 <div class="flex items-center space-x-2.5">
-                    <button type="button" onclick="switchTab('page-maulid-index')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0">
+                    <button type="button" onclick="switchTab('maulid-index')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0">
                         <i class="fa-solid fa-arrow-left text-xs"></i>
                     </button>
                     <div>
@@ -9035,7 +9035,7 @@
                     <div class="space-y-3">
                         <p class="font-semibold text-slate-700">Pilih Kitab Maulid:</p>
                         <div class="space-y-2">
-                            <div onclick="closeModal('ibadah-modal'); switchTab('page-maulid-index'); renderMaulidIndex();" class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:border-purple-500 transition">
+                            <div onclick="closeModal('ibadah-modal'); switchTab('maulid-index'); renderMaulidIndex();" class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:border-purple-500 transition">
                                 <span class="font-bold text-xs text-slate-800">Maulid Ad-Diba'i (الإمام الديبعي)</span>
                                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
                             </div>
@@ -9277,7 +9277,7 @@
             if (!container) return;
             container.innerHTML = '';
             
-            maulidDibaiData.forEach(chapter => {
+            maulidDibai.forEach(chapter => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:border-purple-500 hover:shadow-md transition group";
                 card.onclick = () => openMaulidDetail(chapter.id);
@@ -9301,7 +9301,7 @@
         }
 
         function openMaulidDetail(id) {
-            const chapter = maulidDibaiData.find(c => c.id === id);
+            const chapter = maulidDibai.find(c => c.id === id);
             if (!chapter) return;
             
             document.getElementById('maulid-detail-title').innerText = chapter.title;
@@ -9321,7 +9321,7 @@
                 container.appendChild(div);
             });
             
-            switchTab('page-maulid-detail');
+            switchTab('maulid-detail');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
