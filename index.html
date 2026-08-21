@@ -2971,7 +2971,7 @@
                     </button>
 
                     <!-- 2. Kitab Maulid -->
-                    <button type="button" onclick="openIbadahModal('maulid')"
+                    <button type="button" onclick="switchTab('maulid-hub')"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
                             class="w-12 h-12 md:w-14 md:h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
@@ -3024,6 +3024,37 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- ==================== MAULID HUB ==================== -->
+        <div id="page-maulid-hub" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            <div class="flex items-center justify-between bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100">
+                <button type="button" onclick="switchTab('ibadah')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition active:scale-95">
+                    <div class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </div>
+                    <span>Kembali</span>
+                </button>
+                <div class="text-right">
+                    <span class="text-[10px] font-extrabold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full uppercase">Maulid</span>
+                    <h2 class="text-sm md:text-base font-bold text-slate-800 mt-1">Kitab Maulid Nabi</h2>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div onclick="switchTab('maulid-index')" class="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-500 hover:shadow-md transition group">
+                    <span class="font-bold text-sm text-slate-800 group-hover:text-purple-700 transition">Maulid Ad-Diba'i (الإمام الديبعي)</span>
+                    <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-purple-500 transition"></i>
+                </div>
+                <div class="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-500 hover:shadow-md transition group">
+                    <span class="font-bold text-sm text-slate-800 group-hover:text-purple-700 transition">Maulid Simtuddurar (سمط الدرر)</span>
+                    <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-purple-500 transition"></i>
+                </div>
+                <div class="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-500 hover:shadow-md transition group">
+                    <span class="font-bold text-sm text-slate-800 group-hover:text-purple-700 transition">Maulid Al-Barzanji (البرزنجي)</span>
+                    <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-purple-500 transition"></i>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== TABS: AL-QUR'AN INDEX ==================== -->
@@ -3107,7 +3138,7 @@
         <div id="page-maulid-index" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
             <!-- Header -->
             <div class="flex items-center justify-between bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100">
-                <button type="button" onclick="switchTab('ibadah')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition active:scale-95">
+                <button type="button" onclick="switchTab('maulid-hub')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition active:scale-95">
                     <div class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-arrow-left text-xs"></i>
                     </div>
@@ -5840,6 +5871,12 @@
                 switchTab('kalender', false);
             } else if (path === '/layanan/portal-ibadah') {
                 switchTab('ibadah', false);
+            } else if (path === '/layanan/portal-ibadah/maulid') {
+                switchTab('maulid-hub', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
+                switchTab('maulid-index', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai/baca') {
+                switchTab('maulid-detail', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -5885,6 +5922,12 @@
                 switchTab('kalender', false);
             } else if (path === '/layanan/portal-ibadah') {
                 switchTab('ibadah', false);
+            } else if (path === '/layanan/portal-ibadah/maulid') {
+                switchTab('maulid-hub', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
+                switchTab('maulid-index', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai/baca') {
+                switchTab('maulid-detail', false);
             } else {
                 switchTab('beranda', false);
             }
@@ -5910,6 +5953,9 @@
                 else if (tabId === 'ibadah') targetUrl = '/layanan/portal-ibadah/';
                 else if (tabId === 'quran-index') targetUrl = '/layanan/portal-ibadah/quran/';
                 else if (tabId === 'quran-detail') targetUrl = '/layanan/portal-ibadah/quran/baca/';
+                else if (tabId === 'maulid-hub') targetUrl = '/layanan/portal-ibadah/maulid/';
+                else if (tabId === 'maulid-index') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/';
+                else if (tabId === 'maulid-detail') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/baca/';
                 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || 
@@ -5917,6 +5963,7 @@
                     tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'alumni' || 
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' || 
                     tabId === 'quran-index' || tabId === 'quran-detail' ||
+                    tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
