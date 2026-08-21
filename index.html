@@ -55,6 +55,26 @@
             animation: slideUpDynamic 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        @keyframes slideInLeftHero {
+            0% { transform: translateX(-30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in-left-hero {
+            animation: slideInLeftHero 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInUpHero {
+            0% { transform: translateY(30px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-fade-in-up-hero {
+            animation: fadeInUpHero 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .opacity-0-init {
+            opacity: 0;
+        }
+
         /* Sembunyikan Scrollbar Utama Browser (Chrome, Safari, Opera) */
         html::-webkit-scrollbar,
         body::-webkit-scrollbar {
@@ -470,18 +490,26 @@
                                 Pondok Pesantren Tahfidzul Qur'an Asnawiyyah
                             </div>
 
-                            <h1 class="text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
-                                Mencetak Generasi Qur'ani, <br class="hidden xl:block">
-                                <span class="text-emerald-400">Berakhlak Mulia & Berdaya Saing Global</span>
+                            <h1 class="text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight flex flex-wrap gap-x-3 gap-y-1">
+                                <span class="inline-block opacity-0-init animate-slide-in-left-hero" style="animation-delay: 100ms;">Mencetak</span>
+                                <span class="inline-block opacity-0-init animate-slide-in-left-hero" style="animation-delay: 200ms;">Generasi</span>
+                                <span class="inline-block opacity-0-init animate-slide-in-left-hero" style="animation-delay: 300ms;">Qur'ani,</span>
+                                <span class="basis-full h-0 hidden xl:block"></span>
+                                <span class="inline-block text-emerald-400 opacity-0-init animate-slide-in-left-hero" style="animation-delay: 400ms;">Berakhlak</span>
+                                <span class="inline-block text-emerald-400 opacity-0-init animate-slide-in-left-hero" style="animation-delay: 500ms;">Mulia</span>
+                                <span class="inline-block text-emerald-400 opacity-0-init animate-slide-in-left-hero" style="animation-delay: 600ms;">&</span>
+                                <span class="inline-block text-emerald-400 opacity-0-init animate-slide-in-left-hero" style="animation-delay: 700ms;">Berdaya</span>
+                                <span class="inline-block text-emerald-400 opacity-0-init animate-slide-in-left-hero" style="animation-delay: 800ms;">Saing</span>
+                                <span class="inline-block text-emerald-400 opacity-0-init animate-slide-in-left-hero" style="animation-delay: 900ms;">Global</span>
                             </h1>
 
-                            <p class="text-slate-300 text-base leading-relaxed max-w-xl">
+                            <p class="text-slate-300 text-base leading-relaxed max-w-xl opacity-0-init animate-fade-in-up-hero" style="animation-delay: 1100ms;">
                                 Menyelenggarakan pendidikan terpadu berbasis Al-Qur'an, serta penguasaan sains dan
                                 teknologi dalam lingkungan pesantren yang asri.
                                 Mulai dari Jenjang SD / MI, SMP / MA, SMA / MA, Kuliah / Pra Sekolah.
                             </p>
 
-                            <div class="flex items-center gap-4 pt-2">
+                            <div class="flex items-center gap-4 pt-2 opacity-0-init animate-fade-in-up-hero" style="animation-delay: 1300ms;">
                                 <button onclick="switchTab('ppdb')"
                                     class="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition duration-200 shadow-lg shadow-emerald-500/20">
                                     Daftar PPDB Online
@@ -502,25 +530,25 @@
                     </div>
 
                     <!-- Floating Statistics Bar -->
-                    <div class="max-w-7xl mx-auto px-8 mt-12 relative z-20">
+                    <div class="max-w-7xl mx-auto px-8 mt-12 relative z-20 opacity-0-init animate-fade-in-up-hero" style="animation-delay: 1500ms;">
                         <div
                             class="bg-white/95 backdrop-blur rounded-2xl p-6 shadow-xl border border-slate-200/80 text-slate-900 grid grid-cols-4 divide-x divide-slate-100">
-                            <div class="px-6 text-center">
+                            <div class="px-6 text-center opacity-0-init animate-fade-in-up-hero" style="animation-delay: 1700ms;">
                                 <p class="text-3xl font-extrabold text-emerald-700">1.250+</p>
                                 <p class="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wider">Santri Aktif
                                 </p>
                             </div>
-                            <div class="px-6 text-center">
+                            <div class="px-6 text-center opacity-0-init animate-fade-in-up-hero" style="animation-delay: 1900ms;">
                                 <p class="text-3xl font-extrabold text-emerald-700">480+</p>
                                 <p class="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wider">Muhafizh 30
                                     Juz</p>
                             </div>
-                            <div class="px-6 text-center">
+                            <div class="px-6 text-center opacity-0-init animate-fade-in-up-hero" style="animation-delay: 2100ms;">
                                 <p class="text-3xl font-extrabold text-emerald-700">3.500+</p>
                                 <p class="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wider">Alumni
                                     Tersebar</p>
                             </div>
-                            <div class="px-6 text-center">
+                            <div class="px-6 text-center opacity-0-init animate-fade-in-up-hero" style="animation-delay: 2300ms;">
                                 <p class="text-3xl font-extrabold text-emerald-700">85</p>
                                 <p class="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wider">Asatidz &
                                     Pengajar</p>
