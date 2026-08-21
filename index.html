@@ -3102,6 +3102,49 @@
             </div>
         </div>
 
+        <!-- ==================== MAULID FEATURE ==================== -->
+        <!-- Tab: Daftar Bab Maulid -->
+        <div id="page-maulid-index" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="flex items-center justify-between bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100">
+                <button type="button" onclick="switchTab('page-ibadah')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition active:scale-95">
+                    <div class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </div>
+                    <span>Kembali</span>
+                </button>
+                <div class="text-right">
+                    <span class="text-[10px] font-extrabold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full uppercase">Maulid</span>
+                    <h2 class="text-sm md:text-base font-bold text-slate-800 mt-1">Maulid Ad-Diba'i</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3" id="maulid-list-container">
+                <!-- Data loaded via JS -->
+            </div>
+        </div>
+
+        <!-- Tab: Detail Bacaan Maulid -->
+        <div id="page-maulid-detail" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="flex items-center justify-between bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-center space-x-2.5">
+                    <button type="button" onclick="switchTab('page-maulid-index')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
+                    <div>
+                        <span class="text-[10px] font-bold text-purple-600 uppercase tracking-widest block">Maulid Ad-Diba'i</span>
+                        <h2 id="maulid-detail-title" class="text-sm md:text-base font-bold text-slate-800">Nama Bab</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bacaan Container -->
+            <div id="maulid-ayah-container" class="space-y-4">
+                <!-- Data loaded via JS -->
+            </div>
+        </div>
+
         <!-- ==================== TABS KHUSUS: DETAIL BACA BERITA (FULL PAGE) ==================== -->
         <div id="page-detail-berita" class="tab-content hidden space-y-4">
 
@@ -8992,7 +9035,7 @@
                     <div class="space-y-3">
                         <p class="font-semibold text-slate-700">Pilih Kitab Maulid:</p>
                         <div class="space-y-2">
-                            <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:border-purple-500 transition">
+                            <div onclick="closeModal('ibadah-modal'); switchTab('page-maulid-index'); renderMaulidIndex();" class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:border-purple-500 transition">
                                 <span class="font-bold text-xs text-slate-800">Maulid Ad-Diba'i (الإمام الديبعي)</span>
                                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
                             </div>
@@ -9227,7 +9270,63 @@
                 });
             }
         });
+
+        // ==================== MAULID FEATURE ====================
+        function renderMaulidIndex() {
+            const container = document.getElementById('maulid-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            maulidDibaiData.forEach(chapter => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:border-purple-500 hover:shadow-md transition group";
+                card.onclick = () => openMaulidDetail(chapter.id);
+                
+                card.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm group-hover:bg-purple-50 group-hover:text-purple-700 transition relative overflow-hidden shrink-0">
+                            <span class="relative z-10">${chapter.id}</span>
+                            <div class="absolute inset-0 bg-purple-100 transform scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm group-hover:text-purple-700 transition">${chapter.title}</h3>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-purple-500 transition"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openMaulidDetail(id) {
+            const chapter = maulidDibaiData.find(c => c.id === id);
+            if (!chapter) return;
+            
+            document.getElementById('maulid-detail-title').innerText = chapter.title;
+            const container = document.getElementById('maulid-ayah-container');
+            container.innerHTML = '';
+            
+            chapter.content.forEach((text) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4 hover:border-purple-200 transition";
+                div.innerHTML = `
+                    <div class="flex items-start justify-between gap-4">
+                        <p class="font-arabic text-2xl md:text-3xl text-slate-800 text-center md:text-right leading-loose flex-1 w-full" style="line-height: 2.5;" dir="rtl">
+                            ${text}
+                        </p>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            switchTab('page-maulid-detail');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     </script>
+    <!-- Tambahan Script Data Maulid -->
+    <script src="data-maulid-dibai.js"></script>
 </body>
 
 </html>
