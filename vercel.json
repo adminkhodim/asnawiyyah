@@ -1,9 +1,17 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/berita", "destination": "/index.html" },
-    { "source": "/berita/", "destination": "/index.html" },
-    { "source": "/berita/:slug", "destination": "/api/og?slug=$slug" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/berita",
+      "destination": "https://asnawiyyah-news-platform.vercel.app/berita"
+    },
+    {
+      "source": "/berita/:match*",
+      "destination": "https://asnawiyyah-news-platform.vercel.app/berita/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
