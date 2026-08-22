@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPTQ Asnawiyyah Pilangwetan | Official Website</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#059669">
+    <link rel="apple-touch-icon" href="https://i.ibb.co.com/670FxpWt/464675043-2145441522518998-8374982937199965807-n.jpg">
     <link rel="icon" type="image/jpeg" href="https://i.ibb.co.com/670FxpWt/464675043-2145441522518998-8374982937199965807-n.jpg">
 
     <!-- Google Fonts: Plus Jakarta Sans & Amiri untuk aksen Islami -->
@@ -9633,6 +9638,19 @@
     </script>
     <!-- Tambahan Script Data Maulid -->
     <script src="data-maulid-dibai.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker PWA berhasil didaftarkan dengan scope:', registration.scope);
+                }).catch(err => {
+                    console.log('ServiceWorker pendaftaran gagal:', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>
