@@ -241,11 +241,7 @@
                                     <i class="fa-solid fa-people-group text-blue-600 w-4"></i>
                                     <span>Unit Kegiatan Santri (UKS)</span>
                                 </button>
-                                <button onclick="switchTab('poskestren')"
-                                    class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-red-50 hover:text-red-700 transition flex items-center space-x-2.5">
-                                    <i class="fa-solid fa-kit-medical text-red-600 w-4"></i>
-                                    <span>Layanan Poskestren</span>
-                                </button>
+
                                 <button onclick="switchTab('alumni')"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-orange-50 hover:text-orange-700 transition flex items-center space-x-2.5">
                                     <i class="fa-solid fa-graduation-cap text-orange-600 w-4"></i>
@@ -407,12 +403,12 @@
                         </div>
                         <span class="text-[11px] mt-2 font-semibold text-slate-600">Unit Kegiatan</span>
                     </button>
-                    <button onclick="switchTab('poskestren')" class="flex flex-col items-center group transition">
+                    <button onclick="switchTab('sd-islam')" class="flex flex-col items-center group transition">
                         <div
-                            class="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:bg-red-600 group-hover:text-white transition-all duration-300">
-                            <i class="fa-solid fa-kit-medical"></i>
+                            class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-school"></i>
                         </div>
-                        <span class="text-[11px] mt-2 font-semibold text-slate-600">Poskestren</span>
+                        <span class="text-[11px] mt-2 font-semibold text-slate-600">SD Islam</span>
                     </button>
                     <button onclick="switchTab('profil')" class="flex flex-col items-center group transition">
                         <div
@@ -2361,6 +2357,28 @@
                                 Divisi khusus yang berkonsentrasi pada media sosial resmi pesantren (Facebook,
                                 Instagram, YouTube, Twitter/X). Berperan mengabadikan dan mempublikasikan seluruh
                                 kegiatan serta event pesantren untuk mengenalkan PPTQ Asnawiyyah ke dunia luar.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 6. Poskestren (Layanan Kesehatan) -->
+                    <div onclick="switchTab('poskestren')"
+                        class="bg-slate-50 hover:bg-red-50 p-4 md:p-5 rounded-3xl border border-slate-100 flex flex-col md:flex-row-reverse gap-4 items-center cursor-pointer transition group">
+                        <div class="w-full md:w-48 h-36 rounded-2xl overflow-hidden shrink-0 border border-slate-200">
+                            <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=800&auto=format&fit=crop"
+                                alt="Poskestren" class="w-full h-full object-cover">
+                        </div>
+                        <div class="space-y-1.5 w-full">
+                            <div class="flex items-center justify-between">
+                                <span
+                                    class="bg-red-100 text-red-800 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase group-hover:bg-red-600 group-hover:text-white transition">Layanan
+                                    Kesehatan</span>
+                                <span class="text-[10px] text-red-400 font-bold group-hover:text-red-600 transition"><i
+                                        class="fa-solid fa-arrow-right mr-1"></i>Buka Halaman</span>
+                            </div>
+                            <h3 class="text-sm md:text-base font-bold text-slate-800">Pos Kesehatan Pesantren (Poskestren)</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Fasilitas layanan kesehatan 24 jam untuk seluruh santri yang berlokasi di dalam area pesantren, berfokus pada pertolongan pertama dan pencegahan penyakit menular.
                             </p>
                         </div>
                     </div>
