@@ -195,6 +195,11 @@
                                     <span>Semua Program Pilihan</span>
                                 </button>
                                 <div class="border-t border-slate-100 my-1"></div>
+                                <button onclick="switchTab('sd-islam')"
+                                    class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-blue-50 hover:text-blue-700 transition flex items-center space-x-2.5">
+                                    <i class="fa-solid fa-school text-blue-500 w-4"></i>
+                                    <span>SD Islam Unggulan</span>
+                                </button>
                                 <button onclick="switchTab('tahfidz-anak')"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 hover:text-brand-700 transition flex items-center space-x-2.5">
                                     <i class="fa-solid fa-child-reaching text-amber-500 w-4"></i>
@@ -930,6 +935,7 @@
                             <select id="ppdb-program" required
                                 class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700 transition bg-white">
                                 <option value="" disabled selected>Pilih salah satu jenjang pendidikan</option>
+                                <option value="SD Islam Unggulan">SD Islam Unggulan (Usia 6 - 12 Tahun)</option>
                                 <option value="Pesantren Tahfidz Anak">Pesantren Tahfidz Anak (Usia 6 - 12 Tahun)
                                 </option>
                                 <option value="Pesantren Dewasa Putra">Pesantren Dewasa Putra (Lulusan SMA/Umum)
@@ -1807,6 +1813,7 @@
         </div>
 
         <!-- ==================== TABS DETAIL: PROGRAM (RENDERED VIA PROGRAM_DATA) ==================== -->
+        <div id="page-sd-islam" class="tab-content hidden space-y-6"></div>
         <div id="page-tahfidz-anak" class="tab-content hidden space-y-6"></div>
         <div id="page-dewasa-putra" class="tab-content hidden space-y-6"></div>
         <div id="page-dewasa-putri" class="tab-content hidden space-y-6"></div>
@@ -5321,6 +5328,124 @@
                         waText: "Konsultasi via WhatsApp Admin Dewasa Putri"
                     }
                 }
+            },
+            {
+                id: "sd-islam",
+                name: "SD Islam Unggulan",
+                badge: "SD Islam",
+                berandaBadgeStyle: "bg-blue-600/90 text-white",
+                pilihanBadgeStyle: "bg-blue-500 text-white",
+                headerBadge: "Usia Sekolah Dasar (6 – 12 Tahun)",
+                headerTheme: "from-blue-900 via-blue-800 to-cyan-800",
+                headerIcon: "fa-school",
+                headerCategoryColor: "text-blue-700",
+                image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop",
+                description: "Pendidikan dasar unggulan memadukan kurikulum nasional dan nilai-nilai Al-Qur'an.",
+                highlights: [
+                    "Kurikulum Terintegrasi",
+                    "Tahfidz Dasar & Adab"
+                ],
+                detail: {
+                    tagline: "\"Membangun Fondasi Keilmuan dan Karakter Islami Sejak Dini\"",
+                    summary: "Program SD Islam Unggulan yang memadukan pendidikan formal (kurikulum nasional) dengan pendidikan agama Islam yang mendalam, termasuk tahfidz dasar dan pembentukan karakter/adab harian yang menyenangkan.",
+                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    videoTitle: "Video Profil SD Islam Unggulan",
+                    keunggulan: [
+                        {
+                            title: "Kurikulum Terpadu",
+                            desc: "Memadukan materi umum dan diniyah dengan pendekatan belajar aktif dan menyenangkan.",
+                            icon: "fa-book-open",
+                            iconBg: "bg-blue-100 text-blue-700"
+                        },
+                        {
+                            title: "Program Tahfidz Dini",
+                            desc: "Bimbingan hafalan surah-surah pendek dan juz amma sejak dini.",
+                            icon: "fa-book-quran",
+                            iconBg: "bg-amber-100 text-amber-800"
+                        },
+                        {
+                            title: "Penguatan Adab Harian",
+                            desc: "Menanamkan nilai-nilai akhlakul karimah dalam setiap aktivitas harian siswa.",
+                            icon: "fa-child-reaching",
+                            iconBg: "bg-emerald-100 text-emerald-700"
+                        }
+                    ],
+                    targetOutput: [
+                        "Menguasai materi pendidikan dasar nasional dengan baik.",
+                        "Mampu membaca Al-Qur'an dengan tartil.",
+                        "Memiliki hafalan Juz 30 (Juz Amma).",
+                        "Menjadikan adab Islami sebagai karakter harian.",
+                        "Memiliki dasar-dasar kemandirian dan keberanian."
+                    ],
+                    gallery: [
+                        {
+                            image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop",
+                            caption: "Kegiatan Belajar SD Islam Unggulan Asnawiyyah",
+                            sliderId: "sd-islam-photo-slider"
+                        }
+                    ],
+                    fasilitas: [
+                        { text: "Ruang kelas ber-AC, multimedia, dan nyaman.", icon: "fa-school", iconColor: "text-blue-700" },
+                        { text: "Area bermain dan olahraga yang aman.", icon: "fa-futbol", iconColor: "text-blue-700" },
+                        { text: "Perpustakaan mini dan sudut baca di setiap kelas.", icon: "fa-book", iconColor: "text-blue-700" }
+                    ],
+                    prosedur: {
+                        items: [
+                            "Anak usia minimal 6 tahun pada bulan Juli.",
+                            "Melakukan registrasi pendaftaran secara Online.",
+                            "Mengikuti tes observasi kesiapan belajar anak.",
+                            "Wawancara dengan wali murid."
+                        ],
+                        image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop",
+                        imageAlt: "Siswa SD Islam Unggulan"
+                    },
+                    persyaratan: [
+                        {
+                            title: "Fotocopy Akte & KK",
+                            desc: "Menyerahkan Fotocopy Akte Kelahiran dan Kartu Keluarga masing-masing 2 lembar.",
+                            icon: "fa-address-card"
+                        },
+                        {
+                            title: "Pas Foto Berwarna",
+                            desc: "Menyerahkan Pas foto berwarna ukuran 3x4 sebanyak 4 lembar.",
+                            icon: "fa-camera"
+                        },
+                        {
+                            title: "Membayar Biaya Pendaftaran",
+                            desc: "Membayar biaya pendaftaran sesuai ketentuan.",
+                            icon: "fa-money-bill"
+                        }
+                    ],
+                    biaya: {
+                        pendaftaran: {
+                            nominal: "Rp.1.500.000",
+                            items: [
+                                "Pendaftaran & Observasi",
+                                "Seragam Sekolah (4 Stel)",
+                                "Buku Paket Semester 1",
+                                "Dana Pengembangan Sarana"
+                            ]
+                        },
+                        syahriyah: {
+                            nominal: "Rp.250.000",
+                            items: [
+                                "SPP Bulanan",
+                                "Ekstrakurikuler Dasar"
+                            ],
+                            excludedItems: [
+                                "Katering Makan Siang",
+                                "Antar Jemput"
+                            ]
+                        }
+                    },
+                    cta: {
+                        title: "Pendaftaran Siswa Baru SD Islam Telah Dibuka",
+                        description: "Daftarkan putra-putri Anda untuk mendapatkan pendidikan dasar unggulan yang memadukan keilmuan umum dan Al-Qur'an.",
+                        waLink: "https://wa.me/6281234567890?text=Assalamu'alaikum,%20saya%20ingin%20konsultasi%20mengenai%20Pendaftaran%20SD%20Islam%20Unggulan",
+                        waBtnClass: "bg-blue-700 hover:bg-blue-600 text-white border-blue-400/30",
+                        waText: "Konsultasi via WhatsApp"
+                    }
+                }
             }
         ];
 
@@ -5334,7 +5459,16 @@
 
         function getProgramUiTheme(prog) {
             const id = prog ? (prog.id || "") : "";
-            if (id === "tahfidz-anak") {
+            if (id === "sd-islam") {
+                return {
+                    berandaBadgeStyle: "bg-blue-600/90 text-white",
+                    pilihanBadgeStyle: "bg-blue-500 text-white",
+                    headerBadge: "Usia Sekolah Dasar (6 – 12 Tahun)",
+                    headerTheme: "from-blue-900 via-blue-800 to-cyan-800",
+                    headerIcon: "fa-school",
+                    headerCategoryColor: "text-blue-700"
+                };
+            } else if (id === "tahfidz-anak") {
                 return {
                     berandaBadgeStyle: "bg-emerald-800/90 text-white",
                     pilihanBadgeStyle: "bg-amber-500 text-brand-dark",
@@ -5432,6 +5566,14 @@
                 programRuntimeState.status = "ready";
                 programRuntimeState.requestId = response.requestId || null;
                 RUNTIME_PROGRAM_DATA = data;
+                
+                // Merge local PROGRAM_DATA for items not present in API (e.g., local dummy templates)
+                PROGRAM_DATA.forEach(localProg => {
+                    if (!RUNTIME_PROGRAM_DATA.find(p => p.id === localProg.id)) {
+                        RUNTIME_PROGRAM_DATA.push(localProg);
+                    }
+                });
+
                 renderProgramAllViews();
 
             } catch (err) {
@@ -5849,6 +5991,8 @@
                 switchTab('profil', false);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
+            } else if (path === '/pendidikan/sd-islam-unggulan') {
+                switchTab('sd-islam', false);
             } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
                 switchTab('tahfidz-anak', false);
             } else if (path === '/pendidikan/pesantren-dewasa-putra') {
@@ -5900,6 +6044,8 @@
                 switchTab('profil', false);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
+            } else if (path === '/pendidikan/sd-islam-unggulan') {
+                switchTab('sd-islam', false);
             } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
                 switchTab('tahfidz-anak', false);
             } else if (path === '/pendidikan/pesantren-dewasa-putra') {
@@ -5940,6 +6086,7 @@
                 if (tabId === 'profil') targetUrl = '/tentang-kami/';
                 else if (tabId === 'kabar') targetUrl = '/berita/';
                 else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/semua-program-pilihan/';
+                else if (tabId === 'sd-islam') targetUrl = '/pendidikan/sd-islam-unggulan/';
                 else if (tabId === 'tahfidz-anak') targetUrl = '/pendidikan/pesantren-tahfidz-anak/';
                 else if (tabId === 'dewasa-putra') targetUrl = '/pendidikan/pesantren-dewasa-putra/';
                 else if (tabId === 'dewasa-putri') targetUrl = '/pendidikan/pesantren-dewasa-putri/';
@@ -5959,7 +6106,7 @@
                 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' || 
-                    tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' || 
+                    tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' || 
                     tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'alumni' || 
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' || 
                     tabId === 'quran-index' || tabId === 'quran-detail' ||
