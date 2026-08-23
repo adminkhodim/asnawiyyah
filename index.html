@@ -4329,7 +4329,7 @@
     </main>
 
     <!-- ==================== BOTTOM NAVIGATION (MOBILE) ==================== -->
-    <nav id="mobile-bottom-nav"
+    <div id="mobile-bottom-nav"
         class="md:hidden fixed bottom-0 left-0 right-0 bg-brand-900 border-t border-brand-800 shadow-[0_-4px_16px_rgba(0,0,0,0.25)] px-2 py-2 flex justify-around items-center z-50">
         <!-- 1. Beranda -->
         <button onclick="switchTab('beranda')" id="mobile-nav-beranda"
@@ -6379,17 +6379,15 @@
                 }
             }
 
-            // Hide menus and footer for Admin layout
+            // Hide menus for Admin layout
             const deskNavMenu = document.getElementById('desk-nav-menu');
             const deskActionMenu = document.getElementById('desk-action-menu');
             const mobileBottomNav = document.getElementById('mobile-bottom-nav');
-            const mainFooter = document.querySelector('footer');
 
             if (tabId === 'admin') {
                 if (deskNavMenu) deskNavMenu.classList.add('hidden');
                 if (deskActionMenu) deskActionMenu.classList.add('hidden');
                 if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
-                if (mainFooter) mainFooter.classList.add('hidden');
                 if (!isAdminLoggedIn) {
                     setTimeout(openAdminLoginModal, 100);
                 }
@@ -6397,7 +6395,6 @@
                 if (deskNavMenu) deskNavMenu.classList.remove('hidden');
                 if (deskActionMenu) deskActionMenu.classList.remove('hidden');
                 if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');
-                if (mainFooter) mainFooter.classList.remove('hidden');
             }
 
             if (tabId === 'alumni') {
