@@ -175,6 +175,10 @@ function doPost(e) {
       return createJsonResponse(toggleStatusGaleri(galeriId, newStatus));
     }
 
+    if (action === "alumni.getTestimonials") {
+      return createJsonResponse(getAlumniTestimonials());
+    }
+
     if (action === "alumni.create") {
       return createJsonResponse(saveAlumniData(payload));
     }
@@ -778,6 +782,10 @@ function doGet(e) {
       return createJsonResponse(
         getGaleriData()
       );
+    }
+
+    if (action === "alumni.getTestimonials") {
+      return createJsonResponse(getAlumniTestimonials());
     }
 
     if (action === "getPengaturan") {
