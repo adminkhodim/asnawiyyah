@@ -9994,6 +9994,66 @@
     <script>
         // ==================== FORM ALUMNI & LEAFLET ====================
         let alumniMap = null;
+        // ==================== WILAYAH INDONESIA API ====================
+        async function fetchWilayah(url, selectElementId, defaultText) {
+            const select = document.getElementById(selectElementId);
+            select.innerHTML = `<option value="" disabled selected>Memuat...</option>`;
+            select.disabled = true;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                select.innerHTML = `<option value="" disabled selected>${defaultText}</option>`;
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    // Simpan NAMA sebagai value, dan ID sebagai data-id untuk berjenjang
+                    opt.value = item.name;
+                    opt.setAttribute('data-id', item.id);
+                    opt.textContent = item.name;
+                    select.appendChild(opt);
+                });
+                select.disabled = false;
+            } catch (err) {
+                console.error("Gagal memuat wilayah:", err);
+                select.innerHTML = `<option value="" disabled selected>Gagal memuat data</option>`;
+            }
+        }
+
+        function initWilayah() {
+            const provSelect = document.getElementById('al-provinsi');
+            const kabSelect = document.getElementById('al-kabupaten');
+            const kecSelect = document.getElementById('al-kecamatan');
+            const desaSelect = document.getElementById('al-desa');
+
+            if (!provSelect) return;
+
+            // Load Provinsi
+            fetchWilayah('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json', 'al-provinsi', 'Pilih Provinsi');
+
+            provSelect.addEventListener('change', function() {
+                const id = this.options[this.selectedIndex].getAttribute('data-id');
+                kabSelect.innerHTML = '<option value="" disabled selected>Pilih Kabupaten/Kota</option>';
+                kecSelect.innerHTML = '<option value="" disabled selected>Pilih Kecamatan</option>';
+                desaSelect.innerHTML = '<option value="" disabled selected>Pilih Desa/Kelurahan</option>';
+                kabSelect.disabled = true; kecSelect.disabled = true; desaSelect.disabled = true;
+                if(id) fetchWilayah(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${id}.json`, 'al-kabupaten', 'Pilih Kabupaten/Kota');
+            });
+
+            kabSelect.addEventListener('change', function() {
+                const id = this.options[this.selectedIndex].getAttribute('data-id');
+                kecSelect.innerHTML = '<option value="" disabled selected>Pilih Kecamatan</option>';
+                desaSelect.innerHTML = '<option value="" disabled selected>Pilih Desa/Kelurahan</option>';
+                kecSelect.disabled = true; desaSelect.disabled = true;
+                if(id) fetchWilayah(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${id}.json`, 'al-kecamatan', 'Pilih Kecamatan');
+            });
+
+            kecSelect.addEventListener('change', function() {
+                const id = this.options[this.selectedIndex].getAttribute('data-id');
+                desaSelect.innerHTML = '<option value="" disabled selected>Pilih Desa/Kelurahan</option>';
+                desaSelect.disabled = true;
+                if(id) fetchWilayah(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${id}.json`, 'al-desa', 'Pilih Desa/Kelurahan');
+            });
+        }
+
 
         function initAlumniMap() {
             if (alumniMap) {
@@ -10157,6 +10217,8 @@
                 kesan: document.getElementById('al-kesan').value.trim(),
                 provinsi: document.getElementById('al-provinsi').value.trim(),
                 kabupaten: document.getElementById('al-kabupaten').value.trim(),
+                kecamatan: document.getElementById('al-kecamatan').value.trim(),
+                desa: document.getElementById('al-desa').value.trim(),
                 alamat: document.getElementById('al-alamat').value.trim(),
                 lat: document.getElementById('al-lat').value,
                 lng: document.getElementById('al-lng').value,

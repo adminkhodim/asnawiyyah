@@ -3090,7 +3090,7 @@ function saveAlumniData(payload) {
       const headers = [
         "Timestamp", "Nama Lengkap", "Jenis Kelamin", "No WhatsApp", "Media Sosial",
         "Tahun Masuk", "Tahun Lulus", "Program Terakhir", "Kesibukan", "Instansi/Perusahaan",
-        "Kesan & Pesan", "Provinsi", "Kabupaten", "Alamat Lengkap", "Latitude", "Longitude",
+        "Kesan & Pesan", "Provinsi", "Kabupaten", "Kecamatan", "Desa/Kelurahan", "Alamat Lengkap", "Latitude", "Longitude",
         "Foto", "Izin Publikasi"
       ];
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -3135,13 +3135,15 @@ function saveAlumniData(payload) {
       payload.instansi || "",
       payload.kesan || "",
       payload.provinsi || "",
-      payload.kabupaten || "",
-      payload.alamat || "",
-      payload.lat || "",
-      payload.lng || "",
-      fileUrl,
-      payload.izin || ""
-    ];
+        payload.kabupaten || "",
+        payload.kecamatan || "",
+        payload.desa || "",
+        payload.alamat || "",
+        payload.lat || "",
+        payload.lng || "",
+        fileUrl,
+        payload.izin || ""
+      ];
     
     sheet.appendRow(row);
     return { success: true, message: "Data alumni berhasil disimpan." };
