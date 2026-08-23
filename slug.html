@@ -3083,31 +3083,110 @@
         </div>
 
         <!-- ==================== TABS KHUSUS: DASHBOARD ADMIN ==================== -->
-        <div id="page-admin" class="tab-content hidden space-y-5">
+        <div id="page-admin" class="tab-content hidden h-screen w-full">
+
+    <!-- Admin Dashboard Layout Wrapper -->
+    <div class="flex h-screen w-full bg-slate-50 overflow-hidden text-slate-800 font-sans">
+        
+        <!-- Sidebar (Desktop & Mobile Drawer) -->
+        <aside id="admin-sidebar" class="bg-white border-r border-slate-200 flex flex-col transition-all duration-300 flex-shrink-0 relative w-64 z-30 h-full">
+            
+            <!-- Toggle Button (Desktop) -->
+            <button id="admin-sidebar-toggle" onclick="toggleAdminSidebar()" class="flex absolute -right-3 top-6 bg-brand-600 text-white w-6 h-6 rounded-full items-center justify-center shadow-md hover:bg-brand-700 z-10 transition">
+                <i class="fa-solid fa-chevron-left text-xs transition-transform" id="admin-sidebar-icon"></i>
+            </button>
+
+            <!-- Brand / Header -->
+            <div class="h-16 flex items-center justify-between px-4 border-b border-slate-100 shrink-0">
+                <div class="flex items-center overflow-hidden">
+                    <div class="w-8 h-8 bg-gradient-to-tr from-brand-900 to-emerald-700 text-amber-400 rounded-lg flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="ml-3 sidebar-text whitespace-nowrap transition-opacity duration-300">
+                        <span class="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest block">Administrator</span>
+                        <h2 class="text-xs font-bold text-slate-800">Panel PPTQ</h2>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Menu Navigation -->
+            <div class="flex-1 overflow-y-auto py-4 custom-scrollbar">
+                <ul class="space-y-1 px-2" id="admin-sidebar-menu">
+                    <li>
+                        <button onclick="showAdminView('hub')" data-view="hub" class="admin-nav-item active w-full flex items-center px-3 py-2.5 rounded-lg text-brand-700 bg-brand-50 font-bold transition group relative" title="Dashboard Utama">
+                            <i class="fa-solid fa-gauge-high w-5 text-center text-sm"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Dashboard Utama</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('berita')" data-view="berita" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Berita">
+                            <i class="fa-solid fa-newspaper w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Berita</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('banner')" data-view="banner" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Banner Slider">
+                            <i class="fa-solid fa-images w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Banner Slider</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('galeri')" data-view="galeri" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Galeri">
+                            <i class="fa-solid fa-camera-retro w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Galeri</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('profil-lembaga')" data-view="profil-lembaga" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Profil & Kepengurusan">
+                            <i class="fa-solid fa-building-columns w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Profil & Kepengurusan</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('pengaturan')" data-view="pengaturan" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Tautan & Sosmed">
+                            <i class="fa-solid fa-share-nodes w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Tautan & Sosmed</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('ppdb')" data-view="ppdb" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Data Pendaftar PPDB">
+                            <i class="fa-solid fa-user-graduate w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pendaftar PPDB</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="showAdminView('program')" data-view="program" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Program">
+                            <i class="fa-solid fa-graduation-cap w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Program</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Bottom Footer (Logout) -->
+            <div class="p-4 border-t border-slate-100 shrink-0">
+                <button onclick="logoutAdmin()" class="w-full flex items-center justify-center px-3 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg transition overflow-hidden" title="Keluar">
+                    <i class="fa-solid fa-right-from-bracket text-sm shrink-0"></i>
+                    <span class="ml-2 text-xs font-bold sidebar-text whitespace-nowrap transition-opacity duration-300">Keluar</span>
+                </button>
+            </div>
+        </aside>
+
+        
+        
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            
+
+            <!-- Scrollable Views Container -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+                <div class="max-w-6xl mx-auto">
+
 
             <!-- ================= VIEW 1: MENU HUB ADMIN (ICON GRID) ================= -->
             <div id="admin-menu-hub" class="space-y-4">
-
-                <!-- Header Utama Admin Hub -->
-                <div
-                    class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-11 h-11 bg-gradient-to-tr from-brand-900 to-emerald-700 text-amber-400 rounded-2xl flex items-center justify-center text-lg font-bold shadow-sm">
-                            <i class="fa-solid fa-user-shield"></i>
-                        </div>
-                        <div>
-                            <span
-                                class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest block">Administrator</span>
-                            <h2 class="text-sm md:text-base font-bold text-slate-800">Panel Pengelola Pesantren</h2>
-                        </div>
-                    </div>
-                    <button type="button" onclick="logoutAdmin()"
-                        class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-100 transition flex items-center space-x-1.5 active:scale-95">
-                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
-                        <span>Keluar</span>
-                    </button>
-                </div>
 
                 <!-- Banner Selamat Datang Admin -->
                 <section
@@ -3274,11 +3353,7 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')"
-                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Admin">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
+                        
                         <div>
                             <span
                                 class="text-[10px] font-extrabold text-brand-700 uppercase tracking-widest block">Dashboard
@@ -3384,11 +3459,7 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')"
-                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Admin">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
+                        
                         <div>
                             <span
                                 class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest block">Dashboard
@@ -3726,11 +3797,7 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')"
-                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Admin">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
+                        
                         <div>
                             <h2 class="text-sm md:text-base font-bold text-slate-800">Profil & Kepengurusan</h2>
                         </div>
@@ -3805,11 +3872,7 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')"
-                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Admin">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
+                        
                         <div>
                             <span
                                 class="text-[10px] font-extrabold text-blue-700 uppercase tracking-widest block">Dashboard
@@ -3926,11 +3989,7 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')"
-                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Admin">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
+                        
                         <div>
                             <span
                                 class="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest block">Dashboard
@@ -6174,7 +6233,9 @@
                 switchTab('unit-kegiatan', false);
             } else if (path === '/kehidupan-santri/poskestren') {
                 switchTab('poskestren', false);
-            } else if (path === '/kehidupan-santri/ikatan-alumni') {
+            } else if (path === '/administrator') {
+                  switchTab('admin', false);
+              } else if (path === '/kehidupan-santri/ikatan-alumni') {
                   switchTab('alumni', false);
               } else if (path === '/kehidupan-santri/ikatan-alumni/form-data-alumni') {
                   switchTab('form-alumni', false);
@@ -6287,7 +6348,8 @@
                 else if (tabId === 'jadwal-kegiatan') targetUrl = '/kehidupan-santri/jadwal-kegiatan/';
                 else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
                 else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
-                else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
+                else if (tabId === 'admin') targetUrl = '/administrator';
+                  else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
                   else if (tabId === 'form-alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/form-data-alumni/';
                 else if (tabId === 'layanan-hub') targetUrl = '/layanan/';
                 else if (tabId === 'galeri') targetUrl = '/layanan/galeri/';
@@ -6303,7 +6365,7 @@
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
                     tabId === 'kabar' || tabId === 'program-pilihan' ||
                     tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' ||
-                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'alumni' || tabId === 'form-alumni' ||
+                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'alumni' || tabId === 'form-alumni' ||
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
                     tabId === 'quran-index' || tabId === 'quran-detail' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
@@ -6758,7 +6820,53 @@
             switchTab('beranda');
         }
 
+        
+        let adminSidebarCollapsed = false;
+        function toggleAdminSidebar() {
+            adminSidebarCollapsed = !adminSidebarCollapsed;
+            const sidebar = document.getElementById('admin-sidebar');
+            const icon = document.getElementById('admin-sidebar-icon');
+            const texts = document.querySelectorAll('.sidebar-text');
+            
+            if (adminSidebarCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-16');
+                icon.classList.add('rotate-180');
+                texts.forEach(el => {
+                    el.classList.add('opacity-0', 'invisible', 'w-0');
+                    el.classList.remove('opacity-100');
+                });
+            } else {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-64');
+                icon.classList.remove('rotate-180');
+                texts.forEach(el => {
+                    el.classList.remove('opacity-0', 'invisible', 'w-0');
+                    el.classList.add('opacity-100');
+                });
+            }
+        }
+
+         else {
+                sidebar.classList.remove('left-0');
+                sidebar.classList.add('-left-64');
+                overlay.classList.add('hidden');
+            }
+        }
+
         function showAdminView(viewName) {
+            // Update Sidebar Active state
+            document.querySelectorAll('.admin-nav-item').forEach(btn => {
+                if (btn.dataset.view === viewName) {
+                    btn.classList.add('active', 'text-brand-700', 'bg-brand-50', 'font-bold');
+                    btn.classList.remove('text-slate-500', 'font-semibold');
+                } else {
+                    btn.classList.remove('active', 'text-brand-700', 'bg-brand-50', 'font-bold');
+                    btn.classList.add('text-slate-500', 'font-semibold');
+                }
+            });
+            
+
             const hubView = document.getElementById('admin-menu-hub');
             const beritaView = document.getElementById('admin-view-berita');
             const bannerView = document.getElementById('admin-view-banner');
