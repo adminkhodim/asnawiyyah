@@ -4321,6 +4321,12 @@
                         </div>
 
                         <div id="alumni-error" class="hidden p-3 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl border border-rose-100 text-center"></div>
+                        <div class="pt-2">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" id="al-izin" required class="mt-1 w-4 h-4 text-emerald-600 bg-slate-50 border-slate-300 rounded focus:ring-emerald-500">
+                                <span class="text-xs text-slate-600">Saya mengizinkan data ini (kecuali nomor kontak) ditampilkan dalam direktori alumni IKASAPNA. <span class="text-rose-500">*</span></span>
+                            </label>
+                        </div>
 
                         <div class="pt-4 flex justify-between">
                             <button type="button" onclick="prevAlumniStep(3)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-sm transition flex items-center gap-2">
@@ -10195,6 +10201,11 @@
             const btn = document.getElementById('al-submit-btn');
             const errBox = document.getElementById('alumni-error');
             
+            if (!document.getElementById('al-izin').checked) {
+                document.getElementById('al-izin').reportValidity();
+                return;
+            }
+
             errBox.classList.add('hidden');
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyimpan...</span>';
@@ -10214,7 +10225,8 @@
                 kabupaten: document.getElementById('al-kabupaten').value.trim(),
                 alamat: document.getElementById('al-alamat').value.trim(),
                 lat: document.getElementById('al-lat').value,
-                lng: document.getElementById('al-lng').value
+                lng: document.getElementById('al-lng').value,
+                izin: document.getElementById('al-izin').checked ? "Ya" : "Tidak"
             };
 
             try {

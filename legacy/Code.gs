@@ -3077,19 +3077,42 @@ function saveAlumniData(payload) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName(ALUMNI_SHEET_NAME);
     
-    // Auto-create sheet if not exists
     if (!sheet) {
       sheet = ss.insertSheet(ALUMNI_SHEET_NAME);
       const headers = [
         "Timestamp", "Nama Lengkap", "Jenis Kelamin", "No WhatsApp", "Media Sosial",
         "Tahun Masuk", "Tahun Lulus", "Program Terakhir", "Kesibukan", "Instansi/Perusahaan",
-        "Kesan & Pesan", "Provinsi", "Kabupaten", "Alamat Lengkap", "Latitude", "Longitude"
+        "Kesan & Pesan", "Provinsi", "Kabupaten", "Alamat Lengkap", "Latitude", "Longitude",
+        "Foto", "Izin Publikasi"
       ];
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#dcfce7");
       sheet.setFrozenRows(1);
+    } else {
+        const lastCol = sheet.getLastColumn();
+        if (lastCol > 0) {
+            const currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+            if (currentHeaders.indexOf("Foto") === -1) {
+                sheet.getRange(1, lastCol + 1).setValue("Foto").setFontWeight("bold").setBackground("#dcfce7");
+                sheet.getRange(1, lastCol + 2).setValue("Izin Publikasi").setFontWeight("bold").setBackground("#dcfce7");
+            }
+        }
     }
     
+    let fileUrl = "";
+    if (payload.file && payload.file.base64) {
+      const folder = DriveApp.getFolderById(FOLDER_ID);
+      const decodedData = Utilities.base64Decode(payload.file.base64);
+      const blob = Utilities.newBlob(
+        decodedData, 
+        payload.file.mimeType, 
+        "ALUMNI_" + new Date().getTime() + "_" + payload.file.name
+      );
+      const newFile = folder.createFile(blob);
+      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    }
+
     const timestamp = new Date();
     const row = [
       timestamp,
@@ -3107,7 +3130,9 @@ function saveAlumniData(payload) {
       payload.kabupaten || "",
       payload.alamat || "",
       payload.lat || "",
-      payload.lng || ""
+      payload.lng || "",
+      fileUrl,
+      payload.izin || ""
     ];
     
     sheet.appendRow(row);
