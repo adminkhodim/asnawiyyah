@@ -794,6 +794,19 @@ function doGet(e) {
       );
     }
 
+    if (action === "request_otp") {
+      return createJsonResponse(handleRequestOTP(payload));
+    }
+    if (action === "verify_otp") {
+      return createJsonResponse(handleVerifyOTP(payload));
+    }
+    if (action === "login") {
+      return createJsonResponse(handleLogin(payload));
+    }
+    if (action === "google_login") {
+      return createJsonResponse(handleGoogleLogin(payload));
+    }
+
     if (action === "getPPDB") {
       return createJsonResponse(
         getPendaftarData()
@@ -3207,3 +3220,190 @@ function getAlumniTestimonials() {
     return [];
   }
 }
+
+// ==========================================
+// BUSINESS LOGIC: AUTHENTICATION
+// ==========================================
+
+const SHEET_USERS = "Users";
+const SHEET_OTP = "OTP_Cache";
+
+function handleRequestOTP(data) {
+  const email = data.email ? data.email.toLowerCase().trim() : '';
+  if (!email) return { success: false, message: "Email wajib diisi" };
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiryTime = new Date(new Date().getTime() + 5 * 60000); 
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_OTP);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_OTP);
+    sheet.appendRow(["Email", "OTP", "Expiry", "Timestamp"]);
+  }
+
+  sheet.appendRow([email, otp, expiryTime.toISOString(), new Date().toISOString()]);
+
+  const subject = "Kode Verifikasi Login - PPTQ Asnawiyyah";
+  const body = `Halo,\n\nKode verifikasi Anda adalah: \n\nKode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapapun.\n\nTerima kasih,\nTim PPTQ Asnawiyyah`;
+  
+  MailApp.sendEmail({
+    to: email,
+    subject: subject,
+    body: body
+  });
+
+  return { success: true, message: "OTP berhasil dikirim ke email." };
+}
+
+function handleVerifyOTP(data) {
+  const email = data.email ? data.email.toLowerCase().trim() : '';
+  const otp = data.otp;
+  const password = data.password;
+  
+  if (!email || !otp || !password) return { success: false, message: "Email, OTP, dan Password wajib diisi" };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const otpSheet = ss.getSheetByName(SHEET_OTP);
+  if (!otpSheet) return { success: false, message: "Sistem belum siap (Sheet OTP tidak ditemukan)" };
+
+  const otpData = otpSheet.getDataRange().getValues();
+  let valid = false;
+
+  for (let i = otpData.length - 1; i > 0; i--) {
+    if (otpData[i][0] === email) {
+      const storedOtp = otpData[i][1].toString();
+      const expiry = new Date(otpData[i][2]);
+      
+      if (storedOtp === otp.toString()) {
+        if (new Date() > expiry) {
+          return { success: false, message: "Kode OTP sudah kadaluarsa. Silakan minta kode baru." };
+        }
+        valid = true;
+        break;
+      } else {
+        return { success: false, message: "Kode OTP salah." };
+      }
+    }
+  }
+
+  if (!valid) return { success: false, message: "Kode OTP tidak ditemukan atau salah." };
+
+  let userSheet = ss.getSheetByName(SHEET_USERS);
+  if (!userSheet) {
+    userSheet = ss.insertSheet(SHEET_USERS);
+    userSheet.appendRow(["ID", "Email", "Password", "Nama", "Telepon", "Metode_Login", "Dibuat_Pada"]);
+  }
+
+  const usersData = userSheet.getDataRange().getValues();
+  let userExists = false;
+  let userName = "User";
+
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][1] === email) {
+      userExists = true;
+      userName = usersData[i][3];
+      userSheet.getRange(i + 1, 3).setValue(password);
+      break;
+    }
+  }
+
+  if (!userExists) {
+    const newId = "USR_" + new Date().getTime();
+    userSheet.appendRow([newId, email, password, "Santri / Alumni", "", "Email", new Date().toISOString()]);
+  }
+
+  return { 
+    success: true, 
+    message: "Verifikasi berhasil.",
+    token: generateSimpleToken(email),
+    user: { email: email, name: userExists ? userName : "Santri / Alumni" }
+  };
+}
+
+function handleLogin(data) {
+  const email = data.email ? data.email.toLowerCase().trim() : '';
+  const password = data.password;
+
+  if (!email || !password) return { success: false, message: "Email dan Password wajib diisi" };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const userSheet = ss.getSheetByName(SHEET_USERS);
+  if (!userSheet) return { success: false, message: "Belum ada pengguna terdaftar." };
+
+  const usersData = userSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][1] === email) {
+      if (usersData[i][2] === password) {
+        return {
+          success: true,
+          message: "Login berhasil",
+          token: generateSimpleToken(email),
+          user: {
+            email: email,
+            name: usersData[i][3] || "Pengguna",
+            phone: usersData[i][4] || ""
+          }
+        };
+      } else {
+        return { success: false, message: "Password salah" };
+      }
+    }
+  }
+
+  return { success: false, message: "Email belum terdaftar. Silakan daftar menggunakan OTP." };
+}
+
+function handleGoogleLogin(data) {
+  const email = data.email ? data.email.toLowerCase().trim() : '';
+  const name = data.name || "Pengguna Google";
+
+  if (!email) return { success: false, message: "Data Google tidak valid (Email kosong)" };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let userSheet = ss.getSheetByName(SHEET_USERS);
+  if (!userSheet) {
+    userSheet = ss.insertSheet(SHEET_USERS);
+    userSheet.appendRow(["ID", "Email", "Password", "Nama", "Telepon", "Metode_Login", "Dibuat_Pada"]);
+  }
+
+  const usersData = userSheet.getDataRange().getValues();
+  let userExists = false;
+  let storedName = name;
+  let phone = "";
+
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][1] === email) {
+      userExists = true;
+      storedName = usersData[i][3] || name;
+      phone = usersData[i][4] || "";
+      break;
+    }
+  }
+
+  if (!userExists) {
+    const newId = "USR_" + new Date().getTime();
+    userSheet.appendRow([newId, email, "OAUTH_GOOGLE", name, "", "Google", new Date().toISOString()]);
+  }
+
+  return {
+    success: true,
+    message: "Google Login berhasil",
+    token: generateSimpleToken(email),
+    user: {
+      email: email,
+      name: storedName,
+      phone: phone
+    }
+  };
+}
+
+function generateSimpleToken(email) {
+  const payload = {
+    email: email,
+    exp: new Date().getTime() + (30 * 24 * 60 * 60 * 1000)
+  };
+  return Utilities.base64Encode(JSON.stringify(payload));
+}
+
