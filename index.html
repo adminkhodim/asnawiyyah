@@ -190,17 +190,17 @@
                             class="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                             <div
                                 class="bg-white rounded-2xl shadow-xl border border-slate-100 p-2 space-y-1 text-slate-700">
-                                <button onclick="switchTab('profil')"
+                                <button onclick="switchTab('profil', true, '/sejarah-berdirinya'); closeMobileMenu();"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 hover:text-brand-700 transition flex items-center space-x-2.5">
                                     <i class="fa-solid fa-landmark text-emerald-700 w-4"></i>
                                     <span>Profil & Sejarah</span>
                                 </button>
-                                <button onclick="switchTab('profil')"
+                                <button onclick="switchTab('profil', true, '/tujuan-visi-misi'); closeMobileMenu();"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 hover:text-brand-700 transition flex items-center space-x-2.5">
                                     <i class="fa-solid fa-bullseye text-emerald-700 w-4"></i>
                                     <span>Visi & Misi</span>
                                 </button>
-                                <button onclick="switchTab('profil')"
+                                <button onclick="switchTab('profil', true, '/struktur-kepengurusan'); closeMobileMenu();"
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 hover:text-brand-700 transition flex items-center space-x-2.5">
                                     <i class="fa-solid fa-sitemap text-emerald-700 w-4"></i>
                                     <span>Struktur Pengurus</span>
@@ -5972,6 +5972,12 @@
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
+            } else if (path === '/sejarah-berdirinya') {
+                switchTab('profil', false, path);
+            } else if (path === '/tujuan-visi-misi') {
+                switchTab('profil', false, path);
+            } else if (path === '/struktur-kepengurusan') {
+                switchTab('profil', false, path);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
             } else if (path === '/pendidikan/sd-islam-unggulan') {
@@ -6025,6 +6031,12 @@
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
+            } else if (path === '/sejarah-berdirinya') {
+                switchTab('profil', false, path);
+            } else if (path === '/tujuan-visi-misi') {
+                switchTab('profil', false, path);
+            } else if (path === '/struktur-kepengurusan') {
+                switchTab('profil', false, path);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
             } else if (path === '/pendidikan/sd-islam-unggulan') {
@@ -6063,10 +6075,22 @@
         });
 
         // ==================== SISTEM TABS (NAVIGASI SPA) ====================
-        function switchTab(tabId, updateUrl = true) {
+        function scrollToSection(id) {
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const y = el.getBoundingClientRect().top + window.pageYOffset - 100;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            }, 300);
+        }
+
+        function switchTab(tabId, updateUrl = true, customUrl = null) {
             if (updateUrl) {
                 let targetUrl = '/';
-                if (tabId === 'profil') targetUrl = '/tentang-kami/';
+                if (customUrl) {
+                    targetUrl = customUrl;
+                } else if (tabId === 'profil') targetUrl = '/tentang-kami/';
                 else if (tabId === 'kabar') targetUrl = '/berita/';
                 else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/semua-program-pilihan/';
                 else if (tabId === 'sd-islam') targetUrl = '/pendidikan/sd-islam-unggulan/';
@@ -6101,6 +6125,14 @@
 
             if (tabId === 'profil') {
                 loadPublicProfilLembaga();
+            }
+
+            if (customUrl === '/sejarah-berdirinya') {
+                scrollToSection('public-sejarah-container');
+            } else if (customUrl === '/tujuan-visi-misi') {
+                scrollToSection('public-visimisi-container');
+            } else if (customUrl === '/struktur-kepengurusan') {
+                scrollToSection('public-pengurus-container');
             }
 
             document.querySelectorAll('.tab-content').forEach(el => {
