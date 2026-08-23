@@ -6780,35 +6780,27 @@
 
             try {
                 const token = getAdminSessionToken();
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async function () {
-                    const base64Data = reader.result.split(',')[1];
-                    const fileData = {
-                        name: file.name,
-                        mimeType: file.type,
-                        data: base64Data,
-                        prefix: "PENGURUS"
-                    };
+                const fileData = await readFileAsBase64(file);
+                fileData.prefix = "PENGURUS";
 
-                    const response = await apiPost("uploadMedia", { token, file: fileData });
-                    if (response && (response.success || response.status === "success")) {
-                        const uploadedUrl = response.url || response.fileUrl || (response.data && response.data.url);
-                        if (!uploadedUrl) throw new Error("Server tidak mengembalikan URL gambar.");
-                        
-                        previewImg.src = uploadedUrl;
-                        document.getElementById(`input-pengurus-foto-${index}`).value = uploadedUrl;
-                        syncPengurusList();
-                        showToast("Foto berhasil diunggah!");
-                    } else {
-                        throw new Error(response.message || "Gagal mengunggah foto.");
-                    }
-                };
-                reader.onerror = () => { throw new Error("Gagal membaca file."); };
+                const response = await apiPost("uploadMedia", { token, file: fileData });
+                
+                if (response && (response.success || response.status === "success")) {
+                    const uploadedUrl = response.url || response.fileUrl || (response.data && response.data.url) || "";
+                    if (!uploadedUrl) throw new Error("Server tidak mengembalikan URL gambar.");
+                    
+                    previewImg.src = uploadedUrl;
+                    const hiddenInput = document.getElementById(`input-pengurus-foto-${index}`);
+                    if (hiddenInput) hiddenInput.value = uploadedUrl;
+                    syncPengurusList();
+                    showToast("✅ Foto berhasil diunggah ke Google Drive!");
+                } else {
+                    throw new Error(response.message || "Gagal mengunggah foto.");
+                }
             } catch (err) {
-                console.error(err);
+                console.error("Gagal upload foto pengurus:", err);
                 previewImg.src = originalSrc;
-                showToast("❌ " + err.message);
+                showToast("❌ Gagal mengunggah foto pengurus.");
             }
         }
 
