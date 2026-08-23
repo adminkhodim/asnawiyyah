@@ -3150,3 +3150,58 @@ function saveAlumniData(payload) {
     return { success: false, message: error.toString() };
   }
 }
+
+
+function getAlumniTestimonials() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(ALUMNI_SHEET_NAME);
+    if (!sheet) return [];
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return []; // Only headers
+
+    const headers = data[0];
+    const idxNama = headers.indexOf("Nama Lengkap");
+    const idxMasuk = headers.indexOf("Tahun Masuk");
+    const idxLulus = headers.indexOf("Tahun Lulus");
+    const idxProgram = headers.indexOf("Program Terakhir");
+    const idxKesibukan = headers.indexOf("Kesibukan");
+    const idxInstansi = headers.indexOf("Instansi/Perusahaan");
+    const idxKesan = headers.indexOf("Kesan & Pesan");
+    const idxFoto = headers.indexOf("Foto");
+    const idxIzin = headers.indexOf("Izin Publikasi");
+
+    if (idxIzin === -1 || idxKesan === -1 || idxNama === -1) return [];
+
+    let results = [];
+    
+    // Loop backwards to get latest first
+    for (let i = data.length - 1; i >= 1; i--) {
+      const row = data[i];
+      const izin = row[idxIzin] ? String(row[idxIzin]).trim() : "";
+      const kesan = row[idxKesan] ? String(row[idxKesan]).trim() : "";
+
+      if (izin === "Ya" && kesan !== "") {
+        results.push({
+          nama: String(row[idxNama] || ""),
+          tahunMasuk: String(row[idxMasuk] || ""),
+          tahunLulus: String(row[idxLulus] || ""),
+          program: String(row[idxProgram] || ""),
+          kesibukan: String(row[idxKesibukan] || ""),
+          instansi: String(row[idxInstansi] || ""),
+          kesan: kesan,
+          foto: (idxFoto !== -1) ? String(row[idxFoto] || "") : ""
+        });
+
+        if (results.length >= 5) {
+          break; // Max 5 testimonials
+        }
+      }
+    }
+
+    return results;
+  } catch (e) {
+    return [];
+  }
+}
