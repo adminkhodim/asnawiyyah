@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v2';
+const CACHE_NAME = 'asnawiyyah-cache-v3';
 
 self.addEventListener('install', event => {
   // Langsung aktifkan service worker baru tanpa menunggu
