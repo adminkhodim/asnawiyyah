@@ -174,7 +174,7 @@
                 </div>
 
                 <!-- Menu Navigasi Berjenjang -->
-                <nav class="flex items-center space-x-1 text-xs">
+                <nav id="desk-nav-menu" class="flex items-center space-x-1 text-xs">
 
                     <!-- 1. Beranda -->
                     <button onclick="switchTab('beranda')" id="desk-nav-beranda"
@@ -332,7 +332,7 @@
                 </nav>
 
                 <!-- Tombol Aksi Kanan (Rata Kanan Presisi dengan Kartu Beranda) -->
-                <div class="flex items-center space-x-2.5">
+                <div id="desk-action-menu" class="flex items-center space-x-2.5">
                     <button onclick="switchTab('ppdb')"
                         class="bg-amber-500 hover:bg-amber-400 text-brand-dark px-4 py-2 rounded-xl font-extrabold text-xs shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5">
                         <i class="fa-solid fa-user-plus text-xs"></i>
@@ -4328,8 +4328,8 @@
     
     </main>
 
-    <!-- ==================== STICKY BOTTOM NAVIGATION (MOBILE 5 MENU) ==================== -->
-    <div
+    <!-- ==================== BOTTOM NAVIGATION (MOBILE) ==================== -->
+    <nav id="mobile-bottom-nav"
         class="md:hidden fixed bottom-0 left-0 right-0 bg-brand-900 border-t border-brand-800 shadow-[0_-4px_16px_rgba(0,0,0,0.25)] px-2 py-2 flex justify-around items-center z-50">
         <!-- 1. Beranda -->
         <button onclick="switchTab('beranda')" id="mobile-nav-beranda"
@@ -6379,8 +6379,25 @@
                 }
             }
 
-            if (tabId === 'admin' && !isAdminLoggedIn) {
-                setTimeout(openAdminLoginModal, 100);
+            // Hide menus and footer for Admin layout
+            const deskNavMenu = document.getElementById('desk-nav-menu');
+            const deskActionMenu = document.getElementById('desk-action-menu');
+            const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+            const mainFooter = document.querySelector('footer');
+
+            if (tabId === 'admin') {
+                if (deskNavMenu) deskNavMenu.classList.add('hidden');
+                if (deskActionMenu) deskActionMenu.classList.add('hidden');
+                if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
+                if (mainFooter) mainFooter.classList.add('hidden');
+                if (!isAdminLoggedIn) {
+                    setTimeout(openAdminLoginModal, 100);
+                }
+            } else {
+                if (deskNavMenu) deskNavMenu.classList.remove('hidden');
+                if (deskActionMenu) deskActionMenu.classList.remove('hidden');
+                if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');
+                if (mainFooter) mainFooter.classList.remove('hidden');
             }
 
             if (tabId === 'alumni') {
