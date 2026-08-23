@@ -6054,7 +6054,7 @@
                                     `).join('')}
                                 </div>
                                 <div class="rounded-2xl overflow-hidden border border-slate-200 aspect-[4/3]">
-                                    <img src="${d.prosedur.image}" alt="${d.prosedur.imageAlt || 'Prosedur PPDB'}" class="w-full h-full object-cover">
+                                    <img src="${d.prosedur?.image}" alt="${d.prosedur?.imageAlt || 'Prosedur PPDB'}" class="w-full h-full object-cover">
                                 </div>
                             </div>
                         </section>
@@ -6085,10 +6085,10 @@
                                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
                                     <div>
                                         <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Pendaftaran</h4>
-                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya.pendaftaran.nominal}</div>
-                                        ${d.biaya.pendaftaran.note ? `<p class="text-[10px] text-slate-400 mt-1">${d.biaya.pendaftaran.note}</p>` : ''}
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya?.pendaftaran?.nominal}</div>
+                                        ${d.biaya?.pendaftaran?.note ? `<p class="text-[10px] text-slate-400 mt-1">${d.biaya?.pendaftaran?.note}</p>` : ''}
                                     </div>
-                                    ${Array.isArray(d.biaya.pendaftaran.items) ? `
+                                    ${Array.isArray(d.biaya?.pendaftaran?.items) ? `
                                         <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
                                             ${(d.biaya?.pendaftaran?.items || []).map(item => `
                                                 <div class="flex items-center space-x-2.5 text-slate-700">
@@ -6104,10 +6104,10 @@
                                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
                                     <div>
                                         <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
-                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya.syahriyah.nominal}</div>
-                                        ${d.biaya.syahriyah.note ? `<p class="text-[10px] text-slate-400 mt-1">${d.biaya.syahriyah.note}</p>` : ''}
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya?.syahriyah?.nominal}</div>
+                                        ${d.biaya?.syahriyah?.note ? `<p class="text-[10px] text-slate-400 mt-1">${d.biaya?.syahriyah?.note}</p>` : ''}
                                     </div>
-                                    ${Array.isArray(d.biaya.syahriyah.items) ? `
+                                    ${Array.isArray(d.biaya?.syahriyah?.items) ? `
                                         <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
                                             ${(d.biaya?.syahriyah?.items || []).map(item => `
                                                 <div class="flex items-center space-x-2.5 text-slate-700">
@@ -6115,7 +6115,7 @@
                                                     <span>${item}</span>
                                                 </div>
                                             `).join('')}
-                                            ${Array.isArray(d.biaya.syahriyah.excludedItems) ? d.biaya.syahriyah.excludedItems.map(item => `
+                                            ${Array.isArray(d.biaya?.syahriyah?.excludedItems) ? d.biaya?.syahriyah?.excludedItems.map(item => `
                                                 <div class="flex items-center space-x-2.5 text-slate-400 line-through">
                                                     <i class="fa-solid fa-xmark text-rose-500 font-bold"></i>
                                                     <span>${item}</span>
@@ -6129,9 +6129,9 @@
 
                         <!-- K. CALL TO ACTION (CTA) -->
                         <section class="bg-gradient-to-r ${theme.headerTheme} text-white p-6 md:p-8 rounded-3xl shadow-lg text-center space-y-4">
-                            <h3 class="text-lg md:text-xl font-bold">${d.cta.title}</h3>
+                            <h3 class="text-lg md:text-xl font-bold">${d.cta?.title}</h3>
                             <p class="text-xs text-emerald-100 max-w-md mx-auto leading-relaxed">
-                                ${d.cta.description}
+                                ${d.cta?.description}
                             </p>
                             <div class="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
                                 <button onclick="switchTab('ppdb')"
@@ -6139,10 +6139,10 @@
                                     <i class="fa-solid fa-file-signature"></i>
                                     <span>Daftar Sekarang ke Form PPDB</span>
                                 </button>
-                                <a href="${d.cta.waLink}" target="_blank"
-                                    class="w-full sm:w-auto ${d.cta.waBtnClass || 'bg-emerald-600 text-white'} font-bold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2 border">
+                                <a href="${d.cta?.waLink}" target="_blank"
+                                    class="w-full sm:w-auto ${d.cta?.waBtnClass || 'bg-emerald-600 text-white'} font-bold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2 border">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
-                                    <span>${d.cta.waText || 'Konsultasi via WA'}</span>
+                                    <span>${d.cta?.waText || 'Konsultasi via WA'}</span>
                                 </a>
                             </div>
                         </section>
@@ -8744,7 +8744,7 @@
 
                 if (d.prosedur) {
                     document.getElementById('admin-prog-prosedur-items').value = Array.isArray((d.prosedur ? d.prosedur.items : [])) ? (d.prosedur ? d.prosedur.items : []).map(p => p.title ? `${p.title}: ${p.desc}` : p).join('\n') : "";
-                    const pImg = d.prosedur.image || "";
+                    const pImg = d.prosedur?.image || "";
                     document.getElementById('admin-prog-prosedur-img').value = pImg;
 
                     if (pImg) {
@@ -8775,24 +8775,24 @@
                 }
 
                 if (d.biaya) {
-                    if (d.biaya.pendaftaran) {
-                        document.getElementById('admin-prog-biaya-daftar-nominal').value = d.biaya.pendaftaran.nominal || "";
-                        document.getElementById('admin-prog-biaya-daftar-note').value = d.biaya.pendaftaran.note || "";
-                        document.getElementById('admin-prog-biaya-daftar-items').value = Array.isArray(d.biaya.pendaftaran.items) ? d.biaya.pendaftaran.items.join('\n') : "";
+                    if (d.biaya?.pendaftaran) {
+                        document.getElementById('admin-prog-biaya-daftar-nominal').value = d.biaya?.pendaftaran?.nominal || "";
+                        document.getElementById('admin-prog-biaya-daftar-note').value = d.biaya?.pendaftaran?.note || "";
+                        document.getElementById('admin-prog-biaya-daftar-items').value = Array.isArray(d.biaya?.pendaftaran?.items) ? d.biaya?.pendaftaran?.items.join('\n') : "";
                     }
-                    if (d.biaya.syahriyah) {
-                        document.getElementById('admin-prog-biaya-syahriyah-nominal').value = d.biaya.syahriyah.nominal || "";
-                        document.getElementById('admin-prog-biaya-syahriyah-note').value = d.biaya.syahriyah.note || "";
-                        document.getElementById('admin-prog-biaya-syahriyah-items').value = Array.isArray(d.biaya.syahriyah.items) ? d.biaya.syahriyah.items.join('\n') : "";
-                        document.getElementById('admin-prog-biaya-syahriyah-excluded').value = Array.isArray(d.biaya.syahriyah.excludedItems) ? d.biaya.syahriyah.excludedItems.join('\n') : "";
+                    if (d.biaya?.syahriyah) {
+                        document.getElementById('admin-prog-biaya-syahriyah-nominal').value = d.biaya?.syahriyah?.nominal || "";
+                        document.getElementById('admin-prog-biaya-syahriyah-note').value = d.biaya?.syahriyah?.note || "";
+                        document.getElementById('admin-prog-biaya-syahriyah-items').value = Array.isArray(d.biaya?.syahriyah?.items) ? d.biaya?.syahriyah?.items.join('\n') : "";
+                        document.getElementById('admin-prog-biaya-syahriyah-excluded').value = Array.isArray(d.biaya?.syahriyah?.excludedItems) ? d.biaya?.syahriyah?.excludedItems.join('\n') : "";
                     }
                 }
 
                 if (d.cta) {
-                    document.getElementById('admin-prog-cta-title').value = d.cta.title || "";
-                    document.getElementById('admin-prog-cta-desc').value = d.cta.description || "";
-                    document.getElementById('admin-prog-cta-wa-link').value = d.cta.waLink || "";
-                    document.getElementById('admin-prog-cta-wa-text').value = d.cta.waText || "";
+                    document.getElementById('admin-prog-cta-title').value = d.cta?.title || "";
+                    document.getElementById('admin-prog-cta-desc').value = d.cta?.description || "";
+                    document.getElementById('admin-prog-cta-wa-link').value = d.cta?.waLink || "";
+                    document.getElementById('admin-prog-cta-wa-text').value = d.cta?.waText || "";
                 }
 
                 if (saveBtnText) saveBtnText.innerText = "Simpan Perubahan";
@@ -8992,8 +8992,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
                                 <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Pendaftaran</h4>
-                                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${escapeHtml(d.biaya.pendaftaran ? d.biaya.pendaftaran.nominal : '-')}</div>
-                                ${d.biaya.pendaftaran && d.biaya.pendaftaran.items ? `
+                                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${escapeHtml(d.biaya?.pendaftaran ? d.biaya?.pendaftaran?.nominal : '-')}</div>
+                                ${d.biaya?.pendaftaran && d.biaya?.pendaftaran?.items ? `
                                     <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
                                         ${(d.biaya?.pendaftaran?.items || []).map(item => `
                                             <div class="flex items-center space-x-2.5 text-slate-700">
@@ -9006,8 +9006,8 @@
                             </div>
                             <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
                                 <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
-                                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${escapeHtml(d.biaya.syahriyah ? d.biaya.syahriyah.nominal : '-')}</div>
-                                ${d.biaya.syahriyah && d.biaya.syahriyah.items ? `
+                                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${escapeHtml(d.biaya?.syahriyah ? d.biaya?.syahriyah?.nominal : '-')}</div>
+                                ${d.biaya?.syahriyah && d.biaya?.syahriyah?.items ? `
                                     <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
                                         ${(d.biaya?.syahriyah?.items || []).map(item => `
                                             <div class="flex items-center space-x-2.5 text-slate-700">
