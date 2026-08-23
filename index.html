@@ -1174,87 +1174,113 @@
                 </div>
             </section>
 
-            <!-- SEJARAH -->
-            <section class="space-y-4">
+            <!-- PROFIL SUB-MENU GRID -->
+            <section class="grid grid-cols-3 gap-3 md:gap-5 mt-6">
+                <button onclick="switchTab('sejarah-berdirinya')" class="flex flex-col items-center bg-white border border-slate-100 rounded-[1.5rem] p-4 md:p-6 shadow-sm hover:shadow-md transition group">
+                    <div class="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 text-emerald-700 rounded-full flex items-center justify-center text-xl md:text-2xl mb-3 md:mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300">
+                        <i class="fa-solid fa-landmark"></i>
+                    </div>
+                    <span class="text-[10px] md:text-sm font-bold text-slate-700 text-center uppercase tracking-wide">Sejarah</span>
+                </button>
+                <button onclick="switchTab('tujuan-visi-misi')" class="flex flex-col items-center bg-white border border-slate-100 rounded-[1.5rem] p-4 md:p-6 shadow-sm hover:shadow-md transition group">
+                    <div class="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 text-emerald-700 rounded-full flex items-center justify-center text-xl md:text-2xl mb-3 md:mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <span class="text-[10px] md:text-sm font-bold text-slate-700 text-center uppercase tracking-wide">Visi Misi</span>
+                </button>
+                <button onclick="switchTab('struktur-kepengurusan')" class="flex flex-col items-center bg-white border border-slate-100 rounded-[1.5rem] p-4 md:p-6 shadow-sm hover:shadow-md transition group">
+                    <div class="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 text-emerald-700 rounded-full flex items-center justify-center text-xl md:text-2xl mb-3 md:mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300">
+                        <i class="fa-solid fa-sitemap"></i>
+                    </div>
+                    <span class="text-[10px] md:text-sm font-bold text-slate-700 text-center uppercase tracking-wide">Struktur</span>
+                </button>
+            </section>
+        </div>
 
+        <!-- ==================== TABS BARU: SUB-MENU PROFIL ==================== -->
+        <div id="page-sejarah-berdirinya" class="tab-content hidden space-y-8 px-4 md:px-8 py-4 md:py-6">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div class="flex items-center gap-3">
-                    <span class="w-1.5 h-6 bg-brand-600 rounded-full"></span>
-
+                    <button onclick="switchTab('profil')"
+                        class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+                        title="Kembali ke Profil">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                            Perjalanan Pesantren
+                        <span class="text-[10px] font-bold text-brand-700 uppercase tracking-[0.18em] block">
+                            Profil PPTQ Asnawiyyah
                         </span>
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800">
-                            Sejarah Berdirinya
-                        </h3>
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">Sejarah Berdirinya</h2>
                     </div>
                 </div>
-
+                <button onclick="switchTab('beranda')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Beranda">
+                    <i class="fa-solid fa-house text-xs"></i>
+                </button>
+            </div>
+            <section class="space-y-4">
                 <div class="grid md:grid-cols-[180px_1fr] gap-5 md:gap-8">
-
-                    <!-- YEAR -->
                     <div class="rounded-3xl bg-brand-50 border border-brand-100 p-5 md:p-6 h-fit">
-                        <span class="block text-[10px] font-extrabold uppercase tracking-widest text-brand-700">
-                            Didirikan
-                        </span>
-
-                        <strong class="block mt-1 text-4xl md:text-5xl font-black tracking-tight text-brand-900">
-                            1981
-                        </strong>
-
-                        <p class="mt-2 text-xs leading-relaxed text-brand-700">
-                            5 Desember 1981
-                        </p>
+                        <span class="block text-[10px] font-extrabold uppercase tracking-widest text-brand-700">Didirikan</span>
+                        <strong class="block mt-1 text-4xl md:text-5xl font-black tracking-tight text-brand-900">1981</strong>
+                        <p class="mt-2 text-xs leading-relaxed text-brand-700">5 Desember 1981</p>
                     </div>
-
-                    <!-- STORY -->
-                    <div id="public-sejarah-container"
-                        class="rounded-3xl bg-slate-50 border border-slate-100 p-5 md:p-7 space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <div id="public-sejarah-container" class="rounded-3xl bg-slate-50 border border-slate-100 p-5 md:p-7 space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
                         <!-- Akan dirender oleh JS -->
                     </div>
                 </div>
             </section>
+        </div>
 
-            <!-- VISI & MISI -->
-            <section class="space-y-4">
-
+        <div id="page-tujuan-visi-misi" class="tab-content hidden space-y-8 px-4 md:px-8 py-4 md:py-6">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div class="flex items-center gap-3">
-                    <span class="w-1.5 h-6 bg-brand-600 rounded-full"></span>
-
+                    <button onclick="switchTab('profil')"
+                        class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+                        title="Kembali ke Profil">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                            Arah Pendidikan
+                        <span class="text-[10px] font-bold text-brand-700 uppercase tracking-[0.18em] block">
+                            Profil PPTQ Asnawiyyah
                         </span>
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800">
-                            Visi & Misi
-                        </h3>
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">Visi & Misi</h2>
                     </div>
                 </div>
-
+                <button onclick="switchTab('beranda')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Beranda">
+                    <i class="fa-solid fa-house text-xs"></i>
+                </button>
+            </div>
+            <section class="space-y-4">
                 <div id="public-visimisi-container" class="rounded-3xl border border-slate-100 bg-slate-50 p-6 md:p-8 space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
                     <!-- Akan dirender oleh JS -->
                 </div>
             </section>
+        </div>
 
-            <!-- STRUKTUR PENGURUS -->
-            <section class="space-y-4">
+        <div id="page-struktur-kepengurusan" class="tab-content hidden space-y-8 px-4 md:px-8 py-4 md:py-6">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div class="flex items-center gap-3">
-                    <span class="w-1.5 h-6 bg-brand-600 rounded-full"></span>
+                    <button onclick="switchTab('profil')"
+                        class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+                        title="Kembali ke Profil">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">
-                            Pengelola Pesantren
+                        <span class="text-[10px] font-bold text-brand-700 uppercase tracking-[0.18em] block">
+                            Profil PPTQ Asnawiyyah
                         </span>
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800">
-                            Struktur Kepengurusan
-                        </h3>
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">Struktur Kepengurusan</h2>
                     </div>
                 </div>
-
+                <button onclick="switchTab('beranda')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Beranda">
+                    <i class="fa-solid fa-house text-xs"></i>
+                </button>
+            </div>
+            <section class="space-y-4">
                 <div id="public-pengurus-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <!-- Akan dirender oleh JS -->
                 </div>
             </section>
-        </div>
         </div>
 
         <!-- ==================== TABS BARU: KALENDER INDONESIA & JAWA ==================== -->
@@ -5973,11 +5999,11 @@
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
             } else if (path === '/sejarah-berdirinya') {
-                switchTab('profil', false, path);
+                switchTab('sejarah-berdirinya', false);
             } else if (path === '/tujuan-visi-misi') {
-                switchTab('profil', false, path);
+                switchTab('tujuan-visi-misi', false);
             } else if (path === '/struktur-kepengurusan') {
-                switchTab('profil', false, path);
+                switchTab('struktur-kepengurusan', false);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
             } else if (path === '/pendidikan/sd-islam-unggulan') {
@@ -6032,11 +6058,11 @@
             } else if (path === '/tentang-kami') {
                 switchTab('profil', false);
             } else if (path === '/sejarah-berdirinya') {
-                switchTab('profil', false, path);
+                switchTab('sejarah-berdirinya', false);
             } else if (path === '/tujuan-visi-misi') {
-                switchTab('profil', false, path);
+                switchTab('tujuan-visi-misi', false);
             } else if (path === '/struktur-kepengurusan') {
-                switchTab('profil', false, path);
+                switchTab('struktur-kepengurusan', false);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
             } else if (path === '/pendidikan/sd-islam-unggulan') {
@@ -6091,6 +6117,9 @@
                 if (customUrl) {
                     targetUrl = customUrl;
                 } else if (tabId === 'profil') targetUrl = '/tentang-kami/';
+                else if (tabId === 'sejarah-berdirinya') targetUrl = '/sejarah-berdirinya';
+                else if (tabId === 'tujuan-visi-misi') targetUrl = '/tujuan-visi-misi';
+                else if (tabId === 'struktur-kepengurusan') targetUrl = '/struktur-kepengurusan';
                 else if (tabId === 'kabar') targetUrl = '/berita/';
                 else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/semua-program-pilihan/';
                 else if (tabId === 'sd-islam') targetUrl = '/pendidikan/sd-islam-unggulan/';
@@ -6112,7 +6141,8 @@
                 else if (tabId === 'maulid-detail') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/baca/';
 
                 if (window.location.pathname !== targetUrl && (
-                    tabId === 'profil' || tabId === 'kabar' || tabId === 'program-pilihan' ||
+                    tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
+                    tabId === 'kabar' || tabId === 'program-pilihan' ||
                     tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' ||
                     tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'alumni' ||
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
@@ -6123,16 +6153,8 @@
                 }
             }
 
-            if (tabId === 'profil') {
+            if (tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan') {
                 loadPublicProfilLembaga();
-            }
-
-            if (customUrl === '/sejarah-berdirinya') {
-                scrollToSection('public-sejarah-container');
-            } else if (customUrl === '/tujuan-visi-misi') {
-                scrollToSection('public-visimisi-container');
-            } else if (customUrl === '/struktur-kepengurusan') {
-                scrollToSection('public-pengurus-container');
             }
 
             document.querySelectorAll('.tab-content').forEach(el => {
