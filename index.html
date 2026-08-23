@@ -138,6 +138,10 @@
             transition: opacity 0.2s ease-in-out;
         }
     </style>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
@@ -4161,6 +4165,215 @@
             <i class="fa-solid fa-gear text-base"></i>
             <span class="text-[9px] mt-1">Pengaturan</span>
         </button>
+    </div>
+
+    
+    <!-- ==================== HALAMAN: FORM ALUMNI ==================== -->
+    <div id="page-form-alumni" class="tab-content hidden pt-24 pb-28 md:pt-28 lg:pt-32 min-h-screen">
+        <div class="max-w-4xl mx-auto px-5 lg:px-8">
+            
+            <!-- Header Back & Judul -->
+            <div class="flex items-center justify-between mb-8">
+                <button onclick="switchTab('profil')" class="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm flex items-center justify-center transition hover:-translate-x-1">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="text-right">
+                    <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-black rounded-lg mb-1 tracking-widest uppercase">IKASAPNA</span>
+                    <h1 class="text-xl md:text-2xl font-black text-slate-800">Update Data Alumni</h1>
+                </div>
+            </div>
+
+            <!-- Form Container -->
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-slate-100">
+                    <div id="alumni-progress-bar" class="h-full bg-emerald-500 transition-all duration-300 w-1/3"></div>
+                </div>
+
+                <!-- FORM STATE: SUCCESS -->
+                <div id="alumni-form-success" class="hidden py-10 text-center space-y-6">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner border-4 border-emerald-50">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 mb-2">Terima Kasih!</h2>
+                        <p class="text-slate-500 text-sm max-w-md mx-auto">Data Anda telah berhasil diperbarui ke dalam database alumni IKASAPNA PPTQ Asnawiyyah.</p>
+                    </div>
+                    <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <a href="https://chat.whatsapp.com/EXAMPLE_LINK" target="_blank"
+                            class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-2xl text-sm shadow transition flex items-center justify-center space-x-2">
+                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                            <span>Gabung Grup WA IKASAPNA</span>
+                        </a>
+                        <button onclick="switchTab('profil')" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-3 rounded-2xl text-sm transition">
+                            Kembali ke Profil
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FORM BODY -->
+                <form id="alumni-form" onsubmit="submitAlumniForm(event)">
+                    
+                    <!-- STEP 1: IDENTITAS -->
+                    <div id="alumni-step-1" class="space-y-6 block">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2"><span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">1</span> Identitas & Kontak</h3>
+                            <p class="text-xs text-slate-500 mt-1 pl-8">Masukkan data diri Anda saat ini.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Lengkap <span class="text-rose-500">*</span></label>
+                                <input type="text" id="al-nama" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Sesuai ijazah">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Jenis Kelamin <span class="text-rose-500">*</span></label>
+                                <select id="al-jk" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                    <option value="" disabled selected>Pilih...</option>
+                                    <option value="Laki-laki">Laki-laki</option>
+                                    <option value="Perempuan">Perempuan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Nomor WhatsApp Aktif <span class="text-rose-500">*</span></label>
+                                <input type="tel" id="al-wa" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Contoh: 081234567890">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Link Media Sosial (Opsional)</label>
+                                <input type="url" id="al-medsos" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Link FB / IG / TikTok">
+                            </div>
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button type="button" onclick="nextAlumniStep(1)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition flex items-center gap-2">
+                                Lanjut <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: RIWAYAT MONDOK -->
+                    <div id="alumni-step-2" class="space-y-6 hidden">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2"><span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">2</span> Riwayat & Aktivitas</h3>
+                            <p class="text-xs text-slate-500 mt-1 pl-8">Riwayat saat di pesantren dan aktivitas saat ini.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Tahun Masuk <span class="text-rose-500">*</span></label>
+                                    <input type="number" id="al-masuk" required min="1980" max="2050" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="YYYY">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Tahun Lulus <span class="text-rose-500">*</span></label>
+                                    <input type="number" id="al-lulus" required min="1980" max="2050" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="YYYY">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Program Terakhir <span class="text-rose-500">*</span></label>
+                                <select id="al-program" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                    <option value="" disabled selected>Pilih...</option>
+                                    <option value="SD Islam Unggulan">SD Islam Unggulan</option>
+                                    <option value="Tahfidz Anak Putra/Putri">Tahfidz Anak Putra/Putri</option>
+                                    <option value="Tahfidz Dewasa Putra">Tahfidz Dewasa Putra</option>
+                                    <option value="Tahfidz Dewasa Putri">Tahfidz Dewasa Putri</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Kesibukan Saat Ini <span class="text-rose-500">*</span></label>
+                                <select id="al-kesibukan" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                    <option value="" disabled selected>Pilih...</option>
+                                    <option value="Kuliah">Kuliah</option>
+                                    <option value="Bekerja">Bekerja</option>
+                                    <option value="Wirausaha">Wirausaha</option>
+                                    <option value="Mengabdi">Mengabdi di Pesantren Lain</option>
+                                    <option value="Ibu Rumah Tangga">Ibu Rumah Tangga</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Instansi/Perusahaan (Opsional)</label>
+                                <input type="text" id="al-instansi" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Tempat kuliah/kerja">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Kesan & Pesan / Testimoni (Opsional)</label>
+                                <textarea id="al-kesan" rows="3" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition resize-none" placeholder="Tuliskan memori indah Anda..."></textarea>
+                            </div>
+                        </div>
+                        <div class="pt-4 flex justify-between">
+                            <button type="button" onclick="prevAlumniStep(2)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-sm transition flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-left"></i> Kembali
+                            </button>
+                            <button type="button" onclick="nextAlumniStep(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition flex items-center gap-2">
+                                Lanjut <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: LOKASI & ALAMAT -->
+                    <div id="alumni-step-3" class="space-y-6 hidden">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2"><span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">3</span> Domisili & Peta</h3>
+                            <p class="text-xs text-slate-500 mt-1 pl-8">Bantu kami memetakan pesebaran alumni.</p>
+                        </div>
+                        
+                        <!-- Map Container -->
+                        <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm relative">
+                            <div id="alumni-map" class="w-full h-64 bg-slate-100 relative z-0"></div>
+                            
+                            <!-- GPS Target UI Overlay -->
+                            <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-[1000]">
+                                <div class="w-6 h-6 border-2 border-emerald-600 rounded-full flex items-center justify-center relative bg-emerald-500/20 shadow-lg shadow-emerald-500/50 backdrop-blur-[2px]">
+                                    <div class="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
+                                    <div class="absolute w-8 h-[2px] bg-emerald-600/50"></div>
+                                    <div class="absolute h-8 w-[2px] bg-emerald-600/50"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="absolute bottom-4 right-4 z-[1000] pointer-events-auto">
+                                <button type="button" onclick="getGPSLocation()" class="bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-600 font-bold w-10 h-10 rounded-full shadow-md transition flex items-center justify-center text-sm border border-slate-100" title="Gunakan Lokasi Saat Ini">
+                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                </button>
+                            </div>
+                            <div class="absolute top-4 left-4 right-4 pointer-events-none z-[1000]">
+                                <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/50 shadow-sm text-xs text-slate-600 text-center font-medium">
+                                    Geser peta untuk menandai titik lokasi domisili Anda.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden Coordinates -->
+                        <input type="hidden" id="al-lat">
+                        <input type="hidden" id="al-lng">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Provinsi <span class="text-rose-500">*</span></label>
+                                <input type="text" id="al-provinsi" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Kabupaten / Kota <span class="text-rose-500">*</span></label>
+                                <input type="text" id="al-kabupaten" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Alamat Lengkap <span class="text-rose-500">*</span></label>
+                                <textarea id="al-alamat" required rows="2" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition resize-none" placeholder="Jalan, RT/RW, Desa, Kecamatan"></textarea>
+                            </div>
+                        </div>
+
+                        <div id="alumni-error" class="hidden p-3 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl border border-rose-100 text-center"></div>
+
+                        <div class="pt-4 flex justify-between">
+                            <button type="button" onclick="prevAlumniStep(3)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-sm transition flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-left"></i> Kembali
+                            </button>
+                            <button type="submit" id="al-submit-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-2.5 rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Simpan Data</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
     </div>
 
     <!-- ==================== FOOTER ==================== -->

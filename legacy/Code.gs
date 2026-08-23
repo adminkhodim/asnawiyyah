@@ -175,6 +175,10 @@ function doPost(e) {
       return createJsonResponse(toggleStatusGaleri(galeriId, newStatus));
     }
 
+    if (action === "alumni.create") {
+      return createJsonResponse(saveAlumniData(payload));
+    }
+
     // ========================================================
     // PROGRAM DATA SOURCE v2.0 API ROUTER (POST)
     // ========================================================
@@ -905,6 +909,7 @@ function getKabarData() {
 const BANNER_SHEET_NAME = "Banner";
 const GALERI_SHEET_NAME = "Galeri";
 const PENGATURAN_SHEET_NAME = "Pengaturan";
+const ALUMNI_SHEET_NAME = "Data_Alumni";
 
 // 1. Mengambil Data Banner Aktif (Untuk Beranda & Admin)
 function getBannerData() {
@@ -3064,5 +3069,51 @@ function runMigrationTooling(options = { dryRun: false, force: false, sheetName:
       error: err.message,
       message: "Migration failed during validation before any sheet mutation occurred."
     };
+  }
+}
+// ==================== PENGELOLAAN ALUMNI ====================
+function saveAlumniData(payload) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(ALUMNI_SHEET_NAME);
+    
+    // Auto-create sheet if not exists
+    if (!sheet) {
+      sheet = ss.insertSheet(ALUMNI_SHEET_NAME);
+      const headers = [
+        "Timestamp", "Nama Lengkap", "Jenis Kelamin", "No WhatsApp", "Media Sosial",
+        "Tahun Masuk", "Tahun Lulus", "Program Terakhir", "Kesibukan", "Instansi/Perusahaan",
+        "Kesan & Pesan", "Provinsi", "Kabupaten", "Alamat Lengkap", "Latitude", "Longitude"
+      ];
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+    }
+    
+    const timestamp = new Date();
+    const row = [
+      timestamp,
+      payload.nama || "",
+      payload.jk || "",
+      payload.wa || "",
+      payload.medsos || "",
+      payload.masuk || "",
+      payload.lulus || "",
+      payload.program || "",
+      payload.kesibukan || "",
+      payload.instansi || "",
+      payload.kesan || "",
+      payload.provinsi || "",
+      payload.kabupaten || "",
+      payload.alamat || "",
+      payload.lat || "",
+      payload.lng || ""
+    ];
+    
+    sheet.appendRow(row);
+    return { success: true, message: "Data alumni berhasil disimpan." };
+    
+  } catch (error) {
+    return { success: false, message: error.toString() };
   }
 }
