@@ -4130,51 +4130,13 @@
 
         </div>
 
-    </main>
-
-    <!-- ==================== STICKY BOTTOM NAVIGATION (MOBILE 5 MENU) ==================== -->
-    <div
-        class="md:hidden fixed bottom-0 left-0 right-0 bg-brand-900 border-t border-brand-800 shadow-[0_-4px_16px_rgba(0,0,0,0.25)] px-2 py-2 flex justify-around items-center z-50">
-        <!-- 1. Beranda -->
-        <button onclick="switchTab('beranda')" id="mobile-nav-beranda"
-            class="nav-mob-btn flex flex-col items-center text-emerald-300 font-bold transition">
-            <i class="fa-solid fa-house text-base"></i>
-            <span class="text-[9px] mt-1">Beranda</span>
-        </button>
-        <!-- 2. Ibadah (Baru) -->
-        <button onclick="switchTab('ibadah')" id="mobile-nav-ibadah"
-            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
-            <i class="fa-solid fa-book-quran text-base"></i>
-            <span class="text-[9px] mt-1">Ibadah</span>
-        </button>
-        <!-- 3. Berita -->
-        <button onclick="switchTab('kabar')" id="mobile-nav-kabar"
-            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
-            <i class="fa-solid fa-newspaper text-base"></i>
-            <span class="text-[9px] mt-1">Berita</span>
-        </button>
-        <!-- 4. Kalender -->
-        <button onclick="switchTab('kalender')" id="mobile-nav-kalender"
-            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
-            <i class="fa-solid fa-calendar-days text-base"></i>
-            <span class="text-[9px] mt-1">Kalender</span>
-        </button>
-        <!-- 5. Pengaturan -->
-        <button onclick="switchTab('pengaturan')" id="mobile-nav-pengaturan"
-            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
-            <i class="fa-solid fa-gear text-base"></i>
-            <span class="text-[9px] mt-1">Pengaturan</span>
-        </button>
-    </div>
-
-    
     <!-- ==================== HALAMAN: FORM ALUMNI ==================== -->
-    <div id="page-form-alumni" class="tab-content hidden pt-24 pb-28 md:pt-28 lg:pt-32 min-h-screen">
+    <div id="page-form-alumni" class="tab-content hidden space-y-6">
         <div class="max-w-4xl mx-auto px-5 lg:px-8">
             
             <!-- Header Back & Judul -->
             <div class="flex items-center justify-between mb-8">
-                <button onclick="switchTab('profil')" class="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm flex items-center justify-center transition hover:-translate-x-1">
+                <button onclick="switchTab('alumni')" class="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm flex items-center justify-center transition hover:-translate-x-1">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
                 <div class="text-right">
@@ -4204,7 +4166,7 @@
                             <i class="fa-brands fa-whatsapp text-lg"></i>
                             <span>Gabung Grup WA IKASAPNA</span>
                         </a>
-                        <button onclick="switchTab('profil')" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-3 rounded-2xl text-sm transition">
+                        <button onclick="switchTab('alumni')" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-3 rounded-2xl text-sm transition">
                             Kembali ke Profil
                         </button>
                     </div>
@@ -4376,6 +4338,45 @@
         </div>
     </div>
 
+    
+    </main>
+
+    <!-- ==================== STICKY BOTTOM NAVIGATION (MOBILE 5 MENU) ==================== -->
+    <div
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-brand-900 border-t border-brand-800 shadow-[0_-4px_16px_rgba(0,0,0,0.25)] px-2 py-2 flex justify-around items-center z-50">
+        <!-- 1. Beranda -->
+        <button onclick="switchTab('beranda')" id="mobile-nav-beranda"
+            class="nav-mob-btn flex flex-col items-center text-emerald-300 font-bold transition">
+            <i class="fa-solid fa-house text-base"></i>
+            <span class="text-[9px] mt-1">Beranda</span>
+        </button>
+        <!-- 2. Ibadah (Baru) -->
+        <button onclick="switchTab('ibadah')" id="mobile-nav-ibadah"
+            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
+            <i class="fa-solid fa-book-quran text-base"></i>
+            <span class="text-[9px] mt-1">Ibadah</span>
+        </button>
+        <!-- 3. Berita -->
+        <button onclick="switchTab('kabar')" id="mobile-nav-kabar"
+            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
+            <i class="fa-solid fa-newspaper text-base"></i>
+            <span class="text-[9px] mt-1">Berita</span>
+        </button>
+        <!-- 4. Kalender -->
+        <button onclick="switchTab('kalender')" id="mobile-nav-kalender"
+            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
+            <i class="fa-solid fa-calendar-days text-base"></i>
+            <span class="text-[9px] mt-1">Kalender</span>
+        </button>
+        <!-- 5. Pengaturan -->
+        <button onclick="switchTab('pengaturan')" id="mobile-nav-pengaturan"
+            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
+            <i class="fa-solid fa-gear text-base"></i>
+            <span class="text-[9px] mt-1">Pengaturan</span>
+        </button>
+    </div>
+
+    
     <!-- ==================== FOOTER ==================== -->
     <footer
         class="bg-brand-dark text-emerald-100 pt-6 pb-20 md:pb-6 px-4 text-center text-xs border-t border-brand-900 mt-auto">
