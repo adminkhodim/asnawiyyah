@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v1';
+const CACHE_NAME = 'asnawiyyah-cache-v2';
 
 self.addEventListener('install', event => {
   // Langsung aktifkan service worker baru tanpa menunggu
@@ -6,7 +6,17 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(cacheName => {
+          return cacheName !== CACHE_NAME;
+        }).map(cacheName => {
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', event => {
