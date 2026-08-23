@@ -10063,6 +10063,182 @@
             });
         }
     </script>
+
+    <script>
+        // ==================== FORM ALUMNI & LEAFLET ====================
+        let alumniMap = null;
+
+        function initAlumniMap() {
+            if (alumniMap) {
+                setTimeout(() => { alumniMap.invalidateSize(); }, 300);
+                return;
+            }
+            
+            alumniMap = L.map('alumni-map', {
+                center: [-6.9147, 110.6384],
+                zoom: 10,
+                zoomControl: false
+            });
+            
+            L.control.zoom({ position: 'bottomleft' }).addTo(alumniMap);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(alumniMap);
+
+            alumniMap.on('moveend', function() {
+                const center = alumniMap.getCenter();
+                document.getElementById('al-lat').value = center.lat;
+                document.getElementById('al-lng').value = center.lng;
+            });
+            
+            document.getElementById('al-lat').value = -6.9147;
+            document.getElementById('al-lng').value = 110.6384;
+        }
+
+        function getGPSLocation() {
+            if (navigator.geolocation) {
+                const btn = document.querySelector('button[onclick="getGPSLocation()"]');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        if (alumniMap) {
+                            alumniMap.flyTo([lat, lng], 15);
+                            document.getElementById('al-lat').value = lat;
+                            document.getElementById('al-lng').value = lng;
+                        }
+                        btn.innerHTML = origHtml;
+                    },
+                    (error) => {
+                        btn.innerHTML = origHtml;
+                        showToast("⚠️ Gagal mendapat lokasi GPS. Geser peta secara manual.");
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else {
+                showToast("⚠️ Browser tidak mendukung Geolocation.");
+            }
+        }
+
+        function nextAlumniStep(current) {
+            const form = document.getElementById('alumni-form');
+            if (current === 1) {
+                if (!document.getElementById('al-nama').checkValidity()) {
+                    document.getElementById('al-nama').reportValidity();
+                    return;
+                }
+                if (!document.getElementById('al-jk').checkValidity()) {
+                    document.getElementById('al-jk').reportValidity();
+                    return;
+                }
+                if (!document.getElementById('al-wa').checkValidity()) {
+                    document.getElementById('al-wa').reportValidity();
+                    return;
+                }
+            } else if (current === 2) {
+                if (!document.getElementById('al-masuk').checkValidity()) {
+                    document.getElementById('al-masuk').reportValidity();
+                    return;
+                }
+                if (!document.getElementById('al-lulus').checkValidity()) {
+                    document.getElementById('al-lulus').reportValidity();
+                    return;
+                }
+                if (!document.getElementById('al-program').checkValidity()) {
+                    document.getElementById('al-program').reportValidity();
+                    return;
+                }
+                if (!document.getElementById('al-kesibukan').checkValidity()) {
+                    document.getElementById('al-kesibukan').reportValidity();
+                    return;
+                }
+            }
+
+            document.getElementById('alumni-step-' + current).classList.add('hidden');
+            document.getElementById('alumni-step-' + current).classList.remove('block');
+            
+            const next = current + 1;
+            document.getElementById('alumni-step-' + next).classList.remove('hidden');
+            document.getElementById('alumni-step-' + next).classList.add('block');
+            
+            const prog = next === 2 ? 'w-2/3' : 'w-full';
+            const bar = document.getElementById('alumni-progress-bar');
+            bar.className = 'h-full bg-emerald-500 transition-all duration-300 ' + prog;
+            
+            if (next === 3) {
+                initAlumniMap();
+                setTimeout(() => { if(alumniMap) alumniMap.invalidateSize(); }, 200);
+            }
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function prevAlumniStep(current) {
+            document.getElementById('alumni-step-' + current).classList.add('hidden');
+            document.getElementById('alumni-step-' + current).classList.remove('block');
+            
+            const prev = current - 1;
+            document.getElementById('alumni-step-' + prev).classList.remove('hidden');
+            document.getElementById('alumni-step-' + prev).classList.add('block');
+            
+            const prog = prev === 1 ? 'w-1/3' : 'w-2/3';
+            const bar = document.getElementById('alumni-progress-bar');
+            bar.className = 'h-full bg-emerald-500 transition-all duration-300 ' + prog;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        async function submitAlumniForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('al-submit-btn');
+            const errBox = document.getElementById('alumni-error');
+            
+            errBox.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyimpan...</span>';
+
+            const payload = {
+                nama: document.getElementById('al-nama').value.trim(),
+                jk: document.getElementById('al-jk').value,
+                wa: document.getElementById('al-wa').value.trim(),
+                medsos: document.getElementById('al-medsos').value.trim(),
+                masuk: document.getElementById('al-masuk').value,
+                lulus: document.getElementById('al-lulus').value,
+                program: document.getElementById('al-program').value,
+                kesibukan: document.getElementById('al-kesibukan').value,
+                instansi: document.getElementById('al-instansi').value.trim(),
+                kesan: document.getElementById('al-kesan').value.trim(),
+                provinsi: document.getElementById('al-provinsi').value.trim(),
+                kabupaten: document.getElementById('al-kabupaten').value.trim(),
+                alamat: document.getElementById('al-alamat').value.trim(),
+                lat: document.getElementById('al-lat').value,
+                lng: document.getElementById('al-lng').value
+            };
+
+            try {
+                const res = await apiPost("alumni.create", payload);
+                if (res.success) {
+                    document.getElementById('alumni-form').classList.add('hidden');
+                    document.getElementById('alumni-form-success').classList.remove('hidden');
+                    document.getElementById('alumni-form').reset();
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                } else {
+                    errBox.innerText = res.error?.message || "Gagal menyimpan data.";
+                    errBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                document.getElementById('alumni-form').classList.add('hidden');
+                document.getElementById('alumni-form-success').classList.remove('hidden');
+                window.scrollTo({top: 0, behavior: 'smooth'});
+                console.warn(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Simpan Data</span>';
+            }
+        }
+    </script>
 </body>
 
 </html>
