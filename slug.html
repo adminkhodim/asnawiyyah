@@ -4173,11 +4173,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Lengkap <span class="text-rose-500">*</span></label>
-                                <input type="text" id="al-nama" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Sesuai ijazah">
+                                <input type="text" id="al-nama" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Sesuai ijazah">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Jenis Kelamin <span class="text-rose-500">*</span></label>
-                                <select id="al-jk" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                <select id="al-jk" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
                                     <option value="" disabled selected>Pilih...</option>
                                     <option value="Laki-laki">Laki-laki</option>
                                     <option value="Perempuan">Perempuan</option>
@@ -4185,11 +4185,15 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Nomor WhatsApp Aktif <span class="text-rose-500">*</span></label>
-                                <input type="tel" id="al-wa" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Contoh: 081234567890">
+                                <input type="tel" id="al-wa" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Contoh: 081234567890">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Link Media Sosial (Opsional)</label>
                                 <input type="url" id="al-medsos" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="Link FB / IG / TikTok">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Upload Foto Terbaru (Opsional)</label>
+                                <input type="file" id="al-foto" accept="image/*" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
                             </div>
                         </div>
                         <div class="pt-4 flex justify-end">
@@ -4209,16 +4213,16 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Tahun Masuk <span class="text-rose-500">*</span></label>
-                                    <input type="number" id="al-masuk" required min="1980" max="2050" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="YYYY">
+                                    <input type="number" id="al-masuk" min="1980" max="2050" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="YYYY">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Tahun Lulus <span class="text-rose-500">*</span></label>
-                                    <input type="number" id="al-lulus" required min="1980" max="2050" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="YYYY">
+                                    <input type="number" id="al-lulus" min="1980" max="2050" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition" placeholder="YYYY">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Program Terakhir <span class="text-rose-500">*</span></label>
-                                <select id="al-program" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                <select id="al-program" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
                                     <option value="" disabled selected>Pilih...</option>
                                     <option value="SD Islam Unggulan">SD Islam Unggulan</option>
                                     <option value="Tahfidz Anak Putra/Putri">Tahfidz Anak Putra/Putri</option>
@@ -4229,7 +4233,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Kesibukan Saat Ini <span class="text-rose-500">*</span></label>
-                                <select id="al-kesibukan" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                <select id="al-kesibukan" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
                                     <option value="" disabled selected>Pilih...</option>
                                     <option value="Kuliah">Kuliah</option>
                                     <option value="Bekerja">Bekerja</option>
@@ -4297,22 +4301,22 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Provinsi <span class="text-rose-500">*</span></label>
-                                <input type="text" id="al-provinsi" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                <input type="text" id="al-provinsi" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Kabupaten / Kota <span class="text-rose-500">*</span></label>
-                                <input type="text" id="al-kabupaten" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                                <input type="text" id="al-kabupaten" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Alamat Lengkap <span class="text-rose-500">*</span></label>
-                                <textarea id="al-alamat" required rows="2" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition resize-none" placeholder="Jalan, RT/RW, Desa, Kecamatan"></textarea>
+                                <textarea id="al-alamat" rows="2" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition resize-none" placeholder="Jalan, RT/RW, Desa, Kecamatan"></textarea>
                             </div>
                         </div>
 
                         <div id="alumni-error" class="hidden p-3 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl border border-rose-100 text-center"></div>
                         <div class="pt-2">
                             <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" id="al-izin" required class="mt-1 w-4 h-4 text-emerald-600 bg-slate-50 border-slate-300 rounded focus:ring-emerald-500">
+                                <input type="checkbox" id="al-izin" class="mt-1 w-4 h-4 text-emerald-600 bg-slate-50 border-slate-300 rounded focus:ring-emerald-500">
                                 <span class="text-xs text-slate-600">Saya mengizinkan data ini (kecuali nomor kontak) ditampilkan dalam direktori alumni IKASAPNA. <span class="text-rose-500">*</span></span>
                             </label>
                         </div>
@@ -10190,14 +10194,27 @@
             const btn = document.getElementById('al-submit-btn');
             const errBox = document.getElementById('alumni-error');
             
-            if (!document.getElementById('al-izin').checked) {
-                document.getElementById('al-izin').reportValidity();
-                return;
-            }
-
             errBox.classList.add('hidden');
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyimpan...</span>';
+
+            let fileData = null;
+            const fileInput = document.getElementById('al-foto');
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileData = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64 = e.target.result.split(',')[1];
+                        resolve({
+                            base64: base64,
+                            mimeType: file.type,
+                            filename: file.name
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
 
             const payload = {
                 nama: document.getElementById('al-nama').value.trim(),
@@ -10215,7 +10232,8 @@
                 alamat: document.getElementById('al-alamat').value.trim(),
                 lat: document.getElementById('al-lat').value,
                 lng: document.getElementById('al-lng').value,
-                izin: document.getElementById('al-izin').checked ? "Ya" : "Tidak"
+                izin: document.getElementById('al-izin').checked ? "Ya" : "Tidak",
+                file: fileData
             };
 
             try {
