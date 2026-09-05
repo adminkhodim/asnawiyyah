@@ -91,6 +91,12 @@ function doPost(e) {
     }
 
     if (action === "saveBanner") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(
         simpanBanner(payload.data || payload)
       );
@@ -104,6 +110,12 @@ function doPost(e) {
     }
 
     if (action === "deleteBanner") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
 
       const bannerId =
         payload.bannerId ||
@@ -123,6 +135,12 @@ function doPost(e) {
     }
 
     if (action === "toggleBanner") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
 
       const source =
         payload.data || payload;
@@ -151,14 +169,32 @@ function doPost(e) {
     }
 
     if (action === "saveGaleri") {
-      return createJsonResponse(simpanGaleri(payload));
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(simpanGaleri(payload.data || payload));
     }
 
     if (action === "savePengaturan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(simpanPengaturan(payload.data || payload));
     }
 
     if (action === "deleteGaleri") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const galeriId = payload.galeriId || payload.id || (payload.data && (payload.data.galeriId || payload.data.id));
       if (!galeriId) {
         return createJsonResponse({ status: "error", message: "ID Galeri wajib diisi" });
@@ -167,6 +203,12 @@ function doPost(e) {
     }
 
     if (action === "toggleGaleri") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const galeriId = payload.galeriId || payload.id;
       const newStatus = payload.newStatus || payload.status;
       if (!galeriId || !newStatus) {
@@ -3225,8 +3267,33 @@ function getAlumniTestimonials() {
 // BUSINESS LOGIC: AUTHENTICATION
 // ==========================================
 
+// ==========================================
+// BUSINESS LOGIC: AUTHENTICATION (SECURED)
+// ==========================================
+
 const SHEET_USERS = "Users";
 const SHEET_OTP = "OTP_Cache";
+
+/**
+ * Hash password menggunakan SHA-256 dengan Salt Server
+ */
+function hashPassword(password) {
+  const salt = getServerSecret("PASSWORD_SALT", "ASNAWIYYAH_SALT_2026_SECURE");
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(password) + salt, Utilities.Charset.UTF_8);
+  return digest.map(function(b) {
+    return (b < 0 ? b + 256 : b).toString(16).padStart(2, '0');
+  }).join('');
+}
+
+/**
+ * Verifikasi password dengan dukungan migrasi backward-compatibility
+ */
+function verifyPassword(inputPassword, storedPassword) {
+  if (!storedPassword) return false;
+  // Backward compatibility untuk data lama yang sempat tersimpan plain-text
+  if (storedPassword === inputPassword) return true;
+  return hashPassword(inputPassword) === storedPassword;
+}
 
 function handleRequestOTP(data) {
   const email = data.email ? data.email.toLowerCase().trim() : '';
@@ -3297,27 +3364,30 @@ function handleVerifyOTP(data) {
 
   const usersData = userSheet.getDataRange().getValues();
   let userExists = false;
-  let userName = "User";
+  let userName = "Santri / Alumni";
+  const hashedPassword = hashPassword(password);
 
   for (let i = 1; i < usersData.length; i++) {
     if (usersData[i][1] === email) {
       userExists = true;
-      userName = usersData[i][3];
-      userSheet.getRange(i + 1, 3).setValue(password);
+      userName = usersData[i][3] || userName;
+      userSheet.getRange(i + 1, 3).setValue(hashedPassword);
       break;
     }
   }
 
   if (!userExists) {
     const newId = "USR_" + new Date().getTime();
-    userSheet.appendRow([newId, email, password, "Santri / Alumni", "", "Email", new Date().toISOString()]);
+    userSheet.appendRow([newId, email, hashedPassword, "Santri / Alumni", "", "Email", new Date().toISOString()]);
   }
+
+  const tokenData = generateSessionToken(email, "user", 24 * 30);
 
   return { 
     success: true, 
     message: "Verifikasi berhasil.",
-    token: generateSimpleToken(email),
-    user: { email: email, name: userExists ? userName : "Santri / Alumni" }
+    token: tokenData.token,
+    user: { email: email, name: userName }
   };
 }
 
@@ -3335,11 +3405,17 @@ function handleLogin(data) {
   
   for (let i = 1; i < usersData.length; i++) {
     if (usersData[i][1] === email) {
-      if (usersData[i][2] === password) {
+      const storedPassword = usersData[i][2];
+      if (verifyPassword(password, storedPassword)) {
+        // Upgrade password plain-text menjadi hash secara otomatis jika ditemukan format lama
+        if (storedPassword === password) {
+          userSheet.getRange(i + 1, 3).setValue(hashPassword(password));
+        }
+        const tokenData = generateSessionToken(email, "user", 24 * 30);
         return {
           success: true,
           message: "Login berhasil",
-          token: generateSimpleToken(email),
+          token: tokenData.token,
           user: {
             email: email,
             name: usersData[i][3] || "Pengguna",
@@ -3356,8 +3432,27 @@ function handleLogin(data) {
 }
 
 function handleGoogleLogin(data) {
-  const email = data.email ? data.email.toLowerCase().trim() : '';
-  const name = data.name || "Pengguna Google";
+  let email = data.email ? data.email.toLowerCase().trim() : '';
+  let name = data.name || "Pengguna Google";
+
+  // Verifikasi Google ID Token jika credential disertakan
+  if (data.credential) {
+    try {
+      const googleVerifyUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(data.credential);
+      const res = UrlFetchApp.fetch(googleVerifyUrl, { muteHttpExceptions: true });
+      if (res.getResponseCode() === 200) {
+        const tokenInfo = JSON.parse(res.getContentText());
+        if (tokenInfo && tokenInfo.email) {
+          email = tokenInfo.email.toLowerCase().trim();
+          name = tokenInfo.name || name;
+        }
+      } else {
+        return { success: false, message: "Token autentikasi Google tidak valid atau kedaluwarsa." };
+      }
+    } catch (err) {
+      console.warn("Gagal menghubungi Google OAuth tokeninfo:", err);
+    }
+  }
 
   if (!email) return { success: false, message: "Data Google tidak valid (Email kosong)" };
 
@@ -3387,23 +3482,17 @@ function handleGoogleLogin(data) {
     userSheet.appendRow([newId, email, "OAUTH_GOOGLE", name, "", "Google", new Date().toISOString()]);
   }
 
+  const tokenData = generateSessionToken(email, "user", 24 * 30);
+
   return {
     success: true,
     message: "Google Login berhasil",
-    token: generateSimpleToken(email),
+    token: tokenData.token,
     user: {
       email: email,
       name: storedName,
       phone: phone
     }
   };
-}
-
-function generateSimpleToken(email) {
-  const payload = {
-    email: email,
-    exp: new Date().getTime() + (30 * 24 * 60 * 60 * 1000)
-  };
-  return Utilities.base64Encode(JSON.stringify(payload));
 }
 

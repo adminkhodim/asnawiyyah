@@ -5155,6 +5155,12 @@
         async function apiPost(action, payload = {}) {
             if (!WEB_APP_URL) throw new Error("WEB_APP_URL belum dikonfigurasi.");
 
+            const adminToken = (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+            const bodyPayload = { action, ...payload };
+            if (adminToken && !bodyPayload.token) {
+                bodyPayload.token = adminToken;
+            }
+
             const response = await fetch(WEB_APP_URL, {
                 method: "POST",
                 // text/plain menghindari CORS preflight OPTIONS pada Apps Script Web App.
@@ -5162,7 +5168,7 @@
                     "Content-Type": "text/plain;charset=utf-8",
                     "Accept": "application/json"
                 },
-                body: JSON.stringify({ action, ...payload })
+                body: JSON.stringify(bodyPayload)
             });
 
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -10413,8 +10419,13 @@
             try {
                 const apiResponse = await fetch(AUTH_API_URL, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ 
                         action: 'google_login', 
+                        credential: token,
                         email: gData.email, 
                         name: gData.name 
                     })
