@@ -190,6 +190,19 @@ function doPost(e) {
       return handleProgramApiAction(action, payload, e);
     }
 
+    if (action === "request_otp") {
+      return createJsonResponse(handleRequestOTP(payload));
+    }
+    if (action === "verify_otp") {
+      return createJsonResponse(handleVerifyOTP(payload));
+    }
+    if (action === "login") {
+      return createJsonResponse(handleLogin(payload));
+    }
+    if (action === "google_login") {
+      return createJsonResponse(handleGoogleLogin(payload));
+    }
+
     return createJsonResponse({
       status: "error",
       message: "Action tidak dikenal",
@@ -792,19 +805,6 @@ function doGet(e) {
       return createJsonResponse(
         getPengaturanData()
       );
-    }
-
-    if (action === "request_otp") {
-      return createJsonResponse(handleRequestOTP(payload));
-    }
-    if (action === "verify_otp") {
-      return createJsonResponse(handleVerifyOTP(payload));
-    }
-    if (action === "login") {
-      return createJsonResponse(handleLogin(payload));
-    }
-    if (action === "google_login") {
-      return createJsonResponse(handleGoogleLogin(payload));
     }
 
     if (action === "getPPDB") {
@@ -3245,7 +3245,7 @@ function handleRequestOTP(data) {
   sheet.appendRow([email, otp, expiryTime.toISOString(), new Date().toISOString()]);
 
   const subject = "Kode Verifikasi Login - PPTQ Asnawiyyah";
-  const body = `Halo,\n\nKode verifikasi Anda adalah: \n\nKode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapapun.\n\nTerima kasih,\nTim PPTQ Asnawiyyah`;
+  const body = `Halo,\n\nKode verifikasi Anda adalah: ${otp}\n\nKode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapapun.\n\nTerima kasih,\nTim PPTQ Asnawiyyah`;
   
   MailApp.sendEmail({
     to: email,
