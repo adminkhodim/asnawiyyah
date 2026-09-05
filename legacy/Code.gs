@@ -217,6 +217,48 @@ function doPost(e) {
       return createJsonResponse(toggleStatusGaleri(galeriId, newStatus));
     }
 
+    // ========================================================
+    // UNIT KEGIATAN SANTRI (UKS) API ROUTER (POST)
+    // ========================================================
+    if (action === "saveUnitKegiatan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(simpanUnitKegiatan(payload.data || payload));
+    }
+
+    if (action === "deleteUnitKegiatan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      const kegiatanId = payload.id || (payload.data && payload.data.id);
+      if (!kegiatanId) {
+        return createJsonResponse({ status: "error", message: "ID Kegiatan wajib diisi" });
+      }
+      return createJsonResponse(hapusUnitKegiatan(kegiatanId));
+    }
+
+    if (action === "toggleUnitKegiatan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      const kegiatanId = payload.id || (payload.data && payload.data.id);
+      const newStatus = payload.newStatus || (payload.data && payload.data.newStatus);
+      if (!kegiatanId || !newStatus) {
+        return createJsonResponse({ status: "error", message: "ID Kegiatan dan status wajib diisi" });
+      }
+      return createJsonResponse(toggleStatusUnitKegiatan(kegiatanId, newStatus));
+    }
+
     if (action === "alumni.getTestimonials") {
       return createJsonResponse(getAlumniTestimonials());
     }
@@ -872,6 +914,12 @@ function doGet(e) {
       );
     }
 
+    if (action === "getUnitKegiatan") {
+      return createJsonResponse(
+        getUnitKegiatanData()
+      );
+    }
+
     // ========================================================
     // PROGRAM DATA SOURCE v2.0 API ROUTER (GET)
     // ========================================================
@@ -971,6 +1019,7 @@ function getKabarData() {
 // ==================== PENGELOLAAN BANNER SLIDER ====================
 const BANNER_SHEET_NAME = "Banner";
 const GALERI_SHEET_NAME = "Galeri";
+const UNIT_KEGIATAN_SHEET_NAME = "Unit_Kegiatan";
 const PENGATURAN_SHEET_NAME = "Pengaturan";
 const ALUMNI_SHEET_NAME = "Data_Alumni";
 
@@ -1340,6 +1389,220 @@ function simpanPengaturan(payload) {
     }
     
     return { success: true, message: "Pengaturan berhasil disimpan!" };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// ==================== PENGELOLAAN UNIT KEGIATAN SANTRI (UKS) ====================
+
+// 1. Mengambil Data Unit Kegiatan
+function getUnitKegiatanData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(UNIT_KEGIATAN_SHEET_NAME);
+
+    // Jika sheet belum ada, buat otomatis beserta header dan 5 data default
+    if (!sheet) {
+      sheet = ss.insertSheet(UNIT_KEGIATAN_SHEET_NAME);
+      sheet.appendRow(["ID_Kegiatan", "Nama", "Kategori", "Jadwal", "Deskripsi", "Gambar_URL", "Urutan", "Status", "Timestamp"]);
+      
+      const defaultData = [
+        [
+          "UKS_01_SEMUT",
+          "Teater \"SEMUT\"",
+          "Divisi Teater IKASAPNA",
+          "2x Semesta / Tahun",
+          "Unit kegiatan santri PPTQ Asnawiyyah yang berfokus pada pementasan drama atau teater di bawah naungan lembaga semi otonom IKASAPNA. Ditujukan sebagai wadah kreativitas untuk melatih mental dan rasa percaya diri santri saat berada di tengah masyarakat.",
+          "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop",
+          1,
+          "Aktif",
+          new Date().toISOString()
+        ],
+        [
+          "UKS_02_MADING",
+          "Mading \"EL-Fata\"",
+          "Karya Literasi",
+          "Awal Bulan Hijriyah",
+          "Unit kegiatan yang berfokus pada kreasi majalah dinding sebagai salah satu media untuk menampilkan karya seni, tulisan, dan kreativitas santri PPTQ Asnawiyyah yang terbit secara berkala setiap awal bulan Hijriyah.",
+          "https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=800&auto=format&fit=crop",
+          2,
+          "Aktif",
+          new Date().toISOString()
+        ],
+        [
+          "UKS_03_PERPUS",
+          "Perpustakaan \"Bait Al-Hikmah\"",
+          "Pusat Baca Santri",
+          "IKASAPNA",
+          "Perpustakaan milik PPTQ Asnawiyyah yang berada di bawah naungan IKASAPNA. Dibangun guna melestarikan budaya membaca di kalangan santri serta menjadi jembatan penghubung antara santri dengan wawasan dunia luar lewat koleksi buku yang tersedia.",
+          "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800&auto=format&fit=crop",
+          3,
+          "Aktif",
+          new Date().toISOString()
+        ],
+        [
+          "UKS_04_REBANA",
+          "Rebana \"Az-Zahra\"",
+          "Seni Musik Islami",
+          "Malam Jumat & Event",
+          "Unit kegiatan seni musik dengan aliran Hadroh Banjari Kontemporer (terbang, tam, darbuka, jidor). Ditampilkan rutin pada malam Jumat saat acara diba'an dan sebagai pembuka acara-acara penting di PPTQ Asnawiyyah.",
+          "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop",
+          4,
+          "Aktif",
+          new Date().toISOString()
+        ],
+        [
+          "UKS_05_PERS",
+          "Divisi PERS Asnawiyyah",
+          "Media & Publikasi",
+          "Dokumentasi",
+          "Divisi khusus yang berkonsentrasi pada media sosial resmi pesantren (Facebook, Instagram, YouTube, Twitter/X). Berperan mengabadikan dan mempublikasikan seluruh kegiatan serta event pesantren untuk mengenalkan PPTQ Asnawiyyah ke dunia luar.",
+          "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=800&auto=format&fit=crop",
+          5,
+          "Aktif",
+          new Date().toISOString()
+        ]
+      ];
+
+      for (var d = 0; d < defaultData.length; d++) {
+        sheet.appendRow(defaultData[d]);
+      }
+    }
+
+    const data = sheet.getDataRange().getValues();
+    const list = [];
+
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0]) {
+        list.push({
+          id: String(data[i][0]),
+          nama: String(data[i][1] || ""),
+          kategori: String(data[i][2] || ""),
+          jadwal: String(data[i][3] || ""),
+          deskripsi: String(data[i][4] || ""),
+          gambar: String(data[i][5] || ""),
+          urutan: Number(data[i][6]) || 1,
+          status: String(data[i][7] || "Aktif"),
+          timestamp: String(data[i][8] || "")
+        });
+      }
+    }
+
+    // Urutkan berdasarkan urutan ASC
+    list.sort(function(a, b) {
+      return a.urutan - b.urutan;
+    });
+
+    return { status: "success", data: list };
+  } catch (err) {
+    return { status: "error", message: err.toString(), data: [] };
+  }
+}
+
+// 2. Tambah / Edit Unit Kegiatan
+function simpanUnitKegiatan(formData) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(UNIT_KEGIATAN_SHEET_NAME);
+    if (!sheet) {
+      getUnitKegiatanData();
+      sheet = ss.getSheetByName(UNIT_KEGIATAN_SHEET_NAME);
+    }
+
+    var fileUrl = formData.gambarLama || formData.gambar || "";
+
+    // Upload file ke Google Drive jika ada file base64
+    if (formData.file && formData.file.base64) {
+      var folder = DriveApp.getFolderById(FOLDER_ID);
+      var decodedData = Utilities.base64Decode(formData.file.base64);
+      var blob = Utilities.newBlob(
+        decodedData,
+        formData.file.mimeType,
+        "UKS_" + new Date().getTime() + "_" + formData.file.name
+      );
+      var newFile = folder.createFile(blob);
+      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    }
+
+    const data = sheet.getDataRange().getValues();
+    let isEdit = false;
+
+    // Jika Mode Edit (ID sudah ada)
+    if (formData.id) {
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(formData.id)) {
+          sheet.getRange(i + 1, 2).setValue(formData.nama || formData.judul || "");
+          sheet.getRange(i + 1, 3).setValue(formData.kategori || "");
+          sheet.getRange(i + 1, 4).setValue(formData.jadwal || "");
+          sheet.getRange(i + 1, 5).setValue(formData.deskripsi || "");
+          if (fileUrl) sheet.getRange(i + 1, 6).setValue(fileUrl);
+          sheet.getRange(i + 1, 7).setValue(Number(formData.urutan) || 1);
+          sheet.getRange(i + 1, 8).setValue(formData.status || "Aktif");
+          isEdit = true;
+          break;
+        }
+      }
+    }
+
+    // Jika Tambah Baru
+    if (!isEdit) {
+      const newId = "UKS_" + new Date().getTime();
+      sheet.appendRow([
+        newId,
+        formData.nama || formData.judul || "",
+        formData.kategori || "",
+        formData.jadwal || "",
+        formData.deskripsi || "",
+        fileUrl,
+        Number(formData.urutan) || data.length,
+        formData.status || "Aktif",
+        new Date().toISOString()
+      ]);
+    }
+
+    return { success: true, message: "Data Unit Kegiatan berhasil disimpan", url: fileUrl };
+  } catch (err) {
+    return { success: false, message: "Gagal menyimpan Unit Kegiatan: " + err.message };
+  }
+}
+
+// 3. Hapus Unit Kegiatan
+function hapusUnitKegiatan(kegiatanId) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(UNIT_KEGIATAN_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Sheet Unit Kegiatan tidak ditemukan" };
+
+    const data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(kegiatanId)) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: "Unit Kegiatan berhasil dihapus" };
+      }
+    }
+    return { success: false, message: "ID Unit Kegiatan tidak ditemukan" };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// 4. Toggle Status Unit Kegiatan
+function toggleStatusUnitKegiatan(kegiatanId, newStatus) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(UNIT_KEGIATAN_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Sheet Unit Kegiatan tidak ditemukan" };
+
+    const data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(kegiatanId)) {
+        sheet.getRange(i + 1, 8).setValue(newStatus);
+        return { success: true, message: "Status Unit Kegiatan diubah ke: " + newStatus };
+      }
+    }
+    return { success: false, message: "ID Unit Kegiatan tidak ditemukan" };
   } catch (err) {
     return { success: false, message: err.toString() };
   }

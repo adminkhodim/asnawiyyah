@@ -2135,7 +2135,7 @@
                 </section>
 
                 <!-- List 5 Unit Kegiatan Asli -->
-                <div class="space-y-4">
+                <div id="public-unit-kegiatan-container" class="space-y-4">
 
                     <!-- 1. Teater SEMUT -->
                     <div
@@ -3201,6 +3201,12 @@
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Program</span>
                         </button>
                     </li>
+                    <li>
+                        <button onclick="showAdminView('unit-kegiatan')" data-view="unit-kegiatan" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Unit Kegiatan Santri">
+                            <i class="fa-solid fa-people-roof w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Unit Kegiatan (UKS)</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
             
@@ -3381,6 +3387,26 @@
                                 Manajemen Program</h4>
                             <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola data program unggulan &
                                 santri.</p>
+                        </div>
+                    </div>
+
+                    <!-- 5. Tombol Icon Grid: Manajemen Unit Kegiatan Santri (UKS) -->
+                    <div onclick="showAdminView('unit-kegiatan')"
+                        class="bg-white hover:bg-teal-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-teal-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-teal-50 text-teal-700 group-hover:bg-teal-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-people-roof"></i>
+                            </div>
+                            <span id="admin-hub-unit-kegiatan-count"
+                                class="text-[9px] font-extrabold bg-teal-100 text-teal-800 px-2 py-0.5 rounded-md uppercase">0
+                                Unit</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-teal-700 transition">
+                                Unit Kegiatan Santri</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola UKS, divisi, jadwal & foto kegiatan.</p>
                         </div>
                     </div>
 
@@ -4138,6 +4164,136 @@
                     <!-- EMPTY / LOADING / ERROR STATE CONTAINER -->
                     <div id="admin-program-state-container" class="hidden py-8 text-center space-y-2">
                         <!-- Rendered dynamically by JavaScript -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- ================= VIEW 6: MODUL MANAJEMEN UNIT KEGIATAN SANTRI (UKS) ================= -->
+            <div id="admin-view-unit-kegiatan" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button onclick="showAdminView('hub')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-teal-700 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800">Manajemen Unit Kegiatan Santri (UKS)</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="loadUnitKegiatan()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FORM TAMBAH / EDIT UNIT KEGIATAN -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 id="admin-uks-form-title" class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-plus-circle text-teal-600 mr-2"></i> Tambah Unit Kegiatan Baru
+                        </h3>
+                        <button id="admin-uks-cancel-edit-btn" onclick="resetAdminUnitKegiatanForm()" type="button" class="hidden text-xs text-rose-600 hover:underline font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-xmark"></i> Batal Edit
+                        </button>
+                    </div>
+
+                    <form id="adminUnitKegiatanForm" onsubmit="submitAdminUnitKegiatan(event)" class="space-y-4">
+                        <input type="hidden" id="admin-uks-id">
+                        <input type="hidden" id="admin-uks-old-img">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Nama Unit Kegiatan -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama / Judul Unit Kegiatan <span class="text-rose-500">*</span></label>
+                                <input type="text" id="admin-uks-nama" required placeholder='Contoh: Teater "SEMUT", Mading "EL-Fata"' class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            </div>
+
+                            <!-- Kategori / Divisi -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategori / Divisi Naungan <span class="text-rose-500">*</span></label>
+                                <input type="text" id="admin-uks-kategori" required placeholder="Contoh: Divisi Teater IKASAPNA, Karya Literasi, Seni Musik Islami" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            </div>
+
+                            <!-- Jadwal / Frekuensi Kegiatan -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Jadwal / Frekuensi Waktu <span class="text-rose-500">*</span></label>
+                                <input type="text" id="admin-uks-jadwal" required placeholder="Contoh: 2x Semesta / Tahun, Awal Bulan Hijriyah, Malam Jumat & Event" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            </div>
+
+                            <!-- Urutan & Status -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Urutan Tampil</label>
+                                    <input type="number" id="admin-uks-urutan" min="1" value="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Status</label>
+                                    <select id="admin-uks-status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                                        <option value="Aktif">Aktif</option>
+                                        <option value="Nonaktif">Nonaktif</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Upload Foto / Gambar -->
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Foto Kegiatan / Dokumentasi</label>
+                                <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                    <input type="file" id="admin-uks-file" accept="image/*" onchange="previewAdminUksImage(event)" class="w-full sm:flex-1 text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer">
+                                    <div class="w-20 h-16 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center">
+                                        <img id="admin-uks-preview-img" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                                        <span id="admin-uks-preview-placeholder" class="text-[10px] text-slate-400 text-center px-1">Pratinjau Foto</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Deskripsi Kegiatan -->
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Deskripsi Lengkap Kegiatan <span class="text-rose-500">*</span></label>
+                                <textarea id="admin-uks-deskripsi" rows="3" required placeholder="Tuliskan deskripsi fokus kegiatan, tujuan, dan perannya di pesantren..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 focus:bg-white transition resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" id="admin-uks-submit-btn" class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-2 shadow-sm active:scale-95">
+                                <i id="admin-uks-submit-icon" class="fa-solid fa-cloud-arrow-up"></i>
+                                <span id="admin-uks-submit-text">Simpan Unit Kegiatan</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- DAFTAR UNIT KEGIATAN -->
+                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-list-check text-teal-600 mr-2"></i> Daftar Unit Kegiatan Santri
+                            </h3>
+                            <span id="admin-uks-list-count" class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-lg">0 Unit</span>
+                        </div>
+                        <div class="w-full sm:w-64">
+                            <input type="text" id="admin-uks-search" oninput="filterAdminUnitKegiatanList()" placeholder="Cari nama atau kategori..." class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-600 focus:outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Loader & State -->
+                    <div id="admin-uks-loader" class="hidden py-8 text-center text-xs text-slate-500 space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-xl text-teal-600"></i>
+                        <p>Memuat data unit kegiatan...</p>
+                    </div>
+
+                    <!-- Container Grid Card List -->
+                    <div id="admin-uks-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Rendered by JavaScript -->
+                    </div>
+
+                    <div id="admin-uks-empty-state" class="hidden py-8 text-center text-xs text-slate-400 space-y-2">
+                        <i class="fa-solid fa-people-roof text-3xl text-slate-300"></i>
+                        <p>Belum ada data unit kegiatan.</p>
                     </div>
                 </section>
             </div>
@@ -6265,6 +6421,7 @@
             loadBanners();
             loadGaleri();
             loadPengaturan();
+            loadUnitKegiatan();
             if (typeof renderCalendar === 'function') {
                 renderCalendar();
                 handleClientRouting();
@@ -6917,6 +7074,7 @@
                 renderAdminBannerList();
                 loadAdminPPDBData();
                 loadAdminProgramList();
+                loadUnitKegiatan();
             } else {
                 showToast("PIN Keamanan Salah!");
                 document.getElementById('admin-pin-input').value = "";
@@ -6979,6 +7137,7 @@
             const galeriView = document.getElementById('admin-view-galeri');
             const pengaturanView = document.getElementById('admin-view-pengaturan');
             const profilLembagaView = document.getElementById('admin-view-profil-lembaga');
+            const unitKegiatanView = document.getElementById('admin-view-unit-kegiatan');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -6990,6 +7149,7 @@
             if (galeriView) galeriView.classList.add('hidden');
             if (pengaturanView) pengaturanView.classList.add('hidden');
             if (profilLembagaView) profilLembagaView.classList.add('hidden');
+            if (unitKegiatanView) unitKegiatanView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -7012,6 +7172,9 @@
             } else if (viewName === 'profil-lembaga') {
                 if (profilLembagaView) profilLembagaView.classList.remove('hidden');
                 loadAdminProfilLembaga();
+            } else if (viewName === 'unit-kegiatan') {
+                if (unitKegiatanView) unitKegiatanView.classList.remove('hidden');
+                renderAdminUnitKegiatanList();
             } else {
                 hubView.classList.remove('hidden');
             }
@@ -8156,6 +8319,409 @@
                 if (response && response.success) await loadGaleri();
             } catch (err) {
                 showToast("❌ Gagal menghapus galeri: " + err.message);
+            }
+        }
+
+        // ==================== UNIT KEGIATAN SANTRI (UKS) LOGIC (CLIENT & ADMIN) ====================
+        let mockUnitKegiatanData = [
+            {
+                id: "UKS_01_SEMUT",
+                nama: 'Teater "SEMUT"',
+                kategori: "Divisi Teater IKASAPNA",
+                jadwal: "2x Semesta / Tahun",
+                deskripsi: "Unit kegiatan santri PPTQ Asnawiyyah yang berfokus pada pementasan drama atau teater di bawah naungan lembaga semi otonom IKASAPNA. Ditujukan sebagai wadah kreativitas untuk melatih mental dan rasa percaya diri santri saat berada di tengah masyarakat.",
+                gambar: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop",
+                urutan: 1,
+                status: "Aktif"
+            },
+            {
+                id: "UKS_02_MADING",
+                nama: 'Mading "EL-Fata"',
+                kategori: "Karya Literasi",
+                jadwal: "Awal Bulan Hijriyah",
+                deskripsi: "Unit kegiatan yang berfokus pada kreasi majalah dinding sebagai salah satu media untuk menampilkan karya seni, tulisan, dan kreativitas santri PPTQ Asnawiyyah yang terbit secara berkala setiap awal bulan Hijriyah.",
+                gambar: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=800&auto=format&fit=crop",
+                urutan: 2,
+                status: "Aktif"
+            },
+            {
+                id: "UKS_03_PERPUS",
+                nama: 'Perpustakaan "Bait Al-Hikmah"',
+                kategori: "Pusat Baca Santri",
+                jadwal: "IKASAPNA",
+                deskripsi: "Perpustakaan milik PPTQ Asnawiyyah yang berada di bawah naungan IKASAPNA. Dibangun guna melestarikan budaya membaca di kalangan santri serta menjadi jembatan penghubung antara santri dengan wawasan dunia luar lewat koleksi buku yang tersedia.",
+                gambar: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800&auto=format&fit=crop",
+                urutan: 3,
+                status: "Aktif"
+            },
+            {
+                id: "UKS_04_REBANA",
+                nama: 'Rebana "Az-Zahra"',
+                kategori: "Seni Musik Islami",
+                jadwal: "Malam Jumat & Event",
+                deskripsi: "Unit kegiatan seni musik dengan aliran Hadroh Banjari Kontemporer (terbang, tam, darbuka, jidor). Ditampilkan rutin pada malam Jumat saat acara diba'an dan sebagai pembuka acara-acara penting di PPTQ Asnawiyyah.",
+                gambar: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop",
+                urutan: 4,
+                status: "Aktif"
+            },
+            {
+                id: "UKS_05_PERS",
+                nama: "Divisi PERS Asnawiyyah",
+                kategori: "Media & Publikasi",
+                jadwal: "Dokumentasi",
+                deskripsi: "Divisi khusus yang berkonsentrasi pada media sosial resmi pesantren (Facebook, Instagram, YouTube, Twitter/X). Berperan mengabadikan dan mempublikasikan seluruh kegiatan serta event pesantren untuk mengenalkan PPTQ Asnawiyyah ke dunia luar.",
+                gambar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=800&auto=format&fit=crop",
+                urutan: 5,
+                status: "Aktif"
+            }
+        ];
+        let filteredUnitKegiatanData = [];
+
+        async function loadUnitKegiatan() {
+            try {
+                const loader = document.getElementById('admin-uks-loader');
+                if (loader) loader.classList.remove('hidden');
+
+                if (!isApiConfigured()) {
+                    if (loader) loader.classList.add('hidden');
+                    renderPublicUnitKegiatanList();
+                    renderAdminUnitKegiatanList();
+                    return;
+                }
+
+                const response = await apiGet("getUnitKegiatan");
+                if (loader) loader.classList.add('hidden');
+
+                if (response && response.status === "success" && Array.isArray(response.data) && response.data.length > 0) {
+                    mockUnitKegiatanData = response.data;
+                }
+
+                renderPublicUnitKegiatanList();
+                renderAdminUnitKegiatanList();
+            } catch (err) {
+                console.warn("Gagal memuat unit kegiatan dari server, menggunakan data lokal:", err);
+                const loader = document.getElementById('admin-uks-loader');
+                if (loader) loader.classList.add('hidden');
+                renderPublicUnitKegiatanList();
+                renderAdminUnitKegiatanList();
+            }
+        }
+
+        function renderPublicUnitKegiatanList() {
+            const container = document.getElementById('public-unit-kegiatan-container');
+            if (!container) return;
+
+            const activeItems = mockUnitKegiatanData.filter(item => item.status === "Aktif");
+            if (activeItems.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">Belum ada unit kegiatan santri yang dipublikasikan.</div>`;
+                return;
+            }
+
+            container.innerHTML = activeItems.map((item, idx) => {
+                const isEven = idx % 2 === 1;
+                const flexDir = isEven ? "md:flex-row-reverse" : "md:flex-row";
+                const imgUrl = item.gambar || "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop";
+
+                return `
+                    <div class="bg-slate-50 p-4 md:p-5 rounded-3xl border border-slate-100 flex flex-col ${flexDir} gap-4 items-center">
+                        <div class="w-full md:w-48 h-36 rounded-2xl overflow-hidden shrink-0 border border-slate-200">
+                            <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(item.nama)}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="space-y-1.5 w-full">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-amber-100 text-amber-800 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${escapeHtml(item.kategori || 'Unit Kegiatan')}</span>
+                                <span class="text-[10px] text-slate-400 font-semibold"><i class="fa-solid fa-calendar-check mr-1"></i>${escapeHtml(item.jadwal || '-')}</span>
+                            </div>
+                            <h3 class="text-sm md:text-base font-bold text-slate-800">${escapeHtml(item.nama)}</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">${escapeHtml(item.deskripsi)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAdminUnitKegiatanList(itemsToRender = null) {
+            const container = document.getElementById('admin-uks-cards-container');
+            const countBadge = document.getElementById('admin-uks-list-count');
+            const hubBadge = document.getElementById('admin-hub-unit-kegiatan-count');
+            const emptyState = document.getElementById('admin-uks-empty-state');
+
+            const activeCount = mockUnitKegiatanData.filter(item => item.status === "Aktif").length;
+            if (hubBadge) hubBadge.innerText = `${activeCount} Aktif`;
+            if (countBadge) countBadge.innerText = `${mockUnitKegiatanData.length} Unit`;
+
+            if (!container) return;
+            container.innerHTML = "";
+
+            const list = itemsToRender || mockUnitKegiatanData;
+
+            if (list.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            list.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3 flex flex-col justify-between";
+
+                const statusBadge = item.status === "Aktif"
+                    ? `<span class="text-[9px] font-extrabold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-md uppercase">Aktif</span>`
+                    : `<span class="text-[9px] font-extrabold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-md uppercase">Nonaktif</span>`;
+
+                const imgUrl = item.gambar || "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop";
+
+                card.innerHTML = `
+                    <div class="space-y-2.5">
+                        <div class="flex items-start gap-3">
+                            <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(item.nama)}" class="w-20 h-16 object-cover rounded-xl border border-slate-200 shrink-0 bg-slate-100">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md uppercase shrink-0">${escapeHtml(item.kategori || 'UKS')}</span>
+                                    ${statusBadge}
+                                    <span class="text-[10px] text-slate-400 font-bold ml-auto">#${item.urutan || 1}</span>
+                                </div>
+                                <h4 class="text-xs md:text-sm font-bold text-slate-800 mt-1 truncate" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</h4>
+                                <p class="text-[10px] text-slate-500 font-semibold"><i class="fa-solid fa-clock text-slate-400 mr-1"></i>${escapeHtml(item.jadwal || '-')}</p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 mt-2">
+                        <button onclick="toggleAdminUnitKegiatanStatus('${item.id}', '${item.status === 'Aktif' ? 'Nonaktif' : 'Aktif'}')" class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                            ${item.status === 'Aktif' ? '<i class="fa-solid fa-eye-slash mr-1"></i> Nonaktifkan' : '<i class="fa-solid fa-eye mr-1"></i> Aktifkan'}
+                        </button>
+                        <button onclick='editAdminUnitKegiatan(${JSON.stringify(item)})' class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-teal-50 text-teal-700 hover:bg-teal-100 transition">
+                            <i class="fa-solid fa-pen mr-1"></i> Edit
+                        </button>
+                        <button onclick="deleteAdminUnitKegiatan('${item.id}')" class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Hapus
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterAdminUnitKegiatanList() {
+            const query = (document.getElementById('admin-uks-search')?.value || '').toLowerCase().trim();
+            if (!query) {
+                renderAdminUnitKegiatanList();
+                return;
+            }
+
+            const filtered = mockUnitKegiatanData.filter(item => {
+                const nama = (item.nama || '').toLowerCase();
+                const kategori = (item.kategori || '').toLowerCase();
+                const jadwal = (item.jadwal || '').toLowerCase();
+                const deskripsi = (item.deskripsi || '').toLowerCase();
+                return nama.includes(query) || kategori.includes(query) || jadwal.includes(query) || deskripsi.includes(query);
+            });
+
+            renderAdminUnitKegiatanList(filtered);
+        }
+
+        function previewAdminUksImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('admin-uks-preview-img');
+            const placeholder = document.getElementById('admin-uks-preview-placeholder');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function submitAdminUnitKegiatan(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('admin-uks-submit-btn');
+            const btnIcon = document.getElementById('admin-uks-submit-icon');
+            const btnText = document.getElementById('admin-uks-submit-text');
+
+            const id = document.getElementById('admin-uks-id').value;
+            const nama = document.getElementById('admin-uks-nama').value.trim();
+            const kategori = document.getElementById('admin-uks-kategori').value.trim();
+            const jadwal = document.getElementById('admin-uks-jadwal').value.trim();
+            const urutan = Number(document.getElementById('admin-uks-urutan').value) || 1;
+            const status = document.getElementById('admin-uks-status').value;
+            const deskripsi = document.getElementById('admin-uks-deskripsi').value.trim();
+            const oldImg = document.getElementById('admin-uks-old-img').value;
+
+            const fileInput = document.getElementById('admin-uks-file');
+            const file = fileInput.files[0];
+
+            btn.disabled = true;
+            btnIcon.className = "fa-solid fa-spinner fa-spin";
+            btnText.innerText = "Menyimpan Data...";
+
+            try {
+                let fileData = null;
+                if (file) {
+                    fileData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const base64 = reader.result.split(',')[1];
+                            resolve({
+                                base64: base64,
+                                mimeType: file.type,
+                                name: file.name
+                            });
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                const payload = {
+                    id: id,
+                    nama: nama,
+                    kategori: kategori,
+                    jadwal: jadwal,
+                    urutan: urutan,
+                    status: status,
+                    deskripsi: deskripsi,
+                    gambarLama: oldImg,
+                    file: fileData
+                };
+
+                if (!isApiConfigured()) {
+                    if (id) {
+                        const idx = mockUnitKegiatanData.findIndex(u => u.id === id);
+                        if (idx >= 0) {
+                            mockUnitKegiatanData[idx] = { ...mockUnitKegiatanData[idx], ...payload, gambar: oldImg };
+                        }
+                    } else {
+                        mockUnitKegiatanData.push({
+                            ...payload,
+                            id: "UKS_" + new Date().getTime(),
+                            gambar: oldImg || "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop"
+                        });
+                    }
+                    showToast("✅ Unit Kegiatan disimpan (Mode Lokal).");
+                    resetAdminUnitKegiatanForm();
+                    renderPublicUnitKegiatanList();
+                    renderAdminUnitKegiatanList();
+                    btn.disabled = false;
+                    btnIcon.className = "fa-solid fa-cloud-arrow-up";
+                    btnText.innerText = "Simpan Unit Kegiatan";
+                    return;
+                }
+
+                const response = await apiPost("saveUnitKegiatan", payload);
+
+                btn.disabled = false;
+                btnIcon.className = "fa-solid fa-cloud-arrow-up";
+                btnText.innerText = "Simpan Unit Kegiatan";
+
+                if (response && response.success) {
+                    showToast("✅ " + response.message);
+                    resetAdminUnitKegiatanForm();
+                    await loadUnitKegiatan();
+                } else {
+                    showToast("❌ Gagal: " + (response ? response.message : "Terjadi kesalahan"));
+                }
+            } catch (err) {
+                console.error("UKS Submit Error:", err);
+                btn.disabled = false;
+                btnIcon.className = "fa-solid fa-cloud-arrow-up";
+                btnText.innerText = "Simpan Unit Kegiatan";
+                showToast("❌ Gagal memproses data: " + err.message);
+            }
+        }
+
+        function editAdminUnitKegiatan(item) {
+            if (!item) return;
+
+            document.getElementById('admin-uks-id').value = item.id;
+            document.getElementById('admin-uks-old-img').value = item.gambar || "";
+            document.getElementById('admin-uks-nama').value = item.nama || "";
+            document.getElementById('admin-uks-kategori').value = item.kategori || "";
+            document.getElementById('admin-uks-jadwal').value = item.jadwal || "";
+            document.getElementById('admin-uks-urutan').value = item.urutan || 1;
+            document.getElementById('admin-uks-status').value = item.status || "Aktif";
+            document.getElementById('admin-uks-deskripsi').value = item.deskripsi || "";
+
+            const preview = document.getElementById('admin-uks-preview-img');
+            const placeholder = document.getElementById('admin-uks-preview-placeholder');
+
+            if (item.gambar) {
+                preview.src = item.gambar;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                preview.src = "";
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+
+            document.getElementById('admin-uks-form-title').innerHTML = `<i class="fa-solid fa-pen text-teal-600 mr-2"></i> Edit Unit Kegiatan: ${escapeHtml(item.nama)}`;
+            document.getElementById('admin-uks-submit-text').innerText = "Perbarui Unit Kegiatan";
+            document.getElementById('admin-uks-cancel-edit-btn').classList.remove('hidden');
+
+            window.scrollTo({ top: document.getElementById('adminUnitKegiatanForm').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function resetAdminUnitKegiatanForm() {
+            document.getElementById('adminUnitKegiatanForm').reset();
+            document.getElementById('admin-uks-id').value = "";
+            document.getElementById('admin-uks-old-img').value = "";
+            document.getElementById('admin-uks-urutan').value = 1;
+            document.getElementById('admin-uks-status').value = "Aktif";
+
+            const preview = document.getElementById('admin-uks-preview-img');
+            const placeholder = document.getElementById('admin-uks-preview-placeholder');
+            preview.src = "";
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+
+            document.getElementById('admin-uks-form-title').innerHTML = '<i class="fa-solid fa-plus-circle text-teal-600 mr-2"></i> Tambah Unit Kegiatan Baru';
+            document.getElementById('admin-uks-submit-text').innerText = "Simpan Unit Kegiatan";
+            document.getElementById('admin-uks-cancel-edit-btn').classList.add('hidden');
+        }
+
+        async function toggleAdminUnitKegiatanStatus(id, newStatus) {
+            try {
+                if (!isApiConfigured()) {
+                    const idx = mockUnitKegiatanData.findIndex(u => u.id === id);
+                    if (idx >= 0) mockUnitKegiatanData[idx].status = newStatus;
+                    renderPublicUnitKegiatanList();
+                    renderAdminUnitKegiatanList();
+                    showToast(`Status diubah ke ${newStatus}`);
+                    return;
+                }
+
+                const response = await apiPost("toggleUnitKegiatan", { id, newStatus });
+                showToast(response && response.message ? response.message : "Status diperbarui.");
+                if (response && response.success) await loadUnitKegiatan();
+            } catch (err) {
+                showToast("❌ Gagal mengubah status: " + err.message);
+            }
+        }
+
+        async function deleteAdminUnitKegiatan(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus unit kegiatan ini?")) return;
+            try {
+                if (!isApiConfigured()) {
+                    mockUnitKegiatanData = mockUnitKegiatanData.filter(u => u.id !== id);
+                    renderPublicUnitKegiatanList();
+                    renderAdminUnitKegiatanList();
+                    showToast("Unit kegiatan berhasil dihapus.");
+                    return;
+                }
+
+                const response = await apiPost("deleteUnitKegiatan", { id });
+                showToast(response && response.message ? response.message : "Unit kegiatan dihapus.");
+                if (response && response.success) await loadUnitKegiatan();
+            } catch (err) {
+                showToast("❌ Gagal menghapus unit kegiatan: " + err.message);
             }
         }
 
