@@ -1,8 +1,24 @@
-const CACHE_NAME = 'asnawiyyah-cache-v3';
+const CACHE_NAME = 'asnawiyyah-cache-v4';
+
+const PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/assets/img/brand-header.png',
+  '/assets/img/logo-asnawiyyah.jpg',
+  '/assets/img/kartu-santri.png',
+  '/assets/img/abi-cholil.jpg'
+];
 
 self.addEventListener('install', event => {
-  // Langsung aktifkan service worker baru tanpa menunggu
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(PRECACHE_URLS).catch(err => {
+        console.warn('Pre-caching some assets failed:', err);
+      });
+    })
+  );
 });
 
 self.addEventListener('activate', event => {

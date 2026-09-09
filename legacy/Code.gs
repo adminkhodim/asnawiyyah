@@ -267,6 +267,19 @@ function doPost(e) {
       return createJsonResponse(saveAlumniData(payload));
     }
 
+    if (action === "auditSecurityStatus") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse({
+        status: "success",
+        data: auditSecurityConfig()
+      });
+    }
+
     // ========================================================
     // PROGRAM DATA SOURCE v2.0 API ROUTER (POST)
     // ========================================================
@@ -2228,10 +2241,64 @@ function getServerSecret(key, defaultValue = "") {
   try {
     const props = PropertiesService.getScriptProperties();
     const val = props ? props.getProperty(key) : null;
+    if (!val && key === "TOKEN_SIGNING_SECRET") {
+      console.warn("[SECURITY ALERT] TOKEN_SIGNING_SECRET belum dikonfigurasi di ScriptProperties! Menggunakan fallback.");
+    }
     return val || defaultValue;
   } catch (e) {
     return defaultValue;
   }
+}
+
+/**
+ * Setup Script Security Properties Helper
+ * Jalankan fungsi ini satu kali dari Google Apps Script Editor untuk mengonfigurasi
+ * secret key unik dan versi token secara otomatis ke PropertiesService.
+ */
+function setupScriptSecurityProperties(customSecret, customVersion) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const newSecret = customSecret || ("ASN_" + Utilities.getUuid().replace(/-/g, "") + "_" + new Date().getTime());
+    const newVersion = customVersion || "1";
+    
+    props.setProperty("TOKEN_SIGNING_SECRET", newSecret);
+    props.setProperty("TOKEN_VERSION", String(newVersion));
+    
+    Logger.log("✅ Script Security Properties berhasil dikonfigurasi!");
+    Logger.log("TOKEN_SIGNING_SECRET telah disetel (panjang: " + newSecret.length + " karakter).");
+    Logger.log("TOKEN_VERSION: " + newVersion);
+    
+    return {
+      status: "success",
+      message: "Security properties configured successfully",
+      tokenVersion: newVersion
+    };
+  } catch (err) {
+    Logger.log("❌ Gagal mengonfigurasi Script Properties: " + err.message);
+    throw err;
+  }
+}
+
+/**
+ * Audit Konfigurasi Keamanan Script
+ * Mengecek apakah TOKEN_SIGNING_SECRET sudah disetel dan tidak menggunakan default.
+ */
+function auditSecurityConfig() {
+  const props = PropertiesService.getScriptProperties();
+  const secret = props ? props.getProperty("TOKEN_SIGNING_SECRET") : null;
+  const version = props ? props.getProperty("TOKEN_VERSION") : null;
+  
+  const isDefault = !secret || secret === "ASNAWIYYAH_DEFAULT_SECRET_2026";
+  
+  return {
+    status: isDefault ? "warning" : "ok",
+    isConfigured: !!secret,
+    isUsingFallbackSecret: isDefault,
+    tokenVersion: version || "1",
+    recommendation: isDefault 
+      ? "Segera jalankan setupScriptSecurityProperties() atau atur TOKEN_SIGNING_SECRET di Project Settings > Script Properties."
+      : "Kunci rahasia HMAC telah dikonfigurasi dengan aman."
+  };
 }
 
 /**

@@ -9,12 +9,12 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://i.ibb.co.com/670FxpWt/464675043-2145441522518998-8374982937199965807-n.jpg",
+      "src": "/assets/img/logo-asnawiyyah.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
     },
     {
-      "src": "https://i.ibb.co.com/670FxpWt/464675043-2145441522518998-8374982937199965807-n.jpg",
+      "src": "/assets/img/logo-asnawiyyah.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }
