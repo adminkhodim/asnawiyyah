@@ -22,6 +22,7 @@
 
         // ==================== INISIALISASI UTAMA (SINGLE ONLOAD) ====================
         window.onload = async function () {
+            initThemeUI();
             initMobileSplash();
             initializeProgramRuntime();
             await loadNews();
@@ -338,7 +339,7 @@
 
             newsArray.forEach((news, idx) => {
                 const card = document.createElement('article');
-                card.className = "bg-slate-50 hover:bg-emerald-50/50 p-4 rounded-2xl border border-slate-100 hover:border-brand-100 flex flex-col gap-3 cursor-pointer group transition duration-200";
+                card.className = "bg-slate-50 dark:bg-[#15202d] hover:bg-emerald-50/50 dark:hover:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] hover:border-brand-100 dark:hover:border-emerald-500/40 flex flex-col gap-3 cursor-pointer group transition duration-200";
                 card.onclick = () => bacaBerita(news.news_id);
 
                 const imgHtml = news.gambar
@@ -351,15 +352,15 @@
                         <span class="absolute top-2.5 left-2.5 bg-brand-600 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${news.kategori}</span>
                     </div>
                     <div class="space-y-1.5">
-                        <div class="flex items-center space-x-2 text-[10px] text-slate-400">
+                        <div class="flex items-center space-x-2 text-[10px] text-slate-400 dark:text-slate-400">
                             <span><i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal}</span>
                             <span>•</span>
-                            <span class="text-brand-700 font-bold">${news.penulis}</span>
+                            <span class="text-brand-700 dark:text-emerald-400 font-bold">${news.penulis}</span>
                         </div>
-                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-brand-700 transition line-clamp-2 leading-snug">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                             ${news.judul}
                         </h3>
-                        <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 leading-relaxed">
                             ${news.ringkasan}
                         </p>
                     </div>
@@ -379,7 +380,7 @@
                 containerMobile.innerHTML = "";
                 topHeadline.forEach((news, idx) => {
                     const item = document.createElement('article');
-                    item.className = `flex items-center justify-between gap-3 ${idx < topHeadline.length - 1 ? 'border-b border-slate-100 pb-4' : ''} cursor-pointer group`;
+                    item.className = `flex items-center justify-between gap-3 ${idx < topHeadline.length - 1 ? 'border-b border-slate-100 dark:border-[#253447] pb-4' : ''} cursor-pointer group`;
                     item.onclick = () => bacaBerita(news.news_id || news.slug);
                     const thumbSrc = news.gambar || defaultThumb;
                     item.innerHTML = `
@@ -387,11 +388,11 @@
                             <div>
                                 <span class="inline-block px-2.5 py-0.5 bg-emerald-700 text-white text-[9px] font-extrabold rounded-md uppercase tracking-wider">${news.kategori}</span>
                             </div>
-                            <h4 class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-brand-700 transition line-clamp-2 leading-snug">
+                            <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                                 ${news.judul}
                             </h4>
                         </div>
-                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 bg-slate-100">
+                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 dark:border-[#253447] bg-slate-100 dark:bg-[#1c2836]">
                             <img src="${thumbSrc}" alt="${news.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                         </div>
                     `;
@@ -409,23 +410,23 @@
 
                     let html = `
                         <!-- Featured Big News -->
-                        <div class="grid grid-cols-12 gap-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="grid grid-cols-12 gap-6 bg-white dark:bg-[#15202d] p-5 rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm">
                             <div class="col-span-6 rounded-xl overflow-hidden cursor-pointer" onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')">
                                 <img src="${bigThumb}" alt="${bigNews.judul}" class="w-full h-full object-cover hover:scale-105 transition duration-300">
                             </div>
                             <div class="col-span-6 flex flex-col justify-between py-1">
                                 <div class="space-y-2">
-                                    <span class="text-xs font-semibold text-emerald-700">${bigNews.kategori} • ${bigNews.tanggal}</span>
+                                    <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">${bigNews.kategori} • ${bigNews.tanggal}</span>
                                     <h4 onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
-                                        class="font-bold text-base text-slate-900 leading-snug hover:text-emerald-700 transition cursor-pointer line-clamp-2">
+                                        class="font-bold text-base text-slate-900 dark:text-slate-100 leading-snug hover:text-emerald-700 dark:hover:text-emerald-400 transition cursor-pointer line-clamp-2">
                                         ${bigNews.judul}
                                     </h4>
-                                    <p class="text-xs text-slate-500 line-clamp-3">
+                                    <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-3">
                                         ${plainContent}
                                     </p>
                                 </div>
                                 <button onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
-                                    class="text-xs font-bold text-slate-800 hover:text-emerald-700 inline-flex items-center gap-1 pt-3">
+                                    class="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 inline-flex items-center gap-1 pt-3">
                                     Baca Selengkapnya <span>→</span>
                                 </button>
                             </div>
@@ -438,9 +439,9 @@
                             const smallNews = topHeadline[i];
                             html += `
                                 <div onclick="bacaBerita('${smallNews.news_id || smallNews.slug}')"
-                                    class="bg-white p-4 rounded-xl border border-slate-200/70 hover:border-slate-300 transition cursor-pointer">
-                                    <span class="text-[11px] font-medium text-slate-400">${smallNews.kategori} • ${smallNews.tanggal}</span>
-                                    <h5 class="font-bold text-xs text-slate-800 mt-1 line-clamp-2 hover:text-emerald-700">
+                                    class="bg-white dark:bg-[#15202d] p-4 rounded-xl border border-slate-200/70 dark:border-[#253447] hover:border-slate-300 dark:hover:border-slate-600 transition cursor-pointer">
+                                    <span class="text-[11px] font-medium text-slate-400 dark:text-slate-400">${smallNews.kategori} • ${smallNews.tanggal}</span>
+                                    <h5 class="font-bold text-xs text-slate-800 dark:text-slate-100 mt-1 line-clamp-2 hover:text-emerald-700 dark:hover:text-emerald-400">
                                         ${smallNews.judul}
                                     </h5>
                                 </div>
@@ -451,6 +452,7 @@
                     containerDesktop.innerHTML = html;
                 }
             }
+
         }
 
         function bacaBerita(id, skipHistory = false) {
@@ -639,16 +641,41 @@
 
 
         // ==================== FITUR PENGATURAN USER ====================
+        function initThemeUI() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const toggle = document.getElementById('dark-mode-toggle');
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-status-text');
+
+            if (toggle) toggle.checked = isDark;
+            if (icon) {
+                icon.className = isDark ? "fa-solid fa-moon text-indigo-400" : "fa-solid fa-sun text-amber-500";
+            }
+            if (text) {
+                text.innerText = isDark ? "Mode Gelap (Dark)" : "Mode Terang (Light)";
+            }
+        }
+
         function toggleDarkMode(isDark) {
             const icon = document.getElementById('theme-icon');
             const text = document.getElementById('theme-status-text');
+            const toggle = document.getElementById('dark-mode-toggle');
+
+            if (toggle && toggle.checked !== isDark) {
+                toggle.checked = isDark;
+            }
+
             if (isDark) {
+                document.documentElement.classList.add('dark');
                 document.body.classList.add('dark');
+                localStorage.setItem('asnawiyyah_theme', 'dark');
                 if (icon) icon.className = "fa-solid fa-moon text-indigo-400";
                 if (text) text.innerText = "Mode Gelap (Dark)";
                 showToast("Mode Gelap diaktifkan");
             } else {
+                document.documentElement.classList.remove('dark');
                 document.body.classList.remove('dark');
+                localStorage.setItem('asnawiyyah_theme', 'light');
                 if (icon) icon.className = "fa-solid fa-sun text-amber-500";
                 if (text) text.innerText = "Mode Terang (Light)";
                 showToast("Mode Terang diaktifkan");

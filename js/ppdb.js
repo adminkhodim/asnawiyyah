@@ -6,13 +6,13 @@
             const containerCek = document.getElementById('ppdb-container-cek');
 
             if (type === 'daftar') {
-                btnDaftar.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl bg-white text-brand-900 shadow-sm transition";
-                btnCek.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-brand-900 transition";
+                btnDaftar.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl bg-white dark:bg-[#1c2836] text-brand-900 dark:text-emerald-400 shadow-sm transition";
+                btnCek.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 hover:text-brand-900 dark:hover:text-emerald-400 transition";
                 containerDaftar.classList.remove('hidden');
                 containerCek.classList.add('hidden');
             } else {
-                btnCek.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl bg-white text-brand-900 shadow-sm transition";
-                btnDaftar.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-brand-900 transition";
+                btnCek.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl bg-white dark:bg-[#1c2836] text-brand-900 dark:text-emerald-400 shadow-sm transition";
+                btnDaftar.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 hover:text-brand-900 dark:hover:text-emerald-400 transition";
                 containerDaftar.classList.add('hidden');
                 containerCek.classList.remove('hidden');
             }

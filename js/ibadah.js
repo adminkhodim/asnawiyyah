@@ -123,23 +123,23 @@
 
             list.forEach(surah => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:border-emerald-500 hover:shadow-md transition group";
+                card.className = "bg-white dark:bg-[#15202d] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between cursor-pointer hover:border-emerald-500 hover:shadow-md transition group";
                 card.onclick = () => openQuranDetail(surah.nomor);
 
                 card.innerHTML = `
                     <div class="flex items-center space-x-4">
-                        <div class="w-10 h-10 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm group-hover:bg-emerald-50 group-hover:text-emerald-700 transition relative overflow-hidden shrink-0">
+                        <div class="w-10 h-10 bg-slate-50 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 rounded-xl flex items-center justify-center font-bold text-sm group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/50 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition relative overflow-hidden shrink-0">
                             <span class="relative z-10">${surah.nomor}</span>
-                            <div class="absolute inset-0 bg-emerald-100 transform scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
+                            <div class="absolute inset-0 bg-emerald-100 dark:bg-emerald-900/40 transform scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm group-hover:text-emerald-700 transition">${surah.namaLatin}</h3>
-                            <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider">${surah.tempatTurun} • ${surah.jumlahAyat} Ayat</p>
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">${surah.namaLatin}</h3>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-400 mt-0.5 uppercase tracking-wider">${surah.tempatTurun} • ${surah.jumlahAyat} Ayat</p>
                         </div>
                     </div>
                     <div class="text-right shrink-0">
-                        <span class="font-arabic text-xl md:text-2xl text-emerald-700">${surah.nama}</span>
-                        <p class="text-[9px] text-slate-400 mt-1">${surah.arti}</p>
+                        <span class="font-arabic text-xl md:text-2xl text-emerald-700 dark:text-emerald-400">${surah.nama}</span>
+                        <p class="text-[9px] text-slate-400 dark:text-slate-400 mt-1">${surah.arti}</p>
                     </div>
                 `;
                 container.appendChild(card);
@@ -170,7 +170,7 @@
             titleEl.innerText = "Memuat...";
             subTitleEl.innerText = "Sabar, sedang mengambil data...";
             bismillahEl.classList.add('hidden');
-            container.innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-500 mb-3"></i><p class="text-sm text-slate-500">Memuat ayat...</p></div>`;
+            container.innerHTML = `<div class="bg-white dark:bg-[#15202d] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] text-center py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-500 mb-3"></i><p class="text-sm text-slate-500 dark:text-slate-400">Memuat ayat...</p></div>`;
 
             if (currentAudio) {
                 currentAudio.pause();
@@ -205,20 +205,20 @@
                     container.innerHTML = '';
                     surah.ayat.forEach(ayat => {
                         const div = document.createElement('div');
-                        div.className = "bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4 hover:border-emerald-200 transition";
+                        div.className = "bg-white dark:bg-[#15202d] p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 hover:border-emerald-200 dark:hover:border-emerald-500/40 transition";
                         const latinDisplayClass = isLatinVisible ? "" : "hidden";
                         div.innerHTML = `
                             <div class="flex items-start justify-between gap-4">
-                                <div class="w-8 h-8 shrink-0 bg-emerald-50 text-emerald-700 rounded-full flex items-center justify-center font-bold text-xs border border-emerald-100">
+                                <div class="w-8 h-8 shrink-0 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center justify-center font-bold text-xs border border-emerald-100 dark:border-emerald-800/40">
                                     ${ayat.nomorAyat}
                                 </div>
-                                <p class="font-arabic text-2xl md:text-3xl text-slate-800 text-right leading-loose flex-1" style="line-height: 2.5;">
+                                <p class="font-arabic text-2xl md:text-3xl text-slate-800 dark:text-slate-100 text-right leading-loose flex-1" style="line-height: 2.5;">
                                     ${ayat.teksArab}
                                 </p>
                             </div>
-                            <div class="pt-3 border-t border-slate-50 space-y-2">
-                                <p class="latin-text text-emerald-700 text-xs md:text-sm italic font-medium leading-relaxed ${latinDisplayClass}">${ayat.teksLatin}</p>
-                                <p class="text-slate-600 text-xs md:text-sm leading-relaxed">${ayat.teksIndonesia}</p>
+                            <div class="pt-3 border-t border-slate-50 dark:border-slate-800 space-y-2">
+                                <p class="latin-text text-emerald-700 dark:text-emerald-400 text-xs md:text-sm italic font-medium leading-relaxed ${latinDisplayClass}">${ayat.teksLatin}</p>
+                                <p class="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed">${ayat.teksIndonesia}</p>
                             </div>
                         `;
                         container.appendChild(div);
@@ -226,7 +226,7 @@
                 }
             } catch (error) {
                 console.error("Gagal memuat detail surah:", error);
-                container.innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center py-10 text-red-500">Gagal memuat data. Periksa koneksi internet Anda.</div>`;
+                container.innerHTML = `<div class="bg-white dark:bg-[#15202d] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] text-center py-10 text-red-500">Gagal memuat data. Periksa koneksi internet Anda.</div>`;
             }
         }
 
@@ -283,21 +283,21 @@
 
             maulidDibai.forEach(chapter => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:border-purple-500 hover:shadow-md transition group";
+                card.className = "bg-white dark:bg-[#15202d] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between cursor-pointer hover:border-purple-500 hover:shadow-md transition group";
                 card.onclick = () => openMaulidDetail(chapter.id);
 
                 card.innerHTML = `
                     <div class="flex items-center space-x-4">
-                        <div class="w-10 h-10 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm group-hover:bg-purple-50 group-hover:text-purple-700 transition relative overflow-hidden shrink-0">
+                        <div class="w-10 h-10 bg-slate-50 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 rounded-xl flex items-center justify-center font-bold text-sm group-hover:bg-purple-50 dark:group-hover:bg-purple-950/40 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition relative overflow-hidden shrink-0">
                             <span class="relative z-10">${chapter.id}</span>
-                            <div class="absolute inset-0 bg-purple-100 transform scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
+                            <div class="absolute inset-0 bg-purple-100 dark:bg-purple-900/40 transform scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm group-hover:text-purple-700 transition">${chapter.title}</h3>
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm group-hover:text-purple-700 dark:group-hover:text-purple-400 transition">${chapter.title}</h3>
                         </div>
                     </div>
                     <div class="text-right shrink-0">
-                        <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-purple-500 transition"></i>
+                        <i class="fa-solid fa-chevron-right text-slate-400 dark:text-slate-400 group-hover:text-purple-500 transition"></i>
                     </div>
                 `;
                 container.appendChild(card);
@@ -314,10 +314,10 @@
 
             chapter.content.forEach((text) => {
                 const div = document.createElement('div');
-                div.className = "bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4 hover:border-purple-200 transition";
+                div.className = "bg-white dark:bg-[#15202d] p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 hover:border-purple-200 dark:hover:border-purple-500/40 transition";
                 div.innerHTML = `
                     <div class="flex items-start justify-between gap-4">
-                        <p class="font-arabic text-2xl md:text-3xl text-slate-800 text-center md:text-right leading-loose flex-1 w-full" style="line-height: 2.5;" dir="rtl">
+                        <p class="font-arabic text-2xl md:text-3xl text-slate-800 dark:text-slate-100 text-center md:text-right leading-loose flex-1 w-full" style="line-height: 2.5;" dir="rtl">
                             ${text}
                         </p>
                     </div>

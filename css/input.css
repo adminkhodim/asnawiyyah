@@ -82,3 +82,32 @@ body {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
+
+/* Dark mode native controls & color-scheme */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b131e;
+  color: #f1f5f9;
+}
+
+/* Base form controls for dark mode */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]),
+html.dark textarea,
+html.dark select {
+  background-color: #1c2836;
+  color: #f1f5f9;
+  border-color: #253447;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+html.dark option {
+  background-color: #15202d;
+  color: #f1f5f9;
+}

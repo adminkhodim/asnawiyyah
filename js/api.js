@@ -170,7 +170,7 @@
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "p-2 min-h-[50px] md:min-h-[60px] bg-slate-50/50 rounded-2xl";
+                emptyCell.className = "p-2 min-h-[50px] md:min-h-[60px] bg-slate-50/50 dark:bg-[#15202d]/40 rounded-2xl";
                 gridContainer.appendChild(emptyCell);
             }
 
@@ -182,17 +182,17 @@
                 const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
 
                 const dayCell = document.createElement('div');
-                let cellStyle = "p-1.5 md:p-2 min-h-[50px] md:min-h-[60px] rounded-2xl flex flex-col justify-between items-center cursor-pointer transition border border-slate-100 hover:border-brand-600 ";
+                let cellStyle = "p-1.5 md:p-2 min-h-[50px] md:min-h-[60px] rounded-2xl flex flex-col justify-between items-center cursor-pointer transition border border-slate-100 dark:border-[#253447] hover:border-brand-600 dark:hover:border-emerald-500 ";
 
-                if (isToday) cellStyle += "bg-brand-700 text-white font-bold shadow-md";
-                else if (dayOfWeek === 0) cellStyle += "bg-red-50 text-red-600 hover:bg-red-100";
-                else if (dayOfWeek === 5) cellStyle += "bg-emerald-50 text-emerald-800 hover:bg-emerald-100";
-                else cellStyle += "bg-slate-50 text-slate-700 hover:bg-slate-100";
+                if (isToday) cellStyle += "bg-brand-700 dark:bg-emerald-600 text-white font-bold shadow-md";
+                else if (dayOfWeek === 0) cellStyle += "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40";
+                else if (dayOfWeek === 5) cellStyle += "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40";
+                else cellStyle += "bg-slate-50 dark:bg-[#1c2836] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#253447]";
 
                 dayCell.className = cellStyle;
                 dayCell.onclick = () => selectCalDate(year, month, day, pasaran, dayOfWeek);
 
-                const pasaranColor = isToday ? "text-amber-300" : (dayOfWeek === 0 ? "text-red-400" : "text-slate-400");
+                const pasaranColor = isToday ? "text-amber-300" : (dayOfWeek === 0 ? "text-red-400 dark:text-red-400" : "text-slate-400 dark:text-slate-400");
                 dayCell.innerHTML = `
                     <span class="text-xs md:text-sm font-extrabold">${day}</span>
                     <span class="text-[8px] md:text-[9px] font-semibold ${pasaranColor}">${pasaran}</span>

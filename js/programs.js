@@ -187,7 +187,7 @@
                 const theme = getProgramUiTheme(prog);
                 return `
                 <div onclick="switchTab('${prog.id}')"
-                    class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    class="group bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer">
                     <div class="relative h-48 overflow-hidden">
                         <img src="${prog.image}" alt="${prog.name}"
                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
@@ -197,12 +197,12 @@
                         </span>
                     </div>
                     <div class="p-6 space-y-3">
-                        <h3 class="font-bold text-lg text-slate-900 group-hover:text-emerald-700 transition">
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
                             ${prog.name}</h3>
-                        <p class="text-xs text-slate-500 leading-relaxed">
+                        <p class="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
                             ${prog.description}
                         </p>
-                        <ul class="text-xs text-slate-600 space-y-1.5 pt-2">
+                        <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 pt-2">
                             ${prog.highlights.slice(0, 3).map(item => `<li class="flex items-center gap-2">✓ ${item}</li>`).join('')}
                         </ul>
                     </div>
@@ -222,7 +222,7 @@
                 const theme = getProgramUiTheme(prog);
                 return `
                 <div onclick="switchTab('${prog.id}')"
-                    class="relative aspect-[21/9] md:aspect-[16/10] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm group border border-slate-100 transition hover:shadow-lg flex flex-col justify-end p-3 md:p-5 cursor-pointer">
+                    class="relative aspect-[21/9] md:aspect-[16/10] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm group border border-slate-100 dark:border-[#253447] transition hover:shadow-lg flex flex-col justify-end p-3 md:p-5 cursor-pointer">
                     <img src="${prog.image}" alt="${prog.name}"
                         class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
@@ -250,13 +250,13 @@
                 const categoryColor = theme.headerCategoryColor;
 
                 pageEl.innerHTML = `
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                    <div class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-8">
 
                         <!-- BARIS KEMBALI & HEADER UTAMA -->
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-1">
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2 mb-1">
                             <div class="flex items-center space-x-2.5">
                                 <button onclick="switchTab('program-pilihan')"
-                                    class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                                    class="w-8 h-8 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
                                     title="Kembali">
                                     <i class="fa-solid fa-arrow-left text-xs"></i>
                                 </button>
@@ -284,8 +284,8 @@
                         </section>
 
                         <!-- B. DESKRIPSI SINGKAT PROGRAM -->
-                        <section class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                            <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+                        <section class="bg-slate-50 dark:bg-[#1c2836] p-5 rounded-2xl border border-slate-100 dark:border-[#253447]">
+                            <p class="text-xs md:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                 ${d.summary}
                             </p>
                         </section>
@@ -295,7 +295,7 @@
                             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
                                 <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Video Profil Kegiatan
                             </h3>
-                            <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md border border-slate-200 bg-black">
+                            <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md border border-slate-200 dark:border-[#253447] bg-black">
                                 <iframe class="w-full h-full" src="${d.video}" title="${d.videoTitle}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
                         </section>
@@ -307,12 +307,12 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 ${(d.keunggulan || []).map(k => `
-                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
+                                    <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1.5">
                                         <div class="w-9 h-9 ${k.iconBg || 'bg-brand-100 text-brand-700'} rounded-xl flex items-center justify-center text-sm font-bold mb-2">
                                             <i class="fa-solid ${k.icon}"></i>
                                         </div>
-                                        <h4 class="text-sm md:text-lg font-bold text-slate-800">${k.title}</h4>
-                                        <p class="text-[11px] text-slate-500 leading-relaxed">${k.desc}</p>
+                                        <h4 class="text-sm md:text-lg font-bold text-slate-800 dark:text-slate-100">${k.title}</h4>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">${k.desc}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -353,27 +353,27 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 ${(d.fasilitas || []).map(f => `
-                                    <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center space-x-3">
+                                    <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-center space-x-3">
                                         <i class="${f.icon} ${f.iconColor || 'text-brand-700'} text-lg"></i>
-                                        <span class="text-xs font-semibold text-slate-700">${f.text}</span>
+                                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">${f.text}</span>
                                     </div>
                                 `).join('')}
                             </div>
                         </section>
 
                         <!-- H. PROSEDUR PENDAFTARAN -->
-                        <section class="bg-slate-50 p-5 md:p-6 rounded-3xl border border-slate-100 space-y-4">
-                            <h3 class="text-base font-bold text-slate-800 text-center">Prosedur Pendaftaran</h3>
+                        <section class="bg-slate-50 dark:bg-[#1c2836] p-5 md:p-6 rounded-3xl border border-slate-100 dark:border-[#253447] space-y-4">
+                            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 text-center">Prosedur Pendaftaran</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                                 <div class="space-y-3">
                                     ${(d.prosedur?.items || []).map((p, idx) => `
                                         <div class="flex items-start space-x-3">
-                                            <i class="fa-solid fa-check text-brand-700 font-bold text-sm mt-0.5 shrink-0"></i>
-                                            <p class="text-xs text-slate-700 ${idx === 0 ? 'font-semibold' : ''}">${p.title ? `${p.step ? `${p.step}. ` : ''}${p.title}: ${p.desc}` : p}</p>
+                                            <i class="fa-solid fa-check text-brand-700 dark:text-emerald-400 font-bold text-sm mt-0.5 shrink-0"></i>
+                                            <p class="text-xs text-slate-700 dark:text-slate-200 ${idx === 0 ? 'font-semibold' : ''}">${p.title ? `${p.step ? `${p.step}. ` : ''}${p.title}: ${p.desc}` : p}</p>
                                         </div>
                                     `).join('')}
                                 </div>
-                                <div class="rounded-2xl overflow-hidden border border-slate-200 aspect-[4/3]">
+                                <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-[#253447] aspect-[4/3]">
                                     <img src="${d.prosedur?.image}" alt="${d.prosedur?.imageAlt || 'Prosedur PPDB'}" class="w-full h-full object-cover">
                                 </div>
                             </div>
@@ -381,16 +381,16 @@
 
                         <!-- I. PERSYARATAN PENDAFTARAN -->
                         <section class="space-y-4">
-                            <h3 class="text-base font-bold text-slate-800 text-center">Persyaratan Pendaftaran</h3>
+                            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 text-center">Persyaratan Pendaftaran</h3>
                             <div class="space-y-3 max-w-2xl mx-auto">
                                 ${(d.persyaratan || []).map(req => `
-                                    <div class="flex items-start space-x-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div class="flex items-start space-x-4 p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447]">
                                         <div class="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center text-lg shrink-0">
                                             <i class="fa-solid ${req.icon || 'fa-check'}"></i>
                                         </div>
                                         <div>
-                                            <h4 class="text-xs md:text-sm font-bold text-slate-800">${req.title}</h4>
-                                            <p class="text-[11px] text-slate-500 mt-0.5">${req.desc}</p>
+                                            <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100">${req.title}</h4>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5">${req.desc}</p>
                                         </div>
                                     </div>
                                 `).join('')}
@@ -399,20 +399,20 @@
 
                         <!-- J. BIAYA PENDIDIKAN -->
                         <section class="space-y-4">
-                            <h3 class="text-base font-bold text-slate-800 text-center">Biaya Pendidikan</h3>
+                            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 text-center">Biaya Pendidikan</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <!-- Biaya Pendaftaran -->
-                                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                                <div class="bg-white dark:bg-[#1c2836] p-6 rounded-3xl border border-slate-200 dark:border-[#253447] shadow-sm space-y-4 text-center">
                                     <div>
-                                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Pendaftaran</h4>
-                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya?.pendaftaran?.nominal}</div>
-                                        ${d.biaya?.pendaftaran?.note ? `<p class="text-[10px] text-slate-400 mt-1">${d.biaya?.pendaftaran?.note}</p>` : ''}
+                                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Biaya Pendaftaran</h4>
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">${d.biaya?.pendaftaran?.nominal}</div>
+                                        ${d.biaya?.pendaftaran?.note ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-1">${d.biaya?.pendaftaran?.note}</p>` : ''}
                                     </div>
                                     ${Array.isArray(d.biaya?.pendaftaran?.items) ? `
-                                        <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
+                                        <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100 dark:border-[#253447]">
                                             ${(d.biaya?.pendaftaran?.items || []).map(item => `
-                                                <div class="flex items-center space-x-2.5 text-slate-700">
-                                                    <i class="fa-solid fa-check text-emerald-600 font-bold"></i>
+                                                <div class="flex items-center space-x-2.5 text-slate-700 dark:text-slate-200">
+                                                    <i class="fa-solid fa-check text-emerald-600 dark:text-emerald-400 font-bold"></i>
                                                     <span>${item}</span>
                                                 </div>
                                             `).join('')}
@@ -421,22 +421,22 @@
                                 </div>
 
                                 <!-- Biaya Bulanan -->
-                                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                                <div class="bg-white dark:bg-[#1c2836] p-6 rounded-3xl border border-slate-200 dark:border-[#253447] shadow-sm space-y-4 text-center">
                                     <div>
-                                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
-                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-2">${d.biaya?.syahriyah?.nominal}</div>
-                                        ${d.biaya?.syahriyah?.note ? `<p class="text-[10px] text-slate-400 mt-1">${d.biaya?.syahriyah?.note}</p>` : ''}
+                                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">${d.biaya?.syahriyah?.nominal}</div>
+                                        ${d.biaya?.syahriyah?.note ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-1">${d.biaya?.syahriyah?.note}</p>` : ''}
                                     </div>
                                     ${Array.isArray(d.biaya?.syahriyah?.items) ? `
-                                        <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100">
+                                        <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100 dark:border-[#253447]">
                                             ${(d.biaya?.syahriyah?.items || []).map(item => `
-                                                <div class="flex items-center space-x-2.5 text-slate-700">
-                                                    <i class="fa-solid fa-check text-emerald-600 font-bold"></i>
+                                                <div class="flex items-center space-x-2.5 text-slate-700 dark:text-slate-200">
+                                                    <i class="fa-solid fa-check text-emerald-600 dark:text-emerald-400 font-bold"></i>
                                                     <span>${item}</span>
                                                 </div>
                                             `).join('')}
                                             ${Array.isArray(d.biaya?.syahriyah?.excludedItems) ? d.biaya?.syahriyah?.excludedItems.map(item => `
-                                                <div class="flex items-center space-x-2.5 text-slate-400 line-through">
+                                                <div class="flex items-center space-x-2.5 text-slate-400 dark:text-slate-400 line-through">
                                                     <i class="fa-solid fa-xmark text-rose-500 font-bold"></i>
                                                     <span>${item}</span>
                                                 </div>
