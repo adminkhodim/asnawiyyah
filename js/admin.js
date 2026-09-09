@@ -219,11 +219,11 @@
                 const pTags = textVisiMisi.split('\n').filter(t => t.trim() !== '').map(p => `<p>${p}</p>`).join('');
                 containerVisiMisi.innerHTML = `
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-brand-600 shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-white dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447] flex items-center justify-center text-brand-600 dark:text-emerald-400 shadow-sm">
                             <i class="fa-solid fa-bullseye"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-slate-800">Arah & Tujuan</h4>
+                            <h4 class="font-bold text-slate-800 dark:text-slate-100">Arah & Tujuan</h4>
                         </div>
                     </div>
                     ${pTags}
@@ -240,18 +240,18 @@
                 } catch(e) { struct = []; }
 
                 if (struct.length === 0) {
-                    containerPengurus.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 italic py-4">Data kepengurusan belum ditambahkan.</p>`;
+                    containerPengurus.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 dark:text-slate-500 italic py-4">Data kepengurusan belum ditambahkan.</p>`;
                 } else {
                     struct.forEach(p => {
                         const imgSrc = p.foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.nama || 'P') + '&background=e0e7ff&color=4f46e5';
                         containerPengurus.innerHTML += `
-                            <div class="bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 p-4 text-center space-y-3 flex flex-col items-center hover:shadow-md transition">
-                                <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-brand-600 shadow-sm shrink-0 bg-white">
+                            <div class="bg-slate-50 dark:bg-[#1c2836] rounded-3xl overflow-hidden border border-slate-100 dark:border-[#253447] p-4 text-center space-y-3 flex flex-col items-center hover:shadow-md transition">
+                                <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-brand-600 shadow-sm shrink-0 bg-white dark:bg-[#15202d]">
                                     <img src="${imgSrc}" alt="${p.nama}" class="w-full h-full object-cover">
                                 </div>
                                 <div>
-                                    <span class="bg-brand-100 text-brand-800 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${p.jabatan || 'Pengurus'}</span>
-                                    <h4 class="text-xs md:text-sm font-bold text-slate-800 mt-1">${p.nama || 'Tanpa Nama'}</h4>
+                                    <span class="bg-brand-100 dark:bg-emerald-950/40 text-brand-800 dark:text-emerald-300 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${p.jabatan || 'Pengurus'}</span>
+                                    <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 mt-1">${p.nama || 'Tanpa Nama'}</h4>
                                 </div>
                             </div>
                         `;

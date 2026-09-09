@@ -809,14 +809,14 @@
         function toggleJadwalSubPage(subTab) {
             document.querySelectorAll('.jadwal-sub-container').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.jadwal-sub-btn').forEach(btn => {
-                btn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl text-slate-500 hover:text-brand-900 transition";
+                btn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 hover:text-brand-900 dark:hover:text-emerald-300 transition";
             });
 
             const targetContainer = document.getElementById(`jadwal-container-${subTab}`);
             if (targetContainer) targetContainer.classList.remove('hidden');
 
             const activeBtn = document.getElementById(`jadwal-sub-${subTab}`);
-            if (activeBtn) activeBtn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl bg-white text-brand-900 shadow-sm transition";
+            if (activeBtn) activeBtn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl bg-white dark:bg-[#253447] text-brand-900 dark:text-emerald-300 shadow-sm dark:shadow-none transition";
         }
 
         let currentGaleriFilter = "all";
@@ -831,21 +831,21 @@
 
             if (activeGaleri.length === 0) {
                 filterContainer.innerHTML = '';
-                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-slate-50 rounded-2xl">Belum ada foto galeri.</div>`;
+                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 dark:text-slate-500 text-xs bg-slate-50 dark:bg-[#1c2836] rounded-2xl">Belum ada foto galeri.</div>`;
                 return;
             }
 
             // Generate filter buttons dynamically
             const categories = new Set(activeGaleri.map(g => g.kategori).filter(Boolean));
             let filterHtml = `
-                <button onclick="filterGaleri('all')" id="btn-galeri-all" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${currentGaleriFilter === 'all' ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} shrink-0 transition">Semua</button>
+                <button onclick="filterGaleri('all')" id="btn-galeri-all" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${currentGaleriFilter === 'all' ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]'} shrink-0 transition">Semua</button>
             `;
 
             categories.forEach(cat => {
                 const safeCat = cat.replace(/\s+/g, '-').toLowerCase();
                 const isActive = currentGaleriFilter === safeCat;
                 filterHtml += `
-                    <button onclick="filterGaleri('${safeCat}')" id="btn-galeri-${safeCat}" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${isActive ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} shrink-0 transition" data-category="${cat}">${cat}</button>
+                    <button onclick="filterGaleri('${safeCat}')" id="btn-galeri-${safeCat}" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${isActive ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]'} shrink-0 transition" data-category="${cat}">${cat}</button>
                 `;
             });
             filterContainer.innerHTML = filterHtml;
@@ -865,7 +865,7 @@
                 const tagColor = bgColors[Math.abs(galeri.kategori.length) % bgColors.length];
 
                 const card = document.createElement('div');
-                card.className = "galeri-item relative aspect-video rounded-2xl overflow-hidden shadow-sm group border border-slate-100 bg-slate-100";
+                card.className = "galeri-item relative aspect-video rounded-2xl overflow-hidden shadow-sm group border border-slate-100 dark:border-[#253447] bg-slate-100 dark:bg-[#1c2836]";
                 card.innerHTML = `
                     <img src="${galeri.gambar}" alt="${galeri.judul}" class="w-full h-full object-contain group-hover:scale-105 transition duration-500">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -878,7 +878,7 @@
             });
 
             if (itemsFound === 0) {
-                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-slate-50 rounded-2xl">Tidak ada foto untuk kategori ini.</div>`;
+                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 dark:text-slate-500 text-xs bg-slate-50 dark:bg-[#1c2836] rounded-2xl">Tidak ada foto untuk kategori ini.</div>`;
             }
         }
 

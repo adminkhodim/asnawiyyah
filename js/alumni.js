@@ -262,7 +262,7 @@
                 const data = await apiGet('alumni.getTestimonials');
                 
                 if (!data || data.length === 0) {
-                    container.innerHTML = '<div class="md:col-span-3 text-center text-xs text-slate-500 py-10">Belum ada testimoni terbaru.</div>';
+                    container.innerHTML = '<div class="md:col-span-3 text-center text-xs text-slate-500 dark:text-slate-400 py-10">Belum ada testimoni terbaru.</div>';
                     return;
                 }
 
@@ -280,19 +280,19 @@
                     let pekerjaan = item.instansi || item.kesibukan || 'Alumni';
                     
                     let cardHtml = `
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3 flex flex-col justify-between">
+                        <div class="bg-slate-50 dark:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] space-y-3 flex flex-col justify-between">
                             <div class="space-y-2">
                                 <div class="flex items-center space-x-3">
                                     ${avatarHtml}
                                     <div>
-                                        <h4 class="text-xs md:text-sm font-bold text-slate-800 line-clamp-1">${escapeHtml(item.nama)}</h4>
+                                        <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1">${escapeHtml(item.nama)}</h4>
                                         <p class="text-[10px] text-${color}-700 font-semibold">Alumni Angkatan ${escapeHtml(item.tahunLulus || item.tahunMasuk || '-')}</p>
                                     </div>
                                 </div>
                                 <span class="inline-block bg-${color}-100 text-${color}-800 text-[9px] font-extrabold px-2 py-0.5 rounded-md line-clamp-1">
                                     ${escapeHtml(pekerjaan)}
                                 </span>
-                                <p class="text-[11px] text-slate-600 leading-relaxed italic line-clamp-4">
+                                <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed italic line-clamp-4">
                                     "${escapeHtml(item.kesan)}"
                                 </p>
                             </div>
