@@ -30,9 +30,14 @@
             loadPengaturan();
             loadUnitKegiatan();
             if (typeof renderCalendar === 'function') {
-                renderCalendar();
-                handleClientRouting();
+                try {
+                    renderCalendar();
+                } catch (calErr) {
+                    console.warn("Calendar render skipped/error:", calErr);
+                }
             }
+            // Client-side routing dieksekusi secara independen agar deep link selalu aktif
+            handleClientRouting();
         };
 
         function navigateToNews() {

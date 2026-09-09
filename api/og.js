@@ -22,7 +22,7 @@ export default async function handler(req, res) {
         if (newsItem) {
             const title = `${newsItem.judul} | PPTQ Asnawiyyah`;
             const description = newsItem.ringkasan || `Baca selengkapnya tentang ${newsItem.judul}`;
-            const image = newsItem.gambar || "https://asnawiyyah.vercel.app/default-og.jpg"; // Fallback image
+            const image = newsItem.gambar || "https://asnawiyyah.vercel.app/assets/img/logo-asnawiyyah.jpg"; // Fallback image
             const url = `https://asnawiyyah.vercel.app/berita/${newsItem.slug}`;
 
             const metaTags = `
