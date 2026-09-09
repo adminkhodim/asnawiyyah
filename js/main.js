@@ -1,0 +1,856 @@
+        // ==================== MOBILE SPLASH LOGIC ====================
+        function initMobileSplash() {
+            const splashScreen = document.getElementById('mobile-splash-screen');
+            const logoContainer = document.getElementById('mobile-splash-logo-container');
+
+            // Tampilkan animasi
+            setTimeout(() => {
+                logoContainer.classList.remove('scale-110', 'opacity-0');
+                logoContainer.classList.add('scale-100', 'opacity-100');
+            }, 100);
+
+            // Hilangkan perlahan setelah 2 detik
+            setTimeout(() => {
+                splashScreen.classList.add('opacity-0');
+            }, 2000);
+
+            // Hapus dari DOM
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+            }, 3000);
+        }
+
+        // ==================== INISIALISASI UTAMA (SINGLE ONLOAD) ====================
+        window.onload = async function () {
+            initMobileSplash();
+            initializeProgramRuntime();
+            await loadNews();
+            loadBanners();
+            loadGaleri();
+            loadPengaturan();
+            loadUnitKegiatan();
+            if (typeof renderCalendar === 'function') {
+                renderCalendar();
+                handleClientRouting();
+            }
+        };
+
+        function navigateToNews() {
+            const target = '/berita/';
+
+            if (window.location.pathname !== target) {
+                history.pushState({}, '', target);
+            }
+
+            switchTab('kabar');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function handleClientRouting() {
+            // Cek URL fallback dari 404.html (GitHub Pages)
+            const params = new URLSearchParams(window.location.search);
+            const route = params.get('route');
+            if (route) {
+                window.history.replaceState({}, '', route);
+            }
+
+            const path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+            if (path === '/berita') {
+                switchTab('kabar', false);
+            } else if (path === '/tentang-kami') {
+                switchTab('profil', false);
+            } else if (path === '/sejarah-berdirinya') {
+                switchTab('sejarah-berdirinya', false);
+            } else if (path === '/tujuan-visi-misi') {
+                switchTab('tujuan-visi-misi', false);
+            } else if (path === '/struktur-kepengurusan') {
+                switchTab('struktur-kepengurusan', false);
+            } else if (path === '/pendidikan/semua-program-pilihan') {
+                switchTab('program-pilihan', false);
+            } else if (path === '/pendidikan/sd-islam-unggulan') {
+                switchTab('sd-islam', false);
+            } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
+                switchTab('tahfidz-anak', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putra') {
+                switchTab('dewasa-putra', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putri') {
+                switchTab('dewasa-putri', false);
+            } else if (path === '/kehidupan-santri/jadwal-kegiatan') {
+                switchTab('jadwal-kegiatan', false);
+            } else if (path === '/kehidupan-santri/unit-kegiatan') {
+                switchTab('unit-kegiatan', false);
+            } else if (path === '/kehidupan-santri/poskestren') {
+                switchTab('poskestren', false);
+            } else if (path === '/administrator') {
+                  switchTab('admin', false);
+              } else if (path === '/kehidupan-santri/ikatan-alumni') {
+                  switchTab('alumni', false);
+              } else if (path === '/kehidupan-santri/ikatan-alumni/form-data-alumni') {
+                  switchTab('form-alumni', false);
+            } else if (path === '/layanan') {
+                switchTab('layanan-hub', false);
+            } else if (path === '/layanan/galeri') {
+                switchTab('galeri', false);
+            } else if (path === '/layanan/kalender') {
+                switchTab('kalender', false);
+            } else if (path === '/layanan/portal-ibadah') {
+                switchTab('ibadah', false);
+            } else if (path === '/layanan/portal-ibadah/maulid') {
+                switchTab('maulid-hub', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
+                switchTab('maulid-index', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai/baca') {
+                switchTab('maulid-detail', false);
+            } else if (path.startsWith('/berita/')) {
+                const slug = path.split('/berita/')[1];
+                if (slug) {
+                    bacaBerita(slug, true);
+                }
+            }
+
+            const legacyId = params.get('id');
+            if (legacyId) {
+                bacaBerita(legacyId);
+            }
+        }
+        window.addEventListener('popstate', (e) => {
+            const path = window.location.pathname.replace(/\/+$/, '') || '/';
+            if (path.startsWith('/berita/')) {
+                const slug = path.split('/berita/')[1];
+                if (slug) bacaBerita(slug, true);
+            } else if (path === '/berita') {
+                switchTab('kabar', false);
+            } else if (path === '/tentang-kami') {
+                switchTab('profil', false);
+            } else if (path === '/sejarah-berdirinya') {
+                switchTab('sejarah-berdirinya', false);
+            } else if (path === '/tujuan-visi-misi') {
+                switchTab('tujuan-visi-misi', false);
+            } else if (path === '/struktur-kepengurusan') {
+                switchTab('struktur-kepengurusan', false);
+            } else if (path === '/pendidikan/semua-program-pilihan') {
+                switchTab('program-pilihan', false);
+            } else if (path === '/pendidikan/sd-islam-unggulan') {
+                switchTab('sd-islam', false);
+            } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
+                switchTab('tahfidz-anak', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putra') {
+                switchTab('dewasa-putra', false);
+            } else if (path === '/pendidikan/pesantren-dewasa-putri') {
+                switchTab('dewasa-putri', false);
+            } else if (path === '/kehidupan-santri/jadwal-kegiatan') {
+                switchTab('jadwal-kegiatan', false);
+            } else if (path === '/kehidupan-santri/unit-kegiatan') {
+                switchTab('unit-kegiatan', false);
+            } else if (path === '/kehidupan-santri/poskestren') {
+                switchTab('poskestren', false);
+            } else if (path === '/kehidupan-santri/ikatan-alumni') {
+                  switchTab('alumni', false);
+              } else if (path === '/kehidupan-santri/ikatan-alumni/form-data-alumni') {
+                  switchTab('form-alumni', false);
+            } else if (path === '/layanan') {
+                switchTab('layanan-hub', false);
+            } else if (path === '/layanan/galeri') {
+                switchTab('galeri', false);
+            } else if (path === '/layanan/kalender') {
+                switchTab('kalender', false);
+            } else if (path === '/layanan/portal-ibadah') {
+                switchTab('ibadah', false);
+            } else if (path === '/layanan/portal-ibadah/maulid') {
+                switchTab('maulid-hub', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
+                switchTab('maulid-index', false);
+            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai/baca') {
+                switchTab('maulid-detail', false);
+            } else {
+                switchTab('beranda', false);
+            }
+        });
+
+        // ==================== SISTEM TABS (NAVIGASI SPA) ====================
+        function scrollToSection(id) {
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const y = el.getBoundingClientRect().top + window.pageYOffset - 100;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            }, 300);
+        }
+
+        function switchTab(tabId, updateUrl = true, customUrl = null) {
+            if (updateUrl) {
+                let targetUrl = '/';
+                if (customUrl) {
+                    targetUrl = customUrl;
+                } else if (tabId === 'profil') targetUrl = '/tentang-kami/';
+                else if (tabId === 'sejarah-berdirinya') targetUrl = '/sejarah-berdirinya';
+                else if (tabId === 'tujuan-visi-misi') targetUrl = '/tujuan-visi-misi';
+                else if (tabId === 'struktur-kepengurusan') targetUrl = '/struktur-kepengurusan';
+                else if (tabId === 'kabar') targetUrl = '/berita/';
+                else if (tabId === 'program-pilihan') targetUrl = '/pendidikan/semua-program-pilihan/';
+                else if (tabId === 'sd-islam') targetUrl = '/pendidikan/sd-islam-unggulan/';
+                else if (tabId === 'tahfidz-anak') targetUrl = '/pendidikan/pesantren-tahfidz-anak/';
+                else if (tabId === 'dewasa-putra') targetUrl = '/pendidikan/pesantren-dewasa-putra/';
+                else if (tabId === 'dewasa-putri') targetUrl = '/pendidikan/pesantren-dewasa-putri/';
+                else if (tabId === 'jadwal-kegiatan') targetUrl = '/kehidupan-santri/jadwal-kegiatan/';
+                else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
+                else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
+                else if (tabId === 'admin') targetUrl = '/administrator';
+                  else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
+                  else if (tabId === 'form-alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/form-data-alumni/';
+                else if (tabId === 'layanan-hub') targetUrl = '/layanan/';
+                else if (tabId === 'galeri') targetUrl = '/layanan/galeri/';
+                else if (tabId === 'kalender') targetUrl = '/layanan/kalender/';
+                else if (tabId === 'ibadah') targetUrl = '/layanan/portal-ibadah/';
+                else if (tabId === 'quran-index') targetUrl = '/layanan/portal-ibadah/quran/';
+                else if (tabId === 'quran-detail') targetUrl = '/layanan/portal-ibadah/quran/baca/';
+                else if (tabId === 'maulid-hub') targetUrl = '/layanan/portal-ibadah/maulid/';
+                else if (tabId === 'maulid-index') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/';
+                else if (tabId === 'maulid-detail') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/baca/';
+
+                if (window.location.pathname !== targetUrl && (
+                    tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
+                    tabId === 'kabar' || tabId === 'program-pilihan' ||
+                    tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' ||
+                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'alumni' || tabId === 'form-alumni' ||
+                    tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
+                    tabId === 'quran-index' || tabId === 'quran-detail' ||
+                    tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
+                    tabId === 'beranda')) {
+                    history.pushState({ tab: tabId }, '', targetUrl);
+                }
+            }
+
+            if (tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan') {
+                loadPublicProfilLembaga();
+            }
+
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+
+            const targetTab = document.getElementById(`page-${tabId}`);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+                if (!targetTab.classList.contains('flex')) {
+                    targetTab.classList.add('block');
+                }
+            }
+
+            // Hide menus for Admin layout
+            const deskNavMenu = document.getElementById('desk-nav-menu');
+            const deskActionMenu = document.getElementById('desk-action-menu');
+            const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+            const mainFooter = document.querySelector('footer');
+
+            if (tabId === 'admin') {
+                if (deskNavMenu) deskNavMenu.classList.add('hidden');
+                if (deskActionMenu) deskActionMenu.classList.add('hidden');
+                if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
+                if (mainFooter) mainFooter.classList.add('hidden');
+                if (!isAdminLoggedIn) {
+                    setTimeout(openAdminLoginModal, 100);
+                }
+            } else {
+                if (deskNavMenu) deskNavMenu.classList.remove('hidden');
+                if (deskActionMenu) deskActionMenu.classList.remove('hidden');
+                if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');
+                if (mainFooter) mainFooter.classList.remove('hidden');
+            }
+
+            if (tabId === 'alumni') {
+                loadAlumniTestimonials();
+            }
+            if (tabId === 'form-alumni') {
+                initWilayah();
+            }
+            if (tabId === 'quran-index') {
+                fetchQuranList();
+            } else if (tabId === 'maulid-index') {
+                renderMaulidIndex();
+            }
+
+            // Nav Mobile
+            document.querySelectorAll('.nav-mob-btn').forEach(btn => {
+                btn.classList.remove('text-emerald-300', 'font-bold');
+                btn.classList.add('text-white/80');
+            });
+            const activeMobBtn = document.getElementById(`mobile-nav-${tabId}`);
+            if (activeMobBtn) {
+                activeMobBtn.classList.remove('text-white/80');
+                activeMobBtn.classList.add('text-emerald-300', 'font-bold');
+            }
+
+            // Nav Desktop
+            document.querySelectorAll('.nav-desk-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-800', 'text-white');
+                btn.classList.add('text-emerald-100', 'hover:bg-brand-800', 'hover:text-white');
+            });
+            const activeDeskBtn = document.getElementById(`desk-nav-${tabId}`);
+            if (activeDeskBtn) {
+                activeDeskBtn.classList.remove('text-emerald-100', 'hover:bg-brand-800', 'hover:text-white');
+                activeDeskBtn.classList.add('bg-brand-800', 'text-white');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==================== PEMUATAN & RENDERING BERITA ====================
+        async function loadNews() {
+            if (!isApiConfigured()) {
+                renderAllNewsViews(mockNewsData);
+                // handleClientRouting(); // removed - routing after loadNews
+                return;
+            }
+
+            try {
+                const response = await apiGet("getKabar");
+                if (response && response.status === "success" &&
+                    Array.isArray(response.data) && response.data.length > 0) {
+                    mockNewsData = response.data;
+                }
+                renderAllNewsViews(mockNewsData);
+                // handleClientRouting(); // removed - routing after loadNews
+            } catch (err) {
+                console.error("Gagal memuat berita via API:", err);
+                renderAllNewsViews(mockNewsData);
+                // handleClientRouting(); // removed - routing after loadNews
+            }
+        }
+
+        function renderAllNewsViews(newsArray) {
+            renderNews(newsArray);
+            renderHeadlineNews(newsArray);
+            renderAdminNewsList();
+        }
+
+        function renderNews(newsArray) {
+            const gridContainer = document.getElementById('news-grid-container');
+            if (!gridContainer) return;
+            gridContainer.innerHTML = "";
+
+            newsArray.forEach((news, idx) => {
+                const card = document.createElement('article');
+                card.className = "bg-slate-50 hover:bg-emerald-50/50 p-4 rounded-2xl border border-slate-100 hover:border-brand-100 flex flex-col gap-3 cursor-pointer group transition duration-200";
+                card.onclick = () => bacaBerita(news.news_id);
+
+                const imgHtml = news.gambar
+                    ? `<img src="${news.gambar}" alt="${news.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
+                    : `<i class="fa-solid fa-newspaper text-white/20 text-5xl group-hover:scale-110 transition duration-300"></i>`;
+
+                card.innerHTML = `
+                    <div class="w-full h-40 bg-brand-800 rounded-xl relative flex items-center justify-center overflow-hidden">
+                        ${imgHtml}
+                        <span class="absolute top-2.5 left-2.5 bg-brand-600 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${news.kategori}</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center space-x-2 text-[10px] text-slate-400">
+                            <span><i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal}</span>
+                            <span>•</span>
+                            <span class="text-brand-700 font-bold">${news.penulis}</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-brand-700 transition line-clamp-2 leading-snug">
+                            ${news.judul}
+                        </h3>
+                        <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                            ${news.ringkasan}
+                        </p>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+        }
+
+        function renderHeadlineNews(newsArray) {
+            const containerMobile = document.getElementById('headline-news-container');
+            const containerDesktop = document.getElementById('headline-news-container-desktop');
+            const topHeadline = newsArray.slice(0, 3);
+            const defaultThumb = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=400&auto=format&fit=crop";
+
+            // Mobile Render
+            if (containerMobile) {
+                containerMobile.innerHTML = "";
+                topHeadline.forEach((news, idx) => {
+                    const item = document.createElement('article');
+                    item.className = `flex items-center justify-between gap-3 ${idx < topHeadline.length - 1 ? 'border-b border-slate-100 pb-4' : ''} cursor-pointer group`;
+                    item.onclick = () => bacaBerita(news.news_id || news.slug);
+                    const thumbSrc = news.gambar || defaultThumb;
+                    item.innerHTML = `
+                        <div class="space-y-1.5 flex-1 min-w-0">
+                            <div>
+                                <span class="inline-block px-2.5 py-0.5 bg-emerald-700 text-white text-[9px] font-extrabold rounded-md uppercase tracking-wider">${news.kategori}</span>
+                            </div>
+                            <h4 class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-brand-700 transition line-clamp-2 leading-snug">
+                                ${news.judul}
+                            </h4>
+                        </div>
+                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 bg-slate-100">
+                            <img src="${thumbSrc}" alt="${news.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        </div>
+                    `;
+                    containerMobile.appendChild(item);
+                });
+            }
+
+            // Desktop Render
+            if (containerDesktop) {
+                containerDesktop.innerHTML = "";
+                if (topHeadline.length > 0) {
+                    const bigNews = topHeadline[0];
+                    const bigThumb = bigNews.gambar || defaultThumb;
+                    const plainContent = (bigNews.ringkasan || bigNews.isi || "").replace(/<[^>]*>?/gm, '');
+
+                    let html = `
+                        <!-- Featured Big News -->
+                        <div class="grid grid-cols-12 gap-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                            <div class="col-span-6 rounded-xl overflow-hidden cursor-pointer" onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')">
+                                <img src="${bigThumb}" alt="${bigNews.judul}" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            </div>
+                            <div class="col-span-6 flex flex-col justify-between py-1">
+                                <div class="space-y-2">
+                                    <span class="text-xs font-semibold text-emerald-700">${bigNews.kategori} • ${bigNews.tanggal}</span>
+                                    <h4 onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
+                                        class="font-bold text-base text-slate-900 leading-snug hover:text-emerald-700 transition cursor-pointer line-clamp-2">
+                                        ${bigNews.judul}
+                                    </h4>
+                                    <p class="text-xs text-slate-500 line-clamp-3">
+                                        ${plainContent}
+                                    </p>
+                                </div>
+                                <button onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
+                                    class="text-xs font-bold text-slate-800 hover:text-emerald-700 inline-flex items-center gap-1 pt-3">
+                                    Baca Selengkapnya <span>→</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    if (topHeadline.length > 1) {
+                        html += `<div class="grid grid-cols-2 gap-4 mt-6">`;
+                        for (let i = 1; i < topHeadline.length; i++) {
+                            const smallNews = topHeadline[i];
+                            html += `
+                                <div onclick="bacaBerita('${smallNews.news_id || smallNews.slug}')"
+                                    class="bg-white p-4 rounded-xl border border-slate-200/70 hover:border-slate-300 transition cursor-pointer">
+                                    <span class="text-[11px] font-medium text-slate-400">${smallNews.kategori} • ${smallNews.tanggal}</span>
+                                    <h5 class="font-bold text-xs text-slate-800 mt-1 line-clamp-2 hover:text-emerald-700">
+                                        ${smallNews.judul}
+                                    </h5>
+                                </div>
+                            `;
+                        }
+                        html += `</div>`;
+                    }
+                    containerDesktop.innerHTML = html;
+                }
+            }
+        }
+
+        function bacaBerita(id, skipHistory = false) {
+            const news = mockNewsData.find(n => n.news_id === id || n.slug === id);
+            if (!news) return;
+
+            if (!skipHistory) {
+                const canonicalUrl = `/berita/${news.slug}`;
+                if (window.location.pathname !== canonicalUrl) {
+                    window.history.pushState({ id: news.news_id }, news.judul, canonicalUrl);
+                }
+            }
+
+            const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
+            if (activeTabEl && activeTabEl.id !== 'page-detail-berita') {
+                previousTabBeforeNews = activeTabEl.id.replace('page-', '');
+            }
+
+            document.getElementById('detail-news-title').innerText = news.judul || '';
+            document.getElementById('detail-news-badge').innerText = news.kategori || 'Kabar';
+            document.getElementById('detail-news-date').innerHTML = `<i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal || '-'}`;
+            document.getElementById('detail-news-author').innerText = news.penulis || 'Admin';
+
+            const summaryBox = document.getElementById('detail-news-summary-box');
+            const summaryEl = document.getElementById('detail-news-summary');
+            if (news.ringkasan && news.ringkasan.trim() !== '') {
+                summaryEl.innerText = news.ringkasan;
+                summaryBox.classList.remove('hidden');
+            } else {
+                summaryBox.classList.add('hidden');
+            }
+
+            document.getElementById('detail-news-body').innerText = news.isi || '';
+
+            const imgEl = document.getElementById('detail-news-img');
+            const imgContainer = document.getElementById('detail-news-img-container');
+            if (news.gambar && news.gambar.trim() !== '') {
+                imgEl.src = news.gambar;
+                imgContainer.classList.remove('hidden');
+            } else {
+                imgContainer.classList.add('hidden');
+            }
+
+            switchTab('detail-berita');
+        }
+
+        function kembaliDariBerita() {
+            if (window.location.pathname.startsWith('/berita/')) {
+                window.history.pushState(null, '', '/');
+            }
+            switchTab(previousTabBeforeNews || 'beranda');
+        }
+
+        // ==================== SLIDER BANNER BERANDA ====================
+        async function loadBanners() {
+            if (!isApiConfigured()) {
+                renderHeroSlider();
+                renderAdminBannerList();
+                return;
+            }
+
+            try {
+                const response = await apiGet("getBanner");
+                if (response && response.status === "success" &&
+                    Array.isArray(response.data) && response.data.length > 0) {
+                    mockBannerData = response.data;
+                }
+                renderHeroSlider();
+                renderAdminBannerList();
+            } catch (err) {
+                console.error("Gagal memuat banner via API:", err);
+                renderHeroSlider();
+                renderAdminBannerList();
+            }
+        }
+
+        function renderHeroSlider() {
+            const sliderPairs = [
+                {
+                    slider: document.getElementById('hero-slider-container'),
+                    dots: document.getElementById('hero-dots-container'),
+                    type: 'mobile'
+                },
+                {
+                    slider: document.getElementById('hero-slider-container-desktop'),
+                    dots: document.getElementById('hero-dots-container-desktop'),
+                    type: 'desktop'
+                }
+            ];
+
+            const activeBanners = mockBannerData.filter(b => b.status === "Aktif");
+            const labelMap = { ppdb: 'Pendaftaran', kabar: 'Berita', 'program-pilihan': 'Program', profil: 'Profil', galeri: 'Galeri', alumni: 'Alumni', beranda: 'Beranda', 'jadwal-kegiatan': 'Jadwal', 'unit-kegiatan': 'Unit', poskestren: 'Poskestren' };
+
+            sliderPairs.forEach(({ slider, dots, type }) => {
+                if (!slider || !dots) return;
+
+                if (activeBanners.length === 0) {
+                    const emptyClass = type === 'desktop'
+                        ? 'w-full h-full flex items-center justify-center text-emerald-400/60 text-xs italic'
+                        : 'w-full h-full flex items-center justify-center text-slate-400 text-xs italic bg-slate-100';
+                    slider.innerHTML = `<div class="${emptyClass}">Belum ada banner aktif.</div>`;
+                    dots.innerHTML = "";
+                    return;
+                }
+
+                slider.innerHTML = "";
+                dots.innerHTML = "";
+
+                activeBanners.forEach((banner, idx) => {
+                    const slideDiv = document.createElement('div');
+                    slideDiv.className = `hero-slide absolute inset-0 transition-opacity duration-500 cursor-pointer ${idx === 0 ? 'opacity-100' : 'opacity-0'}`;
+
+                    if (banner.tipeAksi === "tab" && banner.targetAksi) {
+                        slideDiv.onclick = () => switchTab(banner.targetAksi);
+                    } else if (banner.tipeAksi === "url" && banner.targetAksi) {
+                        slideDiv.onclick = () => window.open(banner.targetAksi, '_blank');
+                    }
+
+                    if (type === 'desktop') {
+                        const label = banner.tipeAksi === 'tab' ? (labelMap[banner.targetAksi] || banner.targetAksi || 'Info') : (banner.tipeAksi === 'url' ? 'Tautan' : 'Info');
+                        slideDiv.innerHTML = `
+                            <img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
+                                <div>
+                                    <span class="px-2.5 py-1 rounded bg-emerald-500 text-xs font-bold text-slate-950 uppercase">${label}</span>
+                                    <p class="text-sm font-medium text-white mt-1">${banner.nama}</p>
+                                </div>
+                            </div>`;
+                    } else {
+                        slideDiv.innerHTML = `<img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">`;
+                    }
+
+                    slider.appendChild(slideDiv);
+
+                    const dotBtn = document.createElement('button');
+                    dotBtn.className = `hero-dot rounded-full transition-all duration-300 ${idx === 0 ? 'w-2.5 h-2.5 bg-brand-700' : 'w-2 h-2 bg-slate-300'}`;
+                    dotBtn.onclick = () => setHeroSlide(idx);
+                    dots.appendChild(dotBtn);
+                });
+            });
+
+            currentHeroSlide = 0;
+            if (heroSlideTimer) clearInterval(heroSlideTimer);
+
+            if (activeBanners.length > 1) {
+                heroSlideTimer = setInterval(() => {
+                    const slides = document.querySelectorAll('#hero-slider-container .hero-slide');
+                    if (slides.length > 0) {
+                        currentHeroSlide = (currentHeroSlide + 1) % slides.length;
+                        setHeroSlide(currentHeroSlide);
+                    }
+                }, 4000);
+            }
+        }
+
+        function setHeroSlide(index) {
+            currentHeroSlide = index;
+
+            const containers = [
+                { slides: document.querySelectorAll('#hero-slider-container .hero-slide'), dots: document.querySelectorAll('#hero-dots-container .hero-dot') },
+                { slides: document.querySelectorAll('#hero-slider-container-desktop .hero-slide'), dots: document.querySelectorAll('#hero-dots-container-desktop .hero-dot') }
+            ];
+
+            containers.forEach(({ slides, dots }) => {
+                if (!slides.length) return;
+
+                slides.forEach((slide, i) => {
+                    if (i === index) {
+                        slide.classList.remove('opacity-0');
+                        slide.classList.add('opacity-100');
+                    } else {
+                        slide.classList.remove('opacity-100');
+                        slide.classList.add('opacity-0');
+                    }
+                });
+
+                dots.forEach((dot, i) => {
+                    if (i === index) {
+                        dot.className = "hero-dot w-2.5 h-2.5 rounded-full bg-brand-700 transition-all duration-300";
+                    } else {
+                        dot.className = "hero-dot w-2 h-2 rounded-full bg-slate-300 hover:bg-slate-400 transition-all duration-300";
+                    }
+                });
+            });
+        }
+
+
+        // ==================== FITUR PENGATURAN USER ====================
+        function toggleDarkMode(isDark) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-status-text');
+            if (isDark) {
+                document.body.classList.add('dark');
+                if (icon) icon.className = "fa-solid fa-moon text-indigo-400";
+                if (text) text.innerText = "Mode Gelap (Dark)";
+                showToast("Mode Gelap diaktifkan");
+            } else {
+                document.body.classList.remove('dark');
+                if (icon) icon.className = "fa-solid fa-sun text-amber-500";
+                if (text) text.innerText = "Mode Terang (Light)";
+                showToast("Mode Terang diaktifkan");
+            }
+        }
+
+        function openEditProfileModal() { document.getElementById('editProfileModal').classList.remove('hidden'); }
+        function closeEditProfileModal() { document.getElementById('editProfileModal').classList.add('hidden'); }
+
+        function saveProfileChanges() {
+            const name = document.getElementById('edit-nama-input').value;
+            const email = document.getElementById('edit-email-input').value;
+            const phone = document.getElementById('edit-phone-input').value;
+
+            if (name) document.getElementById('user-display-name').innerText = name;
+            if (email) document.getElementById('user-display-email').innerHTML = `<i class="fa-regular fa-envelope mr-1"></i> ${email}`;
+            if (phone) document.getElementById('user-display-phone').innerHTML = `<i class="fa-brands fa-whatsapp mr-1 text-emerald-600"></i> ${phone}`;
+
+            document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=15803d&color=fff&size=128`;
+            closeEditProfileModal();
+            showToast("Profil berhasil diperbarui!");
+        }
+
+        function updatePrayerLocation(city) { showToast(`Lokasi shalat diubah ke: ${city}`); }
+        function togglePrayerNotification(enabled) { showToast(enabled ? "Notifikasi Azan diaktifkan" : "Notifikasi Azan dinonaktifkan"); }
+        function openFeedbackModal() { document.getElementById('feedbackModal').classList.remove('hidden'); }
+        function closeFeedbackModal() { document.getElementById('feedbackModal').classList.add('hidden'); }
+
+        function submitFeedback() {
+            const text = document.getElementById('feedback-textarea').value.trim();
+            if (!text) {
+                showToast("Mohon tuliskan masukan Anda terlebih dahulu!");
+                return;
+            }
+            document.getElementById('feedback-textarea').value = "";
+            closeFeedbackModal();
+            showToast("Terima kasih! Masukan Anda telah terkirim.");
+        }
+
+        function toggleAuthSession() {
+            const btnIcon = document.getElementById('auth-btn-icon');
+            const btnText = document.getElementById('auth-btn-text');
+            const authBtn = document.getElementById('auth-btn');
+            const mobileHeaderAuthIcon = document.getElementById('mobile-header-auth-icon');
+
+            if (isLoggedIn) {
+                isLoggedIn = false;
+                if (btnIcon) btnIcon.className = "fa-solid fa-right-to-bracket";
+                if (btnText) btnText.innerText = "Masuk ke Akun (Log In)";
+                if (authBtn) authBtn.className = "w-full bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold py-3.5 px-6 rounded-2xl border border-brand-100 transition flex items-center justify-center space-x-2";
+                if (mobileHeaderAuthIcon) mobileHeaderAuthIcon.className = "fa-solid fa-right-to-bracket";
+                showToast("Anda telah keluar dari akun.");
+            } else {
+                isLoggedIn = true;
+                if (btnIcon) btnIcon.className = "fa-solid fa-right-from-bracket";
+                if (btnText) btnText.innerText = "Keluar dari Akun (Log Out)";
+                if (authBtn) authBtn.className = "w-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-3.5 px-6 rounded-2xl border border-rose-100 transition flex items-center justify-center space-x-2";
+                if (mobileHeaderAuthIcon) mobileHeaderAuthIcon.className = "fa-solid fa-right-from-bracket";
+                showToast("Berhasil masuk ke akun!");
+            }
+        }
+
+        // ==================== WIDGET SHALAT & COUNTDOWN ====================
+        const prayerTimes = [
+            { name: "Subuh", time: "04:32" },
+            { name: "Dzuhur", time: "11:51" },
+            { name: "Ashar", time: "15:12" },
+            { name: "Maghrib", time: "17:48" },
+            { name: "Isya", time: "18:58" }
+        ];
+
+        function initHomePrayerWidget() {
+            const now = new Date();
+            const nowInSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+
+            let nextPrayer = prayerTimes[0];
+            let targetSeconds = 0;
+
+            for (let i = 0; i < prayerTimes.length; i++) {
+                const [h, m] = prayerTimes[i].time.split(':').map(Number);
+                const pSeconds = (h * 3600) + (m * 60);
+                if (pSeconds > nowInSeconds) {
+                    nextPrayer = prayerTimes[i];
+                    targetSeconds = pSeconds;
+                    break;
+                }
+            }
+
+            if (targetSeconds === 0) {
+                const [h, m] = prayerTimes[0].time.split(':').map(Number);
+                targetSeconds = (24 * 3600) + (h * 3600) + (m * 60);
+            }
+
+            const diffSeconds = targetSeconds - nowInSeconds;
+            const hoursLeft = Math.floor(diffSeconds / 3600);
+            const minsLeft = Math.floor((diffSeconds % 3600) / 60);
+            const secsLeft = diffSeconds % 60;
+            const formattedCountdown = `${String(hoursLeft).padStart(2, '0')}:${String(minsLeft).padStart(2, '0')}:${String(secsLeft).padStart(2, '0')}`;
+
+            const prayerHtml = `${nextPrayer.name} <span class="text-amber-300 font-normal ml-1">${nextPrayer.time} WIB</span>`;
+
+            ['home-next-prayer-name', 'home-next-prayer-name-desktop'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = prayerHtml;
+            });
+
+            ['home-prayer-countdown', 'home-prayer-countdown-desktop'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = formattedCountdown;
+            });
+
+            // Update Current Date dynamically
+            if (typeof namaHariIndo !== 'undefined' && typeof namaBulanIndo !== 'undefined' && typeof getPasaranJawa !== 'undefined') {
+                const hari = namaHariIndo[now.getDay()];
+                const pasaran = getPasaranJawa(now);
+                const tgl = now.getDate();
+                const bln = namaBulanIndo[now.getMonth()];
+                const thn = now.getFullYear();
+
+                ['home-current-date', 'home-current-date-desktop'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = `${hari} ${pasaran}, ${tgl} ${bln} ${thn}`;
+                });
+            }
+        }
+
+        setInterval(initHomePrayerWidget, 1000);
+        initHomePrayerWidget();
+
+        // ==================== SUB-TABS & FILTERS ====================
+        function toggleJadwalSubPage(subTab) {
+            document.querySelectorAll('.jadwal-sub-container').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.jadwal-sub-btn').forEach(btn => {
+                btn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl text-slate-500 hover:text-brand-900 transition";
+            });
+
+            const targetContainer = document.getElementById(`jadwal-container-${subTab}`);
+            if (targetContainer) targetContainer.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`jadwal-sub-${subTab}`);
+            if (activeBtn) activeBtn.className = "jadwal-sub-btn flex-1 text-center py-2 text-[11px] md:text-xs font-bold rounded-xl bg-white text-brand-900 shadow-sm transition";
+        }
+
+        let currentGaleriFilter = "all";
+
+        function renderGaleriList() {
+            const gridContainer = document.getElementById('galeri-grid');
+            const filterContainer = document.getElementById('galeri-filter-container');
+
+            if (!gridContainer || !filterContainer) return;
+
+            const activeGaleri = mockGaleriData.filter(g => g.status === "Aktif");
+
+            if (activeGaleri.length === 0) {
+                filterContainer.innerHTML = '';
+                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-slate-50 rounded-2xl">Belum ada foto galeri.</div>`;
+                return;
+            }
+
+            // Generate filter buttons dynamically
+            const categories = new Set(activeGaleri.map(g => g.kategori).filter(Boolean));
+            let filterHtml = `
+                <button onclick="filterGaleri('all')" id="btn-galeri-all" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${currentGaleriFilter === 'all' ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} shrink-0 transition">Semua</button>
+            `;
+
+            categories.forEach(cat => {
+                const safeCat = cat.replace(/\s+/g, '-').toLowerCase();
+                const isActive = currentGaleriFilter === safeCat;
+                filterHtml += `
+                    <button onclick="filterGaleri('${safeCat}')" id="btn-galeri-${safeCat}" class="btn-filter-galeri px-4 py-2 rounded-2xl text-xs font-bold ${isActive ? 'bg-brand-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} shrink-0 transition" data-category="${cat}">${cat}</button>
+                `;
+            });
+            filterContainer.innerHTML = filterHtml;
+
+            // Generate grid
+            gridContainer.innerHTML = "";
+            let itemsFound = 0;
+
+            activeGaleri.forEach(galeri => {
+                const safeCat = (galeri.kategori || "").replace(/\s+/g, '-').toLowerCase();
+
+                if (currentGaleriFilter !== 'all' && currentGaleriFilter !== safeCat) return;
+
+                itemsFound++;
+
+                const bgColors = ["bg-amber-500", "bg-purple-600", "bg-blue-600", "bg-rose-500", "bg-emerald-600"];
+                const tagColor = bgColors[Math.abs(galeri.kategori.length) % bgColors.length];
+
+                const card = document.createElement('div');
+                card.className = "galeri-item relative aspect-video rounded-2xl overflow-hidden shadow-sm group border border-slate-100 bg-slate-100";
+                card.innerHTML = `
+                    <img src="${galeri.gambar}" alt="${galeri.judul}" class="w-full h-full object-contain group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                        <span class="${tagColor} ${tagColor === 'bg-amber-500' ? 'text-brand-dark' : 'text-white'} text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase self-start mb-1 shadow-sm">${galeri.kategori}</span>
+                        <h4 class="text-xs font-bold text-white leading-snug">${galeri.judul}</h4>
+                        <p class="text-[10px] text-emerald-200 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${galeri.keterangan || '-'}</p>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+
+            if (itemsFound === 0) {
+                gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-xs bg-slate-50 rounded-2xl">Tidak ada foto untuk kategori ini.</div>`;
+            }
+        }
+
+        function filterGaleri(category) {
+            currentGaleriFilter = category;
+            renderGaleriList();
+        }

@@ -1,0 +1,14 @@
+{
+  "name": "asnawiyyah",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portal Resmi PPTQ Asnawiyyah Pilangwetan",
+  "scripts": {
+    "build:css": "tailwindcss -i ./css/input.css -o ./css/styles.min.css --minify",
+    "watch:css": "tailwindcss -i ./css/input.css -o ./css/styles.min.css --watch",
+    "build": "npm run build:css"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

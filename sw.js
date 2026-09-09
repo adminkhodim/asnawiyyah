@@ -1,13 +1,24 @@
-const CACHE_NAME = 'asnawiyyah-cache-v4';
+const CACHE_NAME = 'asnawiyyah-cache-v5';
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/css/styles.min.css',
   '/assets/img/brand-header.png',
   '/assets/img/logo-asnawiyyah.jpg',
   '/assets/img/kartu-santri.png',
-  '/assets/img/abi-cholil.jpg'
+  '/assets/img/abi-cholil.jpg',
+  '/data-maulid-dibai.js',
+  '/js/api.js',
+  '/js/data-programs.js',
+  '/js/programs.js',
+  '/js/ppdb.js',
+  '/js/ibadah.js',
+  '/js/admin.js',
+  '/js/alumni.js',
+  '/js/auth.js',
+  '/js/main.js'
 ];
 
 self.addEventListener('install', event => {
