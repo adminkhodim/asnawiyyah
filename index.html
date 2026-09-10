@@ -234,11 +234,6 @@
 
                 <!-- Tombol Aksi Kanan (Rata Kanan Presisi dengan Kartu Beranda) -->
                 <div id="desk-action-menu" class="flex items-center space-x-2.5">
-                    <button id="desk-nav-account-btn" onclick="switchTab('pengaturan')"
-                        class="bg-brand-800/80 hover:bg-brand-800 text-emerald-100 hover:text-white border border-emerald-500/20 px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm transition-all duration-200 flex items-center space-x-1.5">
-                        <i id="desk-nav-account-icon" class="fa-solid fa-user-lock text-xs text-emerald-200"></i>
-                        <span id="desk-nav-account-label">Masuk / Akun</span>
-                    </button>
                     <button onclick="switchTab('ppdb')"
                         class="bg-amber-500 hover:bg-amber-400 text-brand-dark px-4 py-2 rounded-xl font-extrabold text-xs shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5">
                         <i class="fa-solid fa-user-plus text-xs"></i>
@@ -1351,8 +1346,8 @@
                         </div>
                     </div>
 
-                    <!-- Accordion: Akses Pengguna Terdaftar (Legacy Compatibility) -->
-                    <div class="bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] overflow-hidden">
+                    <!-- Accordion: Akses Pengguna Terdaftar (Legacy Compatibility - Hidden) -->
+                    <div class="hidden bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] overflow-hidden">
                         <button type="button" onclick="toggleLegacyAuthPanel()" class="w-full px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1c2836] flex items-center justify-between transition">
                             <span class="flex items-center space-x-2">
                                 <i class="fa-solid fa-key text-[11px] text-slate-400"></i>
@@ -1467,14 +1462,6 @@
                             <button type="button" onclick="ASNIdentity.logout()" class="px-3 py-2 bg-white/10 hover:bg-rose-500/20 text-rose-200 hover:text-white text-xs font-bold rounded-xl transition border border-white/15 shrink-0 flex items-center space-x-1">
                                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                                 <span class="hidden sm:inline">Keluar</span>
-                            </button>
-                        </div>
-
-                        <!-- Action Button: Open Admin Dashboard -->
-                        <div class="mt-4 pt-3 border-t border-white/15 flex flex-col sm:flex-row gap-2 relative z-10">
-                            <button type="button" onclick="switchTab('admin'); if (typeof showAdminView === 'function') showAdminView('hub');" class="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-gauge-high"></i>
-                                <span>Buka Dashboard Operasional Pesantren</span>
                             </button>
                         </div>
                     </div>
@@ -3261,8 +3248,8 @@
     <!-- Admin Dashboard Layout Wrapper -->
     <div class="flex h-screen w-full bg-slate-50 overflow-hidden text-slate-800 font-sans">
         
-        <!-- Sidebar (Desktop & Mobile Drawer) -->
-        <aside id="admin-sidebar" class="bg-white border-r border-slate-200 flex flex-col transition-all duration-300 flex-shrink-0 relative w-64 z-30 h-full">
+        <!-- Sidebar (Desktop Drawer, Hidden on Mobile) -->
+        <aside id="admin-sidebar" class="hidden lg:flex bg-white border-r border-slate-200 flex-col transition-all duration-300 flex-shrink-0 relative w-64 z-30 h-full">
             
             <!-- Toggle Button (Desktop) -->
             <button id="admin-sidebar-toggle" onclick="toggleAdminSidebar()" class="flex absolute -right-3 top-6 bg-brand-600 text-white w-6 h-6 rounded-full items-center justify-center shadow-md hover:bg-brand-700 z-10 transition">
@@ -3356,6 +3343,15 @@
         
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            <!-- Mobile Admin Header Bar (Back to Pengaturan) -->
+            <div id="admin-mobile-nav-bar" class="lg:hidden px-4 py-3 bg-white dark:bg-[#15202d] border-b border-slate-200 dark:border-[#253447] flex items-center justify-between z-20 shrink-0 shadow-sm">
+                <button type="button" onclick="switchTab('pengaturan')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-emerald-600 transition active:scale-95">
+                    <i class="fa-solid fa-arrow-left text-emerald-600 dark:text-emerald-400"></i>
+                    <span>Kembali ke Pengaturan</span>
+                </button>
+                <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg">Pusat Kontrol</span>
+            </div>
             
             
 
@@ -4754,6 +4750,14 @@
                         <span>Kirim Kode OTP</span>
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
+
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
+                        <span class="flex-shrink mx-3 text-[10px] text-slate-400 uppercase font-semibold">atau</span>
+                        <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
+                    </div>
+
+                    <div id="google-signin-admin" class="flex justify-center w-full min-h-[40px]"></div>
                 </form>
 
                 <!-- STEP 2: VERIFY OTP (6 DIGITS) -->
@@ -4829,6 +4833,14 @@
                         <span>Kirim Kode OTP ke Email</span>
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
+
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
+                        <span class="flex-shrink mx-3 text-[10px] text-slate-400 uppercase font-semibold">atau</span>
+                        <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
+                    </div>
+
+                    <div id="google-signin-parent" class="flex justify-center w-full min-h-[40px]"></div>
                 </form>
 
                 <!-- STEP 2: VERIFY OTP (6 DIGITS) -->

@@ -287,6 +287,13 @@ function doPost(e) {
       return handleProgramApiAction(action, payload, e);
     }
 
+    // ========================================================
+    // IDENTITY & AUTHENTICATION ARCHITECTURE v2.0 (PHASE 2B)
+    // ========================================================
+    if (action.startsWith("auth.")) {
+      return handleAuthApiAction(action, payload, e);
+    }
+
     if (action === "request_otp") {
       return createJsonResponse(handleRequestOTP(payload));
     }
@@ -2281,31 +2288,123 @@ function setupScriptSecurityProperties(customSecret, customVersion) {
 
 /**
  * Audit Konfigurasi Keamanan Script
- * Mengecek apakah TOKEN_SIGNING_SECRET sudah disetel dan tidak menggunakan default.
+ * Mengecek apakah TOKEN_SIGNING_SECRET dan kunci rahasia Phase 2B sudah terisolasi dan disetel.
  */
 function auditSecurityConfig() {
   const props = PropertiesService.getScriptProperties();
-  const secret = props ? props.getProperty("TOKEN_SIGNING_SECRET") : null;
+  const legacySecret = props ? props.getProperty("TOKEN_SIGNING_SECRET") : null;
+  const authSecret = props ? props.getProperty("AUTH_TOKEN_SIGNING_SECRET") : null;
+  const otpSecret = props ? props.getProperty("OTP_HASH_SECRET") : null;
+  const idSecret = props ? props.getProperty("IDENTIFIER_HASH_SECRET") : null;
+  const salt = props ? props.getProperty("PASSWORD_SALT") : null;
   const version = props ? props.getProperty("TOKEN_VERSION") : null;
   
-  const isDefault = !secret || secret === "ASNAWIYYAH_DEFAULT_SECRET_2026";
+  const isLegacyDefault = !legacySecret || legacySecret === "ASNAWIYYAH_DEFAULT_SECRET_2026";
+  const isPhase2BConfigured = Boolean(authSecret && otpSecret && idSecret && salt);
   
   return {
-    status: isDefault ? "warning" : "ok",
-    isConfigured: !!secret,
-    isUsingFallbackSecret: isDefault,
-    tokenVersion: version || "1",
-    recommendation: isDefault 
-      ? "Segera jalankan setupScriptSecurityProperties() atau atur TOKEN_SIGNING_SECRET di Project Settings > Script Properties."
-      : "Kunci rahasia HMAC telah dikonfigurasi dengan aman."
+    status: (isLegacyDefault || !isPhase2BConfigured) ? "warning" : "ok",
+    legacyAuth: {
+      isConfigured: !!legacySecret,
+      isUsingFallback: isLegacyDefault
+    },
+    phase2B: {
+      isConfigured: isPhase2BConfigured,
+      hasAuthTokenSecret: !!authSecret,
+      hasOtpHashSecret: !!otpSecret,
+      hasIdentifierHashSecret: !!idSecret,
+      hasPasswordSalt: !!salt,
+      tokenVersion: version || "1"
+    },
+    recommendation: !isPhase2BConfigured
+      ? "Jalankan setupPhase2BScriptProperties() di Script Editor untuk mengonfigurasi rahasia Phase 2B secara otomatis tanpa mengganggu legacy auth."
+      : "Seluruh kunci rahasia terisolasi dan token version aktif."
   };
 }
 
 /**
- * Generates Server-Signed Session Token (HMAC SHA-256)
+ * Setup Script Security Properties Phase 2B (Non-destructive Isolation)
+ * Menginisialisasi kunci rahasia mandiri untuk Phase 2B:
+ * - AUTH_TOKEN_SIGNING_SECRET
+ * - OTP_HASH_SECRET
+ * - IDENTIFIER_HASH_SECRET
+ * - PASSWORD_SALT
+ * - TOKEN_VERSION
+ * Menjaga dan TIDAK merotasi TOKEN_SIGNING_SECRET legacy yang sedang berjalan.
+ * Fungsi ini HANYA dapat dijalankan manual oleh Administrator (bukan via HTTP request).
  */
-function generateSessionToken(userId, role, ttlHours = 8) {
-  const secret = getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026");
+function setupPhase2BScriptProperties(forceRegenerate = false) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    if (!props) throw new Error("PropertiesService tidak dapat diakses.");
+
+    // 1. Pastikan legacy secret tetap ada dan tidak diubah jika sudah ada
+    let legacySecret = props.getProperty("TOKEN_SIGNING_SECRET");
+    if (!legacySecret) {
+      legacySecret = "ASN_LEGACY_" + Utilities.getUuid().replace(/-/g, "");
+      props.setProperty("TOKEN_SIGNING_SECRET", legacySecret);
+    }
+
+    // 2. Inisialisasi AUTH_TOKEN_SIGNING_SECRET
+    let authSecret = props.getProperty("AUTH_TOKEN_SIGNING_SECRET");
+    if (!authSecret || forceRegenerate) {
+      authSecret = "ASN_AUTH_" + Utilities.getUuid().replace(/-/g, "") + "_" + Date.now();
+      props.setProperty("AUTH_TOKEN_SIGNING_SECRET", authSecret);
+    }
+
+    // 3. Inisialisasi OTP_HASH_SECRET
+    let otpSecret = props.getProperty("OTP_HASH_SECRET");
+    if (!otpSecret || forceRegenerate) {
+      otpSecret = "ASN_OTP_" + Utilities.getUuid().replace(/-/g, "") + "_" + Date.now();
+      props.setProperty("OTP_HASH_SECRET", otpSecret);
+    }
+
+    // 4. Inisialisasi IDENTIFIER_HASH_SECRET (P1-5 terisolasi dari PASSWORD_SALT)
+    let idSecret = props.getProperty("IDENTIFIER_HASH_SECRET");
+    if (!idSecret || forceRegenerate) {
+      idSecret = "ASN_ID_" + Utilities.getUuid().replace(/-/g, "") + "_" + Date.now();
+      props.setProperty("IDENTIFIER_HASH_SECRET", idSecret);
+    }
+
+    // 5. Inisialisasi PASSWORD_SALT (tetap aman untuk legacy auth jika sudah ada)
+    let salt = props.getProperty("PASSWORD_SALT");
+    if (!salt || forceRegenerate) {
+      salt = "ASN_SALT_" + Utilities.getUuid().replace(/-/g, "") + "_" + Date.now();
+      props.setProperty("PASSWORD_SALT", salt);
+    }
+
+    // 6. Inisialisasi TOKEN_VERSION
+    let version = props.getProperty("TOKEN_VERSION");
+    if (!version) {
+      props.setProperty("TOKEN_VERSION", "1");
+      version = "1";
+    }
+
+    Logger.log("✅ Phase 2B Script Properties berhasil dikonfigurasi dengan isolasi rahasia penuh.");
+    Logger.log("- TOKEN_SIGNING_SECRET (Legacy): Tetap dipertahankan");
+    Logger.log("- AUTH_TOKEN_SIGNING_SECRET: Aktif");
+    Logger.log("- OTP_HASH_SECRET: Aktif");
+    Logger.log("- IDENTIFIER_HASH_SECRET: Aktif");
+    Logger.log("- PASSWORD_SALT: Aktif");
+    Logger.log("- TOKEN_VERSION: " + version);
+
+    return {
+      status: "success",
+      message: "Phase 2B Script Properties configured with complete secret isolation.",
+      tokenVersion: version
+    };
+  } catch (err) {
+    Logger.log("❌ Gagal mengonfigurasi Phase 2B Script Properties: " + err.message);
+    throw err;
+  }
+}
+
+/**
+ * Generates Server-Signed Session Token (HMAC SHA-256)
+ * Menggunakan AUTH_TOKEN_SIGNING_SECRET secara eksplisit.
+ */
+function generateSessionToken(userId, role, ttlHours = 8, sessionId = null, identityId = null) {
+  const secret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026"));
   const tokenVersion = getServerSecret("TOKEN_VERSION", "1");
   const now = new Date().getTime();
   const expiresAt = now + (ttlHours * 60 * 60 * 1000);
@@ -2317,6 +2416,8 @@ function generateSessionToken(userId, role, ttlHours = 8) {
     expiresAt: new Date(expiresAt).toISOString(),
     tokenVersion: String(tokenVersion)
   };
+  if (sessionId) payload.sessionId = String(sessionId);
+  if (identityId) payload.identityId = String(identityId);
 
   const payloadStr = Utilities.base64Encode(JSON.stringify(payload));
   const signatureBytes = Utilities.computeHmacSha256Signature(payloadStr, secret);
@@ -2330,9 +2431,11 @@ function generateSessionToken(userId, role, ttlHours = 8) {
 }
 
 /**
- * Verifies Session Token (Checks HMAC Signature, Expiry, & TOKEN_VERSION)
+ * Verifies Session Token
+ * @param {string} tokenString
+ * @param {boolean} requireAuthSecret - Jika true (Phase 2B), HANYA memverifikasi signature dengan AUTH_TOKEN_SIGNING_SECRET dan menolak mutlak token legacy.
  */
-function verifySessionToken(tokenString) {
+function verifySessionToken(tokenString, requireAuthSecret = false) {
   if (!tokenString || typeof tokenString !== "string" || !tokenString.includes(".")) {
     throw new AuthenticationError("Authentication token is missing or malformed.");
   }
@@ -2345,12 +2448,43 @@ function verifySessionToken(tokenString) {
   const payloadStr = parts[0];
   const signatureStr = parts[1];
 
-  const secret = getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026");
-  const expectedSigBytes = Utilities.computeHmacSha256Signature(payloadStr, secret);
-  const expectedSigStr = Utilities.base64Encode(expectedSigBytes);
+  const authSecret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", "");
+  const legacySecret = getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026");
 
-  if (signatureStr !== expectedSigStr) {
-    throw new AuthenticationError("Authentication token signature verification failed (tampered).");
+  let validSig = false;
+
+  if (requireAuthSecret) {
+    // P0-1 STRICT ISOLATION: Endpoint Phase 2B WAJIB ditandatangani dengan AUTH_TOKEN_SIGNING_SECRET.
+    // Tidak ada fallback ke legacySecret! Token legacy ditolak secara deterministik.
+    if (!authSecret) {
+      throw new AuthenticationError("AUTH_TOKEN_SIGNING_SECRET is not configured on server.");
+    }
+    const expectedSigBytes = Utilities.computeHmacSha256Signature(payloadStr, authSecret);
+    if (signatureStr === Utilities.base64Encode(expectedSigBytes)) {
+      validSig = true;
+    }
+  } else {
+    // Jalur Legacy CMS: periksa authSecret, jika gagal fallback ke legacySecret
+    if (authSecret) {
+      const expectedSigBytes = Utilities.computeHmacSha256Signature(payloadStr, authSecret);
+      if (signatureStr === Utilities.base64Encode(expectedSigBytes)) {
+        validSig = true;
+      }
+    }
+    if (!validSig && legacySecret) {
+      const expectedSigBytes = Utilities.computeHmacSha256Signature(payloadStr, legacySecret);
+      if (signatureStr === Utilities.base64Encode(expectedSigBytes)) {
+        validSig = true;
+      }
+    }
+  }
+
+  if (!validSig) {
+    throw new AuthenticationError(
+      requireAuthSecret 
+        ? "Invalid authentication token signature. Legacy tokens cannot access Phase 2B endpoints."
+        : "Authentication token signature verification failed (tampered)."
+    );
   }
 
   let claims = null;
@@ -2373,6 +2507,18 @@ function verifySessionToken(tokenString) {
   const activeTokenVersion = getServerSecret("TOKEN_VERSION", "1");
   if (String(claims.tokenVersion) !== String(activeTokenVersion)) {
     throw new AuthenticationError("Authentication token has been revoked.");
+  }
+
+  // P0 SERVER-SIDE SESSION AUTHORITY: Validasi terhadap Auth_Sessions jika memuat sessionId
+  if (claims.sessionId && typeof getSessionById === "function") {
+    const session = getSessionById(claims.sessionId);
+    if (!session || session.status !== "ACTIVE") {
+      throw new AuthenticationError("Session has been revoked or is inactive on the server.");
+    }
+    const sessionExpTime = new Date(session.expires_at).getTime();
+    if (isNaN(sessionExpTime) || Date.now() >= sessionExpTime) {
+      throw new AuthenticationError("Server session registry has expired. Please log in again.");
+    }
   }
 
   return claims;
@@ -3825,4 +3971,1147 @@ function handleGoogleLogin(data) {
     }
   };
 }
+
+
+// =====================================================================
+// BACKEND IDENTITY & AUTHENTICATION ARCHITECTURE v2.0 (PHASE 2B)
+// =====================================================================
+
+const SHEET_ADMIN_IDENTITIES = "Admin_Identities";
+const SHEET_WALI_IDENTITIES = "Wali_Identities";
+const SHEET_STUDENTS = "Students";
+const SHEET_WALI_SANTRI_MAP = "Wali_Santri_Map";
+const SHEET_OTP_CHALLENGES = "OTP_Challenges";
+const SHEET_AUTH_SESSIONS = "Auth_Sessions";
+const SHEET_AUTH_AUDIT_LOG = "Auth_Audit_Log";
+
+const RELATIONSHIP_ENUM = Object.freeze({
+  FATHER: "FATHER",
+  MOTHER: "MOTHER",
+  GUARDIAN: "GUARDIAN",
+  OTHER: "OTHER"
+});
+
+/**
+ * Inisialisasi Otomatis Tabel-tabel Autentikasi Phase 2B jika belum ada.
+ */
+function setupAuthSystemSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const defs = [
+    {
+      name: SHEET_ADMIN_IDENTITIES,
+      headers: ["identity_id", "email", "name", "role", "status", "created_at"]
+    },
+    {
+      name: SHEET_WALI_IDENTITIES,
+      headers: ["identity_id", "email", "phone", "name", "role", "status", "created_at"]
+    },
+    {
+      name: SHEET_STUDENTS,
+      headers: ["student_id", "nisn", "name", "program", "class_name", "status", "created_at"]
+    },
+    {
+      name: SHEET_WALI_SANTRI_MAP,
+      headers: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"]
+    },
+    {
+      name: SHEET_OTP_CHALLENGES,
+      headers: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"]
+    },
+    {
+      name: SHEET_AUTH_SESSIONS,
+      headers: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"]
+    },
+    {
+      name: SHEET_AUTH_AUDIT_LOG,
+      headers: ["event_id", "timestamp", "event_type", "identity_id", "session_id", "channel", "success", "request_id", "metadata"]
+    }
+  ];
+
+  defs.forEach(def => {
+    let sheet = ss.getSheetByName(def.name);
+    if (!sheet) {
+      sheet = ss.insertSheet(def.name);
+      sheet.getRange(1, 1, 1, def.headers.length).setValues([def.headers]);
+      sheet.getRange(1, 1, 1, def.headers.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+      Logger.log(`[SCHEMA] Sheet '${def.name}' berhasil dibuat.`);
+    }
+  });
+
+  return { status: "success", message: "Tabel autentikasi Phase 2B siap digunakan." };
+}
+
+/**
+ * Concurrency Lock Wrapper menggunakan LockService
+ */
+function withAuthScriptLock(callback, timeoutMs = 10000) {
+  const lock = LockService.getScriptLock();
+  const acquired = lock.tryLock(timeoutMs);
+  if (!acquired) {
+    throw new Error("Server sibuk memproses antrean keamanan. Silakan coba beberapa saat lagi.");
+  }
+  try {
+    return callback();
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (e) {
+      console.warn("Gagal melepaskan script lock:", e);
+    }
+  }
+}
+
+/**
+ * Unbiased Rejection Sampling OTP Generator
+ * Menggunakan Utilities.getUuid() untuk menjamin entropy tanpa Math.random() dan tanpa modulo bias.
+ */
+function generateSecureOtpDigits() {
+  const MAX_UNBIASED = 4294800000; // 4772 * 900000
+  while (true) {
+    const rawUuid = Utilities.getUuid().replace(/-/g, "");
+    const hex8 = rawUuid.substring(0, 8);
+    const intVal = parseInt(hex8, 16);
+    if (!isNaN(intVal) && intVal < MAX_UNBIASED) {
+      const num = (intVal % 900000) + 100000;
+      return String(num);
+    }
+  }
+}
+
+function hashOtpCode(otpCode) {
+  const salt = getServerSecret("OTP_HASH_SECRET", getServerSecret("PASSWORD_SALT", "ASNAWIYYAH_SALT_2026_SECURE"));
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(otpCode) + salt, Utilities.Charset.UTF_8);
+  return digest.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, '0')).join('');
+}
+
+function hashIdentifier(identifier) {
+  const secret = getServerSecret("IDENTIFIER_HASH_SECRET", getServerSecret("PASSWORD_SALT", "ASNAWIYYAH_IDENTIFIER_SALT_2026"));
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(identifier).trim().toLowerCase() + secret, Utilities.Charset.UTF_8);
+  return digest.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * P1 Audit Log Writer
+ * Dilarang menyimpan plaintext OTP, password, API key, atau token lengkap.
+ */
+/**
+ * P1 Audit Log Writer
+ * Dilarang menyimpan plaintext OTP, password, API key, atau token lengkap.
+ */
+function writeAuthAuditLog(eventType, identityId, sessionId, channel, success, requestId, metadataObj = {}) {
+  try {
+    const ss = getDatabaseSpreadsheet();
+    let sheet = getAuthSheet(ss, SHEET_AUTH_AUDIT_LOG);
+    if (!sheet) {
+      console.warn("[SECURITY AUDIT] Sheet 'Auth_Audit_Log' belum diinisialisasi oleh administrator.");
+      return;
+    }
+
+    const eventId = "EVT_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+    const timestamp = new Date().toISOString();
+    const safeMetadata = JSON.stringify(metadataObj || {});
+
+    sheet.appendRow([
+      eventId,
+      timestamp,
+      String(eventType || "UNKNOWN"),
+      String(identityId || "ANONYMOUS"),
+      String(sessionId || ""),
+      String(channel || "SYSTEM"),
+      Boolean(success),
+      String(requestId || ""),
+      safeMetadata
+    ]);
+  } catch (err) {
+    console.error("Gagal mencatat audit log:", err);
+  }
+}
+
+/**
+ * Dispatcher Pengiriman WhatsApp via Gateway Eksternal
+ */
+function sendWhatsAppOtpMessage(targetPhone, otpCode) {
+  const gatewayUrl = getServerSecret("WA_GATEWAY_URL", "");
+  const gatewayApiKey = getServerSecret("WA_GATEWAY_API_KEY", "");
+
+  if (!gatewayUrl) {
+    console.warn("[WA GATEWAY] WA_GATEWAY_URL belum dikonfigurasi di Script Properties.");
+    return false;
+  }
+
+  const message = `*PPTQ Asnawiyyah Pilangwetan*\n\nKode verifikasi login Anda adalah: *${otpCode}*\n\nKode ini berlaku selama 5 menit. JANGAN berikan kode ini kepada siapapun demi keamanan data putra/putri Anda.`;
+
+  const payload = {
+    phone: targetPhone,
+    message: message
+  };
+
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (gatewayApiKey) {
+    headers["Authorization"] = "Bearer " + gatewayApiKey;
+  }
+
+  const options = {
+    method: "post",
+    headers: headers,
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(gatewayUrl, options);
+    const code = response.getResponseCode();
+    if (code >= 200 && code < 300) {
+      return true;
+    } else {
+      console.warn("[WA GATEWAY] HTTP " + code + ": " + response.getContentText().substring(0, 100));
+      return false;
+    }
+  } catch (err) {
+    console.error("[WA GATEWAY ERROR]", err);
+    return false;
+  }
+}
+
+/**
+ * Dispatcher Pengiriman Email OTP via Native MailApp
+ */
+function sendAdminOtpEmail(email, otpCode) {
+  const subject = "Kode Verifikasi Login Administrator - PPTQ Asnawiyyah";
+  const body = `Yth. Pengelola PPTQ Asnawiyyah,\n\nKode verifikasi 6-digit Anda adalah: ${otpCode}\n\nKode ini berlaku selama 5 menit. Jangan membagikan kode ini kepada pihak lain demi menjaga keamanan sistem operasional pesantren.\n\nTerima kasih,\nTim Keamanan Sistem PPTQ Asnawiyyah`;
+
+  MailApp.sendEmail({
+    to: email,
+    subject: subject,
+    body: body
+  });
+  return true;
+}
+
+/**
+ * Dispatcher Pengiriman Email OTP Wali Santri via Native MailApp (Phase 2B)
+ */
+function sendWaliOtpEmail(email, otpCode, name = "") {
+  const subject = "Kode OTP Login Wali Santri — ASNawiyyah";
+  const body = `Assalamu'alaikum,\n\nKode OTP Anda untuk login ke ASNawiyyah adalah: ${otpCode}\n\nKode ini berlaku selama 5 menit. Jangan berikan kode OTP ini kepada siapa pun.\n\nJika Anda tidak merasa melakukan permintaan login, abaikan email ini.\n\nASNawiyyah`;
+
+  MailApp.sendEmail({
+    to: email,
+    subject: subject,
+    body: body
+  });
+  return true;
+}
+
+// ==================== DATA ACCESS REPOSITORY LAYER ====================
+
+/**
+ * Helper Resolusi Database Spreadsheet
+ * Mendukung override SPREADSHEET_ID eksplisit via Script Properties
+ * dengan fallback aman ke getActiveSpreadsheet() kontainer bawaan.
+ */
+function getDatabaseSpreadsheet() {
+  const explicitId = getServerSecret("SPREADSHEET_ID", "");
+  if (explicitId) {
+    try {
+      return SpreadsheetApp.openById(explicitId);
+    } catch (e) {
+      console.warn("[DB] Gagal membuka spreadsheet eksplisit ID: " + e.message);
+    }
+  }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+/**
+ * Helper Resolusi Sheet Tab Resilien (Toleran Spasi & Huruf Besar/Kecil)
+ */
+function getAuthSheet(ss, targetName) {
+  if (!ss) return null;
+  const direct = ss.getSheetByName(targetName);
+  if (direct) return direct;
+
+  const cleanTarget = String(targetName || "").replace(/[\s_]+/g, "").toLowerCase();
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const name = sheets[i].getName();
+    if (name.trim().toLowerCase() === String(targetName).trim().toLowerCase() ||
+        name.replace(/[\s_]+/g, "").toLowerCase() === cleanTarget) {
+      return sheets[i];
+    }
+  }
+  return null;
+}
+
+function getAdminIdentityByEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) return null;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_ADMIN_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+  let createdAtIdx = header.indexOf("created_at");
+
+  if (idIdx === -1) idIdx = 0;
+  if (emailIdx === -1) emailIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+  if (roleIdx === -1) roleIdx = 3;
+  if (statusIdx === -1) statusIdx = 4;
+  if (createdAtIdx === -1) createdAtIdx = 5;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
+    if (rowEmail === normalized) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: String(data[i][emailIdx] || ""),
+        name: String(data[i][nameIdx] || ""),
+        role: String(data[i][roleIdx] || "ADMIN"),
+        status: String(data[i][statusIdx] || "").trim().toUpperCase(),
+        createdAt: String(data[i][createdAtIdx] || "")
+      };
+    }
+  }
+  return null;
+}
+
+function getAdminIdentityById(identityId) {
+  if (!identityId) return null;
+  const targetId = String(identityId).trim();
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_ADMIN_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (emailIdx === -1) emailIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+  if (roleIdx === -1) roleIdx = 3;
+  if (statusIdx === -1) statusIdx = 4;
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idIdx] || "").trim() === targetId) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: String(data[i][emailIdx] || ""),
+        name: String(data[i][nameIdx] || ""),
+        role: String(data[i][roleIdx] || "ADMIN"),
+        status: String(data[i][statusIdx] || "").trim().toUpperCase()
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Lookup Identitas Wali Santri berdasarkan Email (Phase 2B Active Path)
+ */
+function getWaliIdentityByEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized || !normalized.includes("@")) return null;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let phoneIdx = header.indexOf("phone");
+  let nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (emailIdx === -1) emailIdx = 1;
+  if (phoneIdx === -1) phoneIdx = 2;
+  if (nameIdx === -1) nameIdx = 3;
+  if (roleIdx === -1) roleIdx = 4;
+  if (statusIdx === -1) statusIdx = 5;
+
+  for (let i = 1; i < data.length; i++) {
+    const storedEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
+    if (storedEmail === normalized) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: storedEmail,
+        phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+        name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+        role: roleIdx !== -1 ? String(data[i][roleIdx] || "WALI_SANTRI") : "WALI_SANTRI",
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE"
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Lookup Identitas Wali Santri berdasarkan Phone (Retained as Future WhatsApp Capability)
+ */
+function getWaliIdentityByPhone(phone) {
+  const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
+  const normalized = cleanPhone.startsWith("62") ? cleanPhone : cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : "62" + cleanPhone;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let phoneIdx = header.indexOf("phone");
+  let nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (phoneIdx === -1) phoneIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+  if (roleIdx === -1) roleIdx = 3;
+  if (statusIdx === -1) statusIdx = 4;
+
+  for (let i = 1; i < data.length; i++) {
+    const storedPhone = String(data[i][phoneIdx] || "").replace(/[^0-9]/g, "");
+    if (storedPhone === normalized) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
+        phone: String(data[i][phoneIdx] || ""),
+        name: String(data[i][nameIdx] || ""),
+        role: String(data[i][roleIdx] || "WALI_SANTRI"),
+        status: String(data[i][statusIdx] || "").trim().toUpperCase()
+      };
+    }
+  }
+  return null;
+}
+
+function getWaliIdentityById(identityId) {
+  if (!identityId) return null;
+  const targetId = String(identityId).trim();
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let phoneIdx = header.indexOf("phone");
+  let nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (phoneIdx === -1) phoneIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+  if (roleIdx === -1) roleIdx = 3;
+  if (statusIdx === -1) statusIdx = 4;
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idIdx] || "").trim() === targetId) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
+        phone: String(data[i][phoneIdx] || ""),
+        name: String(data[i][nameIdx] || ""),
+        role: String(data[i][roleIdx] || "WALI_SANTRI"),
+        status: String(data[i][statusIdx] || "").trim().toUpperCase()
+      };
+    }
+  }
+  return null;
+}
+
+function getSessionById(sessionId) {
+  if (!sessionId) return null;
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_AUTH_SESSIONS);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][0]).trim() === String(sessionId).trim()) {
+      return {
+        session_id: String(data[i][0]),
+        identity_id: String(data[i][1]),
+        role: String(data[i][2]),
+        issued_at: String(data[i][3]),
+        expires_at: String(data[i][4]),
+        status: String(data[i][5]),
+        revoked_at: String(data[i][6] || ""),
+        token_version: String(data[i][8] || "")
+      };
+    }
+  }
+  return null;
+}
+
+function createAuthSessionRecord(identityId, role, ttlHours = 8) {
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_AUTH_SESSIONS);
+  if (!sheet) {
+    throw new Error("Tabel sesi 'Auth_Sessions' belum diinisialisasi oleh administrator.");
+  }
+
+  const sessionId = "SES_" + Utilities.getUuid().replace(/-/g, "");
+  const now = new Date();
+  const issuedAt = now.toISOString();
+  const expiresAt = new Date(now.getTime() + (ttlHours * 3600000)).toISOString();
+  const tokenVersion = String(getServerSecret("TOKEN_VERSION", "1"));
+
+  sheet.appendRow([
+    sessionId,
+    identityId,
+    role,
+    issuedAt,
+    expiresAt,
+    "ACTIVE",
+    "",
+    issuedAt,
+    tokenVersion
+  ]);
+
+  return {
+    sessionId: sessionId,
+    expiresAt: expiresAt,
+    tokenVersion: tokenVersion
+  };
+}
+
+function revokeAuthSessionRecord(sessionId) {
+  if (!sessionId) return false;
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_AUTH_SESSIONS);
+  if (!sheet) return false;
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][0]).trim() === String(sessionId).trim()) {
+      sheet.getRange(i + 1, 6).setValue("REVOKED");
+      sheet.getRange(i + 1, 7).setValue(new Date().toISOString());
+      return true;
+    }
+  }
+  return false;
+}
+
+function getLinkedStudentsForWali(waliId) {
+  if (!waliId) return [];
+  const ss = getDatabaseSpreadsheet();
+  const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+  const studentsSheet = getAuthSheet(ss, SHEET_STUDENTS);
+
+  if (!mapSheet || !studentsSheet) return [];
+
+  const mapData = mapSheet.getDataRange().getValues();
+  const activeStudentIds = [];
+  const relationshipMap = {};
+
+  for (let i = 1; i < mapData.length; i++) {
+    if (String(mapData[i][1]).trim() === String(waliId).trim()) {
+      const status = String(mapData[i][4] || "VERIFIED").toUpperCase();
+      if (status === "VERIFIED") {
+        const studentId = String(mapData[i][2]).trim();
+        activeStudentIds.push(studentId);
+        relationshipMap[studentId] = String(mapData[i][3] || RELATIONSHIP_ENUM.GUARDIAN).toUpperCase();
+      }
+    }
+  }
+
+  if (activeStudentIds.length === 0) return [];
+
+  const studentData = studentsSheet.getDataRange().getValues();
+  const results = [];
+
+  for (let i = 1; i < studentData.length; i++) {
+    const id = String(studentData[i][0]).trim();
+    if (activeStudentIds.includes(id)) {
+      results.push({
+        studentId: id,
+        nisn: String(studentData[i][1] || ""),
+        name: String(studentData[i][2] || "Santri"),
+        program: String(studentData[i][3] || "Reguler"),
+        className: String(studentData[i][4] || ""),
+        status: String(studentData[i][5] || "Aktif"),
+        relationship: relationshipMap[id] || RELATIONSHIP_ENUM.GUARDIAN
+      });
+    }
+  }
+
+  return results;
+}
+
+function findPendingOtpChallenge(channel, identifierHash) {
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  const now = new Date();
+
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][2]).trim() === String(channel).trim() &&
+        String(data[i][3]).trim() === String(identifierHash).trim() &&
+        String(data[i][8]).trim() === "PENDING") {
+      
+      const expDate = new Date(data[i][7]);
+      return {
+        rowIndex: i + 1,
+        challengeId: String(data[i][0]),
+        identityId: String(data[i][1]),
+        otpHash: String(data[i][4]),
+        attempts: Number(data[i][5] || 0),
+        maxAttempts: Number(data[i][6] || 3),
+        expiresAt: expDate,
+        isExpired: now > expDate
+      };
+    }
+  }
+  return null;
+}
+
+function cancelPreviousChallenges(channel, identifierHash) {
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+  if (!sheet) return;
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][2]).trim() === String(channel).trim() &&
+        String(data[i][3]).trim() === String(identifierHash).trim() &&
+        String(data[i][8]).trim() === "PENDING") {
+      sheet.getRange(i + 1, 9).setValue("CANCELLED");
+    }
+  }
+}
+
+// ==================== AUTHORIZATION PIPELINE ====================
+
+/**
+ * Stage 1: Authenticate Session Token
+ * P0-1: Memverifikasi token HANYA dengan AUTH_TOKEN_SIGNING_SECRET (strict mode).
+ * Token legacy yang ditandatangani dengan TOKEN_SIGNING_SECRET ditolak secara deterministik.
+ */
+function authenticateSession(tokenString) {
+  const claims = verifySessionToken(tokenString, true);
+
+  if (!claims.sessionId || !claims.identityId) {
+    throw new AuthenticationError("Token does not contain valid Phase 2B identity claims.");
+  }
+
+  // P0-1: Verifikasi status sesi di registry server Auth_Sessions
+  const session = getSessionById(claims.sessionId);
+  if (!session || session.status !== "ACTIVE") {
+    throw new AuthenticationError("Server session is not active or has been revoked.");
+  }
+
+  // P0-1: Cek Status Identitas di Master (Admin / Wali)
+  let identity = null;
+  if (claims.role === "ADMIN" || claims.role === "EDITOR") {
+    identity = getAdminIdentityById(claims.identityId);
+  } else if (claims.role === "WALI_SANTRI") {
+    identity = getWaliIdentityById(claims.identityId);
+  }
+
+  if (!identity || identity.status !== "ACTIVE") {
+    throw new AuthenticationError("Identity is suspended or not found.");
+  }
+
+  return {
+    sessionId: claims.sessionId,
+    identityId: claims.identityId,
+    role: claims.role,
+    issuedAt: claims.issuedAt,
+    expiresAt: claims.expiresAt,
+    identity: identity
+  };
+}
+
+/**
+ * Stage 2: Authorize Role
+ */
+function authorizeRole(actor, allowedRoles = []) {
+  if (!actor || !actor.role) {
+    throw new AuthorizationError("Authentication required.");
+  }
+  if (!allowedRoles.includes(actor.role)) {
+    throw new AuthorizationError(`Role '${actor.role}' is forbidden from accessing this resource.`);
+  }
+  return true;
+}
+
+/**
+ * P0-3: Request ID Sanitizer (Metadata only, never used for authorization/session lookup)
+ */
+function sanitizeRequestId(clientReqId) {
+  if (clientReqId && typeof clientReqId === "string") {
+    const cleaned = clientReqId.replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 64);
+    if (cleaned.length >= 8) return cleaned;
+  }
+  return "req_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+}
+
+// ==================== API ACTION DISPATCHER (PHASE 2B) ====================
+
+function handleAuthApiAction(action, payload, e) {
+  const requestId = sanitizeRequestId(payload && payload.requestId);
+
+  try {
+    // ----------------------------------------------------
+    // 1. ADMIN REQUEST OTP
+    // ----------------------------------------------------
+    if (action === "auth.admin.requestOtp") {
+      return withAuthScriptLock(() => {
+        const email = String(payload.email || "").trim().toLowerCase();
+        const idHash = hashIdentifier(email);
+
+        // Anti-Enumeration: generic response statement
+        const genericResponse = {
+          success: true,
+          message: "Jika akun memenuhi syarat dan terdaftar, kode verifikasi 6 digit telah dikirimkan.",
+          cooldownSeconds: 60,
+          requestId: requestId
+        };
+
+        const admin = getAdminIdentityByEmail(email);
+        if (!admin || admin.status !== "ACTIVE") {
+          writeAuthAuditLog("OTP_REQUEST_IGNORED", "ANONYMOUS", "", "EMAIL", false, requestId, { reason: "Admin identity not found or suspended" });
+          return createJsonResponse(genericResponse);
+        }
+
+        // Cek challenge pending berumur < 60 detik (cooldown check)
+        const pending = findPendingOtpChallenge("EMAIL", idHash);
+        if (pending && !pending.isExpired) {
+          const elapsed = (new Date().getTime() - new Date(pending.expiresAt.getTime() - 300000).getTime()) / 1000;
+          if (elapsed < 60) {
+            return createJsonResponse({
+              success: true,
+              message: "Kode verifikasi telah dikirim sebelumnya. Silakan tunggu jeda kirim ulang.",
+              cooldownSeconds: Math.ceil(60 - elapsed),
+              requestId: requestId
+            });
+          }
+        }
+
+        // Batalkan challenge aktif sebelumnya
+        cancelPreviousChallenges("EMAIL", idHash);
+
+        // Generate CSPRNG OTP
+        const otpCode = generateSecureOtpDigits();
+        const otpHash = hashOtpCode(otpCode);
+        const challengeId = "CHL_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 300000).toISOString();
+
+        const ss = getDatabaseSpreadsheet();
+        const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+        if (!otpSheet) {
+          console.error("[AUTH] Sheet 'OTP_Challenges' belum disetup oleh administrator.");
+          return createJsonResponse(genericResponse);
+        }
+
+        otpSheet.appendRow([
+          challengeId,
+          admin.identityId,
+          "EMAIL",
+          idHash,
+          otpHash,
+          0,
+          3,
+          expiresAt,
+          "PENDING",
+          now.toISOString(),
+          "",
+          requestId
+        ]);
+
+        const challengeRow = otpSheet.getLastRow();
+        let emailSuccess = false;
+        try {
+          emailSuccess = sendAdminOtpEmail(admin.email, otpCode);
+        } catch (mailErr) {
+          console.error("Gagal mengirim email OTP Admin:", mailErr);
+          emailSuccess = false;
+        }
+
+        // P0-2: Jika pengiriman gagal, batalkan challenge dan catat OTP_DISPATCH_FAIL
+        if (!emailSuccess) {
+          otpSheet.getRange(challengeRow, 9).setValue("CANCELLED");
+          writeAuthAuditLog("OTP_DISPATCH_FAIL", admin.identityId, "", "EMAIL", false, requestId, { reason: "Admin email delivery failed" });
+          return createJsonResponse(genericResponse);
+        }
+
+        writeAuthAuditLog("OTP_REQUEST_SENT", admin.identityId, "", "EMAIL", true, requestId, { channel: "EMAIL" });
+        return createJsonResponse(genericResponse);
+      });
+    }
+
+    // ----------------------------------------------------
+    // 2. ADMIN VERIFY OTP
+    // ----------------------------------------------------
+    if (action === "auth.admin.verifyOtp") {
+      return withAuthScriptLock(() => {
+        const email = String(payload.email || "").trim().toLowerCase();
+        const otp = String(payload.otp || "").trim();
+        const idHash = hashIdentifier(email);
+
+        const challenge = findPendingOtpChallenge("EMAIL", idHash);
+        if (!challenge) {
+          writeAuthAuditLog("OTP_VERIFY_NOT_FOUND", "ANONYMOUS", "", "EMAIL", false, requestId, {});
+          return createJsonResponse({ success: false, message: "Kode OTP tidak ditemukan atau sudah kedaluwarsa. Silakan minta kode baru." });
+        }
+
+        if (challenge.isExpired) {
+          writeAuthAuditLog("OTP_VERIFY_EXPIRED", challenge.identityId, "", "EMAIL", false, requestId, { challengeId: challenge.challengeId });
+          return createJsonResponse({ success: false, message: "Kode OTP telah kedaluwarsa. Silakan minta kode baru." });
+        }
+
+        if (challenge.attempts >= challenge.maxAttempts) {
+          writeAuthAuditLog("OTP_VERIFY_EXHAUSTED", challenge.identityId, "", "EMAIL", false, requestId, { challengeId: challenge.challengeId });
+          return createJsonResponse({ success: false, message: "Batas percobaan verifikasi telah habis. Silakan minta kode baru." });
+        }
+
+        const inputHash = hashOtpCode(otp);
+        const ss = getDatabaseSpreadsheet();
+        const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+
+        if (inputHash !== challenge.otpHash) {
+          const newAttempts = challenge.attempts + 1;
+          otpSheet.getRange(challenge.rowIndex, 6).setValue(newAttempts);
+          if (newAttempts >= challenge.maxAttempts) {
+            otpSheet.getRange(challenge.rowIndex, 9).setValue("EXHAUSTED");
+          }
+          writeAuthAuditLog("OTP_VERIFY_FAIL", challenge.identityId, "", "EMAIL", false, requestId, { attempts: newAttempts });
+          return createJsonResponse({
+            success: false,
+            message: `Kode verifikasi salah. Sisa kesempatan: ${Math.max(0, challenge.maxAttempts - newAttempts)}`
+          });
+        }
+
+        // OTP Valid => Konsumsi Challenge
+        otpSheet.getRange(challenge.rowIndex, 9).setValue("CONSUMED");
+        otpSheet.getRange(challenge.rowIndex, 11).setValue(new Date().toISOString());
+
+        // Resolve Identitas dari row challenge
+        const admin = getAdminIdentityById(challenge.identityId);
+        if (!admin || admin.status !== "ACTIVE") {
+          return createJsonResponse({ success: false, message: "Identitas akun tidak aktif." });
+        }
+
+        // Buat Sesi Server
+        const session = createAuthSessionRecord(admin.identityId, admin.role, 8);
+        const tokenData = generateSessionToken(admin.email, admin.role, 8, session.sessionId, admin.identityId);
+
+        writeAuthAuditLog("OTP_VERIFY_SUCCESS", admin.identityId, session.sessionId, "EMAIL", true, requestId, {});
+        writeAuthAuditLog("SESSION_CREATED", admin.identityId, session.sessionId, "EMAIL", true, requestId, { role: admin.role });
+
+        return createJsonResponse({
+          success: true,
+          token: tokenData.token,
+          data: {
+            token: tokenData.token,
+            role: admin.role,
+            admin: {
+              identityId: admin.identityId,
+              name: admin.name,
+              email: admin.email,
+              role: admin.role
+            }
+          },
+          identity: {
+            identityId: admin.identityId,
+            name: admin.name,
+            email: admin.email,
+            role: admin.role
+          },
+          requestId: requestId
+        });
+      });
+    }
+
+    // ----------------------------------------------------
+    // 3. WALI REQUEST OTP (Email OTP - Phase 2B)
+    // ----------------------------------------------------
+    if (action === "auth.parent.requestOtp" || action === "auth.wali.requestOtp") {
+      return withAuthScriptLock(() => {
+        const email = String(payload.email || "").trim().toLowerCase();
+        const idHash = hashIdentifier(email);
+
+        const genericResponse = {
+          success: true,
+          message: "Jika akun memenuhi syarat dan terdaftar, kode verifikasi 6 digit telah dikirimkan ke email Anda.",
+          cooldownSeconds: 60,
+          requestId: requestId
+        };
+
+        const wali = getWaliIdentityByEmail(email);
+        if (!wali || wali.status !== "ACTIVE") {
+          writeAuthAuditLog("OTP_REQUEST_IGNORED", "ANONYMOUS", "", "EMAIL", false, requestId, { reason: "Wali not found or inactive" });
+          return createJsonResponse(genericResponse);
+        }
+
+        const pending = findPendingOtpChallenge("EMAIL", idHash);
+        if (pending && !pending.isExpired) {
+          const elapsed = (new Date().getTime() - new Date(pending.expiresAt.getTime() - 300000).getTime()) / 1000;
+          if (elapsed < 60) {
+            return createJsonResponse({
+              success: true,
+              message: "Kode verifikasi telah dikirimkan sebelumnya. Silakan tunggu jeda kirim ulang.",
+              cooldownSeconds: Math.ceil(60 - elapsed),
+              requestId: requestId
+            });
+          }
+        }
+
+        cancelPreviousChallenges("EMAIL", idHash);
+
+        const otpCode = generateSecureOtpDigits();
+        const otpHash = hashOtpCode(otpCode);
+        const challengeId = "CHL_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 300000).toISOString();
+
+        const ss = getDatabaseSpreadsheet();
+        const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+        if (!otpSheet) {
+          console.error("[AUTH] Sheet 'OTP_Challenges' belum disetup oleh administrator.");
+          return createJsonResponse(genericResponse);
+        }
+
+        otpSheet.appendRow([
+          challengeId,
+          wali.identityId,
+          "EMAIL",
+          idHash,
+          otpHash,
+          0,
+          3,
+          expiresAt,
+          "PENDING",
+          now.toISOString(),
+          "",
+          requestId
+        ]);
+
+        const challengeRow = otpSheet.getLastRow();
+        let emailSuccess = false;
+        try {
+          emailSuccess = sendWaliOtpEmail(wali.email, otpCode, wali.name);
+        } catch (mailErr) {
+          console.error("Gagal mengirim email OTP Wali:", mailErr);
+          emailSuccess = false;
+        }
+
+        // P0-2: Jika pengiriman gagal, batalkan challenge dan catat OTP_DISPATCH_FAIL
+        if (!emailSuccess) {
+          otpSheet.getRange(challengeRow, 9).setValue("CANCELLED");
+          writeAuthAuditLog("OTP_DISPATCH_FAIL", wali.identityId, "", "EMAIL", false, requestId, { reason: "Wali email delivery failed" });
+          return createJsonResponse(genericResponse);
+        }
+
+        writeAuthAuditLog("OTP_REQUEST_SENT", wali.identityId, "", "EMAIL", true, requestId, { channel: "EMAIL" });
+        return createJsonResponse(genericResponse);
+      });
+    }
+
+    // ----------------------------------------------------
+    // 4. WALI VERIFY OTP (Email OTP - Phase 2B)
+    // ----------------------------------------------------
+    if (action === "auth.parent.verifyOtp" || action === "auth.wali.verifyOtp") {
+      return withAuthScriptLock(() => {
+        const email = String(payload.email || "").trim().toLowerCase();
+        const otp = String(payload.otp || "").trim();
+        const idHash = hashIdentifier(email);
+
+        const challenge = findPendingOtpChallenge("EMAIL", idHash);
+        if (!challenge) {
+          writeAuthAuditLog("OTP_VERIFY_NOT_FOUND", "ANONYMOUS", "", "EMAIL", false, requestId, {});
+          return createJsonResponse({ success: false, message: "Kode OTP tidak ditemukan atau sudah kedaluwarsa. Silakan minta kode baru." });
+        }
+
+        if (challenge.isExpired) {
+          writeAuthAuditLog("OTP_VERIFY_EXPIRED", challenge.identityId, "", "EMAIL", false, requestId, { challengeId: challenge.challengeId });
+          return createJsonResponse({ success: false, message: "Kode OTP telah kedaluwarsa. Silakan minta kode baru." });
+        }
+
+        if (challenge.attempts >= challenge.maxAttempts) {
+          writeAuthAuditLog("OTP_VERIFY_EXHAUSTED", challenge.identityId, "", "EMAIL", false, requestId, { challengeId: challenge.challengeId });
+          return createJsonResponse({ success: false, message: "Batas percobaan verifikasi telah habis. Silakan minta kode baru." });
+        }
+
+        const inputHash = hashOtpCode(otp);
+        const ss = getDatabaseSpreadsheet();
+        const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+
+        if (inputHash !== challenge.otpHash) {
+          const newAttempts = challenge.attempts + 1;
+          otpSheet.getRange(challenge.rowIndex, 6).setValue(newAttempts);
+          if (newAttempts >= challenge.maxAttempts) {
+            otpSheet.getRange(challenge.rowIndex, 9).setValue("EXHAUSTED");
+          }
+          writeAuthAuditLog("OTP_VERIFY_FAIL", challenge.identityId, "", "EMAIL", false, requestId, { attempts: newAttempts });
+          return createJsonResponse({
+            success: false,
+            message: `Kode verifikasi salah. Sisa kesempatan: ${Math.max(0, challenge.maxAttempts - newAttempts)}`
+          });
+        }
+
+        otpSheet.getRange(challenge.rowIndex, 9).setValue("CONSUMED");
+        otpSheet.getRange(challenge.rowIndex, 11).setValue(new Date().toISOString());
+
+        const wali = getWaliIdentityById(challenge.identityId);
+        if (!wali || wali.status !== "ACTIVE") {
+          return createJsonResponse({ success: false, message: "Identitas akun tidak aktif." });
+        }
+
+        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", 24);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", 24, session.sessionId, wali.identityId);
+        const students = getLinkedStudentsForWali(wali.identityId);
+
+        writeAuthAuditLog("OTP_VERIFY_SUCCESS", wali.identityId, session.sessionId, "EMAIL", true, requestId, {});
+        writeAuthAuditLog("SESSION_CREATED", wali.identityId, session.sessionId, "EMAIL", true, requestId, { role: "WALI_SANTRI" });
+
+        return createJsonResponse({
+          success: true,
+          token: tokenData.token,
+          data: {
+            token: tokenData.token,
+            role: "WALI_SANTRI",
+            parent: {
+              identityId: wali.identityId,
+              name: wali.name,
+              email: wali.email,
+              phone: wali.phone
+            },
+            students: students
+          },
+          identity: {
+            identityId: wali.identityId,
+            name: wali.name,
+            email: wali.email,
+            phone: wali.phone,
+            role: "WALI_SANTRI"
+          },
+          students: students,
+          requestId: requestId
+        });
+      });
+    }
+
+    // ----------------------------------------------------
+    // 5. VERIFY SESSION (auth.session)
+    // ----------------------------------------------------
+    if (action === "auth.session") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const actor = authenticateSession(token);
+
+      return createJsonResponse({
+        success: true,
+        valid: true,
+        identity: actor.identity,
+        role: actor.role,
+        requestId: requestId
+      });
+    }
+
+    // ----------------------------------------------------
+    // 6. REVOKE SESSION (auth.logout)
+    // ----------------------------------------------------
+    if (action === "auth.logout") {
+      return withAuthScriptLock(() => {
+        const token = payload.token || (payload.data && payload.data.token) || "";
+        const actor = authenticateSession(token);
+
+        revokeAuthSessionRecord(actor.sessionId);
+        writeAuthAuditLog("SESSION_REVOKED", actor.identityId, actor.sessionId, "HTTP_POST", true, requestId, {});
+
+        return createJsonResponse({
+          success: true,
+          message: "Sesi telah diakhiri dan dicabut dari server.",
+          requestId: requestId
+        });
+      });
+    }
+
+    // ----------------------------------------------------
+    // 7. WALI PROFILE (auth.parent.me)
+    // ----------------------------------------------------
+    if (action === "auth.parent.me") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const actor = authenticateSession(token);
+      authorizeRole(actor, ["WALI_SANTRI", "ADMIN"]);
+
+      const wali = getWaliIdentityById(actor.identityId);
+      return createJsonResponse({
+        success: true,
+        parent: wali,
+        requestId: requestId
+      });
+    }
+
+    // ----------------------------------------------------
+    // 8. WALI LINKED STUDENTS (auth.parent.students)
+    // ----------------------------------------------------
+    if (action === "auth.parent.students") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const actor = authenticateSession(token);
+      authorizeRole(actor, ["WALI_SANTRI", "ADMIN"]);
+
+      const students = getLinkedStudentsForWali(actor.identityId);
+      return createJsonResponse({
+        success: true,
+        students: students,
+        requestId: requestId
+      });
+    }
+
+    return createJsonResponse({
+      success: false,
+      message: `Action '${action}' tidak dikenali pada modul autentikasi Phase 2B.`,
+      requestId: requestId
+    });
+
+  } catch (err) {
+    console.error("[AUTH API ERROR]", err);
+    writeAuthAuditLog("AUTH_ERROR", "SYSTEM", "", "HTTP_POST", false, requestId, { error: err.message, action: action });
+    return createJsonResponse({
+      success: false,
+      message: err.message || "Terjadi kesalahan internal pada layanan autentikasi.",
+      requestId: requestId
+    });
+  }
+}
+
 

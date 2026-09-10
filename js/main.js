@@ -216,7 +216,7 @@
         }
 
         function switchTab(tabId, updateUrl = true, customUrl = null) {
-            if (tabId === 'admin' && window.innerWidth < 1024) {
+            if (tabId === 'admin' && window.innerWidth < 1024 && (typeof isAdminLoggedIn === 'undefined' || !isAdminLoggedIn)) {
                 if (updateUrl) {
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
                 }

@@ -687,6 +687,7 @@ function openAdminAuthModal() {
         content.classList.remove('scale-95', 'opacity-0');
         const emailInput = document.getElementById('admin-auth-email');
         if (emailInput) emailInput.focus();
+        if (typeof initGoogleAuth === 'function') initGoogleAuth();
     }, 50);
 }
 
@@ -822,6 +823,7 @@ function openParentAuthModal() {
         content.classList.remove('scale-95', 'opacity-0');
         const emailInput = document.getElementById('parent-auth-email') || document.getElementById('parent-auth-phone');
         if (emailInput) emailInput.focus();
+        if (typeof initGoogleAuth === 'function') initGoogleAuth();
     }, 50);
 }
 
@@ -956,25 +958,13 @@ function togglePintuAksesResmi() {
 }
 
 function openAdminModuleFromControlCenter(viewName) {
-    if (window.innerWidth >= 1024) {
-        if (typeof switchTab === 'function') switchTab('admin');
-        if (typeof showAdminView === 'function') showAdminView(viewName);
-    } else {
-        const moduleNames = {
-            'berita': 'Manajemen Berita',
-            'banner': 'Banner Slider',
-            'ppdb': 'Data PPDB',
-            'galeri': 'Manajemen Galeri',
-            'program': 'Manajemen Program',
-            'unit-kegiatan': 'Unit Kegiatan Santri',
-            'profil-lembaga': 'Profil & Lembaga',
-            'pengaturan': 'Tautan & Sosmed'
-        };
-        const title = moduleNames[viewName] || 'Modul Admin';
-        if (typeof showToast === 'function') {
-            showToast(`Akses ${title}: Buka di perangkat Desktop / Laptop untuk workspace operasional penuh.`);
-        }
+    if (typeof switchTab === 'function') {
+        switchTab('admin', false);
     }
+    if (typeof showAdminView === 'function') {
+        showAdminView(viewName);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleLegacyAuthPanel() {
@@ -1162,18 +1152,34 @@ function initGoogleAuth() {
     
     if (GOOGLE_CLIENT_ID.includes('GANTI_DENGAN')) return;
 
-    const container = document.getElementById("google-signin-container");
-    if (!container) return;
-
     google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse
     });
 
-    google.accounts.id.renderButton(
-        container,
-        { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
-    );
+    const parentBtn = document.getElementById("google-signin-parent");
+    if (parentBtn) {
+        google.accounts.id.renderButton(
+            parentBtn,
+            { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
+        );
+    }
+
+    const adminBtn = document.getElementById("google-signin-admin");
+    if (adminBtn) {
+        google.accounts.id.renderButton(
+            adminBtn,
+            { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
+        );
+    }
+
+    const legacyContainer = document.getElementById("google-signin-container");
+    if (legacyContainer) {
+        google.accounts.id.renderButton(
+            legacyContainer,
+            { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
+        );
+    }
 }
 
 async function handleCredentialResponse(response) {
@@ -1186,7 +1192,31 @@ async function handleCredentialResponse(response) {
         }).join(''));
 
         const gData = JSON.parse(jsonPayload);
-        
+        const email = (gData.email || '').trim().toLowerCase();
+
+        // Cek modal mana yang sedang aktif terbuka
+        const adminModalOpen = document.getElementById('modal-auth-admin') && !document.getElementById('modal-auth-admin').classList.contains('hidden');
+        const parentModalOpen = document.getElementById('modal-auth-parent') && !document.getElementById('modal-auth-parent').classList.contains('hidden');
+
+        if (adminModalOpen) {
+            const adminEmailInput = document.getElementById('admin-auth-email');
+            if (adminEmailInput) adminEmailInput.value = email;
+            if (typeof showToast === 'function') showToast(`Google: Memproses OTP Pengelola untuk ${email}...`);
+            const fakeEvent = { preventDefault: () => {} };
+            handleAdminRequestOtp(fakeEvent);
+            return;
+        }
+
+        if (parentModalOpen) {
+            const parentEmailInput = document.getElementById('parent-auth-email');
+            if (parentEmailInput) parentEmailInput.value = email;
+            if (typeof showToast === 'function') showToast(`Google: Memproses OTP Wali untuk ${email}...`);
+            const fakeEvent = { preventDefault: () => {} };
+            handleParentRequestOtp(fakeEvent);
+            return;
+        }
+
+        // Fallback untuk legacy direct login
         const apiResponse = await fetch(AUTH_API_URL, {
             method: 'POST',
             headers: {
@@ -1196,7 +1226,7 @@ async function handleCredentialResponse(response) {
             body: JSON.stringify({ 
                 action: 'google_login', 
                 credential: token,
-                email: gData.email, 
+                email: email, 
                 name: gData.name 
             })
         });
