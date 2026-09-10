@@ -346,6 +346,8 @@
                 }
             } else if (tabId === 'notifikasi') {
                 loadNotifikasi();
+            } else if (tabId === 'beranda') {
+                checkHomePosterPopup();
             }
 
             // Nav Mobile
@@ -1306,16 +1308,32 @@
         }
 
         // ==================== POPUP POSTER BERANDA ====================
-        function checkHomePosterPopup() {
+        let homePosterTimer = null;
+
+        function checkHomePosterPopup(force = false) {
             try {
-                // Cek gating session: jika sudah ditutup dalam sesi browser ini, jangan munculkan lagi
-                if (sessionStorage.getItem('asn_popup_shown') === 'true') {
+                // Pastikan berada di tab Beranda (jika tab lain sedang aktif, jangan munculkan)
+                const berandaTab = document.getElementById('page-beranda');
+                if (berandaTab && berandaTab.classList.contains('hidden') && !force) {
+                    return;
+                }
+
+                // Cek gating session: jika sudah ditutup dalam sesi browser ini, jangan munculkan lagi (kecuali dipaksa)
+                if (!force && sessionStorage.getItem('asn_popup_shown') === 'true') {
                     return;
                 }
 
                 // Cari notifikasi aktif dengan flag is_popup === true
-                const popupNotif = notifikasiList.find(n => (n.status || 'Aktif') === 'Aktif' && (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true'));
+                const popupNotif = notifikasiList.find(n => 
+                    (n.status || 'Aktif') === 'Aktif' && 
+                    (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true')
+                );
                 if (!popupNotif) return;
+
+                // Cek apakah spesifik notifikasi ini sudah pernah ditutup oleh user
+                if (!force && sessionStorage.getItem('asn_popup_closed_' + popupNotif.id) === 'true') {
+                    return;
+                }
 
                 const modal = document.getElementById('homePosterModal');
                 const content = document.getElementById('homePosterContent');
@@ -1333,11 +1351,28 @@
 
                 if (modal && content) {
                     modal.dataset.notifId = popupNotif.id;
-                    modal.classList.remove('hidden');
-                    setTimeout(() => {
-                        content.classList.remove('scale-95', 'opacity-0');
-                        content.classList.add('scale-100', 'opacity-100');
-                    }, 600);
+
+                    // Batalkan timer lama jika ada
+                    if (homePosterTimer) clearTimeout(homePosterTimer);
+
+                    // Deteksi apakah Mobile Splash Screen sedang aktif
+                    const splash = document.getElementById('mobile-splash-screen');
+                    const isSplashActive = splash && window.getComputedStyle(splash).display !== 'none' && !splash.classList.contains('opacity-0');
+                    
+                    // Jika splash masih aktif di mobile, tunggu hingga splash selesai memudar (2200ms)
+                    const displayDelay = isSplashActive ? 2200 : 400;
+
+                    homePosterTimer = setTimeout(() => {
+                        // Pastikan masih di tab Beranda saat timeout selesai
+                        const curBeranda = document.getElementById('page-beranda');
+                        if (curBeranda && curBeranda.classList.contains('hidden') && !force) return;
+
+                        modal.classList.remove('hidden');
+                        setTimeout(() => {
+                            content.classList.remove('scale-95', 'opacity-0');
+                            content.classList.add('scale-100', 'opacity-100');
+                        }, 50);
+                    }, displayDelay);
                 }
             } catch (e) {
                 console.warn('checkHomePosterPopup error:', e);
@@ -1354,6 +1389,9 @@
                     modal.classList.add('hidden');
                     if (markDismissed) {
                         sessionStorage.setItem('asn_popup_shown', 'true');
+                        if (modal.dataset.notifId) {
+                            sessionStorage.setItem('asn_popup_closed_' + modal.dataset.notifId, 'true');
+                        }
                     }
                 }, 250);
             }
@@ -1362,7 +1400,7 @@
         function openNotifFromPoster(id) {
             const modal = document.getElementById('homePosterModal');
             const notifId = id || (modal ? modal.dataset.notifId : null);
-            closeHomePoster(true);
+            closeHomePoster(false); // Jangan blokir permanen sesi jika user hanya ingin membaca warta
 
             if (notifId) {
                 switchTab('notifikasi');
@@ -1373,3 +1411,7 @@
                 switchTab('notifikasi');
             }
         }
+
+        window.checkHomePosterPopup = checkHomePosterPopup;
+        window.closeHomePoster = closeHomePoster;
+        window.openNotifFromPoster = openNotifFromPoster;
