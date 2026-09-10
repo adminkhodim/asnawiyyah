@@ -8,6 +8,10 @@
                 loadAdminPPDBData();
                 return;
             }
+            if (typeof openAdminAuthModal === 'function') {
+                openAdminAuthModal();
+                return;
+            }
             document.getElementById('admin-pin-input').value = "";
             document.getElementById('adminLoginModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('admin-pin-input').focus(), 150);
@@ -58,6 +62,9 @@
             isAdminLoggedIn = false;
             sessionStorage.removeItem("asnawiyyah_admin_token");
             sessionStorage.removeItem("asnawiyyah_admin_role");
+            if (typeof ASNIdentity !== 'undefined' && typeof ASNIdentity.logout === 'function') {
+                ASNIdentity.logout();
+            }
             showToast("Keluar dari Mode Admin.");
             switchTab('beranda');
         }
@@ -711,6 +718,58 @@
             });
         }
 
+        // Helper kompresi gambar client-side sebelum upload ke Google Drive
+        function compressImageFile(file, maxWidth = 1200, quality = 0.82) {
+            return new Promise((resolve, reject) => {
+                if (!file || !file.type.startsWith('image/')) {
+                    return resolve(readFileAsBase64(file));
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        let mimeType = 'image/webp';
+                        let dataUrl = canvas.toDataURL(mimeType, quality);
+                        if (!dataUrl.startsWith('data:image/webp')) {
+                            mimeType = 'image/jpeg';
+                            dataUrl = canvas.toDataURL(mimeType, quality);
+                        }
+
+                        const base64 = dataUrl.split(',')[1];
+                        const extension = mimeType === 'image/webp' ? '.webp' : '.jpg';
+                        const cleanName = file.name.replace(/\.[^/.]+$/, "") + extension;
+
+                        resolve({
+                            base64: base64,
+                            mimeType: mimeType,
+                            name: cleanName
+                        });
+                    };
+                    img.onerror = () => {
+                        readFileAsBase64(file).then(resolve).catch(reject);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
         // ==================== DASHBOARD ADMIN: MANAJEMEN BERITA ====================
         function renderAdminNewsList() {
             const container = document.getElementById('admin-news-list');
@@ -972,7 +1031,7 @@
             try {
                 let fileData = null;
                 if (file) {
-                    fileData = await readFileAsBase64(file);
+                    fileData = await compressImageFile(file, 1200, 0.82);
                 }
 
                 const tipeAksi = document.getElementById('admin-banner-tipe-aksi').value;
@@ -1004,6 +1063,7 @@
                 if (response && response.success) {
                     showToast("✅ " + response.message);
                     resetAdminBannerForm();
+                    try { localStorage.removeItem('asnawiyyah_banner_cache'); } catch (e) {}
                     loadBanners();
                 } else {
                     showToast("❌ Gagal: " + (response ? response.message : "Terjadi kesalahan"));
@@ -1077,7 +1137,10 @@
                 const response = await apiPost("toggleBanner", { bannerId, newStatus });
                 showToast(response && response.message ? response.message : "Status banner diperbarui.");
 
-                if (response && response.success) await loadBanners();
+                if (response && response.success) {
+                    try { localStorage.removeItem('asnawiyyah_banner_cache'); } catch (e) {}
+                    await loadBanners();
+                }
             } catch (err) {
                 console.error("Gagal mengubah status banner:", err);
                 showToast("❌ Gagal mengubah status banner: " + err.message);
@@ -1093,7 +1156,10 @@
                 const response = await apiPost("deleteBanner", { bannerId });
                 showToast(response && response.message ? response.message : "Banner berhasil dihapus.");
 
-                if (response && response.success) await loadBanners();
+                if (response && response.success) {
+                    try { localStorage.removeItem('asnawiyyah_banner_cache'); } catch (e) {}
+                    await loadBanners();
+                }
             } catch (err) {
                 console.error("Gagal menghapus banner:", err);
                 showToast("❌ Gagal menghapus banner: " + err.message);

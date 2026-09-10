@@ -21,12 +21,13 @@
         }
 
         // ==================== INISIALISASI UTAMA (SINGLE ONLOAD) ====================
-        window.onload = async function () {
+        window.onload = function () {
             initThemeUI();
             initMobileSplash();
             initializeProgramRuntime();
-            await loadNews();
+            // Eksekusi paralel tanpa blocking waterfall
             loadBanners();
+            loadNews();
             loadGaleri();
             loadPengaturan();
             loadUnitKegiatan();
@@ -39,7 +40,21 @@
             }
             // Client-side routing dieksekusi secara independen agar deep link selalu aktif
             handleClientRouting();
+
+            // Non-blocking ASNIdentity session hydration (tidak menghambat render aplikasi publik)
+            if (typeof ASNIdentity !== 'undefined' && typeof ASNIdentity.hydrateSession === 'function') {
+                ASNIdentity.hydrateSession().catch(err => {
+                    console.warn("ASNIdentity background hydration error:", err);
+                });
+            }
         };
+
+        // Render banner secepat kilat sebelum window.onload (Stale-While-Revalidate)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadBanners);
+        } else {
+            loadBanners();
+        }
 
         function navigateToNews() {
             const target = '/berita/';
@@ -88,8 +103,16 @@
             } else if (path === '/kehidupan-santri/poskestren') {
                 switchTab('poskestren', false);
             } else if (path === '/administrator') {
-                  switchTab('admin', false);
-              } else if (path === '/kehidupan-santri/ikatan-alumni') {
+                const isMobile = window.innerWidth < 1024;
+                if (isMobile) {
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
+                    switchTab('pengaturan', false);
+                } else {
+                    switchTab('admin', false);
+                }
+            } else if (path === '/pengaturan') {
+                  switchTab('pengaturan', false);
+            } else if (path === '/kehidupan-santri/ikatan-alumni') {
                   switchTab('alumni', false);
               } else if (path === '/kehidupan-santri/ikatan-alumni/form-data-alumni') {
                   switchTab('form-alumni', false);
@@ -166,8 +189,16 @@
                 switchTab('maulid-hub', false);
             } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
                 switchTab('maulid-index', false);
-            } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai/baca') {
-                switchTab('maulid-detail', false);
+            } else if (path === '/administrator') {
+                const isMobile = window.innerWidth < 1024;
+                if (isMobile) {
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
+                    switchTab('pengaturan', false);
+                } else {
+                    switchTab('admin', false);
+                }
+            } else if (path === '/pengaturan') {
+                switchTab('pengaturan', false);
             } else {
                 switchTab('beranda', false);
             }
@@ -185,6 +216,14 @@
         }
 
         function switchTab(tabId, updateUrl = true, customUrl = null) {
+            if (tabId === 'admin' && window.innerWidth < 1024) {
+                if (updateUrl) {
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
+                }
+                switchTab('pengaturan', updateUrl);
+                return;
+            }
+
             if (updateUrl) {
                 let targetUrl = '/';
                 if (customUrl) {
@@ -203,8 +242,9 @@
                 else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
                 else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
                 else if (tabId === 'admin') targetUrl = '/administrator';
-                  else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
-                  else if (tabId === 'form-alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/form-data-alumni/';
+                else if (tabId === 'pengaturan') targetUrl = '/pengaturan';
+                else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
+                else if (tabId === 'form-alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/form-data-alumni/';
                 else if (tabId === 'layanan-hub') targetUrl = '/layanan/';
                 else if (tabId === 'galeri') targetUrl = '/layanan/galeri/';
                 else if (tabId === 'kalender') targetUrl = '/layanan/kalender/';
@@ -219,7 +259,7 @@
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
                     tabId === 'kabar' || tabId === 'program-pilihan' ||
                     tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' ||
-                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'alumni' || tabId === 'form-alumni' ||
+                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'pengaturan' || tabId === 'alumni' || tabId === 'form-alumni' ||
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
                     tabId === 'quran-index' || tabId === 'quran-detail' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
@@ -257,7 +297,13 @@
                 if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
                 if (mainFooter) mainFooter.classList.add('hidden');
                 if (!isAdminLoggedIn) {
-                    setTimeout(openAdminLoginModal, 100);
+                    setTimeout(() => {
+                        if (typeof openAdminAuthModal === 'function') {
+                            openAdminAuthModal();
+                        } else if (typeof openAdminLoginModal === 'function') {
+                            openAdminLoginModal();
+                        }
+                    }, 100);
                 }
             } else {
                 if (deskNavMenu) deskNavMenu.classList.remove('hidden');
@@ -276,6 +322,16 @@
                 fetchQuranList();
             } else if (tabId === 'maulid-index') {
                 renderMaulidIndex();
+            } else if (tabId === 'pengaturan') {
+                if (typeof ASNIdentity !== 'undefined') {
+                    if (typeof ASNIdentity.hydrateSession === 'function') {
+                        ASNIdentity.hydrateSession().catch(err => {
+                            console.warn("Hydration error on tab switch:", err);
+                        });
+                    } else if (typeof ASNIdentity.renderAccountCenterUI === 'function') {
+                        ASNIdentity.renderAccountCenterUI();
+                    }
+                }
             }
 
             // Nav Mobile
@@ -506,30 +562,77 @@
             switchTab(previousTabBeforeNews || 'beranda');
         }
 
-        // ==================== SLIDER BANNER BERANDA ====================
+        // ==================== SLIDER BANNER BERANDA (OPTIMIZED SWR) ====================
+        const BANNER_CACHE_KEY = 'asnawiyyah_banner_cache';
+
+        function optimizeImageUrl(url, width = 1000) {
+            if (!url || typeof url !== 'string') return '';
+            // Google Drive direct user content
+            if (url.includes('googleusercontent.com')) {
+                const cleanUrl = url.split('=')[0];
+                return `${cleanUrl}=w${width}-rw`;
+            }
+            // Unsplash images
+            if (url.includes('images.unsplash.com')) {
+                try {
+                    const u = new URL(url);
+                    u.searchParams.set('auto', 'format');
+                    u.searchParams.set('fit', 'crop');
+                    u.searchParams.set('q', '80');
+                    u.searchParams.set('w', String(width));
+                    return u.toString();
+                } catch (e) {
+                    return url;
+                }
+            }
+            return url;
+        }
+
         async function loadBanners() {
-            if (!isApiConfigured()) {
-                renderHeroSlider();
-                renderAdminBannerList();
-                return;
+            // 1. STALE: Coba render secepat kilat dari cache lokal jika ada
+            try {
+                const cached = localStorage.getItem(BANNER_CACHE_KEY);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        mockBannerData = parsed;
+                        renderHeroSlider();
+                        if (typeof renderAdminBannerList === 'function') renderAdminBannerList();
+                    }
+                } else if (Array.isArray(mockBannerData) && mockBannerData.length > 0) {
+                    renderHeroSlider();
+                    if (typeof renderAdminBannerList === 'function') renderAdminBannerList();
+                }
+            } catch (e) {
+                console.warn("Gagal membaca cache banner:", e);
             }
 
+            if (!isApiConfigured()) return;
+
+            // 2. REVALIDATE: Ambil data segar dari backend di background
             try {
                 const response = await apiGet("getBanner");
                 if (response && response.status === "success" &&
                     Array.isArray(response.data) && response.data.length > 0) {
+                    const newDataStr = JSON.stringify(response.data);
+                    const oldDataStr = localStorage.getItem(BANNER_CACHE_KEY);
+
+                    localStorage.setItem(BANNER_CACHE_KEY, newDataStr);
                     mockBannerData = response.data;
+
+                    // Update UI jika ada perubahan data dari cache sebelumnya
+                    if (newDataStr !== oldDataStr) {
+                        renderHeroSlider();
+                        if (typeof renderAdminBannerList === 'function') renderAdminBannerList();
+                    }
                 }
-                renderHeroSlider();
-                renderAdminBannerList();
             } catch (err) {
                 console.error("Gagal memuat banner via API:", err);
-                renderHeroSlider();
-                renderAdminBannerList();
             }
         }
 
         function renderHeroSlider() {
+            const isDesktop = window.innerWidth >= 1024;
             const sliderPairs = [
                 {
                     slider: document.getElementById('hero-slider-container'),
@@ -552,7 +655,7 @@
                 if (activeBanners.length === 0) {
                     const emptyClass = type === 'desktop'
                         ? 'w-full h-full flex items-center justify-center text-emerald-400/60 text-xs italic'
-                        : 'w-full h-full flex items-center justify-center text-slate-400 text-xs italic bg-slate-100';
+                        : 'w-full h-full flex items-center justify-center text-slate-400 text-xs italic bg-slate-100 dark:bg-[#15202d]';
                     slider.innerHTML = `<div class="${emptyClass}">Belum ada banner aktif.</div>`;
                     dots.innerHTML = "";
                     return;
@@ -560,6 +663,9 @@
 
                 slider.innerHTML = "";
                 dots.innerHTML = "";
+
+                const isCurrentViewport = (type === 'desktop' && isDesktop) || (type === 'mobile' && !isDesktop);
+                const targetWidth = type === 'desktop' ? 1200 : 750;
 
                 activeBanners.forEach((banner, idx) => {
                     const slideDiv = document.createElement('div');
@@ -571,24 +677,31 @@
                         slideDiv.onclick = () => window.open(banner.targetAksi, '_blank');
                     }
 
+                    const optImgUrl = optimizeImageUrl(banner.gambar, targetWidth);
+                    // Atribut prioritas pemuatan:
+                    // Slide 0 pada viewport aktif: eager + high priority untuk LCP instan
+                    // Slide lainnya atau viewport tersembunyi: lazy loading
+                    const isEager = isCurrentViewport && idx === 0;
+                    const loadingAttr = isEager ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"';
+
                     if (type === 'desktop') {
                         const label = banner.tipeAksi === 'tab' ? (labelMap[banner.targetAksi] || banner.targetAksi || 'Info') : (banner.tipeAksi === 'url' ? 'Tautan' : 'Info');
                         slideDiv.innerHTML = `
-                            <img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">
+                            <img src="${optImgUrl}" alt="${escapeHtml(banner.nama)}" class="w-full h-full object-cover" ${loadingAttr} decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
                                 <div>
-                                    <span class="px-2.5 py-1 rounded bg-emerald-500 text-xs font-bold text-slate-950 uppercase">${label}</span>
-                                    <p class="text-sm font-medium text-white mt-1">${banner.nama}</p>
+                                    <span class="px-2.5 py-1 rounded bg-emerald-500 text-xs font-bold text-slate-950 uppercase">${escapeHtml(label)}</span>
+                                    <p class="text-sm font-medium text-white mt-1">${escapeHtml(banner.nama)}</p>
                                 </div>
                             </div>`;
                     } else {
-                        slideDiv.innerHTML = `<img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">`;
+                        slideDiv.innerHTML = `<img src="${optImgUrl}" alt="${escapeHtml(banner.nama)}" class="w-full h-full object-cover" ${loadingAttr} decoding="async">`;
                     }
 
                     slider.appendChild(slideDiv);
 
                     const dotBtn = document.createElement('button');
-                    dotBtn.className = `hero-dot rounded-full transition-all duration-300 ${idx === 0 ? 'w-2.5 h-2.5 bg-brand-700' : 'w-2 h-2 bg-slate-300'}`;
+                    dotBtn.className = `hero-dot rounded-full transition-all duration-300 ${idx === 0 ? 'w-2.5 h-2.5 bg-brand-700 dark:bg-emerald-400' : 'w-2 h-2 bg-slate-300 dark:bg-slate-600'}`;
                     dotBtn.onclick = () => setHeroSlide(idx);
                     dots.appendChild(dotBtn);
                 });
@@ -599,7 +712,8 @@
 
             if (activeBanners.length > 1) {
                 heroSlideTimer = setInterval(() => {
-                    const slides = document.querySelectorAll('#hero-slider-container .hero-slide');
+                    const activeSelector = isDesktop ? '#hero-slider-container-desktop .hero-slide' : '#hero-slider-container .hero-slide';
+                    const slides = document.querySelectorAll(activeSelector);
                     if (slides.length > 0) {
                         currentHeroSlide = (currentHeroSlide + 1) % slides.length;
                         setHeroSlide(currentHeroSlide);
@@ -631,9 +745,9 @@
 
                 dots.forEach((dot, i) => {
                     if (i === index) {
-                        dot.className = "hero-dot w-2.5 h-2.5 rounded-full bg-brand-700 transition-all duration-300";
+                        dot.className = "hero-dot w-2.5 h-2.5 rounded-full bg-brand-700 dark:bg-emerald-400 transition-all duration-300";
                     } else {
-                        dot.className = "hero-dot w-2 h-2 rounded-full bg-slate-300 hover:bg-slate-400 transition-all duration-300";
+                        dot.className = "hero-dot w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500 transition-all duration-300";
                     }
                 });
             });
