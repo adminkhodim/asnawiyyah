@@ -234,6 +234,13 @@
 
                 <!-- Tombol Aksi Kanan (Rata Kanan Presisi dengan Kartu Beranda) -->
                 <div id="desk-action-menu" class="flex items-center space-x-2.5">
+                    <!-- Tombol Notifikasi Desktop -->
+                    <button onclick="switchTab('notifikasi')"
+                        class="relative w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 flex items-center justify-center text-sm border border-white/10 shadow-sm transition active:scale-95"
+                        title="Pusat Notifikasi">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="desk-notif-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow border-2 border-brand-900 leading-none">0</span>
+                    </button>
                     <button onclick="switchTab('ppdb')"
                         class="bg-amber-500 hover:bg-amber-400 text-brand-dark px-4 py-2 rounded-xl font-extrabold text-xs shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5">
                         <i class="fa-solid fa-user-plus text-xs"></i>
@@ -255,13 +262,14 @@
                 class="h-9 w-auto object-contain">
         </div>
 
-        <!-- Tombol Aksi Kanan: Notifikasi & Login/Logout -->
+        <!-- Tombol Aksi Kanan: Notifikasi -->
         <div class="flex items-center space-x-2">
-            <!-- Tombol Notifikasi -->
-            <button onclick="showToast('Belum ada notifikasi baru')"
-                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-400 flex items-center justify-center text-sm border border-white/10 shadow-sm transition active:scale-95"
-                title="Notifikasi">
+            <!-- Tombol Notifikasi Mobile -->
+            <button onclick="switchTab('notifikasi')"
+                class="relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-400 flex items-center justify-center text-sm border border-white/10 shadow-sm transition active:scale-95"
+                title="Pusat Notifikasi">
                 <i class="fa-solid fa-bell"></i>
+                <span id="mobile-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow border-2 border-brand-900 leading-none">0</span>
             </button>
         </div>
     </header>
@@ -727,6 +735,65 @@
 
         </div>
         <!-- END TABS 1: BERANDA -->
+
+        <!-- ==================== TABS: NOTIFIKASI & WARTA ==================== -->
+        <div id="page-notifikasi" class="tab-content hidden space-y-6 max-w-4xl mx-auto px-4 py-4 md:py-6">
+
+            <!-- HEADER BAR NOTIFIKASI -->
+            <div class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between transition-colors">
+                <div class="flex items-center space-x-3">
+                    <button onclick="switchTab('beranda')"
+                        class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-200 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+                        title="Kembali ke Beranda">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
+                    <div>
+                        <span class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 uppercase tracking-widest block">Pusat Informasi</span>
+                        <h2 class="text-base md:text-lg font-bold text-slate-900 dark:text-slate-100">Notifikasi & Warta</h2>
+                    </div>
+                </div>
+                <button type="button" onclick="markAllNotifAsRead()" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center space-x-1.5 px-3 py-1.5 rounded-xl hover:bg-emerald-50 dark:hover:bg-[#1c2836] transition">
+                    <i class="fa-solid fa-check-double text-xs"></i>
+                    <span class="hidden sm:inline">Tandai Semua Dibaca</span>
+                </button>
+            </div>
+
+            <!-- FILTER CHIPS -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+                <button type="button" onclick="setNotifFilter('all')" id="notif-filter-all" class="notif-chip px-3.5 py-1.5 rounded-xl text-xs font-bold bg-brand-900 text-white shadow-sm shrink-0 transition">
+                    Semua
+                </button>
+                <button type="button" onclick="setNotifFilter('unread')" id="notif-filter-unread" class="notif-chip px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#253447] hover:bg-slate-50 dark:hover:bg-[#1c2836] shrink-0 transition flex items-center space-x-1.5">
+                    <span>Belum Dibaca</span>
+                    <span id="notif-unread-pill" class="hidden px-1.5 py-0.2 bg-rose-500 text-white text-[10px] font-extrabold rounded-full">0</span>
+                </button>
+                <button type="button" onclick="setNotifFilter('Pengumuman')" id="notif-filter-Pengumuman" class="notif-chip px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#253447] hover:bg-slate-50 dark:hover:bg-[#1c2836] shrink-0 transition">
+                    Pengumuman
+                </button>
+                <button type="button" onclick="setNotifFilter('Kegiatan')" id="notif-filter-Kegiatan" class="notif-chip px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#253447] hover:bg-slate-50 dark:hover:bg-[#1c2836] shrink-0 transition">
+                    Kegiatan
+                </button>
+            </div>
+
+            <!-- NOTIFIKASI CONTAINER / HEADLINE FEED -->
+            <div id="notifikasi-list-container" class="space-y-3">
+                <!-- Skeleton / Loading State -->
+                <div class="p-6 text-center space-y-3 bg-white dark:bg-[#15202d] rounded-3xl border border-slate-100 dark:border-[#253447]">
+                    <div class="w-10 h-10 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p class="text-xs text-slate-400">Memuat warta & notifikasi...</p>
+                </div>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div id="notifikasi-empty-state" class="hidden p-10 text-center bg-white dark:bg-[#15202d] rounded-3xl border border-slate-100 dark:border-[#253447] space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1c2836] text-slate-400 flex items-center justify-center mx-auto text-2xl">
+                    <i class="fa-regular fa-bell-slash"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200">Tidak Ada Notifikasi</h3>
+                <p class="text-xs text-slate-400">Semua pengumuman dan warta terbaru telah Anda baca.</p>
+            </div>
+
+        </div>
 
         <!-- ==================== TABS 2: BERITA PESANTREN ==================== -->
         <div id="page-kabar" class="tab-content hidden space-y-6">
@@ -1472,11 +1539,11 @@
                             <h3 class="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest flex items-center">
                                 <span class="w-1.5 h-4 bg-emerald-600 rounded-full mr-2"></span> Pusat Kontrol Admin
                             </h3>
-                            <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">8 Modul CMS</span>
+                            <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">9 Modul CMS</span>
                         </div>
 
-                        <!-- 4 Kolom x 2 Baris Grid -->
-                        <div class="grid grid-cols-4 gap-2 md:gap-3 pt-1">
+                        <!-- Grid Modul CMS -->
+                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3 pt-1">
                             <!-- 1. Berita -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('berita')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-100 dark:border-[#253447] hover:border-emerald-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
@@ -1493,7 +1560,15 @@
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Banner</span>
                             </button>
 
-                            <!-- 3. PPDB -->
+                            <!-- 3. Notifikasi (NEW) -->
+                            <button type="button" onclick="openAdminModuleFromControlCenter('notifikasi')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-100 dark:border-[#253447] hover:border-rose-300 transition group active:scale-95 text-center">
+                                <div class="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 group-hover:bg-rose-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
+                                    <i class="fa-solid fa-bell"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Notifikasi</span>
+                            </button>
+
+                            <!-- 4. PPDB -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('ppdb')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-100 dark:border-[#253447] hover:border-blue-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
                                     <i class="fa-solid fa-user-graduate"></i>
@@ -1501,7 +1576,7 @@
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">PPDB</span>
                             </button>
 
-                            <!-- 4. Galeri -->
+                            <!-- 5. Galeri -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('galeri')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-slate-100 dark:border-[#253447] hover:border-purple-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
                                     <i class="fa-solid fa-camera-retro"></i>
@@ -1509,7 +1584,7 @@
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Galeri</span>
                             </button>
 
-                            <!-- 5. Program -->
+                            <!-- 6. Program -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('program')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-100 dark:border-[#253447] hover:border-teal-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
                                     <i class="fa-solid fa-graduation-cap"></i>
@@ -1517,7 +1592,7 @@
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Program</span>
                             </button>
 
-                            <!-- 6. Unit Kegiatan -->
+                            <!-- 7. Unit Kegiatan -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('unit-kegiatan')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border border-slate-100 dark:border-[#253447] hover:border-cyan-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 group-hover:bg-cyan-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
                                     <i class="fa-solid fa-people-roof"></i>
@@ -1525,7 +1600,7 @@
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Unit (UKS)</span>
                             </button>
 
-                            <!-- 7. Profil & Lembaga -->
+                            <!-- 8. Profil & Lembaga -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('profil-lembaga')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-slate-100 dark:border-[#253447] hover:border-indigo-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
                                     <i class="fa-solid fa-building-columns"></i>
@@ -1533,7 +1608,7 @@
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Profil</span>
                             </button>
 
-                            <!-- 8. Tautan & Sosmed -->
+                            <!-- 9. Tautan & Sosmed -->
                             <button type="button" onclick="openAdminModuleFromControlCenter('pengaturan')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-100 dark:border-[#253447] hover:border-slate-300 transition group active:scale-95 text-center">
                                 <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 group-hover:bg-slate-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
                                     <i class="fa-solid fa-share-nodes"></i>
@@ -3292,6 +3367,12 @@
                         </button>
                     </li>
                     <li>
+                        <button onclick="showAdminView('notifikasi')" data-view="notifikasi" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Notifikasi">
+                            <i class="fa-solid fa-bell w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Notifikasi</span>
+                        </button>
+                    </li>
+                    <li>
                         <button onclick="showAdminView('galeri')" data-view="galeri" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Galeri">
                             <i class="fa-solid fa-camera-retro w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Galeri</span>
@@ -4423,6 +4504,152 @@
                     <div id="admin-uks-empty-state" class="hidden py-8 text-center text-xs text-slate-400 space-y-2">
                         <i class="fa-solid fa-people-roof text-3xl text-slate-300"></i>
                         <p>Belum ada data unit kegiatan.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ==================== VIEW 9: MANAJEMEN NOTIFIKASI & POP-UP BERANDA ==================== -->
+            <div id="admin-view-notifikasi" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shadow-sm">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Notifikasi & Pop-up Beranda</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORMULIR INPUT / EDIT NOTIFIKASI -->
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
+                        <h3 id="admin-notif-form-title" class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-bullhorn text-rose-600 mr-2"></i> Tambah Notifikasi Baru
+                        </h3>
+                        <button type="button" id="admin-notif-cancel-btn" onclick="resetAdminNotifikasiForm()" class="text-xs text-rose-600 hover:underline hidden font-semibold">
+                            Batal Edit
+                        </button>
+                    </div>
+
+                    <form id="adminNotifikasiForm" onsubmit="handleAdminNotifikasiSubmit(event)" class="space-y-4">
+                        <input type="hidden" id="admin-notif-id" value="">
+                        <input type="hidden" id="admin-notif-old-gambar" value="">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Judul -->
+                            <div class="md:col-span-2">
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Judul Notifikasi / Warta <span class="text-rose-500">*</span></label>
+                                <input type="text" id="admin-notif-judul" required placeholder="Contoh: Pengumuman Libur Hari Raya Santri 1447 H" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm bg-slate-50 dark:bg-[#1c2836] focus:bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none transition">
+                            </div>
+
+                            <!-- Kategori -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Kategori <span class="text-rose-500">*</span></label>
+                                <select id="admin-notif-kategori" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm bg-slate-50 dark:bg-[#1c2836] focus:ring-2 focus:ring-rose-500 focus:outline-none transition">
+                                    <option value="Pengumuman">Pengumuman</option>
+                                    <option value="Warta Santri">Warta Santri</option>
+                                    <option value="Kegiatan">Kegiatan Pesantren</option>
+                                    <option value="Pembayaran">Administrasi & Pembayaran</option>
+                                    <option value="Akademik">Akademik & Ujian</option>
+                                    <option value="Umum">Umum</option>
+                                </select>
+                            </div>
+
+                            <!-- Tanggal -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Tanggal Publikasi</label>
+                                <input type="date" id="admin-notif-tanggal" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm bg-slate-50 dark:bg-[#1c2836] focus:ring-2 focus:ring-rose-500 focus:outline-none transition">
+                            </div>
+
+                            <!-- Ringkasan / Headline -->
+                            <div class="md:col-span-2">
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Ringkasan / Headline Singkat <span class="text-rose-500">*</span></label>
+                                <input type="text" id="admin-notif-ringkasan" required placeholder="Teks singkat yang muncul pada daftar notifikasi dan pop-up..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm bg-slate-50 dark:bg-[#1c2836] focus:bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none transition">
+                            </div>
+
+                            <!-- Gambar / Poster (File atau URL) -->
+                            <div class="md:col-span-2">
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Gambar / Poster Pengumuman (Opsional)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                                    <input type="text" id="admin-notif-gambar-url" placeholder="https://... atau path gambar" class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-50 dark:bg-[#1c2836] focus:ring-2 focus:ring-rose-500 focus:outline-none transition">
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="admin-notif-file" accept="image/*" onchange="previewAdminNotifImage(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer">
+                                        <div class="w-12 h-10 rounded-lg border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center">
+                                            <img id="admin-notif-preview-img" src="" alt="Prev" class="w-full h-full object-cover hidden">
+                                            <span id="admin-notif-preview-placeholder" class="text-[9px] text-slate-400 text-center">Foto</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Toggle Pop-up Beranda & Status -->
+                            <div class="p-3 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-1.5">
+                                        <i class="fa-solid fa-window-restore text-rose-600"></i>
+                                        <span>Jadikan Pop-up Beranda</span>
+                                    </label>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Otomatis muncul sebagai dialog poster saat santri/wali membuka beranda.</p>
+                                </div>
+                                <input type="checkbox" id="admin-notif-is-popup" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+                            </div>
+
+                            <div class="p-3 bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447] rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-800 dark:text-slate-100">Status Notifikasi</label>
+                                    <p class="text-[10px] text-slate-400">Tampilkan atau sembunyikan dari feed publik.</p>
+                                </div>
+                                <select id="admin-notif-status" class="px-3 py-1 text-xs rounded-xl border border-slate-200 dark:border-[#253447] bg-white dark:bg-[#15202d] font-bold">
+                                    <option value="Aktif">Aktif</option>
+                                    <option value="Nonaktif">Nonaktif</option>
+                                </select>
+                            </div>
+
+                            <!-- Isi Lengkap -->
+                            <div class="md:col-span-2">
+                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Isi Lengkap Warta / Pengumuman <span class="text-rose-500">*</span></label>
+                                <textarea id="admin-notif-isi" rows="4" required placeholder="Tuliskan isi pengumuman atau surat edaran lengkap di sini..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm bg-slate-50 dark:bg-[#1c2836] focus:bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none transition resize-y"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" id="admin-notif-submit-btn" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-2 shadow-sm active:scale-95">
+                                <i id="admin-notif-submit-icon" class="fa-solid fa-paper-plane"></i>
+                                <span id="admin-notif-submit-text">Simpan & Publikasikan</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- DAFTAR NOTIFIKASI TERSIMPAN -->
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 dark:border-[#253447] pb-3">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Daftar Notifikasi</h3>
+                            <span id="admin-notif-list-count" class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2.5 py-0.5 rounded-lg">0 Warta</span>
+                        </div>
+                        <div class="w-full sm:w-64">
+                            <input type="text" id="admin-notif-search" oninput="filterAdminNotifikasiList()" placeholder="Cari judul notifikasi..." class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-50 dark:bg-[#1c2836] focus:bg-white focus:ring-2 focus:ring-rose-600 focus:outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Loader & State -->
+                    <div id="admin-notif-loader" class="hidden py-8 text-center text-xs text-slate-500 space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-xl text-rose-600"></i>
+                        <p>Memuat warta notifikasi...</p>
+                    </div>
+
+                    <!-- Container Grid Card List -->
+                    <div id="admin-notif-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Rendered by JavaScript -->
+                    </div>
+
+                    <div id="admin-notif-empty-state" class="hidden py-8 text-center text-xs text-slate-400 space-y-2">
+                        <i class="fa-regular fa-bell-slash text-3xl text-slate-300"></i>
+                        <p>Belum ada notifikasi dibuat.</p>
                     </div>
                 </section>
             </div>
@@ -5572,6 +5799,86 @@
         <span id="toastText">Teks Pesan Notifikasi</span>
     </div>
 
+
+    <!-- ==================== POPUP POSTER BERANDA ==================== -->
+    <div id="homePosterModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9998] flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-sm sm:max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] transform transition-all duration-300 scale-95 opacity-0 relative" id="homePosterContent">
+            <!-- Close button top-right -->
+            <button type="button" onclick="closeHomePoster()" class="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full transition active:scale-95 shadow" title="Tutup Pop-up">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+            
+            <!-- Poster Image Container -->
+            <div id="home-poster-img-wrapper" class="relative w-full aspect-[16/10] bg-brand-900 overflow-hidden cursor-pointer" onclick="openNotifFromPoster()">
+                <img id="home-poster-img" src="" alt="Poster" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+                    <span id="home-poster-badge" class="px-2.5 py-1 bg-amber-500 text-slate-950 text-[10px] font-black rounded-lg uppercase tracking-wider shadow">Warta Terkini</span>
+                </div>
+            </div>
+
+            <!-- Poster Body & Action -->
+            <div class="p-5 space-y-3">
+                <h3 id="home-poster-title" class="font-extrabold text-base text-slate-900 dark:text-slate-100 leading-snug cursor-pointer hover:text-emerald-600 transition" onclick="openNotifFromPoster()">
+                    Judul Pengumuman
+                </h3>
+                <p id="home-poster-summary" class="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                    Ringkasan pesan notifikasi...
+                </p>
+                <div class="pt-2 flex items-center space-x-2">
+                    <button type="button" onclick="openNotifFromPoster()" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1.5 active:scale-95">
+                        <span>Buka Warta Lengkap</span>
+                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </button>
+                    <button type="button" onclick="closeHomePoster(true)" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-500 dark:text-slate-300 font-bold text-xs rounded-xl transition active:scale-95" title="Tutup untuk sesi ini">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL DETAIL NOTIFIKASI & WA SHARE ==================== -->
+    <div id="notifikasiDetailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all duration-300 scale-95 opacity-0 relative" id="notifikasiDetailContent">
+            <!-- Header Modal -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span id="notif-detail-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 uppercase">Pengumuman</span>
+                    <span id="notif-detail-date" class="text-[11px] font-semibold text-slate-400">11 September 2026</span>
+                </div>
+                <button type="button" onclick="closeNotifikasiDetail()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content Body -->
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                <!-- Optional Image -->
+                <div id="notif-detail-img-wrapper" class="hidden rounded-2xl overflow-hidden border border-slate-100 dark:border-[#253447] max-h-64 bg-slate-100 dark:bg-slate-900">
+                    <img id="notif-detail-img" src="" alt="Notifikasi Banner" class="w-full h-full object-cover">
+                </div>
+
+                <h2 id="notif-detail-title" class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 leading-snug">
+                    Judul Notifikasi
+                </h2>
+
+                <div id="notif-detail-body" class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line leading-relaxed space-y-2">
+                    Isi notifikasi lengkap...
+                </div>
+            </div>
+
+            <!-- Footer Modal with WA Share Button -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
+                <button type="button" id="notif-detail-share-btn" onclick="shareNotifToWA()" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center space-x-2 active:scale-95">
+                    <i class="fa-brands fa-whatsapp text-sm text-emerald-100"></i>
+                    <span>Bagikan ke WhatsApp</span>
+                </button>
+                <button type="button" onclick="closeNotifikasiDetail()" class="py-2.5 px-4 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition active:scale-95">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ==================== APPLICATION SCRIPTS & MODULES ==================== -->
     <!-- Service Worker PWA -->

@@ -118,6 +118,7 @@
             const pengaturanView = document.getElementById('admin-view-pengaturan');
             const profilLembagaView = document.getElementById('admin-view-profil-lembaga');
             const unitKegiatanView = document.getElementById('admin-view-unit-kegiatan');
+            const notifikasiView = document.getElementById('admin-view-notifikasi');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -130,6 +131,7 @@
             if (pengaturanView) pengaturanView.classList.add('hidden');
             if (profilLembagaView) profilLembagaView.classList.add('hidden');
             if (unitKegiatanView) unitKegiatanView.classList.add('hidden');
+            if (notifikasiView) notifikasiView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -137,6 +139,9 @@
             } else if (viewName === 'banner') {
                 bannerView.classList.remove('hidden');
                 renderAdminBannerList();
+            } else if (viewName === 'notifikasi') {
+                if (notifikasiView) notifikasiView.classList.remove('hidden');
+                loadAdminNotifikasi();
             } else if (viewName === 'galeri') {
                 if (galeriView) galeriView.classList.remove('hidden');
                 renderAdminGaleriList();
@@ -3011,5 +3016,298 @@
             } catch (err) {
                 console.error("Gagal archive program:", err);
                 showToast("❌ " + err.message);
+            }
+        }
+
+        // ==================== DASHBOARD ADMIN: MANAJEMEN NOTIFIKASI & POP-UP BERANDA ====================
+        let adminNotifikasiList = [];
+
+        async function loadAdminNotifikasi() {
+            const loader = document.getElementById('admin-notif-loader');
+            const countBadge = document.getElementById('admin-notif-list-count');
+            if (loader) loader.classList.remove('hidden');
+
+            try {
+                let response = null;
+                if (typeof apiGet === 'function') {
+                    response = await apiGet("getNotifikasi");
+                } else if (typeof API_URL !== 'undefined') {
+                    const res = await fetch(`${API_URL}?action=getNotifikasi`);
+                    response = await res.json();
+                }
+
+                if (response && response.status === "success" && Array.isArray(response.data)) {
+                    adminNotifikasiList = response.data;
+                } else if (Array.isArray(response)) {
+                    adminNotifikasiList = response;
+                } else if (typeof notifikasiList !== 'undefined' && Array.isArray(notifikasiList)) {
+                    adminNotifikasiList = notifikasiList;
+                }
+
+                if (countBadge) countBadge.innerText = `${adminNotifikasiList.length} Warta`;
+                filterAdminNotifikasiList();
+            } catch (err) {
+                console.error("Gagal memuat warta notifikasi:", err);
+                if (typeof showToast === 'function') showToast("❌ Gagal memuat data notifikasi: " + err.message);
+                filterAdminNotifikasiList();
+            } finally {
+                if (loader) loader.classList.add('hidden');
+            }
+        }
+
+        function filterAdminNotifikasiList() {
+            const searchInput = document.getElementById('admin-notif-search');
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+            let filtered = adminNotifikasiList;
+            if (query) {
+                filtered = adminNotifikasiList.filter(item => 
+                    (item.judul || '').toLowerCase().includes(query) ||
+                    (item.kategori || '').toLowerCase().includes(query) ||
+                    (item.ringkasan || '').toLowerCase().includes(query)
+                );
+            }
+            renderAdminNotifikasiList(filtered);
+        }
+
+        function renderAdminNotifikasiList(dataToRender) {
+            const items = dataToRender || adminNotifikasiList;
+            const container = document.getElementById('admin-notif-cards-container');
+            const emptyState = document.getElementById('admin-notif-empty-state');
+            if (!container) return;
+
+            if (items.length === 0) {
+                container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            container.innerHTML = items.map(item => {
+                const isPopup = (item.is_popup === true || item.is_popup === 1 || String(item.is_popup) === "1" || String(item.is_popup).toLowerCase() === "true");
+                const isAktif = (item.status || "Aktif") === "Aktif";
+
+                const thumb = item.gambar 
+                    ? `<img src="${item.gambar}" alt="" class="w-12 h-12 rounded-xl object-cover border border-slate-100 dark:border-[#253447] shrink-0" onerror="this.style.display='none'">` 
+                    : `<div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-400 flex items-center justify-center shrink-0 text-base"><i class="fa-solid fa-bell"></i></div>`;
+
+                let badgeBg = 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300';
+                if (item.kategori === 'Kegiatan') badgeBg = 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300';
+                if (item.kategori === 'Pembayaran') badgeBg = 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300';
+
+                return `
+                    <div class="bg-slate-50 dark:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] flex flex-col justify-between space-y-3">
+                        <div class="flex items-start gap-3">
+                            ${thumb}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${badgeBg}">
+                                        ${item.kategori || 'Pengumuman'}
+                                    </span>
+                                    ${isPopup ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"><i class="fa-solid fa-star text-[8px] mr-1"></i>Pop-up Beranda</span>` : ''}
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${isAktif ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}">
+                                        ${isAktif ? 'Aktif' : 'Nonaktif'}
+                                    </span>
+                                </div>
+                                <h4 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 mt-1 line-clamp-1 leading-snug">
+                                    ${item.judul}
+                                </h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+                                    ${item.ringkasan || item.isi}
+                                </p>
+                                <span class="text-[10px] text-slate-400 mt-1 block"><i class="fa-regular fa-clock mr-1"></i>${item.tanggal || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-200/60 dark:border-[#253447]">
+                            <button type="button" onclick="openAdminNotifikasiEditor('${item.id}')" class="px-3 py-1.5 rounded-lg bg-white dark:bg-[#15202d] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#253447] text-xs font-bold transition flex items-center space-x-1">
+                                <i class="fa-solid fa-pen text-[10px] text-brand-600 dark:text-emerald-400"></i>
+                                <span>Edit</span>
+                            </button>
+                            <button type="button" onclick="deleteAdminNotifikasi('${item.id}')" class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40 text-xs font-bold transition flex items-center space-x-1">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
+                                <span>Hapus</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAdminNotifikasiEditor(id) {
+            const item = adminNotifikasiList.find(n => String(n.id) === String(id));
+            if (!item) return;
+
+            document.getElementById('admin-notif-id').value = item.id;
+            document.getElementById('admin-notif-judul').value = item.judul || '';
+            document.getElementById('admin-notif-kategori').value = item.kategori || 'Pengumuman';
+            document.getElementById('admin-notif-tanggal').value = item.tanggal || '';
+            document.getElementById('admin-notif-ringkasan').value = item.ringkasan || '';
+            document.getElementById('admin-notif-isi').value = item.isi || '';
+            document.getElementById('admin-notif-gambar-url').value = item.gambar || '';
+            document.getElementById('admin-notif-old-gambar').value = item.gambar || '';
+            document.getElementById('admin-notif-is-popup').checked = (item.is_popup === true || item.is_popup === 1 || String(item.is_popup) === '1' || String(item.is_popup).toLowerCase() === 'true');
+            document.getElementById('admin-notif-status').value = item.status || 'Aktif';
+
+            const previewImg = document.getElementById('admin-notif-preview-img');
+            const previewPlaceholder = document.getElementById('admin-notif-preview-placeholder');
+            if (item.gambar) {
+                if (previewImg) { previewImg.src = item.gambar; previewImg.classList.remove('hidden'); }
+                if (previewPlaceholder) previewPlaceholder.classList.add('hidden');
+            } else {
+                if (previewImg) previewImg.classList.add('hidden');
+                if (previewPlaceholder) previewPlaceholder.classList.remove('hidden');
+            }
+
+            const title = document.getElementById('admin-notif-form-title');
+            const cancelBtn = document.getElementById('admin-notif-cancel-btn');
+            const submitText = document.getElementById('admin-notif-submit-text');
+            if (title) title.innerHTML = '<i class="fa-solid fa-pen-to-square text-rose-600 mr-2"></i> Edit Notifikasi';
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
+            if (submitText) submitText.innerText = 'Perbarui Notifikasi';
+
+            const formEl = document.getElementById('adminNotifikasiForm');
+            if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function resetAdminNotifikasiForm() {
+            const form = document.getElementById('adminNotifikasiForm');
+            if (form) form.reset();
+
+            document.getElementById('admin-notif-id').value = '';
+            document.getElementById('admin-notif-old-gambar').value = '';
+            document.getElementById('admin-notif-tanggal').value = new Date().toISOString().split('T')[0];
+
+            const previewImg = document.getElementById('admin-notif-preview-img');
+            const previewPlaceholder = document.getElementById('admin-notif-preview-placeholder');
+            if (previewImg) previewImg.classList.add('hidden');
+            if (previewPlaceholder) previewPlaceholder.classList.remove('hidden');
+
+            const title = document.getElementById('admin-notif-form-title');
+            const cancelBtn = document.getElementById('admin-notif-cancel-btn');
+            const submitText = document.getElementById('admin-notif-submit-text');
+            if (title) title.innerHTML = '<i class="fa-solid fa-bullhorn text-rose-600 mr-2"></i> Tambah Notifikasi Baru';
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+            if (submitText) submitText.innerText = 'Simpan & Publikasikan';
+        }
+
+        function previewAdminNotifImage(event) {
+            const file = event.target.files && event.target.files[0];
+            const previewImg = document.getElementById('admin-notif-preview-img');
+            const previewPlaceholder = document.getElementById('admin-notif-preview-placeholder');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (previewImg) { previewImg.src = e.target.result; previewImg.classList.remove('hidden'); }
+                    if (previewPlaceholder) previewPlaceholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleAdminNotifikasiSubmit(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('admin-notif-submit-btn');
+            const btnIcon = document.getElementById('admin-notif-submit-icon');
+            const btnText = document.getElementById('admin-notif-submit-text');
+
+            const id = document.getElementById('admin-notif-id').value;
+            const judul = document.getElementById('admin-notif-judul').value.trim();
+            const kategori = document.getElementById('admin-notif-kategori').value;
+            const tanggal = document.getElementById('admin-notif-tanggal').value || new Date().toISOString().split('T')[0];
+            const ringkasan = document.getElementById('admin-notif-ringkasan').value.trim();
+            const isi = document.getElementById('admin-notif-isi').value.trim();
+            const gambarUrl = document.getElementById('admin-notif-gambar-url').value.trim();
+            const oldGambar = document.getElementById('admin-notif-old-gambar').value;
+            const isPopup = document.getElementById('admin-notif-is-popup').checked;
+            const status = document.getElementById('admin-notif-status').value;
+
+            const fileInput = document.getElementById('admin-notif-file');
+            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+            btn.disabled = true;
+            if (btnIcon) btnIcon.className = "fa-solid fa-spinner fa-spin";
+            if (btnText) btnText.innerText = "Menyimpan Warta...";
+
+            try {
+                let fileData = null;
+                if (file && typeof compressImageFile === 'function') {
+                    fileData = await compressImageFile(file, 1200, 0.82);
+                }
+
+                const token = getAdminSessionToken();
+                const payload = {
+                    id: id || undefined,
+                    judul,
+                    kategori,
+                    tanggal,
+                    ringkasan,
+                    isi,
+                    gambar: gambarUrl || oldGambar || "",
+                    gambarLama: oldGambar,
+                    file: fileData,
+                    is_popup: isPopup,
+                    status
+                };
+
+                let response = null;
+                if (typeof apiPost === 'function') {
+                    response = await apiPost("saveNotifikasi", { token, data: payload, ...payload });
+                } else {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: "saveNotifikasi", token, data: payload })
+                    });
+                    response = await res.json();
+                }
+
+                if (response && (response.status === "success" || response.success)) {
+                    if (typeof showToast === 'function') showToast(response.message || "Warta notifikasi berhasil disimpan!");
+                    resetAdminNotifikasiForm();
+                    await loadAdminNotifikasi();
+                    if (typeof loadNotifikasi === 'function') loadNotifikasi();
+                } else {
+                    const msg = (response && response.message) || "Gagal menyimpan notifikasi.";
+                    if (typeof showToast === 'function') showToast("❌ " + msg);
+                }
+            } catch (err) {
+                console.error("Gagal simpan notifikasi:", err);
+                if (typeof showToast === 'function') showToast("❌ " + err.message);
+            } finally {
+                btn.disabled = false;
+                if (btnIcon) btnIcon.className = "fa-solid fa-paper-plane";
+                if (btnText) btnText.innerText = id ? "Perbarui Notifikasi" : "Simpan & Publikasikan";
+            }
+        }
+
+        async function deleteAdminNotifikasi(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus warta notifikasi ini?")) return;
+
+            const token = getAdminSessionToken();
+            try {
+                let response = null;
+                if (typeof apiPost === 'function') {
+                    response = await apiPost("deleteNotifikasi", { token, id });
+                } else {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: "deleteNotifikasi", token, id })
+                    });
+                    response = await res.json();
+                }
+
+                if (response && (response.status === "success" || response.success)) {
+                    if (typeof showToast === 'function') showToast("Warta notifikasi berhasil dihapus!");
+                    await loadAdminNotifikasi();
+                    if (typeof loadNotifikasi === 'function') loadNotifikasi();
+                } else {
+                    const msg = (response && response.message) || "Gagal menghapus warta notifikasi.";
+                    if (typeof showToast === 'function') showToast("❌ " + msg);
+                }
+            } catch (err) {
+                console.error("Gagal hapus notifikasi:", err);
+                if (typeof showToast === 'function') showToast("❌ " + err.message);
             }
         }

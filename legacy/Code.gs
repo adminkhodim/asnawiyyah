@@ -134,6 +134,36 @@ function doPost(e) {
       );
     }
 
+    if (action === "getNotifikasi") {
+      return createJsonResponse(
+        getNotifikasiData()
+      );
+    }
+
+    if (action === "saveNotifikasi" || action === "admin.saveNotifikasi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        simpanNotifikasi(payload.data || payload)
+      );
+    }
+
+    if (action === "deleteNotifikasi" || action === "admin.deleteNotifikasi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        deleteNotifikasiData(payload.data || payload)
+      );
+    }
+
     if (action === "toggleBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -901,6 +931,12 @@ function doGet(e) {
       );
     }
 
+    if (action === "getNotifikasi") {
+      return createJsonResponse(
+        getNotifikasiData()
+      );
+    }
+
     if (action === "alumni.getTestimonials") {
       return createJsonResponse(getAlumniTestimonials());
     }
@@ -1625,6 +1661,152 @@ function toggleStatusUnitKegiatan(kegiatanId, newStatus) {
     return { success: false, message: "ID Unit Kegiatan tidak ditemukan" };
   } catch (err) {
     return { success: false, message: err.toString() };
+  }
+}
+
+// ==================== PENGELOLAAN NOTIFIKASI & POP-UP BERANDA ====================
+const NOTIFIKASI_SHEET_NAME = "Notifikasi";
+
+function getNotifikasiSheet(ss) {
+  let sheet = ss.getSheetByName(NOTIFIKASI_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(NOTIFIKASI_SHEET_NAME);
+    sheet.appendRow([
+      "ID", "Judul", "Kategori", "Tanggal", "Ringkasan", "Isi", "Gambar_URL", "Is_Popup", "Status", "CreatedAt"
+    ]);
+    sheet.appendRow([
+      "NOTIF_" + new Date().getTime(),
+      "Selamat Datang di Portal Resmi PPTQ Asnawiyyah",
+      "Pengumuman",
+      new Date().toISOString().split('T')[0],
+      "Informasi dan pengumuman resmi seputar pesantren, kegiatan santri, dan administrasi.",
+      "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nSelamat datang di Portal Informasi Resmi PPTQ Asnawiyyah Pilangwetan. Melalui sistem ini, bapak/ibu wali santri dan masyarakat dapat memantau perkembangan, pengumuman penting, dan agenda kegiatan pesantren secara langsung.\n\nSemoga ikhtiar ini membawa keberkahan bagi kita semua.",
+      "assets/img/brand-header.png",
+      1,
+      "Aktif",
+      new Date().toISOString()
+    ]);
+  }
+  return sheet;
+}
+
+function getNotifikasiData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = getNotifikasiSheet(ss);
+    const values = sheet.getDataRange().getValues();
+    const list = [];
+
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i];
+      if (row[0]) {
+        list.push({
+          id: String(row[0]),
+          judul: String(row[1] || ""),
+          kategori: String(row[2] || "Pengumuman"),
+          tanggal: row[3] ? Utilities.formatDate(new Date(row[3]), "GMT+7", "yyyy-MM-dd") : "",
+          ringkasan: String(row[4] || ""),
+          isi: String(row[5] || ""),
+          gambar: String(row[6] || ""),
+          is_popup: (row[7] === 1 || String(row[7]).toLowerCase() === "true" || String(row[7]) === "1"),
+          status: String(row[8] || "Aktif"),
+          createdAt: String(row[9] || "")
+        });
+      }
+    }
+
+    list.sort(function(a, b) {
+      return (b.id > a.id ? 1 : -1);
+    });
+
+    return { status: "success", data: list };
+  } catch (err) {
+    return { status: "error", message: err.toString(), data: [] };
+  }
+}
+
+function simpanNotifikasi(formData) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = getNotifikasiSheet(ss);
+    let fileUrl = formData.gambarLama || formData.gambar || "";
+
+    if (formData.file && formData.file.base64) {
+      const folder = DriveApp.getFolderById(FOLDER_ID);
+      const decodedData = Utilities.base64Decode(formData.file.base64);
+      const blob = Utilities.newBlob(
+        decodedData,
+        formData.file.mimeType,
+        "NOTIF_" + new Date().getTime() + "_" + formData.file.name
+      );
+      const newFile = folder.createFile(blob);
+      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    }
+
+    const data = sheet.getDataRange().getValues();
+    let isEdit = false;
+    const isPopupVal = (formData.is_popup === true || formData.is_popup === 1 || String(formData.is_popup) === "1" || String(formData.is_popup).toLowerCase() === "true") ? 1 : 0;
+    const tanggalVal = formData.tanggal || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
+
+    if (formData.id) {
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(formData.id)) {
+          sheet.getRange(i + 1, 2).setValue(formData.judul || "");
+          sheet.getRange(i + 1, 3).setValue(formData.kategori || "Pengumuman");
+          sheet.getRange(i + 1, 4).setValue(tanggalVal);
+          sheet.getRange(i + 1, 5).setValue(formData.ringkasan || "");
+          sheet.getRange(i + 1, 6).setValue(formData.isi || "");
+          if (fileUrl !== undefined) sheet.getRange(i + 1, 7).setValue(fileUrl);
+          sheet.getRange(i + 1, 8).setValue(isPopupVal);
+          sheet.getRange(i + 1, 9).setValue(formData.status || "Aktif");
+          isEdit = true;
+          break;
+        }
+      }
+    }
+
+    if (!isEdit) {
+      const newId = "NOTIF_" + new Date().getTime();
+      sheet.appendRow([
+        newId,
+        formData.judul || "",
+        formData.kategori || "Pengumuman",
+        tanggalVal,
+        formData.ringkasan || "",
+        formData.isi || "",
+        fileUrl,
+        isPopupVal,
+        formData.status || "Aktif",
+        new Date().toISOString()
+      ]);
+    }
+
+    return { status: "success", message: isEdit ? "Notifikasi berhasil diperbarui!" : "Notifikasi berhasil ditambahkan!" };
+  } catch (err) {
+    return { status: "error", message: err.toString() };
+  }
+}
+
+function deleteNotifikasiData(formData) {
+  try {
+    const notifId = typeof formData === "object" ? (formData.id || formData.notifId) : formData;
+    if (!notifId) return { status: "error", message: "ID Notifikasi tidak diberikan" };
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = getNotifikasiSheet(ss);
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(notifId)) {
+        sheet.deleteRow(i + 1);
+        return { status: "success", message: "Notifikasi berhasil dihapus!" };
+      }
+    }
+
+    return { status: "error", message: "Notifikasi tidak ditemukan." };
+  } catch (err) {
+    return { status: "error", message: err.toString() };
   }
 }
 

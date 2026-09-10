@@ -488,7 +488,20 @@ const ASNIdentity = {
         }
     },
 
-    async logout() {
+    async logout(triggerBtn) {
+        if (triggerBtn) {
+            try {
+                triggerBtn.disabled = true;
+                triggerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i><span class="ml-1 text-xs">Keluar...</span>';
+            } catch (e) {}
+        }
+        try {
+            document.querySelectorAll('button[onclick*="logout"]').forEach(b => {
+                b.disabled = true;
+                b.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i><span class="ml-1 text-xs">Keluar...</span>';
+            });
+        } catch (e) {}
+
         const token = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
                       sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
 

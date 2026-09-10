@@ -31,6 +31,7 @@
             loadGaleri();
             loadPengaturan();
             loadUnitKegiatan();
+            loadNotifikasi();
             if (typeof renderCalendar === 'function') {
                 try {
                     renderCalendar();
@@ -49,11 +50,15 @@
             }
         };
 
-        // Render banner secepat kilat sebelum window.onload (Stale-While-Revalidate)
+        // Render banner & notifikasi secepat kilat sebelum window.onload (Stale-While-Revalidate)
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadBanners);
+            document.addEventListener('DOMContentLoaded', () => {
+                loadBanners();
+                loadNotifikasi();
+            });
         } else {
             loadBanners();
+            loadNotifikasi();
         }
 
         function navigateToNews() {
@@ -112,6 +117,12 @@
                 }
             } else if (path === '/pengaturan') {
                   switchTab('pengaturan', false);
+            } else if (path === '/notifikasi') {
+                  switchTab('notifikasi', false);
+                  const notifIdParam = params.get('id');
+                  if (notifIdParam) {
+                      setTimeout(() => openNotifikasiDetail(notifIdParam), 400);
+                  }
             } else if (path === '/kehidupan-santri/ikatan-alumni') {
                   switchTab('alumni', false);
               } else if (path === '/kehidupan-santri/ikatan-alumni/form-data-alumni') {
@@ -243,6 +254,7 @@
                 else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
                 else if (tabId === 'admin') targetUrl = '/administrator';
                 else if (tabId === 'pengaturan') targetUrl = '/pengaturan';
+                else if (tabId === 'notifikasi') targetUrl = '/notifikasi';
                 else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
                 else if (tabId === 'form-alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/form-data-alumni/';
                 else if (tabId === 'layanan-hub') targetUrl = '/layanan/';
@@ -259,7 +271,7 @@
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
                     tabId === 'kabar' || tabId === 'program-pilihan' ||
                     tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' ||
-                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'pengaturan' || tabId === 'alumni' || tabId === 'form-alumni' ||
+                    tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'pengaturan' || tabId === 'notifikasi' || tabId === 'alumni' || tabId === 'form-alumni' ||
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
                     tabId === 'quran-index' || tabId === 'quran-detail' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
@@ -332,6 +344,8 @@
                         ASNIdentity.renderAccountCenterUI();
                     }
                 }
+            } else if (tabId === 'notifikasi') {
+                loadNotifikasi();
             }
 
             // Nav Mobile
@@ -999,4 +1013,363 @@
         function filterGaleri(category) {
             currentGaleriFilter = category;
             renderGaleriList();
+        }
+
+        // ==================== PUSAT NOTIFIKASI & POP-UP BERANDA ====================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        let notifikasiList = [
+            {
+                id: "NOTIF_INIT_1",
+                judul: "Selamat Datang di Portal Resmi PPTQ Asnawiyyah",
+                kategori: "Pengumuman",
+                tanggal: "2026-09-11",
+                ringkasan: "Informasi dan pengumuman resmi seputar pesantren, kegiatan santri, dan administrasi.",
+                isi: "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nSelamat datang di Portal Informasi Resmi PPTQ Asnawiyyah Pilangwetan. Melalui sistem ini, bapak/ibu wali santri dan masyarakat dapat memantau perkembangan, pengumuman penting, dan agenda kegiatan pesantren secara langsung.\n\nSemoga ikhtiar ini membawa keberkahan bagi kita semua.",
+                gambar: "assets/img/brand-header.png",
+                is_popup: true,
+                status: "Aktif"
+            }
+        ];
+        let activeNotifFilter = 'all';
+        let currentDetailNotifId = null;
+
+        function getReadNotifIds() {
+            try {
+                const stored = localStorage.getItem('asn_read_notif_ids');
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveReadNotifId(id) {
+            if (!id) return;
+            try {
+                const ids = getReadNotifIds();
+                if (!ids.includes(id)) {
+                    ids.push(id);
+                    localStorage.setItem('asn_read_notif_ids', JSON.stringify(ids));
+                }
+                updateNotifBadge();
+            } catch (e) {}
+        }
+
+        function updateNotifBadge() {
+            try {
+                const readIds = getReadNotifIds();
+                const activeNotifs = notifikasiList.filter(n => (n.status || 'Aktif') === 'Aktif');
+                const unreadCount = activeNotifs.filter(n => !readIds.includes(n.id)).length;
+
+                const mobileBadge = document.getElementById('mobile-notif-badge');
+                const deskBadge = document.getElementById('desk-notif-badge');
+                const pillBadge = document.getElementById('notif-unread-pill');
+
+                [mobileBadge, deskBadge].forEach(badge => {
+                    if (badge) {
+                        if (unreadCount > 0) {
+                            badge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                });
+
+                if (pillBadge) {
+                    if (unreadCount > 0) {
+                        pillBadge.innerText = unreadCount;
+                        pillBadge.classList.remove('hidden');
+                    } else {
+                        pillBadge.classList.add('hidden');
+                    }
+                }
+            } catch (e) {
+                console.warn('updateNotifBadge error:', e);
+            }
+        }
+
+        async function loadNotifikasi() {
+            // 1. Render immediate cached / initial data (Stale-While-Revalidate)
+            const cached = localStorage.getItem('asn_cached_notifikasi');
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        notifikasiList = parsed;
+                    }
+                } catch (e) {}
+            }
+            renderNotifikasiList();
+            updateNotifBadge();
+            checkHomePosterPopup();
+
+            if (typeof isApiConfigured === 'function' && !isApiConfigured()) {
+                return;
+            }
+
+            // 2. Fetch fresh data from server in background
+            try {
+                let response = null;
+                if (typeof apiGet === 'function') {
+                    response = await apiGet('getNotifikasi');
+                } else if (typeof API_URL !== 'undefined') {
+                    const res = await fetch(`${API_URL}?action=getNotifikasi`);
+                    response = await res.json();
+                }
+
+                if (response && response.status === 'success' && Array.isArray(response.data)) {
+                    notifikasiList = response.data;
+                    try {
+                        localStorage.setItem('asn_cached_notifikasi', JSON.stringify(notifikasiList));
+                    } catch (e) {}
+                    renderNotifikasiList();
+                    updateNotifBadge();
+                    checkHomePosterPopup();
+                }
+            } catch (err) {
+                console.warn('Gagal memuat notifikasi dari server:', err);
+            }
+        }
+
+        function setNotifFilter(filter) {
+            activeNotifFilter = filter;
+            document.querySelectorAll('.notif-chip').forEach(btn => {
+                btn.classList.remove('bg-brand-900', 'text-white', 'shadow-sm');
+                btn.classList.add('bg-white', 'dark:bg-[#15202d]', 'text-slate-600', 'dark:text-slate-300');
+            });
+
+            const activeBtn = document.getElementById(`notif-filter-${filter}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'dark:bg-[#15202d]', 'text-slate-600', 'dark:text-slate-300');
+                activeBtn.classList.add('bg-brand-900', 'text-white', 'shadow-sm');
+            }
+
+            renderNotifikasiList();
+        }
+
+        function renderNotifikasiList() {
+            const container = document.getElementById('notifikasi-list-container');
+            const emptyState = document.getElementById('notifikasi-empty-state');
+            if (!container) return;
+
+            const readIds = getReadNotifIds();
+            let filtered = notifikasiList.filter(n => (n.status || 'Aktif') === 'Aktif');
+
+            if (activeNotifFilter === 'unread') {
+                filtered = filtered.filter(n => !readIds.includes(n.id));
+            } else if (activeNotifFilter !== 'all') {
+                filtered = filtered.filter(n => (n.kategori || '').toLowerCase() === activeNotifFilter.toLowerCase());
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            container.innerHTML = filtered.map(item => {
+                const isRead = readIds.includes(item.id);
+                const unreadDot = !isRead 
+                    ? `<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" title="Belum dibaca"></span>`
+                    : '';
+                const imgThumb = item.gambar 
+                    ? `<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shrink-0 border border-slate-100 dark:border-[#253447] bg-slate-100 dark:bg-slate-900">
+                         <img src="${escapeHtml(item.gambar)}" alt="${escapeHtml(item.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" onerror="this.parentElement.style.display='none'">
+                       </div>`
+                    : '';
+
+                let badgeBg = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300';
+                if (item.kategori === 'Pengumuman') badgeBg = 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300';
+                if (item.kategori === 'Pembayaran') badgeBg = 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300';
+                if (item.kategori === 'Kegiatan') badgeBg = 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300';
+
+                return `
+                    <div onclick="openNotifikasiDetail('${escapeHtml(item.id)}')"
+                        class="group bg-white dark:bg-[#15202d] p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] hover:border-emerald-300 dark:hover:border-emerald-500/50 transition duration-200 cursor-pointer flex items-start gap-3.5 sm:gap-4 relative overflow-hidden ${!isRead ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : ''}">
+                        ${imgThumb}
+                        <div class="flex-1 min-w-0 space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${badgeBg}">
+                                        ${escapeHtml(item.kategori || 'Pengumuman')}
+                                    </span>
+                                    ${item.is_popup ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"><i class="fa-solid fa-star text-[8px] mr-1"></i>Penting</span>` : ''}
+                                </div>
+                                <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
+                                    <span>${escapeHtml(item.tanggal || '')}</span>
+                                    ${unreadDot}
+                                </div>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition leading-snug">
+                                ${escapeHtml(item.judul)}
+                            </h3>
+                            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                ${escapeHtml(item.ringkasan || item.isi)}
+                            </p>
+                            <div class="pt-1 flex items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition duration-200">
+                                <span>Baca Warta Lengkap</span>
+                                <i class="fa-solid fa-arrow-right text-[8px] ml-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openNotifikasiDetail(id) {
+            const notif = notifikasiList.find(n => String(n.id) === String(id));
+            if (!notif) return;
+
+            currentDetailNotifId = notif.id;
+            saveReadNotifId(notif.id);
+
+            const modal = document.getElementById('notifikasiDetailModal');
+            const content = document.getElementById('notifikasiDetailContent');
+            const titleEl = document.getElementById('notif-detail-title');
+            const bodyEl = document.getElementById('notif-detail-body');
+            const dateEl = document.getElementById('notif-detail-date');
+            const badgeEl = document.getElementById('notif-detail-badge');
+            const imgWrapper = document.getElementById('notif-detail-img-wrapper');
+            const imgEl = document.getElementById('notif-detail-img');
+
+            if (titleEl) titleEl.innerText = notif.judul;
+            if (bodyEl) bodyEl.innerText = notif.isi || notif.ringkasan || '';
+            if (dateEl) dateEl.innerText = notif.tanggal || '';
+            if (badgeEl) badgeEl.innerText = notif.kategori || 'Pengumuman';
+
+            if (imgWrapper && imgEl) {
+                if (notif.gambar) {
+                    imgEl.src = notif.gambar;
+                    imgWrapper.classList.remove('hidden');
+                } else {
+                    imgWrapper.classList.add('hidden');
+                }
+            }
+
+            if (modal && content) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 20);
+            }
+        }
+
+        function closeNotifikasiDetail() {
+            const modal = document.getElementById('notifikasiDetailModal');
+            const content = document.getElementById('notifikasiDetailContent');
+            if (modal && content) {
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    currentDetailNotifId = null;
+                }, 250);
+            }
+        }
+
+        function shareNotifToWA(id) {
+            const notifId = id || currentDetailNotifId;
+            const notif = notifikasiList.find(n => String(n.id) === String(notifId));
+            if (!notif) {
+                if (typeof showToast === 'function') showToast('Warta tidak ditemukan.');
+                return;
+            }
+
+            const shareUrl = `https://www.asnawiyyah.or.id/notifikasi?id=${encodeURIComponent(notif.id)}`;
+            const text = `*${notif.judul}*\n\n${notif.ringkasan || (notif.isi ? notif.isi.substring(0, 160) : '')}\n\n_Baca warta resmi selengkapnya di:_ \n${shareUrl}\n\n*PPTQ Asnawiyyah Pilangwetan Demak*`;
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, '_blank');
+        }
+
+        function markAllNotifAsRead() {
+            const allIds = notifikasiList.map(n => n.id);
+            try {
+                localStorage.setItem('asn_read_notif_ids', JSON.stringify(allIds));
+            } catch (e) {}
+            updateNotifBadge();
+            renderNotifikasiList();
+            if (typeof showToast === 'function') {
+                showToast('Semua notifikasi telah ditandai dibaca.');
+            }
+        }
+
+        // ==================== POPUP POSTER BERANDA ====================
+        function checkHomePosterPopup() {
+            try {
+                // Cek gating session: jika sudah ditutup dalam sesi browser ini, jangan munculkan lagi
+                if (sessionStorage.getItem('asn_popup_shown') === 'true') {
+                    return;
+                }
+
+                // Cari notifikasi aktif dengan flag is_popup === true
+                const popupNotif = notifikasiList.find(n => (n.status || 'Aktif') === 'Aktif' && (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true'));
+                if (!popupNotif) return;
+
+                const modal = document.getElementById('homePosterModal');
+                const content = document.getElementById('homePosterContent');
+                const imgEl = document.getElementById('home-poster-img');
+                const titleEl = document.getElementById('home-poster-title');
+                const summaryEl = document.getElementById('home-poster-summary');
+                const badgeEl = document.getElementById('home-poster-badge');
+
+                if (titleEl) titleEl.innerText = popupNotif.judul;
+                if (summaryEl) summaryEl.innerText = popupNotif.ringkasan || (popupNotif.isi ? popupNotif.isi.substring(0, 150) : '');
+                if (badgeEl) badgeEl.innerText = popupNotif.kategori || 'Warta Terkini';
+                if (imgEl) {
+                    imgEl.src = popupNotif.gambar || 'assets/img/brand-header.png';
+                }
+
+                if (modal && content) {
+                    modal.dataset.notifId = popupNotif.id;
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        content.classList.remove('scale-95', 'opacity-0');
+                        content.classList.add('scale-100', 'opacity-100');
+                    }, 600);
+                }
+            } catch (e) {
+                console.warn('checkHomePosterPopup error:', e);
+            }
+        }
+
+        function closeHomePoster(markDismissed = true) {
+            const modal = document.getElementById('homePosterModal');
+            const content = document.getElementById('homePosterContent');
+            if (modal && content) {
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    if (markDismissed) {
+                        sessionStorage.setItem('asn_popup_shown', 'true');
+                    }
+                }, 250);
+            }
+        }
+
+        function openNotifFromPoster(id) {
+            const modal = document.getElementById('homePosterModal');
+            const notifId = id || (modal ? modal.dataset.notifId : null);
+            closeHomePoster(true);
+
+            if (notifId) {
+                switchTab('notifikasi');
+                setTimeout(() => {
+                    openNotifikasiDetail(notifId);
+                }, 300);
+            } else {
+                switchTab('notifikasi');
+            }
         }
