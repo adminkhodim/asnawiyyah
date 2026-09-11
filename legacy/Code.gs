@@ -110,6 +110,13 @@ function doPost(e) {
       );
     }
 
+    if (action === "uploadStudentPhoto" || action === "student.uploadPhoto") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(
+        uploadStudentPhotoToDrive(payload.data || payload, token)
+      );
+    }
+
     if (action === "deleteBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -4235,7 +4242,7 @@ const AUTH_SHEET_SCHEMAS = Object.freeze({
   [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at"],
   [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at"],
   [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at"],
-  [SHEET_STUDENTS]: ["student_id", "nisn", "name", "birth_date", "program", "class_name", "status", "created_at"],
+  [SHEET_STUDENTS]: ["student_id", "nis", "nik", "name", "gender", "birth_date", "photo_url", "program", "status", "created_at"],
   [SHEET_WALI_SANTRI_MAP]: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"],
   [SHEET_OTP_CHALLENGES]: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"],
   [SHEET_AUTH_SESSIONS]: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"],
@@ -4276,25 +4283,57 @@ function setupAuthSystemSheets() {
       sheet.setFrozenRows(1);
       Logger.log(`[SCHEMA] Sheet '${sheetName}' berhasil dibuat.`);
     } else {
-      // Sheet sudah ada -> cek apakah ada header baru yang belum terpasang
+      // Sheet sudah ada -> cek apakah ada header baru yang belum terpasang atau perlu rename
       const lastCol = sheet.getLastColumn();
       if (lastCol === 0) {
         sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
         sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
         sheet.setFrozenRows(1);
       } else {
-        const currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+        // 1. Auto-rename header nisn -> nis jika ada pada sheet Students
+        if (sheetName === SHEET_STUDENTS) {
+          const firstRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+          for (let c = 0; c < firstRowValues.length; c++) {
+            if (String(firstRowValues[c] || "").trim().toLowerCase() === "nisn") {
+              sheet.getRange(1, c + 1).setValue("nis");
+              Logger.log(`[SCHEMA] Header 'nisn' di sheet '${sheetName}' kolom ${c + 1} berhasil diubah menjadi 'nis'.`);
+              break;
+            }
+          }
+
+          // 2. Hapus kolom class_name / kelas jika ada pada sheet Students
+          const updatedRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+          for (let c = updatedRowValues.length - 1; c >= 0; c--) {
+            const hName = String(updatedRowValues[c] || "").trim().toLowerCase();
+            if (hName === "class_name" || hName === "kelas") {
+              sheet.deleteColumn(c + 1);
+              Logger.log(`[SCHEMA] Kolom '${hName}' di sheet '${sheetName}' (kolom ${c + 1}) berhasil dihapus.`);
+            }
+          }
+        }
+
+        const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h || "").trim().toLowerCase());
         const missingHeaders = expectedHeaders.filter(eh => {
           const lower = eh.toLowerCase();
+          if (lower === "nis") {
+            return !currentHeaders.includes("nis") && !currentHeaders.includes("nisn");
+          }
           if (lower === "birth_date") {
             return !currentHeaders.includes("birth_date") && !currentHeaders.includes("tanggal_lahir") && !currentHeaders.includes("tgl_lahir");
+          }
+          if (lower === "gender") {
+            return !currentHeaders.includes("gender") && !currentHeaders.includes("jenis") && !currentHeaders.includes("jenis_kelamin");
+          }
+          if (lower === "photo_url") {
+            return !currentHeaders.includes("photo_url") && !currentHeaders.includes("foto_profil") && !currentHeaders.includes("foto");
           }
           return !currentHeaders.includes(lower);
         });
 
         if (missingHeaders.length > 0) {
+          const updatedLastCol = sheet.getLastColumn();
           missingHeaders.forEach((mh, idx) => {
-            const colIdx = lastCol + idx + 1;
+            const colIdx = updatedLastCol + idx + 1;
             sheet.getRange(1, colIdx).setValue(mh).setFontWeight("bold").setBackground("#dcfce7");
           });
           Logger.log(`[SCHEMA] Kolom baru [${missingHeaders.join(", ")}] berhasil ditambahkan ke sheet '${sheetName}'.`);
@@ -4559,18 +4598,50 @@ function ensureAuthSheetSchema(sheet, targetName) {
       return;
     }
 
-    const currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+    // 1. Auto-rename header nisn -> nis jika ada pada sheet Students
+    if (targetName === SHEET_STUDENTS) {
+      const firstRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      for (let c = 0; c < firstRowValues.length; c++) {
+        if (String(firstRowValues[c] || "").trim().toLowerCase() === "nisn") {
+          sheet.getRange(1, c + 1).setValue("nis");
+          Logger.log(`[AUTO-MIGRATION] Header 'nisn' di sheet '${targetName}' kolom ${c + 1} berhasil diubah menjadi 'nis'.`);
+          break;
+        }
+      }
+
+      // 2. Hapus kolom class_name / kelas jika ada pada sheet Students
+      const updatedRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      for (let c = updatedRowValues.length - 1; c >= 0; c--) {
+        const hName = String(updatedRowValues[c] || "").trim().toLowerCase();
+        if (hName === "class_name" || hName === "kelas") {
+          sheet.deleteColumn(c + 1);
+          Logger.log(`[AUTO-MIGRATION] Kolom '${hName}' di sheet '${targetName}' (kolom ${c + 1}) berhasil dihapus.`);
+        }
+      }
+    }
+
+    const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h || "").trim().toLowerCase());
     const missingHeaders = expectedHeaders.filter(eh => {
       const lower = eh.toLowerCase();
+      if (lower === "nis") {
+        return !currentHeaders.includes("nis") && !currentHeaders.includes("nisn");
+      }
       if (lower === "birth_date") {
         return !currentHeaders.includes("birth_date") && !currentHeaders.includes("tanggal_lahir") && !currentHeaders.includes("tgl_lahir");
+      }
+      if (lower === "gender") {
+        return !currentHeaders.includes("gender") && !currentHeaders.includes("jenis") && !currentHeaders.includes("jenis_kelamin");
+      }
+      if (lower === "photo_url") {
+        return !currentHeaders.includes("photo_url") && !currentHeaders.includes("foto_profil") && !currentHeaders.includes("foto");
       }
       return !currentHeaders.includes(lower);
     });
 
     if (missingHeaders.length > 0) {
+      const updatedLastCol = sheet.getLastColumn();
       missingHeaders.forEach((mh, idx) => {
-        const colIdx = lastCol + idx + 1;
+        const colIdx = updatedLastCol + idx + 1;
         sheet.getRange(1, colIdx).setValue(mh).setFontWeight("bold").setBackground("#dcfce7");
       });
       Logger.log(`[AUTO-MIGRATION] Kolom [${missingHeaders.join(", ")}] otomatis ditambahkan ke sheet '${targetName}'.`);
@@ -4949,13 +5020,259 @@ function normalizeDateString(val) {
   return s;
 }
 
+// =====================================================================
+// MANAJEMEN DATA SANTRI & GOOGLE DRIVE PHOTO STORAGE
+// =====================================================================
+
+const FOLDER_ID_STUDENT_PHOTOS = "1XJi_lcDlydSV_eEjpyx7XjV-dmbKU_Im";
+
 /**
- * Lookup Santri berdasarkan NISN & Tanggal Lahir untuk Aktivasi Wali Santri
+ * Upload Foto Profil Santri ke Google Drive & Set Sharing Publik
+ * Menghasilkan link Google CDN direct view dan menyimpan ke sheet Students
  */
-function getStudentByNisnAndBirthDate(nisn, birthDate) {
-  const cleanNisn = String(nisn || "").trim();
+function uploadStudentPhotoToDrive(filePayload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+      } catch (e) {
+        const legacy = verifySessionToken(token);
+        if (legacy && legacy.role) {
+          actor = { role: legacy.role, identityId: legacy.userId };
+        }
+      }
+    }
+
+    if (!actor) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 401,
+        message: "Sesi autentikasi tidak valid atau telah kedaluwarsa."
+      };
+    }
+
+    const fileData = (filePayload && filePayload.file) || filePayload;
+    if (!fileData || !fileData.base64) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Data file foto (base64) wajib dikirimkan."
+      };
+    }
+
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const rawMime = String(fileData.mimeType || fileData.type || "image/jpeg").trim().toLowerCase();
+    if (!allowedMimes.includes(rawMime)) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Format foto tidak didukung. Hanya gambar (JPG, PNG, WEBP) yang diperbolehkan."
+      };
+    }
+
+    const decodedData = Utilities.base64Decode(fileData.base64);
+    if (!decodedData || decodedData.length === 0) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Data file foto kosong atau rusak."
+      };
+    }
+
+    // Maksimal 5 MB
+    if (decodedData.length > 5 * 1024 * 1024) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Ukuran foto melebihi batas maksimal 5 MB."
+      };
+    }
+
+    const folder = DriveApp.getFolderById(FOLDER_ID_STUDENT_PHOTOS);
+    const cleanStudentId = String(filePayload.studentId || filePayload.student_id || filePayload.nis || "SANTRI").replace(/[^a-zA-Z0-9_-]/g, "");
+    const fileName = "FOTO_" + cleanStudentId + "_" + new Date().getTime() + ".jpg";
+    const blob = Utilities.newBlob(decodedData, rawMime, fileName);
+    const newFile = folder.createFile(blob);
+    newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    const fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    const driveViewUrl = "https://drive.google.com/file/d/" + newFile.getId() + "/view?usp=sharing";
+
+    // Update langsung ke sheet Students jika studentId atau nis tersedia
+    const targetStudentId = filePayload.studentId || filePayload.student_id;
+    const targetNis = filePayload.nis || filePayload.nisn;
+    if (targetStudentId || targetNis) {
+      updateStudentPhotoInSheet(targetStudentId, targetNis, fileUrl);
+    }
+
+    return {
+      success: true,
+      status: "success",
+      statusCode: 200,
+      url: fileUrl,
+      fileUrl: fileUrl,
+      driveViewUrl: driveViewUrl,
+      fileId: newFile.getId(),
+      message: "Foto santri berhasil diunggah ke Google Drive dan disimpan ke database!"
+    };
+  } catch (err) {
+    console.error("[UPLOAD STUDENT PHOTO ERROR]", err);
+    return {
+      success: false,
+      status: "error",
+      message: "Gagal mengunggah foto santri: " + err.message
+    };
+  }
+}
+
+/**
+ * Update link foto profil santri di spreadsheet Students
+ */
+function updateStudentPhotoInSheet(studentId, nis, photoUrl) {
+  if (!photoUrl) return false;
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+  if (!sheet) return false;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return false;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("student_id");
+  let nisIdx = header.indexOf("nis");
+  if (nisIdx === -1) nisIdx = header.indexOf("nisn");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+  if (photoIdx === -1) {
+    photoIdx = header.length;
+    sheet.getRange(1, photoIdx + 1).setValue("photo_url").setFontWeight("bold").setBackground("#dcfce7");
+  }
+
+  const targetId = String(studentId || "").trim();
+  const targetNis = String(nis || "").trim();
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+    const rowNis = nisIdx !== -1 ? String(data[i][nisIdx] || "").trim() : "";
+
+    if ((targetId && rowId === targetId) || (targetNis && rowNis === targetNis)) {
+      sheet.getRange(i + 1, photoIdx + 1).setValue(photoUrl);
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Tambah / Perbarui Data Santri di Spreadsheet Students (Admin/Editor Only)
+ */
+function saveStudentData(studentObj, token) {
+  const actor = authenticateSession(token);
+  authorizeRole(actor, ["ADMIN", "EDITOR"]);
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+  if (!sheet) throw new Error("Tabel Students tidak ditemukan.");
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+
+  let idIdx = headers.indexOf("student_id");
+  let nisIdx = headers.indexOf("nis");
+  if (nisIdx === -1) nisIdx = headers.indexOf("nisn");
+  let nikIdx = headers.indexOf("nik");
+  let nameIdx = headers.indexOf("name");
+  if (nameIdx === -1) nameIdx = headers.indexOf("nama");
+  let genderIdx = headers.indexOf("gender");
+  if (genderIdx === -1) genderIdx = headers.indexOf("jenis");
+  let birthIdx = headers.indexOf("birth_date");
+  if (birthIdx === -1) birthIdx = headers.indexOf("tanggal_lahir");
+  let photoIdx = headers.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+  let progIdx = headers.indexOf("program");
+  let statusIdx = headers.indexOf("status");
+
+  const inputId = String(studentObj.studentId || studentObj.student_id || "").trim();
+  const inputNis = String(studentObj.nis || studentObj.nisn || "").trim();
+  const inputNik = String(studentObj.nik || "").trim();
+  const inputName = String(studentObj.name || studentObj.nama || "").trim();
+  const inputGender = String(studentObj.gender || studentObj.jenis || "").trim().toUpperCase();
+  const inputBirth = normalizeDateString(studentObj.birthDate || studentObj.birth_date || "");
+  const inputPhoto = String(studentObj.photoUrl || studentObj.photo_url || "").trim();
+  const inputProgram = String(studentObj.program || "Reguler").trim();
+  const inputStatus = String(studentObj.status || "ACTIVE").trim().toUpperCase();
+
+  if (!inputNis || !inputName) {
+    throw new Error("NIS dan Nama Santri wajib diisi.");
+  }
+
+  let foundRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+    const rowNis = nisIdx !== -1 ? String(data[i][nisIdx] || "").trim() : "";
+    if ((inputId && rowId === inputId) || (inputNis && rowNis === inputNis)) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  const nowIso = new Date().toISOString();
+
+  if (foundRow !== -1) {
+    if (nisIdx !== -1) sheet.getRange(foundRow, nisIdx + 1).setValue(inputNis);
+    if (nikIdx !== -1) sheet.getRange(foundRow, nikIdx + 1).setValue(inputNik);
+    if (nameIdx !== -1) sheet.getRange(foundRow, nameIdx + 1).setValue(inputName);
+    if (genderIdx !== -1) sheet.getRange(foundRow, genderIdx + 1).setValue(inputGender);
+    if (birthIdx !== -1) sheet.getRange(foundRow, birthIdx + 1).setValue(inputBirth);
+    if (photoIdx !== -1 && inputPhoto) sheet.getRange(foundRow, photoIdx + 1).setValue(inputPhoto);
+    if (progIdx !== -1) sheet.getRange(foundRow, progIdx + 1).setValue(inputProgram);
+    if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(inputStatus);
+
+    return {
+      success: true,
+      message: `Data santri ${inputName} (NIS: ${inputNis}) berhasil diperbarui.`
+    };
+  } else {
+    const newStudentId = inputId || ("STD_" + Utilities.getUuid().replace(/-/g, "").substring(0, 12));
+    const newRow = new Array(headers.length).fill("");
+    if (idIdx !== -1) newRow[idIdx] = newStudentId;
+    if (nisIdx !== -1) newRow[nisIdx] = inputNis;
+    if (nikIdx !== -1) newRow[nikIdx] = inputNik;
+    if (nameIdx !== -1) newRow[nameIdx] = inputName;
+    if (genderIdx !== -1) newRow[genderIdx] = inputGender;
+    if (birthIdx !== -1) newRow[birthIdx] = inputBirth;
+    if (photoIdx !== -1) newRow[photoIdx] = inputPhoto;
+    if (progIdx !== -1) newRow[progIdx] = inputProgram;
+    if (statusIdx !== -1) newRow[statusIdx] = inputStatus;
+    const createdIdx = headers.indexOf("created_at");
+    if (createdIdx !== -1) newRow[createdIdx] = nowIso;
+
+    sheet.appendRow(newRow);
+    return {
+      success: true,
+      studentId: newStudentId,
+      message: `Santri baru ${inputName} (NIS: ${inputNis}) berhasil ditambahkan ke database.`
+    };
+  }
+}
+
+/**
+ * Lookup Santri berdasarkan NIS & Tanggal Lahir untuk Aktivasi Wali Santri
+ * Mendukung pencarian toleran dan mengekstrak NIK, Gender, dan Foto Profil
+ */
+function getStudentByNisAndBirthDate(nisOrNisn, birthDate) {
+  const cleanNis = String(nisOrNisn || "").trim();
   const cleanBirthDate = normalizeDateString(birthDate);
-  if (!cleanNisn || !cleanBirthDate) return null;
+  if (!cleanNis) return null;
 
   const ss = getDatabaseSpreadsheet();
   const sheet = getAuthSheet(ss, SHEET_STUDENTS);
@@ -4966,38 +5283,56 @@ function getStudentByNisnAndBirthDate(nisn, birthDate) {
 
   const header = data[0].map(h => String(h || "").trim().toLowerCase());
   let idIdx = header.indexOf("student_id");
-  let nisnIdx = header.indexOf("nisn");
+  let nisIdx = header.indexOf("nis");
+  if (nisIdx === -1) nisIdx = header.indexOf("nisn");
+  let nikIdx = header.indexOf("nik");
   let nameIdx = header.indexOf("name");
+  if (nameIdx === -1) nameIdx = header.indexOf("nama");
+  let genderIdx = header.indexOf("gender");
+  if (genderIdx === -1) genderIdx = header.indexOf("jenis");
+  if (genderIdx === -1) genderIdx = header.indexOf("jenis_kelamin");
   let birthIdx = header.indexOf("birth_date");
   if (birthIdx === -1) birthIdx = header.indexOf("tanggal_lahir");
   if (birthIdx === -1) birthIdx = header.indexOf("tgl_lahir");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
   let progIdx = header.indexOf("program");
-  let classIdx = header.indexOf("class_name");
-  if (classIdx === -1) classIdx = header.indexOf("kelas");
   let statusIdx = header.indexOf("status");
 
   if (idIdx === -1) idIdx = 0;
-  if (nisnIdx === -1) nisnIdx = 1;
+  if (nisIdx === -1) nisIdx = 1;
   if (nameIdx === -1) nameIdx = 2;
 
   for (let i = 1; i < data.length; i++) {
-    const rowNisn = String(data[i][nisnIdx] || "").trim();
-    if (rowNisn === cleanNisn) {
+    const rowNis = String(data[i][nisIdx] || "").trim();
+    if (rowNis === cleanNis) {
       const rowBirth = birthIdx !== -1 ? normalizeDateString(data[i][birthIdx]) : "";
-      if (!rowBirth || rowBirth === cleanBirthDate) {
+      // Toleran: Jika tanggal lahir di database masih kosong (data awal), tetap cocok
+      if (!rowBirth || !cleanBirthDate || rowBirth === cleanBirthDate) {
         return {
           studentId: String(data[i][idIdx] || ""),
-          nisn: rowNisn,
+          nis: rowNis,
+          nisn: rowNis, // alias backward compatible
+          nik: nikIdx !== -1 ? String(data[i][nikIdx] || "") : "",
           name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Santri",
+          gender: genderIdx !== -1 ? String(data[i][genderIdx] || "").trim().toUpperCase() : "",
           birthDate: rowBirth,
+          photoUrl: photoIdx !== -1 ? String(data[i][photoIdx] || "") : "",
           program: progIdx !== -1 ? String(data[i][progIdx] || "Reguler") : "Reguler",
-          className: classIdx !== -1 ? String(data[i][classIdx] || "") : "",
           status: statusIdx !== -1 ? String(data[i][statusIdx] || "Aktif") : "Aktif"
         };
       }
     }
   }
   return null;
+}
+
+/**
+ * Alias fungsi backward compatible untuk getStudentByNisnAndBirthDate
+ */
+function getStudentByNisnAndBirthDate(nisn, birthDate) {
+  return getStudentByNisAndBirthDate(nisn, birthDate);
 }
 
 function getSessionById(sessionId) {
@@ -5099,18 +5434,47 @@ function getLinkedStudentsForWali(waliId) {
   if (activeStudentIds.length === 0) return [];
 
   const studentData = studentsSheet.getDataRange().getValues();
+  if (!studentData || studentData.length < 2) return [];
+
+  const header = studentData[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("student_id");
+  let nisIdx = header.indexOf("nis");
+  if (nisIdx === -1) nisIdx = header.indexOf("nisn");
+  let nikIdx = header.indexOf("nik");
+  let nameIdx = header.indexOf("name");
+  if (nameIdx === -1) nameIdx = header.indexOf("nama");
+  let genderIdx = header.indexOf("gender");
+  if (genderIdx === -1) genderIdx = header.indexOf("jenis");
+  if (genderIdx === -1) genderIdx = header.indexOf("jenis_kelamin");
+  let birthIdx = header.indexOf("birth_date");
+  if (birthIdx === -1) birthIdx = header.indexOf("tanggal_lahir");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
+  let progIdx = header.indexOf("program");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (nisIdx === -1) nisIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+
   const results = [];
 
   for (let i = 1; i < studentData.length; i++) {
-    const id = String(studentData[i][0]).trim();
+    const id = String(studentData[i][idIdx]).trim();
     if (activeStudentIds.includes(id)) {
+      const rowNis = nisIdx !== -1 ? String(studentData[i][nisIdx] || "") : "";
       results.push({
         studentId: id,
-        nisn: String(studentData[i][1] || ""),
-        name: String(studentData[i][2] || "Santri"),
-        program: String(studentData[i][3] || "Reguler"),
-        className: String(studentData[i][4] || ""),
-        status: String(studentData[i][5] || "Aktif"),
+        nis: rowNis,
+        nisn: rowNis, // alias backward compatible
+        nik: nikIdx !== -1 ? String(studentData[i][nikIdx] || "") : "",
+        name: nameIdx !== -1 ? String(studentData[i][nameIdx] || "Santri") : "Santri",
+        gender: genderIdx !== -1 ? String(studentData[i][genderIdx] || "").trim().toUpperCase() : "",
+        birthDate: birthIdx !== -1 ? normalizeDateString(studentData[i][birthIdx]) : "",
+        photoUrl: photoIdx !== -1 ? String(studentData[i][photoIdx] || "") : "",
+        program: progIdx !== -1 ? String(studentData[i][progIdx] || "Reguler") : "Reguler",
+        status: statusIdx !== -1 ? String(studentData[i][statusIdx] || "Aktif") : "Aktif",
         relationship: relationshipMap[id] || RELATIONSHIP_ENUM.GUARDIAN
       });
     }
@@ -5753,34 +6117,34 @@ function handleAuthApiAction(action, payload, e) {
     }
 
     // ----------------------------------------------------
-    // 10. WALI SANTRI ACTIVATION REQUEST (Matching NISN + Tanggal Lahir)
+    // 10. WALI SANTRI ACTIVATION REQUEST (Matching NIS + Tanggal Lahir)
     // ----------------------------------------------------
     if (action === "auth.parent.activate") {
       return withAuthScriptLock(() => {
-        const nisn = String(payload.nisn || "").trim();
+        const nis = String(payload.nis || payload.nisn || "").trim();
         const birthDate = String(payload.birthDate || "").trim();
         const waliEmail = String(payload.waliEmail || "").trim().toLowerCase();
         const waliName = String(payload.waliName || "").trim();
         const waliPhone = String(payload.waliPhone || "").trim();
         const relationship = String(payload.relationship || "GUARDIAN").trim().toUpperCase();
 
-        if (!nisn || !birthDate || !waliEmail || !waliEmail.includes("@")) {
+        if (!nis || !birthDate || !waliEmail || !waliEmail.includes("@")) {
           return createJsonResponse({
             success: false,
-            message: "NISN, Tanggal Lahir, dan Email Wali wajib diisi dengan benar."
+            message: "NIS, Tanggal Lahir, dan Email Wali wajib diisi dengan benar."
           });
         }
 
-        const student = getStudentByNisnAndBirthDate(nisn, birthDate);
+        const student = getStudentByNisAndBirthDate(nis, birthDate);
         if (!student) {
-          writeAuthAuditLog("ACTIVATION_REJECTED_STUDENT_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { nisn: nisn });
+          writeAuthAuditLog("ACTIVATION_REJECTED_STUDENT_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { nis: nis });
           return createJsonResponse({
             success: false,
-            message: "Data santri dengan NISN dan tanggal lahir tersebut tidak ditemukan. Mohon periksa kembali atau hubungi pengurus madrasah."
+            message: "Data santri dengan NIS dan tanggal lahir tersebut tidak ditemukan. Mohon periksa kembali atau hubungi pengurus madrasah."
           });
         }
 
-        if (student.status && student.status.toUpperCase() !== "AKTIF") {
+        if (student.status && !["AKTIF", "ACTIVE"].includes(student.status.toUpperCase())) {
           return createJsonResponse({
             success: false,
             message: "Status santri tidak aktif pada sistem akademik madrasah."
@@ -5862,7 +6226,7 @@ function handleAuthApiAction(action, payload, e) {
     // ----------------------------------------------------
     if (action === "auth.parent.verifyActivation") {
       return withAuthScriptLock(() => {
-        const nisn = String(payload.nisn || "").trim();
+        const nis = String(payload.nis || payload.nisn || "").trim();
         const birthDate = String(payload.birthDate || "").trim();
         const waliEmail = String(payload.waliEmail || "").trim().toLowerCase();
         const waliName = String(payload.waliName || "").trim();
@@ -5907,7 +6271,7 @@ function handleAuthApiAction(action, payload, e) {
         otpSheet.getRange(challenge.rowIndex, 11).setValue(new Date().toISOString());
 
         // Cari data santri
-        const student = getStudentByNisnAndBirthDate(nisn, birthDate);
+        const student = getStudentByNisAndBirthDate(nis, birthDate);
         if (!student) {
           return createJsonResponse({ success: false, message: "Data santri tidak ditemukan." });
         }
@@ -6005,6 +6369,22 @@ function handleAuthApiAction(action, payload, e) {
         identity: pengasuh,
         requestId: requestId
       });
+    }
+
+    // ----------------------------------------------------
+    // 13. STUDENT PHOTO UPLOAD (auth.student.uploadPhoto)
+    // ----------------------------------------------------
+    if (action === "auth.student.uploadPhoto" || action === "student.uploadPhoto") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(uploadStudentPhotoToDrive(payload.data || payload, token));
+    }
+
+    // ----------------------------------------------------
+    // 14. STUDENT DATA MANAGEMENT (auth.student.save)
+    // ----------------------------------------------------
+    if (action === "auth.student.save" || action === "student.save") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveStudentData(payload.data || payload, token));
     }
 
     return createJsonResponse({

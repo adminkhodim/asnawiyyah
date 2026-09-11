@@ -790,22 +790,30 @@ const ASNIdentity = {
         }
 
         // Server-authorized data rendered directly without client-side ID filtering
-        listContainer.innerHTML = students.map(s => `
+        listContainer.innerHTML = students.map(s => {
+            const studentPhoto = s.photoUrl || s.photo_url || '';
+            const studentGender = (s.gender || s.jenis || '').toUpperCase();
+            const studentNis = s.nis || s.nisn || '-';
+            return `
             <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-center justify-between">
                 <div class="flex items-center space-x-3 min-w-0">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-sm shrink-0">
-                        <i class="fa-solid fa-graduation-cap"></i>
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden border border-emerald-200/60 dark:border-emerald-800/40">
+                        ${studentPhoto ? `<img src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(s.name || 'Santri')}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid fa-graduation-cap\\'></i>';">` : `<i class="fa-solid fa-graduation-cap"></i>`}
                     </div>
                     <div class="min-w-0">
-                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(s.name || s.nama || 'Santri')}</h4>
-                        <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">NISN: ${escapeHtml(s.nisn || '-')} • ${escapeHtml(s.program || s.className || 'Reguler')}</p>
+                        <div class="flex items-center space-x-1.5">
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(s.name || s.nama || 'Santri')}</h4>
+                            ${studentGender ? `<span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded ${studentGender === 'L' ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300' : 'bg-pink-100 dark:bg-pink-950/80 text-pink-700 dark:text-pink-300'}">${escapeHtml(studentGender)}</span>` : ''}
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">NIS: ${escapeHtml(studentNis)} • ${escapeHtml(s.program || 'Reguler')}</p>
                     </div>
                 </div>
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
+                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
                     ${escapeHtml(s.status || 'Aktif')}
                 </span>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 };
 
@@ -1096,8 +1104,8 @@ function openParentActivationModal(prefillEmail = "", prefillName = "") {
     modal.classList.remove('hidden');
     setTimeout(() => {
         content.classList.remove('scale-95', 'opacity-0');
-        const nisnInput = document.getElementById('activation-nisn');
-        if (nisnInput) nisnInput.focus();
+        const nisInput = document.getElementById('activation-nis') || document.getElementById('activation-nisn');
+        if (nisInput) nisInput.focus();
     }, 50);
 }
 
@@ -1127,7 +1135,7 @@ function resetParentActivationStep() {
 
 async function handleParentActivationRequest(e) {
     e.preventDefault();
-    const nisn = (document.getElementById('activation-nisn')?.value || '').trim();
+    const nis = (document.getElementById('activation-nis')?.value || document.getElementById('activation-nisn')?.value || '').trim();
     const birthDate = (document.getElementById('activation-birth-date')?.value || '').trim();
     const waliName = (document.getElementById('activation-wali-name')?.value || '').trim();
     const waliEmail = (document.getElementById('activation-wali-email')?.value || '').trim().toLowerCase();
@@ -1138,9 +1146,9 @@ async function handleParentActivationRequest(e) {
     const alertBox = document.getElementById('activation-alert');
     const alertText = document.getElementById('activation-alert-text');
 
-    if (!nisn || !birthDate || !waliEmail) {
+    if (!nis || !birthDate || !waliEmail) {
         if (alertBox && alertText) {
-            alertText.innerText = 'NISN, Tanggal Lahir, dan Email Wali wajib diisi.';
+            alertText.innerText = 'NIS, Tanggal Lahir, dan Email Wali wajib diisi.';
             alertBox.classList.remove('hidden');
         }
         return;
@@ -1151,7 +1159,8 @@ async function handleParentActivationRequest(e) {
     if (alertBox) alertBox.classList.add('hidden');
 
     const payload = {
-        nisn,
+        nis,
+        nisn: nis, // alias backward compatible
         birthDate,
         waliName,
         waliEmail,
@@ -1207,7 +1216,8 @@ async function handleParentActivationVerify(e) {
         if (raw) payload = JSON.parse(raw);
     } catch (e) {}
 
-    if (!payload.nisn || !payload.waliEmail) {
+    const hasNis = payload.nis || payload.nisn;
+    if (!hasNis || !payload.waliEmail) {
         if (alertBox && alertText) {
             alertText.innerText = 'Sesi aktivasi kedaluwarsa. Silakan isi ulang data formulir.';
             alertBox.classList.remove('hidden');
