@@ -470,8 +470,11 @@
             btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
 
             try {
+                const rawVideo = document.getElementById('input-video-highlight').value;
+                const formattedVideo = (typeof formatYoutubeEmbedUrl === 'function') ? formatYoutubeEmbedUrl(rawVideo) : rawVideo;
+
                 const payload = {
-                    video_highlight: document.getElementById('input-video-highlight').value,
+                    video_highlight: formattedVideo,
                     link_instagram: document.getElementById('input-link-instagram').value,
                     link_youtube: document.getElementById('input-link-youtube').value,
                     link_facebook: document.getElementById('input-link-facebook').value
@@ -500,14 +503,25 @@
                 if (data && data.status === "success" && data.data) {
                     const config = data.data;
 
-                    // Update iframe video highlight
-                    const iframeVideo = document.querySelector('iframe[title="Video Dokumentasi PPTQ Asnawiyyah"]');
+                    // Update iframe video highlight dengan URL embed resmi
+                    const iframeVideo = document.getElementById('highlight-video-iframe') || document.querySelector('iframe[title="Video Dokumentasi PPTQ Asnawiyyah"]');
                     if (iframeVideo && config.video_highlight) {
-                        iframeVideo.src = config.video_highlight;
+                        const embedUrl = (typeof formatYoutubeEmbedUrl === 'function')
+                            ? formatYoutubeEmbedUrl(config.video_highlight)
+                            : config.video_highlight;
+                        if (embedUrl) {
+                            iframeVideo.src = embedUrl;
+                        }
+                    }
+
+                    // Update tautan eksternal YouTube
+                    const externalLink = document.getElementById('highlight-video-external-link');
+                    if (externalLink && config.video_highlight) {
+                        externalLink.href = config.video_highlight;
                     }
 
                     // Update social links
-                    const sosmedContainer = document.querySelector('.bg-slate-50.p-5.rounded-3xl.border.border-slate-100.text-center.space-y-3');
+                    const sosmedContainer = document.getElementById('galeri-social-links') || document.querySelector('.bg-slate-50.p-5.rounded-3xl.border.border-slate-100.text-center.space-y-3');
                     if (sosmedContainer) {
                         const igLink = sosmedContainer.querySelector('a[href*="instagram"]');
                         const ytLink = sosmedContainer.querySelector('a[href*="youtube"]');

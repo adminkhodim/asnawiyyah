@@ -18,7 +18,7 @@
                 detail: {
                     tagline: "\"Membentuk Generasi Qur'ani Sejak Dini dengan Metode Khas, Ramah Anak, dan Berakhlak Mulia\"",
                     summary: "Program khusus anak-anak yang memadukan pendidikan tahfidz Al-Qur'an intensif dengan pembentukan karakter/adab harian. Anak-anak dibimbing agar proses menghafal terasa menyenangkan (<span class=\"italic font-semibold text-brand-700\">fun & friendly environment</span>) tanpa mengabaikan kualitas tajwid dan keabsahan bacaan.",
-                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    video: "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0",
                     videoTitle: "Video Pesantren Tahfidz Anak PPTQ Asnawiyyah",
                     keunggulan: [
                         {
@@ -147,7 +147,7 @@
                 detail: {
                     tagline: "\"Mendidik Generasi Muda Putra yang Berjiwa Al-Qur'an, Menguasai Literasi Syariah, dan Berakhlak Mulia\"",
                     summary: "Program karantina dan pembinaan intensif khusus santri putra dewasa yang memadukan tahfidz Al-Qur'an 30 juz, tahsin ber-sanad, pendalaman kitab turats (kitab kuning), serta pembentukan jiwa kepemimpinan Islam dan kedisiplinan beribadah.",
-                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    video: "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0",
                     videoTitle: "Video Pesantren Dewasa Putra PPTQ Asnawiyyah",
                     keunggulan: [
                         {
@@ -277,7 +277,7 @@
                 detail: {
                     tagline: "\"Mencetak Muslimah Muhafizhah yang Bersyahsiyah Islamiyah, Menguasai Fikih Wanita, dan Berakhlak Mulia\"",
                     summary: "Program khusus santriwati dewasa yang dirancang untuk percepatan hafalan Al-Qur'an, perbaikan kualitas bacaan (tahsin), kajian fikih nisa (fikih wanita), serta pembekalan adab dan kemandirian muslimah dalam lingkungan asrama putri yang asri dan terjaga.",
-                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    video: "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0",
                     videoTitle: "Video Pesantren Dewasa Putri PPTQ Asnawiyyah",
                     keunggulan: [
                         {
@@ -407,7 +407,7 @@
                 detail: {
                     tagline: "\"Membangun Fondasi Keilmuan dan Karakter Islami Sejak Dini\"",
                     summary: "Program SD Islam Unggulan yang memadukan pendidikan formal (kurikulum nasional) dengan pendidikan agama Islam yang mendalam, termasuk tahfidz dasar dan pembentukan karakter/adab harian yang menyenangkan.",
-                    video: "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0",
+                    video: "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0",
                     videoTitle: "Video Profil SD Islam Unggulan",
                     keunggulan: [
                         {

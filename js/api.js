@@ -56,6 +56,47 @@
                 .replace(/'/g, "&#039;");
         }
 
+        /**
+         * Mengonversi semua variasi URL YouTube (watch?v=, youtu.be/, shorts/, playlist)
+         * menjadi URL embed resmi yang aman disematkan dalam <iframe> tanpa terblokir X-Frame-Options.
+         */
+        function formatYoutubeEmbedUrl(rawUrl) {
+            if (!rawUrl || typeof rawUrl !== 'string') return '';
+            const trimmed = rawUrl.trim();
+            if (!trimmed) return '';
+
+            // Jika sudah berformat embed, kembalikan langsung
+            if (trimmed.includes('youtube.com/embed/') || trimmed.includes('youtube-nocookie.com/embed/')) {
+                return trimmed;
+            }
+
+            // 1. Playlist: youtube.com/playlist?list=ID
+            const playlistMatch = trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+            if (playlistMatch && playlistMatch[1] && !trimmed.includes('watch?v=')) {
+                return `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}&rel=0`;
+            }
+
+            // 2. Short Link: youtu.be/VIDEO_ID
+            const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+            if (shortMatch && shortMatch[1]) {
+                return `https://www.youtube.com/embed/${shortMatch[1]}?rel=0`;
+            }
+
+            // 3. Watch Link: youtube.com/watch?v=VIDEO_ID
+            const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+            if (watchMatch && watchMatch[1]) {
+                return `https://www.youtube.com/embed/${watchMatch[1]}?rel=0`;
+            }
+
+            // 4. Shorts: youtube.com/shorts/VIDEO_ID
+            const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+            if (shortsMatch && shortsMatch[1]) {
+                return `https://www.youtube.com/embed/${shortsMatch[1]}?rel=0`;
+            }
+
+            return trimmed;
+        }
+
         // ==================== STATE MANAGEMENT DATA ====================
         let mockNewsData = [
             {

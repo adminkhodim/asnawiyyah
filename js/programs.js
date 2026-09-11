@@ -296,7 +296,7 @@
                                 <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Video Profil Kegiatan
                             </h3>
                             <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md border border-slate-200 dark:border-[#253447] bg-black">
-                                <iframe class="w-full h-full" src="${d.video}" title="${d.videoTitle}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <iframe class="w-full h-full" src="${(typeof formatYoutubeEmbedUrl === 'function') ? formatYoutubeEmbedUrl(d.video) : d.video}" title="${d.videoTitle}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                             </div>
                         </section>
 

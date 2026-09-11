@@ -1384,6 +1384,32 @@ function toggleStatusGaleri(galeriId, newStatus) {
   }
 }
 
+function formatYoutubeEmbedUrlBackend(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string") return "";
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return "";
+  if (trimmed.includes("youtube.com/embed/") || trimmed.includes("youtube-nocookie.com/embed/")) {
+    return trimmed;
+  }
+  const playlistMatch = trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (playlistMatch && playlistMatch[1] && !trimmed.includes("watch?v=")) {
+    return "https://www.youtube.com/embed/videoseries?list=" + playlistMatch[1] + "&rel=0";
+  }
+  const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (shortMatch && shortMatch[1]) {
+    return "https://www.youtube.com/embed/" + shortMatch[1] + "?rel=0";
+  }
+  const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (watchMatch && watchMatch[1]) {
+    return "https://www.youtube.com/embed/" + watchMatch[1] + "?rel=0";
+  }
+  const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+  if (shortsMatch && shortsMatch[1]) {
+    return "https://www.youtube.com/embed/" + shortsMatch[1] + "?rel=0";
+  }
+  return trimmed;
+}
+
 // ==================== PENGATURAN PROFIL ====================
 function getPengaturanData() {
   try {
@@ -1393,7 +1419,7 @@ function getPengaturanData() {
     if (!sheet) {
       sheet = ss.insertSheet(PENGATURAN_SHEET_NAME);
       sheet.appendRow(["Key", "Value", "Keterangan", "Update_Terakhir"]);
-      sheet.appendRow(["video_highlight", "https://www.youtube.com/embed/videoseries?list=PL_XQ&rel=0", "URL Embed Youtube untuk Galeri", new Date().toISOString()]);
+      sheet.appendRow(["video_highlight", "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0", "URL Embed Youtube untuk Galeri", new Date().toISOString()]);
       sheet.appendRow(["link_instagram", "https://instagram.com", "URL Profil Instagram", new Date().toISOString()]);
       sheet.appendRow(["link_youtube", "https://youtube.com", "URL Channel YouTube", new Date().toISOString()]);
       sheet.appendRow(["link_facebook", "https://facebook.com", "URL Halaman Facebook", new Date().toISOString()]);
@@ -1405,7 +1431,16 @@ function getPengaturanData() {
     for (let i = 1; i < data.length; i++) {
       const key = String(data[i][0]).trim();
       if (key) {
-        config[key] = String(data[i][1]).trim();
+        let val = String(data[i][1]).trim();
+        if (key === "video_highlight") {
+          // Bersihkan dummy playlist rusak atau ubah link youtu.be menjadi embed URL
+          if (val.includes("list=PL_XQ")) {
+            val = "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0";
+          } else {
+            val = formatYoutubeEmbedUrlBackend(val);
+          }
+        }
+        config[key] = val;
       }
     }
     
@@ -1422,6 +1457,10 @@ function simpanPengaturan(payload) {
     if (!sheet) {
       getPengaturanData();
       sheet = ss.getSheetByName(PENGATURAN_SHEET_NAME);
+    }
+    
+    if (payload.video_highlight) {
+      payload.video_highlight = formatYoutubeEmbedUrlBackend(payload.video_highlight);
     }
     
     const keysToUpdate = Object.keys(payload);
