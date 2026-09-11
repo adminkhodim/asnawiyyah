@@ -1028,21 +1028,37 @@
                 .replace(/'/g, '&#039;');
         }
 
-        let notifikasiList = [
-            {
-                id: "NOTIF_INIT_1",
-                judul: "Selamat Datang di Portal Resmi PPTQ Asnawiyyah",
-                kategori: "Pengumuman",
-                tanggal: "2026-09-11",
-                ringkasan: "Informasi dan pengumuman resmi seputar pesantren, kegiatan santri, dan administrasi.",
-                isi: "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nSelamat datang di Portal Informasi Resmi PPTQ Asnawiyyah Pilangwetan. Melalui sistem ini, bapak/ibu wali santri dan masyarakat dapat memantau perkembangan, pengumuman penting, dan agenda kegiatan pesantren secara langsung.\n\nSemoga ikhtiar ini membawa keberkahan bagi kita semua.",
-                gambar: "assets/img/brand-header.png",
-                is_popup: true,
-                status: "Aktif"
-            }
-        ];
+        let notifikasiList = [];
         let activeNotifFilter = 'all';
         let currentDetailNotifId = null;
+
+        function toggleNotifRead(event, id) {
+            if (event) {
+                event.stopPropagation();
+            }
+            if (!id) return;
+            try {
+                let ids = getReadNotifIds();
+                const index = ids.indexOf(id);
+                if (index > -1) {
+                    ids.splice(index, 1);
+                    if (typeof showToast === 'function') {
+                        showToast('Pengumuman ditandai belum dibaca.');
+                    }
+                } else {
+                    ids.push(id);
+                    if (typeof showToast === 'function') {
+                        showToast('✅ Pengumuman telah diceklis / dibaca.');
+                    }
+                }
+                localStorage.setItem('asn_read_notif_ids', JSON.stringify(ids));
+                updateNotifBadge();
+                renderNotifikasiList();
+            } catch (e) {
+                console.warn('toggleNotifRead error:', e);
+            }
+        }
+        window.toggleNotifRead = toggleNotifRead;
 
         function getReadNotifIds() {
             try {
@@ -1100,19 +1116,24 @@
         }
 
         async function loadNotifikasi() {
-            // 1. Render immediate cached / initial data (Stale-While-Revalidate)
+            // 1. Render immediate cached data (Stale-While-Revalidate)
             const cached = localStorage.getItem('asn_cached_notifikasi');
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        notifikasiList = parsed;
+                        const cleanCached = parsed.filter(n => n && n.id && !String(n.id).startsWith('NOTIF_INIT'));
+                        if (cleanCached.length > 0) {
+                            notifikasiList = cleanCached;
+                        }
                     }
                 } catch (e) {}
             }
             renderNotifikasiList();
             updateNotifBadge();
-            checkHomePosterPopup();
+            if (notifikasiList.length > 0) {
+                checkHomePosterPopup();
+            }
 
             if (typeof isApiConfigured === 'function' && !isApiConfigured()) {
                 return;
@@ -1129,7 +1150,7 @@
                 }
 
                 if (response && response.status === 'success' && Array.isArray(response.data)) {
-                    notifikasiList = response.data;
+                    notifikasiList = response.data.filter(n => n && n.id && !String(n.id).startsWith('NOTIF_INIT'));
                     try {
                         localStorage.setItem('asn_cached_notifikasi', JSON.stringify(notifikasiList));
                     } catch (e) {}
@@ -1198,30 +1219,42 @@
 
                 return `
                     <div onclick="openNotifikasiDetail('${escapeHtml(item.id)}')"
-                        class="group bg-white dark:bg-[#15202d] p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] hover:border-emerald-300 dark:hover:border-emerald-500/50 transition duration-200 cursor-pointer flex items-start gap-3.5 sm:gap-4 relative overflow-hidden ${!isRead ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : ''}">
-                        ${imgThumb}
-                        <div class="flex-1 min-w-0 space-y-1">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${badgeBg}">
-                                        ${escapeHtml(item.kategori || 'Pengumuman')}
-                                    </span>
-                                    ${item.is_popup ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"><i class="fa-solid fa-star text-[8px] mr-1"></i>Penting</span>` : ''}
+                        class="group bg-white dark:bg-[#15202d] p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] hover:border-emerald-300 dark:hover:border-emerald-500/50 transition duration-200 cursor-pointer flex flex-col gap-3 relative overflow-hidden ${!isRead ? 'ring-1 ring-emerald-500/20 bg-emerald-50/10 dark:bg-emerald-950/10' : ''}">
+                        <div class="flex items-start gap-3.5 sm:gap-4">
+                            ${imgThumb}
+                            <div class="flex-1 min-w-0 space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${badgeBg}">
+                                            ${escapeHtml(item.kategori || 'Pengumuman')}
+                                        </span>
+                                        ${item.is_popup ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"><i class="fa-solid fa-star text-[8px] mr-1"></i>Popup Beranda</span>` : ''}
+                                    </div>
+                                    <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
+                                        <span>${escapeHtml(item.tanggal || '')}</span>
+                                        ${unreadDot}
+                                    </div>
                                 </div>
-                                <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
-                                    <span>${escapeHtml(item.tanggal || '')}</span>
-                                    ${unreadDot}
-                                </div>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition leading-snug">
+                                    ${escapeHtml(item.judul)}
+                                </h3>
+                                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                    ${escapeHtml(item.ringkasan || item.isi)}
+                                </p>
                             </div>
-                            <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition leading-snug">
-                                ${escapeHtml(item.judul)}
-                            </h3>
-                            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                                ${escapeHtml(item.ringkasan || item.isi)}
-                            </p>
-                            <div class="pt-1 flex items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition duration-200">
+                        </div>
+
+                        <!-- Action Bar: Ceklis & Buka Detail -->
+                        <div class="pt-2 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-2">
+                            <button type="button" onclick="toggleNotifRead(event, '${escapeHtml(item.id)}')"
+                                class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition active:scale-95 ${isRead ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 dark:bg-[#1c2836] dark:hover:bg-emerald-950/40 dark:text-slate-300 border border-slate-200 dark:border-[#253447]'}"
+                                title="${isRead ? 'Klik untuk tandai belum dibaca' : 'Ceklis bahwa pengumuman telah dibaca'}">
+                                <i class="fa-solid ${isRead ? 'fa-circle-check text-emerald-600 dark:text-emerald-400 text-xs' : 'fa-circle text-slate-300 dark:text-slate-500 text-xs'}"></i>
+                                <span>${isRead ? 'Sudah Dibaca' : 'Ceklis Telah Dibaca'}</span>
+                            </button>
+                            <div class="flex items-center text-[11px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition duration-200">
                                 <span>Baca Warta Lengkap</span>
-                                <i class="fa-solid fa-arrow-right text-[8px] ml-1"></i>
+                                <i class="fa-solid fa-arrow-right text-[9px] ml-1"></i>
                             </div>
                         </div>
                     </div>
@@ -1318,20 +1351,17 @@
                     return;
                 }
 
-                // Cek gating session: jika sudah ditutup dalam sesi browser ini, jangan munculkan lagi (kecuali dipaksa)
-                if (!force && sessionStorage.getItem('asn_popup_shown') === 'true') {
-                    return;
-                }
-
                 // Cari notifikasi aktif dengan flag is_popup === true
                 const popupNotif = notifikasiList.find(n => 
                     (n.status || 'Aktif') === 'Aktif' && 
-                    (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true')
+                    (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true') &&
+                    n.gambar && !String(n.gambar).includes('brand-header.png')
                 );
                 if (!popupNotif) return;
 
-                // Cek apakah spesifik notifikasi ini sudah pernah ditutup oleh user
-                if (!force && sessionStorage.getItem('asn_popup_closed_' + popupNotif.id) === 'true') {
+                // Hanya sembunyikan jika user telah MENGEKLIS bahwa pengumuman telah dibaca di halaman Notifikasi
+                const readIds = getReadNotifIds();
+                if (!force && readIds.includes(popupNotif.id)) {
                     return;
                 }
 
@@ -1345,8 +1375,8 @@
                 if (titleEl) titleEl.innerText = popupNotif.judul;
                 if (summaryEl) summaryEl.innerText = popupNotif.ringkasan || (popupNotif.isi ? popupNotif.isi.substring(0, 150) : '');
                 if (badgeEl) badgeEl.innerText = popupNotif.kategori || 'Warta Terkini';
-                if (imgEl) {
-                    imgEl.src = popupNotif.gambar || 'assets/img/brand-header.png';
+                if (imgEl && popupNotif.gambar) {
+                    imgEl.src = popupNotif.gambar;
                 }
 
                 if (modal && content) {
@@ -1360,7 +1390,7 @@
                     const isSplashActive = splash && window.getComputedStyle(splash).display !== 'none' && !splash.classList.contains('opacity-0');
                     
                     // Jika splash masih aktif di mobile, tunggu hingga splash selesai memudar (2200ms)
-                    const displayDelay = isSplashActive ? 2200 : 400;
+                    const displayDelay = isSplashActive ? 2200 : 350;
 
                     homePosterTimer = setTimeout(() => {
                         // Pastikan masih di tab Beranda saat timeout selesai
@@ -1379,7 +1409,7 @@
             }
         }
 
-        function closeHomePoster(markDismissed = true) {
+        function closeHomePoster() {
             const modal = document.getElementById('homePosterModal');
             const content = document.getElementById('homePosterContent');
             if (modal && content) {
@@ -1387,12 +1417,6 @@
                 content.classList.add('scale-95', 'opacity-0');
                 setTimeout(() => {
                     modal.classList.add('hidden');
-                    if (markDismissed) {
-                        sessionStorage.setItem('asn_popup_shown', 'true');
-                        if (modal.dataset.notifId) {
-                            sessionStorage.setItem('asn_popup_closed_' + modal.dataset.notifId, 'true');
-                        }
-                    }
                 }, 250);
             }
         }
