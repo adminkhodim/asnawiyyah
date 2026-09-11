@@ -79,7 +79,7 @@ async function authApiPost(action, payload = {}) {
     if (!targetUrl) throw new Error("Endpoint autentikasi belum dikonfigurasi.");
 
     const token = payload.token || 
-                  (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN)) || 
+                  (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : (sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN))) || 
                   sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || 
                   localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
                   sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) ||
@@ -393,7 +393,7 @@ const ASNIdentity = {
         this.renderAccountCenterUI();
 
         const pengasuhToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
-        const adminToken = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
+        const adminToken = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
         const parentToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
         const token = pengasuhToken || adminToken || parentToken;
 
@@ -442,7 +442,9 @@ const ASNIdentity = {
                     role: serverRole
                 };
                 sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, serverRole);
+                localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, serverRole);
                 sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(this.currentUser));
+                localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(this.currentUser));
                 if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
                 this.currentState = ASN_STATES.ADMIN_AUTH_ACTIVE;
                 this.isHydrating = false;
@@ -469,6 +471,7 @@ const ASNIdentity = {
                 if (studRes.success && Array.isArray(studRes.students)) {
                     this.linkedStudents = studRes.students;
                     sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
+                    localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
                     this.studentsLoadFailed = false;
                 } else {
                     console.warn('[ASNIdentity] Gagal memuat daftar santri terhubung.');
@@ -524,8 +527,11 @@ const ASNIdentity = {
     setAdminSession(token, adminData) {
         if (!token) return;
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
+        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, ASN_ROLES.ADMIN);
+        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, ASN_ROLES.ADMIN);
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(adminData || {}));
+        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(adminData || {}));
         this.currentRole = ASN_ROLES.ADMIN;
         this.currentUser = adminData;
         if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
@@ -540,6 +546,7 @@ const ASNIdentity = {
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(parentData || {}));
         localStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(parentData || {}));
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(students || []));
+        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(students || []));
         this.currentRole = ASN_ROLES.WALI_SANTRI;
         this.currentUser = parentData;
         this.linkedStudents = Array.isArray(students) ? students : [];
@@ -565,6 +572,7 @@ const ASNIdentity = {
         if (studRes.success && Array.isArray(studRes.students)) {
             this.linkedStudents = studRes.students;
             sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
+            localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
             this.studentsLoadFailed = false;
             this.renderLinkedStudents();
         } else {
@@ -593,6 +601,7 @@ const ASNIdentity = {
         const token = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || 
                       localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || 
                       sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
+                      localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
                       sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
                       localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
 
@@ -630,13 +639,17 @@ const ASNIdentity = {
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
         localStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_DATA);
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_DATA);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
         localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PARENT_DATA);
         localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_DATA);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
         sessionStorage.removeItem('asn_temp_admin_email');
         sessionStorage.removeItem('asn_temp_parent_email');
         sessionStorage.removeItem('asn_temp_parent_phone');

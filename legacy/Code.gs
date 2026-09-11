@@ -2587,7 +2587,10 @@ function setupPhase2BScriptProperties(forceRegenerate = false) {
  * Generates Server-Signed Session Token (HMAC SHA-256)
  * Menggunakan AUTH_TOKEN_SIGNING_SECRET secara eksplisit.
  */
-function generateSessionToken(userId, role, ttlHours = 8, sessionId = null, identityId = null) {
+// Durasi sesi tanpa batas / permanen (10 tahun = 87600 jam), hanya berakhir jika logout eksplisit
+const PERMANENT_SESSION_TTL_HOURS = 87600;
+
+function generateSessionToken(userId, role, ttlHours = PERMANENT_SESSION_TTL_HOURS, sessionId = null, identityId = null) {
   const secret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", getServerSecret("TOKEN_SIGNING_SECRET", ""));
   if (!secret) {
     throw new AuthenticationError("Signing secret is not configured on server.");
@@ -2690,9 +2693,18 @@ function verifySessionToken(tokenString, requireAuthSecret = false) {
     throw new AuthenticationError("Authentication token payload is incomplete.");
   }
 
+  // Model Revocation-Driven: Sesi aktif secara permanen di perangkat pengguna,
+  // dan HANYA kedaluwarsa jika dicabut (REVOKED) oleh server atau saat user melakukan logout manual.
   const expTime = new Date(claims.expiresAt).getTime();
-  if (isNaN(expTime) || Date.now() >= expTime) {
-    throw new AuthenticationError("Authentication token has expired. Please log in again.");
+  if (!isNaN(expTime) && Date.now() >= expTime) {
+    let isServerActive = false;
+    if (claims.sessionId && typeof getSessionById === "function") {
+      const sess = getSessionById(claims.sessionId);
+      if (sess && sess.status === "ACTIVE") isServerActive = true;
+    }
+    if (!isServerActive) {
+      throw new AuthenticationError("Authentication token has expired. Please log in again.");
+    }
   }
 
   const activeTokenVersion = getServerSecret("TOKEN_VERSION", "1");
@@ -2705,10 +2717,6 @@ function verifySessionToken(tokenString, requireAuthSecret = false) {
     const session = getSessionById(claims.sessionId);
     if (!session || session.status !== "ACTIVE") {
       throw new AuthenticationError("Session has been revoked or is inactive on the server.");
-    }
-    const sessionExpTime = new Date(session.expires_at).getTime();
-    if (isNaN(sessionExpTime) || Date.now() >= sessionExpTime) {
-      throw new AuthenticationError("Server session registry has expired. Please log in again.");
     }
   }
 
@@ -4977,7 +4985,7 @@ function getSessionById(sessionId) {
   return null;
 }
 
-function createAuthSessionRecord(identityId, role, ttlHours = 8) {
+function createAuthSessionRecord(identityId, role, ttlHours = PERMANENT_SESSION_TTL_HOURS) {
   const ss = getDatabaseSpreadsheet();
   const sheet = getAuthSheet(ss, SHEET_AUTH_SESSIONS);
   if (!sheet) {
@@ -5343,9 +5351,9 @@ function handleAuthApiAction(action, payload, e) {
           return createJsonResponse({ success: false, message: "Identitas akun tidak aktif." });
         }
 
-        // Buat Sesi Server
-        const session = createAuthSessionRecord(admin.identityId, admin.role, 8);
-        const tokenData = generateSessionToken(admin.email, admin.role, 8, session.sessionId, admin.identityId);
+        // Buat Sesi Server Permanen (sampai logout)
+        const session = createAuthSessionRecord(admin.identityId, admin.role, PERMANENT_SESSION_TTL_HOURS);
+        const tokenData = generateSessionToken(admin.email, admin.role, PERMANENT_SESSION_TTL_HOURS, session.sessionId, admin.identityId);
 
         writeAuthAuditLog("OTP_VERIFY_SUCCESS", admin.identityId, session.sessionId, "EMAIL", true, requestId, {});
         writeAuthAuditLog("SESSION_CREATED", admin.identityId, session.sessionId, "EMAIL", true, requestId, { role: admin.role });
@@ -5509,8 +5517,8 @@ function handleAuthApiAction(action, payload, e) {
           return createJsonResponse({ success: false, message: "Identitas akun tidak aktif." });
         }
 
-        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", 24);
-        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", 24, session.sessionId, wali.identityId);
+        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.identityId);
         const students = getLinkedStudentsForWali(wali.identityId);
 
         writeAuthAuditLog("OTP_VERIFY_SUCCESS", wali.identityId, session.sessionId, "EMAIL", true, requestId, {});
@@ -5636,8 +5644,8 @@ function handleAuthApiAction(action, payload, e) {
           pengasuh = getPengasuhIdentityByEmail(email);
         }
         if (pengasuh && pengasuh.status === "ACTIVE") {
-          const session = createAuthSessionRecord(pengasuh.identityId, "PENGASUH", 720); // 30 hari
-          const tokenData = generateSessionToken(pengasuh.email, "PENGASUH", 720, session.sessionId, pengasuh.identityId);
+          const session = createAuthSessionRecord(pengasuh.identityId, "PENGASUH", PERMANENT_SESSION_TTL_HOURS);
+          const tokenData = generateSessionToken(pengasuh.email, "PENGASUH", PERMANENT_SESSION_TTL_HOURS, session.sessionId, pengasuh.identityId);
 
           writeAuthAuditLog("SSO_LOGIN_SUCCESS", pengasuh.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: "PENGASUH" });
           return createJsonResponse({
@@ -5656,8 +5664,8 @@ function handleAuthApiAction(action, payload, e) {
           admin = getAdminIdentityByEmail(email);
         }
         if (admin && admin.status === "ACTIVE") {
-          const session = createAuthSessionRecord(admin.identityId, admin.role, 8); // 8 jam
-          const tokenData = generateSessionToken(admin.email, admin.role, 8, session.sessionId, admin.identityId);
+          const session = createAuthSessionRecord(admin.identityId, admin.role, PERMANENT_SESSION_TTL_HOURS);
+          const tokenData = generateSessionToken(admin.email, admin.role, PERMANENT_SESSION_TTL_HOURS, session.sessionId, admin.identityId);
 
           writeAuthAuditLog("SSO_LOGIN_SUCCESS", admin.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: admin.role });
           return createJsonResponse({
@@ -5676,8 +5684,8 @@ function handleAuthApiAction(action, payload, e) {
           wali = getWaliIdentityByEmail(email);
         }
         if (wali && wali.status === "ACTIVE") {
-          const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", 720); // 30 hari
-          const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", 720, session.sessionId, wali.identityId);
+          const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
+          const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.identityId);
           const students = getLinkedStudentsForWali(wali.identityId);
 
           writeAuthAuditLog("SSO_LOGIN_SUCCESS", wali.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: "WALI_SANTRI" });
@@ -5920,9 +5928,9 @@ function handleAuthApiAction(action, payload, e) {
           }
         }
 
-        // Buat Sesi 30 hari (720 jam)
-        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", 720);
-        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", 720, session.sessionId, wali.identityId);
+        // Buat Sesi Permanen (sampai logout manual)
+        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.identityId);
         const students = getLinkedStudentsForWali(wali.identityId);
 
         writeAuthAuditLog("WALI_ACTIVATION_SUCCESS", wali.identityId, session.sessionId, "EMAIL_ACTIVATION", true, requestId, {

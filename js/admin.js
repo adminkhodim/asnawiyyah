@@ -28,7 +28,9 @@
         function logoutAdmin() {
             isAdminLoggedIn = false;
             sessionStorage.removeItem("asnawiyyah_admin_token");
+            localStorage.removeItem("asnawiyyah_admin_token");
             sessionStorage.removeItem("asnawiyyah_admin_role");
+            localStorage.removeItem("asnawiyyah_admin_role");
             if (typeof ASNIdentity !== 'undefined' && typeof ASNIdentity.logout === 'function') {
                 ASNIdentity.logout();
             }
@@ -1743,11 +1745,11 @@
         let adminProgramSearchQuery = "";
 
         function getAdminSessionToken() {
-            return sessionStorage.getItem("asnawiyyah_admin_token") || "";
+            return sessionStorage.getItem("asnawiyyah_admin_token") || localStorage.getItem("asnawiyyah_admin_token") || "";
         }
 
         function getAdminSessionRole() {
-            return sessionStorage.getItem("asnawiyyah_admin_role") || "admin";
+            return sessionStorage.getItem("asnawiyyah_admin_role") || localStorage.getItem("asnawiyyah_admin_role") || "admin";
         }
 
         async function loadAdminProgramList() {
