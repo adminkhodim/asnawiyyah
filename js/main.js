@@ -375,11 +375,10 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ==================== PEMUATAN & RENDERING BERITA ====================
         async function loadNews() {
             if (!isApiConfigured()) {
                 renderAllNewsViews(mockNewsData);
-                // handleClientRouting(); // removed - routing after loadNews
+                checkPendingNewsRoute();
                 return;
             }
 
@@ -390,11 +389,19 @@
                     mockNewsData = response.data;
                 }
                 renderAllNewsViews(mockNewsData);
-                // handleClientRouting(); // removed - routing after loadNews
+                checkPendingNewsRoute();
             } catch (err) {
                 console.error("Gagal memuat berita via API:", err);
                 renderAllNewsViews(mockNewsData);
-                // handleClientRouting(); // removed - routing after loadNews
+                checkPendingNewsRoute();
+            }
+        }
+
+        function checkPendingNewsRoute() {
+            const path = window.location.pathname.replace(/\/+$/, '') || '/';
+            const params = new URLSearchParams(window.location.search);
+            if (path.startsWith('/berita/') || params.get('id')) {
+                handleClientRouting();
             }
         }
 

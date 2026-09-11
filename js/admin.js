@@ -12,49 +12,16 @@
                 openAdminAuthModal();
                 return;
             }
-            document.getElementById('admin-pin-input').value = "";
-            document.getElementById('adminLoginModal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('admin-pin-input').focus(), 150);
+            showToast("Modul autentikasi admin belum siap.");
         }
 
         function closeAdminLoginModal() {
-            document.getElementById('adminLoginModal').classList.add('hidden');
+            if (typeof closeAdminAuthModal === 'function') {
+                closeAdminAuthModal();
+            }
             const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
             if (activeTabEl && activeTabEl.id === 'page-admin' && !isAdminLoggedIn) {
                 switchTab('beranda');
-            }
-        }
-
-        async function verifyAdminPIN() {
-            const inputPin = document.getElementById('admin-pin-input').value.trim();
-            if (inputPin === ADMIN_PIN) {
-                isAdminLoggedIn = true;
-                closeAdminLoginModal();
-                showToast("Login Admin Berhasil!");
-
-                // Attempt to acquire server session token via admin.login
-                try {
-                    if (isApiConfigured()) {
-                        const loginRes = await apiPost("admin.login", { pin: inputPin });
-                        if (loginRes && loginRes.success && loginRes.data && loginRes.data.token) {
-                            sessionStorage.setItem("asnawiyyah_admin_token", loginRes.data.token);
-                            sessionStorage.setItem("asnawiyyah_admin_role", loginRes.data.role || "admin");
-                        }
-                    }
-                } catch (e) {
-                    console.warn("Could not obtain server session token:", e);
-                }
-
-                switchTab('admin');
-                showAdminView('hub');
-                renderAdminNewsList();
-                renderAdminBannerList();
-                loadAdminPPDBData();
-                loadAdminProgramList();
-                loadUnitKegiatan();
-            } else {
-                showToast("PIN Keamanan Salah!");
-                document.getElementById('admin-pin-input').value = "";
             }
         }
 
@@ -177,7 +144,7 @@
             }
 
             try {
-                const response = await apiGet("getPPDB");
+                const response = await apiPost("getPPDB");
                 if (response && response.status === "success" && Array.isArray(response.data)) {
                     mockPPDBData = response.data;
                 } else if (Array.isArray(response)) {

@@ -106,13 +106,13 @@
                     resultBox.innerHTML = `
                             <div class="text-center pb-3 border-b border-slate-200/60 mb-3">
                                 <h4 class="font-bold text-slate-800 text-sm">Data Santri Ditemukan</h4>
-                                <p class="text-[10px] text-slate-400">Terdaftar tanggal: ${student.tanggalDaftar}</p>
+                                <p class="text-[10px] text-slate-400">Terdaftar tanggal: ${escapeHtml(student.tanggalDaftar)}</p>
                             </div>
                             <div class="space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-slate-400">Nama Santri:</span><span class="font-bold text-slate-700">${student.nama}</span></div>
-                                <div class="flex justify-between"><span class="text-slate-400">NISN:</span><span class="font-bold text-slate-700">${student.nisn}</span></div>
-                                <div class="flex justify-between"><span class="text-slate-400">Wali Santri:</span><span class="font-bold text-slate-700">${student.wali}</span></div>
-                                <div class="flex justify-between"><span class="text-slate-400">Program Studi:</span><span class="font-bold text-slate-700">${student.program}</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Nama Santri:</span><span class="font-bold text-slate-700">${escapeHtml(student.nama)}</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">NISN:</span><span class="font-bold text-slate-700">${escapeHtml(student.nisn)}</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Wali Santri:</span><span class="font-bold text-slate-700">${escapeHtml(student.wali)}</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Program Studi:</span><span class="font-bold text-slate-700">${escapeHtml(student.program)}</span></div>
                                 <div class="flex justify-between items-center pt-2 border-t border-slate-200/60"><span class="text-slate-400">Status Seleksi:</span>${statusBadge}</div>
                             </div>
                         `;
@@ -121,7 +121,7 @@
                             <div class="text-center space-y-2 p-3">
                                 <i class="fa-solid fa-user-slash text-rose-500 text-2xl"></i>
                                 <h4 class="font-bold text-slate-800 text-xs">NISN Tidak Ditemukan</h4>
-                                <p class="text-[11px] text-slate-500 leading-relaxed">Maaf, nomor NISN <strong>${nisnInput}</strong> belum terdaftar di sistem PPDB kami.</p>
+                                <p class="text-[11px] text-slate-500 leading-relaxed">Maaf, nomor NISN <strong>${escapeHtml(nisnInput)}</strong> belum terdaftar di sistem PPDB kami.</p>
                             </div>
                         `;
                 } else {

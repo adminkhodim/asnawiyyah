@@ -47,6 +47,11 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Hanya proses request GET (Cache API tidak mendukung caching request POST/PUT/DELETE)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // Network-first strategy: Ambil dari internet dulu, kalau gagal (offline) baru ambil dari cache
   event.respondWith(
     fetch(event.request)

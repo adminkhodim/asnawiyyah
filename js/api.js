@@ -109,7 +109,6 @@
         let heroSlideTimer = null;
         let currentHeroSlide = 0;
         let previousTabBeforeNews = 'beranda';
-        const ADMIN_PIN = "123456";
         let isAdminLoggedIn = false;
         let isLoggedIn = true;
 

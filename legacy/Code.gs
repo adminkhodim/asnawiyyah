@@ -39,20 +39,21 @@ function doPost(e) {
       );
     }
 
+    // ========================================================
+    // ADMIN API
+    // ========================================================
+
     if (action === "getPPDB") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        verifySessionToken(token);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(
         getPendaftarData()
       );
     }
-
-    // ========================================================
-    // ADMIN API
-    //
-    // STEP 3:
-    // HTTP routing sudah tersedia.
-    // Authentication/Authorization belum diaktifkan.
-    // Akan ditambahkan pada tahap Security.
-    // ========================================================
 
     if (action === "saveBerita") {
       const token = payload.token || (payload.data && payload.data.token) || null;
@@ -944,12 +945,6 @@ function doGet(e) {
     if (action === "getPengaturan") {
       return createJsonResponse(
         getPengaturanData()
-      );
-    }
-
-    if (action === "getPPDB") {
-      return createJsonResponse(
-        getPendaftarData()
       );
     }
 
@@ -2586,7 +2581,10 @@ function setupPhase2BScriptProperties(forceRegenerate = false) {
  * Menggunakan AUTH_TOKEN_SIGNING_SECRET secara eksplisit.
  */
 function generateSessionToken(userId, role, ttlHours = 8, sessionId = null, identityId = null) {
-  const secret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026"));
+  const secret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", getServerSecret("TOKEN_SIGNING_SECRET", ""));
+  if (!secret) {
+    throw new AuthenticationError("Signing secret is not configured on server.");
+  }
   const tokenVersion = getServerSecret("TOKEN_VERSION", "1");
   const now = new Date().getTime();
   const expiresAt = now + (ttlHours * 60 * 60 * 1000);
@@ -2631,7 +2629,11 @@ function verifySessionToken(tokenString, requireAuthSecret = false) {
   const signatureStr = parts[1];
 
   const authSecret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", "");
-  const legacySecret = getServerSecret("TOKEN_SIGNING_SECRET", "ASNAWIYYAH_DEFAULT_SECRET_2026");
+  const legacySecret = getServerSecret("TOKEN_SIGNING_SECRET", "");
+
+  if (!authSecret && !legacySecret) {
+    throw new AuthenticationError("Signing secrets are not configured on server.");
+  }
 
   let validSig = false;
 
