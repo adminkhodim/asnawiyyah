@@ -1403,12 +1403,29 @@
                                     <div class="min-w-0">
                                         <div class="flex items-center space-x-1.5">
                                             <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">Pengelola / Admin</h4>
-                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 shrink-0">Email OTP</span>
+                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 shrink-0">1-Klik / OTP</span>
                                         </div>
                                         <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Operasional & CMS pesantren</p>
                                     </div>
                                 </div>
                                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition ml-2"></i>
+                            </button>
+
+                            <!-- 3. Khidmat Pengasuh Option -->
+                            <button type="button" onclick="openPengasuhAuthModal()" class="w-full text-left p-3 rounded-xl hover:bg-amber-50/70 dark:hover:bg-emerald-950/40 flex items-center justify-between transition group border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/30 dark:bg-emerald-950/20">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm shrink-0 group-hover:scale-105 transition border border-amber-300/40">
+                                        <i class="fa-solid fa-kaaba"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center space-x-1.5">
+                                            <h4 class="font-bold text-xs text-slate-900 dark:text-amber-200 truncate">Khidmat Pengasuh</h4>
+                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-black bg-amber-400 text-slate-950 shrink-0">1-KLIK</span>
+                                        </div>
+                                        <p class="text-[10px] text-amber-800/80 dark:text-amber-300/80 truncate">Kiai & Asatidz Pesantren</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition ml-2"></i>
                             </button>
                         </div>
                     </div>
@@ -1443,6 +1460,39 @@
                             <div class="pt-1">
                                 <div id="google-signin-container" class="flex justify-center"></div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATE D: AUTHENTICATED PENGASUH -->
+                <div id="account-state-pengasuh" class="hidden space-y-4">
+                    <!-- Pengasuh Profile Card -->
+                    <div class="bg-gradient-to-br from-emerald-950 via-[#0a2318] to-emerald-900 text-white p-5 md:p-6 rounded-3xl shadow-xl border border-amber-500/30 relative overflow-hidden">
+                        <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                        <div class="flex items-center justify-between relative z-10">
+                            <div class="flex items-center space-x-3.5 min-w-0">
+                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-2xl font-black shadow-md shrink-0 border border-amber-300/40">
+                                    <i class="fa-solid fa-kaaba"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center space-x-2">
+                                        <h3 id="pengasuh-display-name" class="font-black text-sm md:text-base text-amber-200 truncate">Pengasuh Pesantren</h3>
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-black bg-amber-400 text-emerald-950 uppercase tracking-wide">PENGASUH</span>
+                                    </div>
+                                    <p id="pengasuh-display-email" class="text-xs text-emerald-200/90 truncate mt-0.5 flex items-center">
+                                        <i class="fa-regular fa-envelope mr-1.5 text-amber-300"></i>
+                                        <span>pengasuh@asnawiyyah.sch.id</span>
+                                    </p>
+                                    <p class="text-[10px] text-amber-300/90 mt-1 font-semibold flex items-center">
+                                        <i class="fa-solid fa-circle-check mr-1 text-amber-400"></i> Ahlan wa Sahlan di Portal Resmi PPTQ Asnawiyyah
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="ASNIdentity.logout(this)" class="px-3 py-2 bg-white/10 hover:bg-rose-500/20 text-rose-200 hover:text-white text-xs font-bold rounded-xl transition border border-white/15 shrink-0 flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                <span class="hidden sm:inline">Keluar</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -5011,18 +5061,11 @@
                         <span id="admin-otp-cooldown" class="text-slate-400">Kirim ulang dalam 60s</span>
                     </div>
                 </form>
-
-                <!-- Emergency / Legacy PIN note for continuity -->
-                <div class="pt-2 border-t border-slate-100 dark:border-[#253447] text-center">
-                    <button type="button" onclick="closeAdminAuthModal(); openAdminLoginModal();" class="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-semibold transition">
-                        <i class="fa-solid fa-key mr-1 text-[10px]"></i> Masuk via PIN Pengelola (Mode Transisi)
-                    </button>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- ==================== MODAL AUTHENTICATION: WALI SANTRI EMAIL OTP (PHASE 3) ==================== -->
+    <!-- ==================== MODAL AUTHENTICATION: WALI SANTRI (GOOGLE & EMAIL OTP) ==================== -->
     <div id="modal-auth-parent" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] transform transition-all scale-95 opacity-0 duration-300 relative" id="modal-auth-parent-content">
             <!-- Close button -->
@@ -5032,13 +5075,13 @@
 
             <div class="p-6 md:p-8 text-center space-y-5">
                 <div class="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-emerald-100 dark:border-emerald-800/40">
-                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <i class="fa-solid fa-people-roof"></i>
                 </div>
 
                 <div>
                     <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Masuk Wali Santri</h3>
                     <p class="text-xs text-slate-500 dark:text-slate-300 mt-1 leading-relaxed">
-                        Akses pantauan kegiatan, hafalan & administrasi santri langsung via Email.
+                        Akses pantauan kegiatan, hafalan & administrasi santri langsung via Google atau Email.
                     </p>
                 </div>
 
@@ -5048,26 +5091,29 @@
                     <span id="parent-auth-alert-text">Pesan error autentikasi</span>
                 </div>
 
-                <!-- STEP 1: REQUEST OTP (EMAIL INPUT) -->
+                <!-- STEP 1: REQUEST OTP (EMAIL INPUT & GOOGLE SSO) -->
                 <form id="form-parent-request-otp" onsubmit="handleParentRequestOtp(event)" class="space-y-3">
-                    <div class="relative text-left">
-                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Wali Santri Terdaftar</label>
-                        <input type="email" id="parent-auth-email" required placeholder="nama@domain.com" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-3 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
-                        <span class="text-[10px] text-slate-400 mt-1 block">Pastikan email aktif dan terdaftar pada sistem pesantren.</span>
+                    <!-- Google 1-Klik Button (Prominent) -->
+                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#283a4e] space-y-2">
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wide">Paling Mudah & Instan</span>
+                        <div id="google-signin-parent" class="flex justify-center w-full min-h-[40px]"></div>
                     </div>
-
-                    <button type="submit" id="btn-parent-request-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
-                        <span>Kirim Kode OTP ke Email</span>
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
 
                     <div class="relative flex py-1 items-center">
                         <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
-                        <span class="flex-shrink mx-3 text-[10px] text-slate-400 uppercase font-semibold">atau</span>
+                        <span class="flex-shrink mx-3 text-[10px] text-slate-400 uppercase font-semibold">atau via Email OTP</span>
                         <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
                     </div>
 
-                    <div id="google-signin-parent" class="flex justify-center w-full min-h-[40px]"></div>
+                    <div class="relative text-left">
+                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Wali Santri Terdaftar</label>
+                        <input type="email" id="parent-auth-email" placeholder="nama@gmail.com" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                    </div>
+
+                    <button type="submit" id="btn-parent-request-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                        <span>Kirim Kode OTP ke Email</span>
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
                 </form>
 
                 <!-- STEP 2: VERIFY OTP (6 DIGITS) -->
@@ -5079,7 +5125,7 @@
 
                     <div class="relative text-left">
                         <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Masukkan 6 Digit OTP</label>
-                        <input type="text" id="parent-otp-code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition">
+                        <input type="text" id="parent-otp-code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
                     </div>
 
                     <button type="submit" id="btn-parent-verify-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
@@ -5092,6 +5138,169 @@
                             Ganti Email
                         </button>
                         <span id="parent-otp-cooldown" class="text-slate-400">Kirim ulang dalam 60s</span>
+                    </div>
+                </form>
+
+                <!-- ACTIVATION CTA FOR NEW WALI SANTRI -->
+                <div class="pt-3 border-t border-slate-100 dark:border-[#253447] text-center space-y-2">
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                        Belum memiliki akun Wali Santri terhubung?
+                    </p>
+                    <button type="button" onclick="closeParentAuthModal(); openParentActivationModal();" class="w-full py-2.5 px-3 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl text-xs transition border border-emerald-200/80 dark:border-emerald-800/40 flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-user-plus text-xs"></i>
+                        <span>Aktivasi Akun Santri Baru</span>
+                    </button>
+                    <div class="pt-1">
+                        <a href="https://wa.me/6281234567890?text=Assalamu%27alaikum%20Admin%20Pesantren%2C%20saya%20butuh%20bantuan%20login%20Wali%20Santri" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                            <i class="fa-brands fa-whatsapp mr-1 text-emerald-500 text-xs"></i> Butuh bantuan admin madrasah? Hubungi WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL AUTHENTICATION: PENGASUH 1-KLIK SSO ==================== -->
+    <div id="modal-auth-pengasuh" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-white to-slate-50 dark:from-[#15202d] dark:to-[#0f1721] rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl border border-amber-500/30 transform transition-all scale-95 opacity-0 duration-300 relative" id="modal-auth-pengasuh-content">
+            <!-- Close button -->
+            <button type="button" onclick="closePengasuhAuthModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-[#1c2836] hover:bg-rose-100 text-slate-400 hover:text-rose-600 rounded-full transition">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <div class="p-6 md:p-8 text-center space-y-5">
+                <div class="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black shadow-lg border border-amber-300/40">
+                    <i class="fa-solid fa-kaaba"></i>
+                </div>
+
+                <div>
+                    <h3 class="font-black text-slate-900 dark:text-amber-200 text-lg">Pintu Khidmat Pengasuh</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                        Akses khusus Kiai, Ibu Nyai, dan Dewan Asatidz PPTQ Asnawiyyah Pilangwetan.
+                    </p>
+                </div>
+
+                <!-- Alert Message -->
+                <div id="pengasuh-auth-alert" class="hidden p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-xs font-semibold rounded-xl border border-rose-100 dark:border-rose-900/50 text-left flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-rose-600"></i>
+                    <span id="pengasuh-auth-alert-text">Pesan keamanan</span>
+                </div>
+
+                <!-- Dedicated 1-Click Google Sign-In -->
+                <div class="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 space-y-3">
+                    <p class="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
+                        Masuk instan 1-Klik tanpa perlu memasukkan kata sandi atau kode OTP:
+                    </p>
+                    <div id="google-signin-pengasuh" class="flex justify-center w-full min-h-[44px]"></div>
+                </div>
+
+                <p class="text-[10px] text-slate-400 dark:text-slate-400 leading-relaxed">
+                    Sistem akan mencocokkan akun Google Anda dengan daftar resmi pengasuh yang telah ditetapkan pesantren secara otomatis.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL AKTIVASI AKUN WALI SANTRI ==================== -->
+    <div id="modal-parent-activation" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] transform transition-all scale-95 opacity-0 duration-300 relative" id="modal-parent-activation-content">
+            <!-- Close button -->
+            <button type="button" onclick="closeParentActivationModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-[#1c2836] hover:bg-rose-100 text-slate-400 hover:text-rose-600 rounded-full transition">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <div class="p-6 md:p-8 space-y-5">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-emerald-200/60 dark:border-emerald-800/40">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800 dark:text-slate-100 text-base md:text-lg">Aktivasi Akun Wali Santri</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Verifikasi NISN & Tanggal Lahir untuk menghubungkan santri.</p>
+                    </div>
+                </div>
+
+                <!-- Alert Message -->
+                <div id="activation-alert" class="hidden p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-xs font-semibold rounded-xl border border-rose-100 dark:border-rose-900/50 flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-rose-600"></i>
+                    <span id="activation-alert-text">Pesan kesalahan</span>
+                </div>
+
+                <!-- STEP 1: INPUT DATA SANTRI & WALI -->
+                <form id="form-activation-step1" onsubmit="handleParentActivationRequest(event)" class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">NISN Santri *</label>
+                            <input type="text" id="activation-nisn" required placeholder="Contoh: 0081234567" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Tanggal Lahir Santri *</label>
+                            <input type="date" id="activation-birth-date" required class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Nama Lengkap Wali *</label>
+                            <input type="text" id="activation-wali-name" required placeholder="Nama Bapak/Ibu" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Hubungan</label>
+                            <select id="activation-relationship" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 px-2 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                                <option value="FATHER">Ayah</option>
+                                <option value="MOTHER">Ibu</option>
+                                <option value="GUARDIAN" selected>Wali</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Aktif (Menerima OTP) *</label>
+                            <input type="email" id="activation-wali-email" required placeholder="nama@gmail.com" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">No. WhatsApp / HP</label>
+                            <input type="tel" id="activation-wali-phone" placeholder="08xxxxxxxxxx" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" id="btn-activation-step1" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                            <span>Lanjut Verifikasi OTP</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="text-center pt-1">
+                        <button type="button" onclick="closeParentActivationModal(); openParentAuthModal();" class="text-xs text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition font-semibold">
+                            Sudah pernah aktivasi? Masuk ke Akun
+                        </button>
+                    </div>
+                </form>
+
+                <!-- STEP 2: VERIFIKASI OTP -->
+                <form id="form-activation-step2" onsubmit="handleParentActivationVerify(event)" class="hidden space-y-4">
+                    <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-xs text-slate-700 dark:text-slate-200 border border-emerald-200/80 dark:border-emerald-800/40 space-y-1">
+                        <p>Santri terdeteksi: <strong id="activation-target-student" class="text-emerald-700 dark:text-emerald-300 font-bold"></strong></p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Kode verifikasi 6 digit telah dikirimkan ke: <br><strong id="activation-target-email" class="text-slate-800 dark:text-slate-200 font-bold"></strong></p>
+                    </div>
+
+                    <div class="space-y-1 text-left">
+                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase">Masukkan 6 Digit OTP</label>
+                        <input type="text" id="activation-otp-code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                    </div>
+
+                    <button type="submit" id="btn-activation-step2" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                        <span>Selesaikan Aktivasi</span>
+                        <i class="fa-solid fa-circle-check"></i>
+                    </button>
+
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                        <button type="button" onclick="resetParentActivationStep()" class="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                            Ubah Data Santri
+                        </button>
+                        <span class="text-slate-400">OTP berlaku 5 menit</span>
                     </div>
                 </form>
             </div>

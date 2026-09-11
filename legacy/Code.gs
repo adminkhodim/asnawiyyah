@@ -978,6 +978,13 @@ function doGet(e) {
       return handleProgramApiAction(action, null, e);
     }
 
+    // ========================================================
+    // AUTH SCHEMA SETUP & AUTO-MIGRATION (GET)
+    // ========================================================
+    if (action === "setupAuth" || action === "auth.system.setup") {
+      return createJsonResponse(setupAuthSystemSheets());
+    }
+
     return createJsonResponse({
       status: "error",
       message: "Action tidak dikenal",
@@ -4163,6 +4170,7 @@ function handleGoogleLogin(data) {
 
 const SHEET_ADMIN_IDENTITIES = "Admin_Identities";
 const SHEET_WALI_IDENTITIES = "Wali_Identities";
+const SHEET_PENGASUH_IDENTITIES = "Pengasuh_Identities";
 const SHEET_STUDENTS = "Students";
 const SHEET_WALI_SANTRI_MAP = "Wali_Santri_Map";
 const SHEET_OTP_CHALLENGES = "OTP_Challenges";
@@ -4176,54 +4184,79 @@ const RELATIONSHIP_ENUM = Object.freeze({
   OTHER: "OTHER"
 });
 
+const AUTH_SHEET_SCHEMAS = Object.freeze({
+  [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at"],
+  [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at"],
+  [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at"],
+  [SHEET_STUDENTS]: ["student_id", "nisn", "name", "birth_date", "program", "class_name", "status", "created_at"],
+  [SHEET_WALI_SANTRI_MAP]: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"],
+  [SHEET_OTP_CHALLENGES]: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"],
+  [SHEET_AUTH_SESSIONS]: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"],
+  [SHEET_AUTH_AUDIT_LOG]: ["event_id", "timestamp", "event_type", "identity_id", "session_id", "channel", "success", "request_id", "metadata"]
+});
+
 /**
- * Inisialisasi Otomatis Tabel-tabel Autentikasi Phase 2B jika belum ada.
+ * Inisialisasi & Migrasi Otomatis Tabel-tabel Autentikasi Phase 2B & Pengasuh.
+ * Mendukung deteksi tabel baru dan penambahan kolom baru secara non-destruktif.
  */
 function setupAuthSystemSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const defs = [
-    {
-      name: SHEET_ADMIN_IDENTITIES,
-      headers: ["identity_id", "email", "name", "role", "status", "created_at"]
-    },
-    {
-      name: SHEET_WALI_IDENTITIES,
-      headers: ["identity_id", "email", "phone", "name", "role", "status", "created_at"]
-    },
-    {
-      name: SHEET_STUDENTS,
-      headers: ["student_id", "nisn", "name", "program", "class_name", "status", "created_at"]
-    },
-    {
-      name: SHEET_WALI_SANTRI_MAP,
-      headers: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"]
-    },
-    {
-      name: SHEET_OTP_CHALLENGES,
-      headers: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"]
-    },
-    {
-      name: SHEET_AUTH_SESSIONS,
-      headers: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"]
-    },
-    {
-      name: SHEET_AUTH_AUDIT_LOG,
-      headers: ["event_id", "timestamp", "event_type", "identity_id", "session_id", "channel", "success", "request_id", "metadata"]
-    }
-  ];
+  const ss = getDatabaseSpreadsheet();
+  if (!ss) {
+    Logger.log("[SCHEMA ERROR] Spreadsheet database tidak dapat diakses.");
+    return { status: "error", message: "Spreadsheet database tidak dapat diakses." };
+  }
 
-  defs.forEach(def => {
-    let sheet = ss.getSheetByName(def.name);
+  const sheetNames = Object.keys(AUTH_SHEET_SCHEMAS);
+  sheetNames.forEach(sheetName => {
+    const expectedHeaders = AUTH_SHEET_SCHEMAS[sheetName];
+    let sheet = ss.getSheetByName(sheetName);
     if (!sheet) {
-      sheet = ss.insertSheet(def.name);
-      sheet.getRange(1, 1, 1, def.headers.length).setValues([def.headers]);
-      sheet.getRange(1, 1, 1, def.headers.length).setFontWeight("bold").setBackground("#dcfce7");
+      // Cek variasi nama sebelum insert
+      const cleanTarget = String(sheetName).replace(/[\s_]+/g, "").toLowerCase();
+      const existingSheets = ss.getSheets();
+      for (let i = 0; i < existingSheets.length; i++) {
+        if (existingSheets[i].getName().replace(/[\s_]+/g, "").toLowerCase() === cleanTarget) {
+          sheet = existingSheets[i];
+          break;
+        }
+      }
+    }
+
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
       sheet.setFrozenRows(1);
-      Logger.log(`[SCHEMA] Sheet '${def.name}' berhasil dibuat.`);
+      Logger.log(`[SCHEMA] Sheet '${sheetName}' berhasil dibuat.`);
+    } else {
+      // Sheet sudah ada -> cek apakah ada header baru yang belum terpasang
+      const lastCol = sheet.getLastColumn();
+      if (lastCol === 0) {
+        sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+        sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
+        sheet.setFrozenRows(1);
+      } else {
+        const currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+        const missingHeaders = expectedHeaders.filter(eh => {
+          const lower = eh.toLowerCase();
+          if (lower === "birth_date") {
+            return !currentHeaders.includes("birth_date") && !currentHeaders.includes("tanggal_lahir") && !currentHeaders.includes("tgl_lahir");
+          }
+          return !currentHeaders.includes(lower);
+        });
+
+        if (missingHeaders.length > 0) {
+          missingHeaders.forEach((mh, idx) => {
+            const colIdx = lastCol + idx + 1;
+            sheet.getRange(1, colIdx).setValue(mh).setFontWeight("bold").setBackground("#dcfce7");
+          });
+          Logger.log(`[SCHEMA] Kolom baru [${missingHeaders.join(", ")}] berhasil ditambahkan ke sheet '${sheetName}'.`);
+        }
+      }
     }
   });
 
-  return { status: "success", message: "Tabel autentikasi Phase 2B siap digunakan." };
+  return { status: "success", message: "Tabel autentikasi Phase 2B & Pengasuh terverifikasi dan siap digunakan." };
 }
 
 /**
@@ -4390,6 +4423,60 @@ function sendWaliOtpEmail(email, otpCode, name = "") {
   return true;
 }
 
+/**
+ * Dispatcher Pengiriman Email OTP Aktivasi Akun Wali Santri (Phase 2B / Redesign)
+ */
+function sendWaliActivationOtpEmail(email, otpCode, waliName = "", studentName = "") {
+  const subject = "Kode OTP Aktivasi Akun Wali Santri — PPTQ Asnawiyyah";
+  const body = `Assalamu'alaikum Warahmatullahi Wabarakatuh,\n\n` +
+    `Yth. Bapak/Ibu ${waliName || "Wali Santri"},\n\n` +
+    `Berikut adalah kode OTP 6-digit untuk aktivasi akun Wali Santri Anda (terhubung dengan santri: ${studentName || "Santri"}):\n\n` +
+    `   ${otpCode}\n\n` +
+    `Kode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapa pun demi menjaga keamanan data santri.\n\n` +
+    `Wassalamu'alaikum Warahmatullahi Wabarakatuh,\n` +
+    `Pengurus PPTQ Asnawiyyah Pilangwetan`;
+
+  MailApp.sendEmail({
+    to: email,
+    subject: subject,
+    body: body
+  });
+  return true;
+}
+
+/**
+ * Verifikasi Google ID Token secara Server-Side via Tokeninfo Endpoint
+ */
+function verifyGoogleIdToken(idToken) {
+  if (!idToken || typeof idToken !== "string") {
+    return { valid: false, error: "Token Google tidak ditemukan." };
+  }
+  try {
+    const url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken.trim());
+    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const code = response.getResponseCode();
+    if (code !== 200) {
+      return { valid: false, error: "HTTP " + code + ": " + response.getContentText().substring(0, 120) };
+    }
+    const data = JSON.parse(response.getContentText());
+    const email = String(data.email || "").trim().toLowerCase();
+    const emailVerified = data.email_verified === true || data.email_verified === "true";
+    if (!email || !emailVerified) {
+      return { valid: false, error: "Alamat email Google belum terverifikasi." };
+    }
+    return {
+      valid: true,
+      email: email,
+      name: String(data.name || ""),
+      picture: String(data.picture || ""),
+      sub: String(data.sub || "")
+    };
+  } catch (e) {
+    console.error("Gagal verifikasi Google ID Token:", e);
+    return { valid: false, error: e.message || "Gagal menghubungi server autentikasi Google." };
+  }
+}
+
 // ==================== DATA ACCESS REPOSITORY LAYER ====================
 
 /**
@@ -4410,23 +4497,84 @@ function getDatabaseSpreadsheet() {
 }
 
 /**
- * Helper Resolusi Sheet Tab Resilien (Toleran Spasi & Huruf Besar/Kecil)
+ * Memastikan skema tabel mutakhir secara non-destruktif on-the-fly.
+ * Menambahkan kolom yang belum ada (seperti birth_date pada Students).
+ */
+function ensureAuthSheetSchema(sheet, targetName) {
+  if (!sheet || !targetName || !AUTH_SHEET_SCHEMAS || !AUTH_SHEET_SCHEMAS[targetName]) return;
+  try {
+    const expectedHeaders = AUTH_SHEET_SCHEMAS[targetName];
+    const lastCol = sheet.getLastColumn();
+    if (lastCol === 0) {
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+      return;
+    }
+
+    const currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+    const missingHeaders = expectedHeaders.filter(eh => {
+      const lower = eh.toLowerCase();
+      if (lower === "birth_date") {
+        return !currentHeaders.includes("birth_date") && !currentHeaders.includes("tanggal_lahir") && !currentHeaders.includes("tgl_lahir");
+      }
+      return !currentHeaders.includes(lower);
+    });
+
+    if (missingHeaders.length > 0) {
+      missingHeaders.forEach((mh, idx) => {
+        const colIdx = lastCol + idx + 1;
+        sheet.getRange(1, colIdx).setValue(mh).setFontWeight("bold").setBackground("#dcfce7");
+      });
+      Logger.log(`[AUTO-MIGRATION] Kolom [${missingHeaders.join(", ")}] otomatis ditambahkan ke sheet '${targetName}'.`);
+    }
+  } catch (err) {
+    console.warn(`[AUTO-MIGRATION WARNING] Gagal sinkronisasi skema untuk '${targetName}':`, err);
+  }
+}
+
+/**
+ * Helper Resolusi Sheet Tab Resilien & Auto-Init On-Demand.
+ * 1. Jika tabel sudah ada, lakukan schema sync (tambah kolom baru bila ada).
+ * 2. Jika tabel belum ada, otomatis buat sheet baru dengan header lengkap & format resmi.
  */
 function getAuthSheet(ss, targetName) {
   if (!ss) return null;
-  const direct = ss.getSheetByName(targetName);
-  if (direct) return direct;
+  let targetSheet = ss.getSheetByName(targetName);
 
-  const cleanTarget = String(targetName || "").replace(/[\s_]+/g, "").toLowerCase();
-  const sheets = ss.getSheets();
-  for (let i = 0; i < sheets.length; i++) {
-    const name = sheets[i].getName();
-    if (name.trim().toLowerCase() === String(targetName).trim().toLowerCase() ||
-        name.replace(/[\s_]+/g, "").toLowerCase() === cleanTarget) {
-      return sheets[i];
+  if (!targetSheet) {
+    const cleanTarget = String(targetName || "").replace(/[\s_]+/g, "").toLowerCase();
+    const sheets = ss.getSheets();
+    for (let i = 0; i < sheets.length; i++) {
+      const name = sheets[i].getName();
+      if (name.trim().toLowerCase() === String(targetName).trim().toLowerCase() ||
+          name.replace(/[\s_]+/g, "").toLowerCase() === cleanTarget) {
+        targetSheet = sheets[i];
+        break;
+      }
     }
   }
-  return null;
+
+  // Jika tabel belum ada sama sekali di spreadsheet, auto-create on-the-fly!
+  if (!targetSheet && AUTH_SHEET_SCHEMAS && AUTH_SHEET_SCHEMAS[targetName]) {
+    try {
+      targetSheet = ss.insertSheet(targetName);
+      const headers = AUTH_SHEET_SCHEMAS[targetName];
+      targetSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      targetSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#dcfce7");
+      targetSheet.setFrozenRows(1);
+      Logger.log(`[SCHEMA AUTO-INIT] Tab '${targetName}' berhasil dibuat otomatis di Google Sheets.`);
+    } catch (e) {
+      console.warn(`[SCHEMA AUTO-INIT WARN] Gagal insert sheet '${targetName}': ${e.message}`);
+      targetSheet = ss.getSheetByName(targetName); // fallback jika terjadi concurrency
+    }
+  }
+
+  if (targetSheet) {
+    ensureAuthSheetSchema(targetSheet, targetName);
+  }
+
+  return targetSheet;
 }
 
 function getAdminIdentityByEmail(email) {
@@ -4638,6 +4786,173 @@ function getWaliIdentityById(identityId) {
   return null;
 }
 
+/**
+ * Lookup Identitas Pengasuh berdasarkan Email (Khidmat Pengasuh SSO)
+ */
+function getPengasuhIdentityByEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized || !normalized.includes("@")) return null;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_PENGASUH_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let phoneIdx = header.indexOf("phone");
+  let nameIdx = header.indexOf("title_name");
+  if (nameIdx === -1) nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (emailIdx === -1) emailIdx = 1;
+  if (phoneIdx === -1) phoneIdx = 2;
+  if (nameIdx === -1) nameIdx = 3;
+  if (roleIdx === -1) roleIdx = 4;
+  if (statusIdx === -1) statusIdx = 5;
+
+  for (let i = 1; i < data.length; i++) {
+    const storedEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
+    if (storedEmail === normalized) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: storedEmail,
+        phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+        name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+        titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+        role: roleIdx !== -1 ? String(data[i][roleIdx] || "PENGASUH") : "PENGASUH",
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE"
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Lookup Identitas Pengasuh berdasarkan ID
+ */
+function getPengasuhIdentityById(identityId) {
+  if (!identityId) return null;
+  const targetId = String(identityId).trim();
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_PENGASUH_IDENTITIES);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let phoneIdx = header.indexOf("phone");
+  let nameIdx = header.indexOf("title_name");
+  if (nameIdx === -1) nameIdx = header.indexOf("name");
+  let roleIdx = header.indexOf("role");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (emailIdx === -1) emailIdx = 1;
+  if (phoneIdx === -1) phoneIdx = 2;
+  if (nameIdx === -1) nameIdx = 3;
+  if (roleIdx === -1) roleIdx = 4;
+  if (statusIdx === -1) statusIdx = 5;
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idIdx] || "").trim() === targetId) {
+      return {
+        identityId: String(data[i][idIdx] || ""),
+        email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
+        phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+        name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+        titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+        role: roleIdx !== -1 ? String(data[i][roleIdx] || "PENGASUH") : "PENGASUH",
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE"
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Normalisasi format tanggal untuk pencocokan toleran (YYYY-MM-DD)
+ */
+function normalizeDateString(val) {
+  if (!val) return "";
+  if (val instanceof Date && !isNaN(val.getTime())) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, "0");
+    const d = String(val.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(val).trim();
+  const mYmd = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (mYmd) {
+    return `${mYmd[1]}-${String(mYmd[2]).padStart(2, "0")}-${String(mYmd[3]).padStart(2, "0")}`;
+  }
+  const mDmy = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (mDmy) {
+    return `${mDmy[3]}-${String(mDmy[2]).padStart(2, "0")}-${String(mDmy[1]).padStart(2, "0")}`;
+  }
+  return s;
+}
+
+/**
+ * Lookup Santri berdasarkan NISN & Tanggal Lahir untuk Aktivasi Wali Santri
+ */
+function getStudentByNisnAndBirthDate(nisn, birthDate) {
+  const cleanNisn = String(nisn || "").trim();
+  const cleanBirthDate = normalizeDateString(birthDate);
+  if (!cleanNisn || !cleanBirthDate) return null;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("student_id");
+  let nisnIdx = header.indexOf("nisn");
+  let nameIdx = header.indexOf("name");
+  let birthIdx = header.indexOf("birth_date");
+  if (birthIdx === -1) birthIdx = header.indexOf("tanggal_lahir");
+  if (birthIdx === -1) birthIdx = header.indexOf("tgl_lahir");
+  let progIdx = header.indexOf("program");
+  let classIdx = header.indexOf("class_name");
+  if (classIdx === -1) classIdx = header.indexOf("kelas");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (nisnIdx === -1) nisnIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowNisn = String(data[i][nisnIdx] || "").trim();
+    if (rowNisn === cleanNisn) {
+      const rowBirth = birthIdx !== -1 ? normalizeDateString(data[i][birthIdx]) : "";
+      if (!rowBirth || rowBirth === cleanBirthDate) {
+        return {
+          studentId: String(data[i][idIdx] || ""),
+          nisn: rowNisn,
+          name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Santri",
+          birthDate: rowBirth,
+          program: progIdx !== -1 ? String(data[i][progIdx] || "Reguler") : "Reguler",
+          className: classIdx !== -1 ? String(data[i][classIdx] || "") : "",
+          status: statusIdx !== -1 ? String(data[i][statusIdx] || "Aktif") : "Aktif"
+        };
+      }
+    }
+  }
+  return null;
+}
+
 function getSessionById(sessionId) {
   if (!sessionId) return null;
   const ss = getDatabaseSpreadsheet();
@@ -4821,12 +5136,14 @@ function authenticateSession(tokenString) {
     throw new AuthenticationError("Server session is not active or has been revoked.");
   }
 
-  // P0-1: Cek Status Identitas di Master (Admin / Wali)
+  // P0-1: Cek Status Identitas di Master (Admin / Wali / Pengasuh)
   let identity = null;
   if (claims.role === "ADMIN" || claims.role === "EDITOR") {
     identity = getAdminIdentityById(claims.identityId);
   } else if (claims.role === "WALI_SANTRI") {
     identity = getWaliIdentityById(claims.identityId);
+  } else if (claims.role === "PENGASUH") {
+    identity = getPengasuhIdentityById(claims.identityId);
   }
 
   if (!identity || identity.status !== "ACTIVE") {
@@ -4873,6 +5190,18 @@ function handleAuthApiAction(action, payload, e) {
   const requestId = sanitizeRequestId(payload && payload.requestId);
 
   try {
+    // ----------------------------------------------------
+    // 0. AUTH SYSTEM SETUP & AUTO-MIGRATION
+    // ----------------------------------------------------
+    if (action === "auth.system.setup") {
+      const setupResult = setupAuthSystemSheets();
+      return createJsonResponse({
+        success: setupResult.status === "success",
+        ...setupResult,
+        requestId: requestId
+      });
+    }
+
     // ----------------------------------------------------
     // 1. ADMIN REQUEST OTP
     // ----------------------------------------------------
@@ -5277,6 +5606,356 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse({
         success: true,
         students: students,
+        requestId: requestId
+      });
+    }
+
+    // ----------------------------------------------------
+    // 9. GOOGLE ONE-CLICK SSO (Wali Santri, Admin, Pengasuh)
+    // ----------------------------------------------------
+    if (action === "auth.sso.google") {
+      return withAuthScriptLock(() => {
+        const credential = String(payload.credential || "").trim();
+        const targetRoleHint = String(payload.targetRole || "").trim().toUpperCase();
+
+        if (!credential) {
+          return createJsonResponse({ success: false, message: "Kredensial token Google tidak ditemukan." });
+        }
+
+        const gUser = verifyGoogleIdToken(credential);
+        if (!gUser || !gUser.valid || !gUser.email) {
+          writeAuthAuditLog("SSO_GOOGLE_INVALID_TOKEN", "ANONYMOUS", "", "GOOGLE_SSO", false, requestId, { error: gUser ? gUser.error : "Unknown" });
+          return createJsonResponse({ success: false, message: "Verifikasi akun Google gagal: " + ((gUser && gUser.error) || "Token tidak valid") });
+        }
+
+        const email = gUser.email.toLowerCase();
+
+        // 1. Cek Pengasuh terlebih dahulu (atau jika targetRoleHint === "PENGASUH")
+        let pengasuh = null;
+        if (!targetRoleHint || targetRoleHint === "PENGASUH") {
+          pengasuh = getPengasuhIdentityByEmail(email);
+        }
+        if (pengasuh && pengasuh.status === "ACTIVE") {
+          const session = createAuthSessionRecord(pengasuh.identityId, "PENGASUH", 720); // 30 hari
+          const tokenData = generateSessionToken(pengasuh.email, "PENGASUH", 720, session.sessionId, pengasuh.identityId);
+
+          writeAuthAuditLog("SSO_LOGIN_SUCCESS", pengasuh.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: "PENGASUH" });
+          return createJsonResponse({
+            success: true,
+            role: "PENGASUH",
+            token: tokenData.token,
+            identity: pengasuh,
+            pengasuh: pengasuh,
+            requestId: requestId
+          });
+        }
+
+        // 2. Cek Pengelola / Admin
+        let admin = null;
+        if (!targetRoleHint || targetRoleHint === "ADMIN" || targetRoleHint === "EDITOR") {
+          admin = getAdminIdentityByEmail(email);
+        }
+        if (admin && admin.status === "ACTIVE") {
+          const session = createAuthSessionRecord(admin.identityId, admin.role, 8); // 8 jam
+          const tokenData = generateSessionToken(admin.email, admin.role, 8, session.sessionId, admin.identityId);
+
+          writeAuthAuditLog("SSO_LOGIN_SUCCESS", admin.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: admin.role });
+          return createJsonResponse({
+            success: true,
+            role: admin.role,
+            token: tokenData.token,
+            identity: admin,
+            admin: admin,
+            requestId: requestId
+          });
+        }
+
+        // 3. Cek Wali Santri
+        let wali = null;
+        if (!targetRoleHint || targetRoleHint === "WALI_SANTRI") {
+          wali = getWaliIdentityByEmail(email);
+        }
+        if (wali && wali.status === "ACTIVE") {
+          const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", 720); // 30 hari
+          const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", 720, session.sessionId, wali.identityId);
+          const students = getLinkedStudentsForWali(wali.identityId);
+
+          writeAuthAuditLog("SSO_LOGIN_SUCCESS", wali.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: "WALI_SANTRI" });
+          return createJsonResponse({
+            success: true,
+            role: "WALI_SANTRI",
+            token: tokenData.token,
+            identity: wali,
+            parent: wali,
+            students: students,
+            requestId: requestId
+          });
+        }
+
+        // Tidak terdaftar di tabel manapun
+        writeAuthAuditLog("SSO_NOT_REGISTERED", "ANONYMOUS", "", "GOOGLE_SSO", false, requestId, { email: email, targetRoleHint: targetRoleHint });
+        return createJsonResponse({
+          success: false,
+          notRegistered: true,
+          email: email,
+          name: gUser.name,
+          message: `Akun Google (${email}) belum terdaftar pada sistem pesantren. Jika Anda Wali Santri, silakan lakukan Aktivasi Akun terlebih dahulu menggunakan NISN & Tanggal Lahir santri.`,
+          requestId: requestId
+        });
+      });
+    }
+
+    // ----------------------------------------------------
+    // 10. WALI SANTRI ACTIVATION REQUEST (Matching NISN + Tanggal Lahir)
+    // ----------------------------------------------------
+    if (action === "auth.parent.activate") {
+      return withAuthScriptLock(() => {
+        const nisn = String(payload.nisn || "").trim();
+        const birthDate = String(payload.birthDate || "").trim();
+        const waliEmail = String(payload.waliEmail || "").trim().toLowerCase();
+        const waliName = String(payload.waliName || "").trim();
+        const waliPhone = String(payload.waliPhone || "").trim();
+        const relationship = String(payload.relationship || "GUARDIAN").trim().toUpperCase();
+
+        if (!nisn || !birthDate || !waliEmail || !waliEmail.includes("@")) {
+          return createJsonResponse({
+            success: false,
+            message: "NISN, Tanggal Lahir, dan Email Wali wajib diisi dengan benar."
+          });
+        }
+
+        const student = getStudentByNisnAndBirthDate(nisn, birthDate);
+        if (!student) {
+          writeAuthAuditLog("ACTIVATION_REJECTED_STUDENT_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { nisn: nisn });
+          return createJsonResponse({
+            success: false,
+            message: "Data santri dengan NISN dan tanggal lahir tersebut tidak ditemukan. Mohon periksa kembali atau hubungi pengurus madrasah."
+          });
+        }
+
+        if (student.status && student.status.toUpperCase() !== "AKTIF") {
+          return createJsonResponse({
+            success: false,
+            message: "Status santri tidak aktif pada sistem akademik madrasah."
+          });
+        }
+
+        const idHash = hashIdentifier(waliEmail);
+        const pending = findPendingOtpChallenge("EMAIL_ACTIVATION", idHash);
+        if (pending && !pending.isExpired) {
+          const elapsed = (new Date().getTime() - new Date(pending.expiresAt.getTime() - 300000).getTime()) / 1000;
+          if (elapsed < 60) {
+            return createJsonResponse({
+              success: true,
+              message: "Kode OTP aktivasi telah dikirim sebelumnya ke email Anda. Silakan tunggu jeda kirim ulang.",
+              cooldownSeconds: Math.ceil(60 - elapsed),
+              requestId: requestId
+            });
+          }
+        }
+
+        cancelPreviousChallenges("EMAIL_ACTIVATION", idHash);
+
+        const otpCode = generateSecureOtpDigits();
+        const otpHash = hashOtpCode(otpCode);
+        const challengeId = "CHL_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 300000).toISOString();
+
+        const ss = getDatabaseSpreadsheet();
+        const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+        if (!otpSheet) {
+          return createJsonResponse({ success: false, message: "Tabel tantangan autentikasi belum disiapkan." });
+        }
+
+        otpSheet.appendRow([
+          challengeId,
+          "ACTIVATION_" + student.studentId,
+          "EMAIL_ACTIVATION",
+          idHash,
+          otpHash,
+          0,
+          3,
+          expiresAt,
+          "PENDING",
+          now.toISOString(),
+          "",
+          requestId
+        ]);
+
+        let emailSuccess = false;
+        try {
+          emailSuccess = sendWaliActivationOtpEmail(waliEmail, otpCode, waliName, student.name);
+        } catch (mailErr) {
+          console.error("Gagal mengirim email OTP aktivasi Wali:", mailErr);
+          emailSuccess = false;
+        }
+
+        if (!emailSuccess) {
+          writeAuthAuditLog("OTP_DISPATCH_FAIL", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { reason: "MailApp error" });
+          return createJsonResponse({
+            success: false,
+            message: "Gagal mengirimkan email verifikasi. Pastikan alamat email aktif dan coba kembali."
+          });
+        }
+
+        writeAuthAuditLog("ACTIVATION_OTP_SENT", student.studentId, "", "EMAIL_ACTIVATION", true, requestId, { email: waliEmail, studentName: student.name });
+        return createJsonResponse({
+          success: true,
+          message: `Kode verifikasi 6 digit telah dikirimkan ke ${waliEmail}. Masukkan kode untuk menyelesaikan aktivasi.`,
+          studentName: student.name,
+          cooldownSeconds: 60,
+          requestId: requestId
+        });
+      });
+    }
+
+    // ----------------------------------------------------
+    // 11. WALI SANTRI VERIFY ACTIVATION (Create/Link Identity & Issue Session)
+    // ----------------------------------------------------
+    if (action === "auth.parent.verifyActivation") {
+      return withAuthScriptLock(() => {
+        const nisn = String(payload.nisn || "").trim();
+        const birthDate = String(payload.birthDate || "").trim();
+        const waliEmail = String(payload.waliEmail || "").trim().toLowerCase();
+        const waliName = String(payload.waliName || "").trim();
+        const waliPhone = String(payload.waliPhone || "").trim();
+        const relationship = String(payload.relationship || "GUARDIAN").trim().toUpperCase();
+        const otp = String(payload.otp || "").trim();
+
+        const idHash = hashIdentifier(waliEmail);
+        const challenge = findPendingOtpChallenge("EMAIL_ACTIVATION", idHash);
+
+        if (!challenge) {
+          writeAuthAuditLog("ACTIVATION_OTP_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, {});
+          return createJsonResponse({ success: false, message: "Kode OTP aktivasi tidak ditemukan atau sudah kedaluwarsa." });
+        }
+
+        if (challenge.isExpired) {
+          return createJsonResponse({ success: false, message: "Kode OTP aktivasi telah kedaluwarsa. Silakan minta kode baru." });
+        }
+
+        if (challenge.attempts >= challenge.maxAttempts) {
+          return createJsonResponse({ success: false, message: "Batas percobaan verifikasi telah habis. Silakan ulangi aktivasi." });
+        }
+
+        const inputHash = hashOtpCode(otp);
+        const ss = getDatabaseSpreadsheet();
+        const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
+
+        if (inputHash !== challenge.otpHash) {
+          const newAttempts = challenge.attempts + 1;
+          otpSheet.getRange(challenge.rowIndex, 6).setValue(newAttempts);
+          if (newAttempts >= challenge.maxAttempts) {
+            otpSheet.getRange(challenge.rowIndex, 9).setValue("EXHAUSTED");
+          }
+          return createJsonResponse({
+            success: false,
+            message: `Kode verifikasi salah. Sisa kesempatan: ${Math.max(0, challenge.maxAttempts - newAttempts)}`
+          });
+        }
+
+        // Tandai OTP digunakan
+        otpSheet.getRange(challenge.rowIndex, 9).setValue("CONSUMED");
+        otpSheet.getRange(challenge.rowIndex, 11).setValue(new Date().toISOString());
+
+        // Cari data santri
+        const student = getStudentByNisnAndBirthDate(nisn, birthDate);
+        if (!student) {
+          return createJsonResponse({ success: false, message: "Data santri tidak ditemukan." });
+        }
+
+        // Cari atau buat Wali Identity
+        let wali = getWaliIdentityByEmail(waliEmail);
+        const waliSheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
+        const nowIso = new Date().toISOString();
+
+        if (!wali) {
+          const newWaliId = "WLI_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+          waliSheet.appendRow([
+            newWaliId,
+            waliEmail,
+            waliPhone,
+            waliName || "Wali Santri",
+            "WALI_SANTRI",
+            "ACTIVE",
+            nowIso
+          ]);
+          wali = {
+            identityId: newWaliId,
+            email: waliEmail,
+            phone: waliPhone,
+            name: waliName || "Wali Santri",
+            role: "WALI_SANTRI",
+            status: "ACTIVE"
+          };
+        } else {
+          // Update phone / name jika sebelumnya kosong
+          if (!wali.name && waliName) wali.name = waliName;
+          if (!wali.phone && waliPhone) wali.phone = waliPhone;
+        }
+
+        // Cek / Hubungkan santri di Wali_Santri_Map
+        const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+        let alreadyMapped = false;
+        if (mapSheet) {
+          const mapData = mapSheet.getDataRange().getValues();
+          for (let i = 1; i < mapData.length; i++) {
+            if (String(mapData[i][1]).trim() === wali.identityId &&
+                String(mapData[i][2]).trim() === student.studentId) {
+              alreadyMapped = true;
+              break;
+            }
+          }
+          if (!alreadyMapped) {
+            const mapId = "MAP_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
+            mapSheet.appendRow([
+              mapId,
+              wali.identityId,
+              student.studentId,
+              relationship,
+              "VERIFIED",
+              nowIso
+            ]);
+          }
+        }
+
+        // Buat Sesi 30 hari (720 jam)
+        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", 720);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", 720, session.sessionId, wali.identityId);
+        const students = getLinkedStudentsForWali(wali.identityId);
+
+        writeAuthAuditLog("WALI_ACTIVATION_SUCCESS", wali.identityId, session.sessionId, "EMAIL_ACTIVATION", true, requestId, {
+          studentId: student.studentId,
+          studentName: student.name
+        });
+
+        return createJsonResponse({
+          success: true,
+          token: tokenData.token,
+          role: "WALI_SANTRI",
+          parent: wali,
+          identity: wali,
+          students: students,
+          message: `Aktivasi akun berhasil! Anda terhubung dengan santri ${student.name}.`,
+          requestId: requestId
+        });
+      });
+    }
+
+    // ----------------------------------------------------
+    // 12. PENGASUH PROFILE (auth.pengasuh.me)
+    // ----------------------------------------------------
+    if (action === "auth.pengasuh.me") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const actor = authenticateSession(token);
+      authorizeRole(actor, ["PENGASUH", "ADMIN"]);
+
+      const pengasuh = getPengasuhIdentityById(actor.identityId);
+      return createJsonResponse({
+        success: true,
+        pengasuh: pengasuh,
+        identity: pengasuh,
         requestId: requestId
       });
     }

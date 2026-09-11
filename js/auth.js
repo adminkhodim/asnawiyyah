@@ -9,7 +9,8 @@ const ASN_ROLES = Object.freeze({
     PUBLIC: 'PUBLIC',
     ADMIN: 'ADMIN',
     EDITOR: 'EDITOR',
-    WALI_SANTRI: 'WALI_SANTRI'
+    WALI_SANTRI: 'WALI_SANTRI',
+    PENGASUH: 'PENGASUH'
 });
 
 /**
@@ -21,11 +22,15 @@ const ASN_STATES = Object.freeze({
     PUBLIC: 'PUBLIC',
     WALI_LOGIN: 'WALI_LOGIN',
     WALI_OTP: 'WALI_OTP',
+    WALI_ACTIVATION: 'WALI_ACTIVATION',
+    WALI_ACTIVATION_OTP: 'WALI_ACTIVATION_OTP',
     WALI_HYDRATING: 'WALI_HYDRATING',
     WALI_AUTH_ACTIVE: 'WALI_AUTH_ACTIVE',
     ADMIN_LOGIN: 'ADMIN_LOGIN',
     ADMIN_OTP: 'ADMIN_OTP',
     ADMIN_AUTH_ACTIVE: 'ADMIN_AUTH_ACTIVE',
+    PENGASUH_LOGIN: 'PENGASUH_LOGIN',
+    PENGASUH_AUTH_ACTIVE: 'PENGASUH_AUTH_ACTIVE',
     LOGGING_OUT: 'LOGGING_OUT',
     SESSION_EXPIRED: 'SESSION_EXPIRED'
 });
@@ -38,9 +43,13 @@ const ASN_AUTH_ACTIONS = Object.freeze({
     ADMIN_VERIFY_OTP: 'auth.admin.verifyOtp',
     PARENT_REQUEST_OTP: 'auth.parent.requestOtp',
     PARENT_VERIFY_OTP: 'auth.parent.verifyOtp',
+    PARENT_ACTIVATE: 'auth.parent.activate',
+    PARENT_VERIFY_ACTIVATION: 'auth.parent.verifyActivation',
     SESSION_VERIFY: 'auth.session',
     PARENT_ME: 'auth.parent.me',
     PARENT_STUDENTS: 'auth.parent.students',
+    PENGASUH_ME: 'auth.pengasuh.me',
+    SSO_GOOGLE: 'auth.sso.google',
     LOGOUT: 'auth.logout'
 });
 
@@ -53,7 +62,9 @@ const ASN_STORAGE_KEYS = Object.freeze({
     ADMIN_DATA: 'asnawiyyah_admin_data',
     PARENT_TOKEN: 'asnawiyyah_parent_token',
     PARENT_DATA: 'asnawiyyah_parent_data',
-    PARENT_STUDENTS: 'asnawiyyah_parent_students'
+    PARENT_STUDENTS: 'asnawiyyah_parent_students',
+    PENGASUH_TOKEN: 'asnawiyyah_pengasuh_token',
+    PENGASUH_DATA: 'asnawiyyah_pengasuh_data'
 });
 
 /**
@@ -68,8 +79,11 @@ async function authApiPost(action, payload = {}) {
     if (!targetUrl) throw new Error("Endpoint autentikasi belum dikonfigurasi.");
 
     const token = payload.token || 
-                  (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || 
-                  sessionStorage.getItem("asnawiyyah_parent_token") || "";
+                  (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN)) || 
+                  sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || 
+                  localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
+                  sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) ||
+                  localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || "";
 
     const bodyPayload = { action, ...payload };
     if (token && !bodyPayload.token) {
@@ -305,6 +319,51 @@ const ASNAuthAPI = {
             console.warn('[ASNAuthAPI] logoutSession error:', err);
             return { success: false, error: err.message };
         }
+    },
+
+    async ssoGoogle(credential, targetRole = "") {
+        if (!credential) return { success: false, message: "Kredensial token Google tidak ditemukan." };
+        try {
+            const response = await authApiPost(ASN_AUTH_ACTIONS.SSO_GOOGLE, {
+                credential: credential,
+                targetRole: targetRole
+            });
+            return response;
+        } catch (err) {
+            console.warn('[ASNAuthAPI] ssoGoogle error:', err);
+            return { success: false, unavailable: true, message: 'Gagal menghubungi server Google SSO.' };
+        }
+    },
+
+    async activateParent(payload) {
+        try {
+            const response = await authApiPost(ASN_AUTH_ACTIONS.PARENT_ACTIVATE, payload);
+            return response;
+        } catch (err) {
+            console.warn('[ASNAuthAPI] activateParent error:', err);
+            return { success: false, unavailable: true, message: 'Gagal menghubungi server aktivasi santri.' };
+        }
+    },
+
+    async verifyParentActivation(payload) {
+        try {
+            const response = await authApiPost(ASN_AUTH_ACTIONS.PARENT_VERIFY_ACTIVATION, payload);
+            return response;
+        } catch (err) {
+            console.warn('[ASNAuthAPI] verifyParentActivation error:', err);
+            return { success: false, unavailable: true, message: 'Gagal memverifikasi aktivasi santri.' };
+        }
+    },
+
+    async getPengasuhProfile(token) {
+        if (!token) return { success: false };
+        try {
+            const response = await authApiPost(ASN_AUTH_ACTIONS.PENGASUH_ME, { token: token });
+            return response;
+        } catch (err) {
+            console.warn('[ASNAuthAPI] getPengasuhProfile error:', err);
+            return { success: false, unavailable: true, message: 'Gagal memuat profil pengasuh.' };
+        }
     }
 };
 
@@ -333,9 +392,10 @@ const ASNIdentity = {
         this.currentState = ASN_STATES.HYDRATING;
         this.renderAccountCenterUI();
 
+        const pengasuhToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
         const adminToken = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
-        const parentToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
-        const token = adminToken || parentToken;
+        const parentToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+        const token = pengasuhToken || adminToken || parentToken;
 
         if (!token) {
             this.clearLocalSession();
@@ -361,7 +421,20 @@ const ASNIdentity = {
             }
 
             const serverRole = String(verifyRes.role || '').toUpperCase();
-            if (serverRole === 'ADMIN' || serverRole === 'EDITOR') {
+            if (serverRole === 'PENGASUH') {
+                this.currentRole = ASN_ROLES.PENGASUH;
+                const profRes = await ASNAuthAPI.getPengasuhProfile(token);
+                if (profRes.success && profRes.pengasuh) {
+                    this.currentUser = profRes.pengasuh;
+                    sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(profRes.pengasuh));
+                    localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(profRes.pengasuh));
+                } else if (verifyRes.identity) {
+                    this.currentUser = verifyRes.identity;
+                }
+                this.currentState = ASN_STATES.PENGASUH_AUTH_ACTIVE;
+                this.isHydrating = false;
+                this.renderAccountCenterUI();
+            } else if (serverRole === 'ADMIN' || serverRole === 'EDITOR') {
                 this.currentRole = ASN_ROLES.ADMIN;
                 this.currentUser = verifyRes.identity || {
                     name: 'Administrator Pesantren',
@@ -388,6 +461,7 @@ const ASNIdentity = {
                 if (profRes.success && profRes.parent) {
                     this.currentUser = profRes.parent;
                     sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(profRes.parent));
+                    localStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(profRes.parent));
                 } else if (verifyRes.identity) {
                     this.currentUser = verifyRes.identity;
                 }
@@ -435,6 +509,18 @@ const ASNIdentity = {
         return this.currentRole;
     },
 
+    setPengasuhSession(token, pengasuhData) {
+        if (!token) return;
+        sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN, token);
+        localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN, token);
+        sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(pengasuhData || {}));
+        localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(pengasuhData || {}));
+        this.currentRole = ASN_ROLES.PENGASUH;
+        this.currentUser = pengasuhData;
+        this.currentState = ASN_STATES.PENGASUH_AUTH_ACTIVE;
+        this.renderAccountCenterUI();
+    },
+
     setAdminSession(token, adminData) {
         if (!token) return;
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
@@ -450,7 +536,9 @@ const ASNIdentity = {
     setParentSession(token, parentData, students) {
         if (!token) return;
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_TOKEN, token);
+        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_TOKEN, token);
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(parentData || {}));
+        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(parentData || {}));
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(students || []));
         this.currentRole = ASN_ROLES.WALI_SANTRI;
         this.currentUser = parentData;
@@ -461,7 +549,7 @@ const ASNIdentity = {
     },
 
     async retryLoadStudents() {
-        const token = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+        const token = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
         if (!token) return;
         const listContainer = document.getElementById('parent-linked-students-list');
         if (listContainer) {
@@ -502,8 +590,11 @@ const ASNIdentity = {
             });
         } catch (e) {}
 
-        const token = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
-                      sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+        const token = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || 
+                      localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || 
+                      sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
+                      sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
+                      localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
 
         this.currentState = ASN_STATES.LOGGING_OUT;
         this.renderAccountCenterUI();
@@ -534,15 +625,22 @@ const ASNIdentity = {
     },
 
     clearLocalSession() {
+        sessionStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
+        sessionStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_DATA);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PARENT_DATA);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_DATA);
         sessionStorage.removeItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
         sessionStorage.removeItem('asn_temp_admin_email');
         sessionStorage.removeItem('asn_temp_parent_email');
         sessionStorage.removeItem('asn_temp_parent_phone');
+        sessionStorage.removeItem('asn_temp_activation_data');
 
         // Bersihkan token legacy jika ada
         localStorage.removeItem('user_token');
@@ -554,6 +652,7 @@ const ASNIdentity = {
         const publicStateEl = document.getElementById('account-state-public');
         const adminStateEl = document.getElementById('account-state-admin');
         const waliStateEl = document.getElementById('account-state-wali');
+        const pengasuhStateEl = document.getElementById('account-state-pengasuh');
 
         if (!publicStateEl || !adminStateEl || !waliStateEl) return;
 
@@ -562,6 +661,7 @@ const ASNIdentity = {
         publicStateEl.classList.add('hidden');
         adminStateEl.classList.add('hidden');
         waliStateEl.classList.add('hidden');
+        if (pengasuhStateEl) pengasuhStateEl.classList.add('hidden');
 
         // Update Desktop Navigation button
         this.updateDesktopNavButton();
@@ -571,7 +671,15 @@ const ASNIdentity = {
             return;
         }
 
-        if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
+        if (this.currentRole === ASN_ROLES.PENGASUH) {
+            if (pengasuhStateEl) {
+                pengasuhStateEl.classList.remove('hidden');
+                const nameEl = document.getElementById('pengasuh-display-name');
+                const emailEl = document.getElementById('pengasuh-display-email');
+                if (nameEl) nameEl.innerText = (this.currentUser && (this.currentUser.titleName || this.currentUser.name)) || 'Pengasuh Pesantren';
+                if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1.5 text-amber-400"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || '-')}`;
+            }
+        } else if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
             adminStateEl.classList.remove('hidden');
             const nameEl = document.getElementById('admin-display-name');
             const emailEl = document.getElementById('admin-display-email');
@@ -598,7 +706,11 @@ const ASNIdentity = {
         const icon = document.getElementById('desk-nav-account-icon');
         if (!btn || !label) return;
 
-        if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
+        if (this.currentRole === ASN_ROLES.PENGASUH) {
+            label.innerText = 'Pengasuh';
+            if (icon) icon.className = 'fa-solid fa-kaaba text-xs text-amber-300';
+            btn.className = 'bg-emerald-950 hover:bg-emerald-900 text-amber-200 border border-amber-500/40 px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm transition-all duration-200 flex items-center space-x-1.5';
+        } else if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
             label.innerText = 'Pengelola';
             if (icon) icon.className = 'fa-solid fa-shield-halved text-xs text-emerald-300';
             btn.className = 'bg-brand-800 hover:bg-brand-700 text-emerald-300 border border-emerald-500/30 px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm transition-all duration-200 flex items-center space-x-1.5';
@@ -952,6 +1064,202 @@ async function handleParentVerifyOtp(e) {
     }
 }
 
+// ----- Wali Santri Activation Controllers -----
+function openParentActivationModal(prefillEmail = "", prefillName = "") {
+    const modal = document.getElementById('modal-parent-activation');
+    const content = document.getElementById('modal-parent-activation-content');
+    if (!modal || !content) return;
+
+    resetParentActivationStep();
+    if (prefillEmail) {
+        const emailInput = document.getElementById('activation-wali-email');
+        if (emailInput) emailInput.value = prefillEmail;
+    }
+    if (prefillName) {
+        const nameInput = document.getElementById('activation-wali-name');
+        if (nameInput) nameInput.value = prefillName;
+    }
+
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        const nisnInput = document.getElementById('activation-nisn');
+        if (nisnInput) nisnInput.focus();
+    }, 50);
+}
+
+function closeParentActivationModal() {
+    const modal = document.getElementById('modal-parent-activation');
+    const content = document.getElementById('modal-parent-activation-content');
+    if (!modal || !content) return;
+
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 250);
+}
+
+function resetParentActivationStep() {
+    const step1 = document.getElementById('form-activation-step1');
+    const step2 = document.getElementById('form-activation-step2');
+    const alertBox = document.getElementById('activation-alert');
+
+    if (step1) step1.classList.remove('hidden');
+    if (step2) step2.classList.add('hidden');
+    if (alertBox) alertBox.classList.add('hidden');
+
+    const otpInput = document.getElementById('activation-otp-code');
+    if (otpInput) otpInput.value = '';
+}
+
+async function handleParentActivationRequest(e) {
+    e.preventDefault();
+    const nisn = (document.getElementById('activation-nisn')?.value || '').trim();
+    const birthDate = (document.getElementById('activation-birth-date')?.value || '').trim();
+    const waliName = (document.getElementById('activation-wali-name')?.value || '').trim();
+    const waliEmail = (document.getElementById('activation-wali-email')?.value || '').trim().toLowerCase();
+    const waliPhone = (document.getElementById('activation-wali-phone')?.value || '').trim();
+    const relationship = (document.getElementById('activation-relationship')?.value || 'GUARDIAN').trim();
+
+    const btn = document.getElementById('btn-activation-step1');
+    const alertBox = document.getElementById('activation-alert');
+    const alertText = document.getElementById('activation-alert-text');
+
+    if (!nisn || !birthDate || !waliEmail) {
+        if (alertBox && alertText) {
+            alertText.innerText = 'NISN, Tanggal Lahir, dan Email Wali wajib diisi.';
+            alertBox.classList.remove('hidden');
+        }
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Mencocokkan Data Santri...</span>`;
+    if (alertBox) alertBox.classList.add('hidden');
+
+    const payload = {
+        nisn,
+        birthDate,
+        waliName,
+        waliEmail,
+        waliPhone,
+        relationship
+    };
+
+    try {
+        const result = await ASNAuthAPI.activateParent(payload);
+        if (result && result.success) {
+            sessionStorage.setItem('asn_temp_activation_data', JSON.stringify(payload));
+            document.getElementById('form-activation-step1').classList.add('hidden');
+            document.getElementById('form-activation-step2').classList.remove('hidden');
+
+            const targetEmail = document.getElementById('activation-target-email');
+            if (targetEmail) targetEmail.innerText = waliEmail;
+
+            const targetStudent = document.getElementById('activation-target-student');
+            if (targetStudent) targetStudent.innerText = result.studentName || 'Santri Ditemukan';
+
+            const otpInput = document.getElementById('activation-otp-code');
+            if (otpInput) {
+                otpInput.value = '';
+                setTimeout(() => otpInput.focus(), 150);
+            }
+        } else {
+            if (alertBox && alertText) {
+                alertText.innerText = (result && result.message) || 'Data santri tidak cocok.';
+                alertBox.classList.remove('hidden');
+            }
+        }
+    } catch (err) {
+        if (alertBox && alertText) {
+            alertText.innerText = 'Terjadi kesalahan sistem saat meminta kode verifikasi.';
+            alertBox.classList.remove('hidden');
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Lanjut Verifikasi OTP</span><i class="fa-solid fa-arrow-right"></i>`;
+    }
+}
+
+async function handleParentActivationVerify(e) {
+    e.preventDefault();
+    const otp = (document.getElementById('activation-otp-code')?.value || '').trim();
+    const btn = document.getElementById('btn-activation-step2');
+    const alertBox = document.getElementById('activation-alert');
+    const alertText = document.getElementById('activation-alert-text');
+
+    let payload = {};
+    try {
+        const raw = sessionStorage.getItem('asn_temp_activation_data');
+        if (raw) payload = JSON.parse(raw);
+    } catch (e) {}
+
+    if (!payload.nisn || !payload.waliEmail) {
+        if (alertBox && alertText) {
+            alertText.innerText = 'Sesi aktivasi kedaluwarsa. Silakan isi ulang data formulir.';
+            alertBox.classList.remove('hidden');
+        }
+        return;
+    }
+
+    payload.otp = otp;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Mengaktifkan Akun...</span>`;
+    if (alertBox) alertBox.classList.add('hidden');
+
+    try {
+        const result = await ASNAuthAPI.verifyParentActivation(payload);
+        if (result && result.success && result.token) {
+            sessionStorage.removeItem('asn_temp_activation_data');
+            ASNIdentity.setParentSession(result.token, result.parent || result.identity, result.students);
+            closeParentActivationModal();
+            if (typeof showToast === 'function') {
+                showToast(result.message || 'Akun Wali Santri berhasil diaktifkan!');
+            }
+        } else {
+            if (alertBox && alertText) {
+                alertText.innerText = (result && result.message) || 'Kode OTP aktivasi salah atau kedaluwarsa.';
+                alertBox.classList.remove('hidden');
+            }
+        }
+    } catch (err) {
+        if (alertBox && alertText) {
+            alertText.innerText = 'Verifikasi aktivasi gagal.';
+            alertBox.classList.remove('hidden');
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Selesaikan Aktivasi</span><i class="fa-solid fa-circle-check"></i>`;
+    }
+}
+
+// ----- Pengasuh Modal Controllers -----
+function openPengasuhAuthModal() {
+    const modal = document.getElementById('modal-auth-pengasuh');
+    const content = document.getElementById('modal-auth-pengasuh-content');
+    if (!modal || !content) return;
+
+    const alertBox = document.getElementById('pengasuh-auth-alert');
+    if (alertBox) alertBox.classList.add('hidden');
+
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        if (typeof initGoogleAuth === 'function') initGoogleAuth();
+    }, 50);
+}
+
+function closePengasuhAuthModal() {
+    const modal = document.getElementById('modal-auth-pengasuh');
+    const content = document.getElementById('modal-auth-pengasuh-content');
+    if (!modal || !content) return;
+
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 250);
+}
+
 function togglePintuAksesResmi() {
     const dropdown = document.getElementById('dropdown-pintu-akses');
     const icon = document.getElementById('icon-pintu-akses');
@@ -1170,6 +1478,14 @@ function initGoogleAuth() {
         callback: handleCredentialResponse
     });
 
+    const pengasuhBtn = document.getElementById("google-signin-pengasuh");
+    if (pengasuhBtn) {
+        google.accounts.id.renderButton(
+            pengasuhBtn,
+            { theme: "filled_blue", size: "large", text: "continue_with", shape: "pill" }
+        );
+    }
+
     const parentBtn = document.getElementById("google-signin-parent");
     if (parentBtn) {
         google.accounts.id.renderButton(
@@ -1197,62 +1513,72 @@ function initGoogleAuth() {
 
 async function handleCredentialResponse(response) {
     const token = response.credential;
+    if (!token) return;
+
+    // Deteksi modal atau tab mana yang sedang aktif
+    let roleHint = "";
+    const pengasuhModalOpen = document.getElementById('modal-auth-pengasuh') && !document.getElementById('modal-auth-pengasuh').classList.contains('hidden');
+    const adminModalOpen = document.getElementById('modal-auth-admin') && !document.getElementById('modal-auth-admin').classList.contains('hidden');
+    const parentModalOpen = document.getElementById('modal-auth-parent') && !document.getElementById('modal-auth-parent').classList.contains('hidden');
+
+    if (pengasuhModalOpen) roleHint = "PENGASUH";
+    else if (adminModalOpen) roleHint = "ADMIN";
+    else if (parentModalOpen) roleHint = "WALI_SANTRI";
+
+    if (typeof showToast === 'function') {
+        showToast('Memverifikasi akun Google...');
+    }
+
     try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        const gData = JSON.parse(jsonPayload);
-        const email = (gData.email || '').trim().toLowerCase();
-
-        // Cek modal mana yang sedang aktif terbuka
-        const adminModalOpen = document.getElementById('modal-auth-admin') && !document.getElementById('modal-auth-admin').classList.contains('hidden');
-        const parentModalOpen = document.getElementById('modal-auth-parent') && !document.getElementById('modal-auth-parent').classList.contains('hidden');
-
-        if (adminModalOpen) {
-            const adminEmailInput = document.getElementById('admin-auth-email');
-            if (adminEmailInput) adminEmailInput.value = email;
-            if (typeof showToast === 'function') showToast(`Google: Memproses OTP Pengelola untuk ${email}...`);
-            const fakeEvent = { preventDefault: () => {} };
-            handleAdminRequestOtp(fakeEvent);
+        const ssoResult = await ASNAuthAPI.ssoGoogle(token, roleHint);
+        if (ssoResult && ssoResult.success) {
+            const role = String(ssoResult.role || '').toUpperCase();
+            if (role === 'PENGASUH') {
+                ASNIdentity.setPengasuhSession(ssoResult.token, ssoResult.pengasuh || ssoResult.identity);
+                if (typeof closePengasuhAuthModal === 'function') closePengasuhAuthModal();
+                if (typeof showToast === 'function') showToast(`Ahlan wa Sahlan, ${ssoResult.identity?.name || 'Pengasuh'}`);
+            } else if (role === 'ADMIN' || role === 'EDITOR') {
+                ASNIdentity.setAdminSession(ssoResult.token, ssoResult.admin || ssoResult.identity);
+                if (typeof closeAdminAuthModal === 'function') closeAdminAuthModal();
+                if (typeof showToast === 'function') showToast('Login Pengelola Berhasil!');
+                if (window.innerWidth >= 1024 && (window.location.pathname.replace(/\/+$/, '') === '/administrator' || document.getElementById('page-admin')?.classList.contains('block'))) {
+                    if (typeof switchTab === 'function') switchTab('admin');
+                    if (typeof showAdminView === 'function') showAdminView('hub');
+                }
+            } else if (role === 'WALI_SANTRI') {
+                ASNIdentity.setParentSession(ssoResult.token, ssoResult.parent || ssoResult.identity, ssoResult.students);
+                if (typeof closeParentAuthModal === 'function') closeParentAuthModal();
+                if (typeof showToast === 'function') showToast('Login Wali Santri Berhasil!');
+            }
             return;
         }
 
-        if (parentModalOpen) {
-            const parentEmailInput = document.getElementById('parent-auth-email');
-            if (parentEmailInput) parentEmailInput.value = email;
-            if (typeof showToast === 'function') showToast(`Google: Memproses OTP Wali untuk ${email}...`);
-            const fakeEvent = { preventDefault: () => {} };
-            handleParentRequestOtp(fakeEvent);
+        if (ssoResult && ssoResult.notRegistered) {
+            if (roleHint === 'WALI_SANTRI' || !roleHint) {
+                if (typeof closeParentAuthModal === 'function') closeParentAuthModal();
+                if (typeof openParentActivationModal === 'function') {
+                    openParentActivationModal(ssoResult.email, ssoResult.name);
+                }
+                if (typeof showToast === 'function') {
+                    showToast('Email belum terdaftar. Silakan aktivasi akun menggunakan NISN & Tanggal Lahir santri.');
+                }
+            } else {
+                const alertEl = document.getElementById(roleHint === 'ADMIN' ? 'admin-auth-alert' : 'pengasuh-auth-alert');
+                const alertText = document.getElementById(roleHint === 'ADMIN' ? 'admin-auth-alert-text' : 'pengasuh-auth-alert-text');
+                if (alertEl && alertText) {
+                    alertText.innerText = ssoResult.message || 'Email Google tidak terdaftar dalam daftar resmi.';
+                    alertEl.classList.remove('hidden');
+                } else if (typeof showToast === 'function') {
+                    showToast(ssoResult.message || 'Email Google tidak terdaftar.');
+                }
+            }
             return;
         }
 
-        // Fallback untuk legacy direct login
-        const apiResponse = await fetch(AUTH_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ 
-                action: 'google_login', 
-                credential: token,
-                email: email, 
-                name: gData.name 
-            })
-        });
-        
-        const data = await apiResponse.json();
-        if (data.success) {
-            localStorage.setItem('user_token', data.token);
-            localStorage.setItem('user_data', JSON.stringify(data.user));
-            checkAuthState();
-        } else {
-            if (typeof showToast === 'function') showToast('Gagal integrasi Google Login: ' + data.message);
-        }
+        const msg = (ssoResult && ssoResult.message) || 'Verifikasi Google Sign-In gagal.';
+        if (typeof showToast === 'function') showToast(msg);
     } catch (e) {
-        if (typeof showToast === 'function') showToast('Koneksi Google gagal: ' + e.message);
+        console.error('[Google SSO] Exception:', e);
+        if (typeof showToast === 'function') showToast('Terjadi kendala memproses Google Sign-In.');
     }
 }
