@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v5';
+const CACHE_NAME = 'asnawiyyah-cache-v6';
 
 const PRECACHE_URLS = [
   '/',
@@ -47,8 +47,8 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Hanya proses request GET (Cache API tidak mendukung caching request POST/PUT/DELETE)
-  if (event.request.method !== 'GET') {
+  // Hanya proses request GET dengan skema http/https (Cache API tidak mendukung non-GET maupun skema non-http seperti chrome-extension://)
+  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
     return;
   }
 

@@ -1174,7 +1174,7 @@ function initGoogleAuth() {
     if (parentBtn) {
         google.accounts.id.renderButton(
             parentBtn,
-            { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
+            { theme: "outline", size: "large", text: "continue_with", shape: "pill" }
         );
     }
 
@@ -1182,7 +1182,7 @@ function initGoogleAuth() {
     if (adminBtn) {
         google.accounts.id.renderButton(
             adminBtn,
-            { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
+            { theme: "outline", size: "large", text: "continue_with", shape: "pill" }
         );
     }
 
@@ -1190,7 +1190,7 @@ function initGoogleAuth() {
     if (legacyContainer) {
         google.accounts.id.renderButton(
             legacyContainer,
-            { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" }
+            { theme: "outline", size: "large", text: "continue_with", shape: "pill" }
         );
     }
 }
