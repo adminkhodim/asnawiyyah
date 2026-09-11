@@ -1402,13 +1402,15 @@
             const notifId = id || (modal ? modal.dataset.notifId : null);
             closeHomePoster(false); // Jangan blokir permanen sesi jika user hanya ingin membaca warta
 
+            switchTab('notifikasi');
+            if (typeof setNotifFilter === 'function') {
+                setNotifFilter('Pengumuman');
+            }
+
             if (notifId) {
-                switchTab('notifikasi');
                 setTimeout(() => {
                     openNotifikasiDetail(notifId);
                 }, 300);
-            } else {
-                switchTab('notifikasi');
             }
         }
 

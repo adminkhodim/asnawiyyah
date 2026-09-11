@@ -5802,37 +5802,21 @@
 
 
     <!-- ==================== POPUP POSTER BERANDA ==================== -->
-    <div id="homePosterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 hidden transition-opacity duration-300" style="z-index: 10000;">
-        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-sm sm:max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] transform transition-all duration-300 scale-95 opacity-0 relative" id="homePosterContent">
-            <!-- Close button top-right -->
-            <button type="button" onclick="closeHomePoster()" class="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full transition active:scale-95 shadow" title="Tutup Pop-up">
+    <div id="homePosterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 sm:p-6 hidden transition-opacity duration-300" style="z-index: 10000;">
+        <div class="relative w-full max-w-[320px] sm:max-w-[360px] md:max-w-[390px] rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 transform transition-all duration-300 scale-95 opacity-0 bg-transparent group" id="homePosterContent">
+            <!-- Close button top-right (X) -->
+            <button type="button" onclick="closeHomePoster(true)" class="absolute top-3 right-3 z-30 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-black/65 hover:bg-black/85 text-white rounded-full transition active:scale-90 shadow-xl border border-white/30 backdrop-blur-sm" title="Tutup">
                 <i class="fa-solid fa-xmark text-sm"></i>
             </button>
             
-            <!-- Poster Image Container -->
-            <div id="home-poster-img-wrapper" class="relative w-full aspect-[16/10] bg-brand-900 overflow-hidden cursor-pointer" onclick="openNotifFromPoster()">
-                <img id="home-poster-img" src="" alt="Poster" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
-                    <span id="home-poster-badge" class="px-2.5 py-1 bg-amber-500 text-slate-950 text-[10px] font-black rounded-lg uppercase tracking-wider shadow">Warta Terkini</span>
-                </div>
-            </div>
-
-            <!-- Poster Body & Action -->
-            <div class="p-5 space-y-3">
-                <h3 id="home-poster-title" class="font-extrabold text-base text-slate-900 dark:text-slate-100 leading-snug cursor-pointer hover:text-emerald-600 transition" onclick="openNotifFromPoster()">
-                    Judul Pengumuman
-                </h3>
-                <p id="home-poster-summary" class="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                    Ringkasan pesan notifikasi...
-                </p>
-                <div class="pt-2 flex items-center space-x-2">
-                    <button type="button" onclick="openNotifFromPoster()" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1.5 active:scale-95">
-                        <span>Buka Warta Lengkap</span>
-                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </button>
-                    <button type="button" onclick="closeHomePoster(true)" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-500 dark:text-slate-300 font-bold text-xs rounded-xl transition active:scale-95" title="Tutup untuk sesi ini">
-                        Tutup
-                    </button>
+            <!-- Poster Image Container (Rasio Postingan Instagram 4:5) -->
+            <div id="home-poster-img-wrapper" class="relative w-full aspect-[4/5] bg-brand-950 overflow-hidden cursor-pointer rounded-3xl" onclick="openNotifFromPoster()" title="Ketuk untuk buka submenu Pengumuman">
+                <img id="home-poster-img" src="" alt="Poster Pengumuman" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                
+                <!-- Hint Bar di bagian bawah poster -->
+                <div class="absolute inset-x-0 bottom-0 py-2.5 px-4 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-center justify-center text-white/95 text-[11px] font-bold tracking-wide space-x-1.5 backdrop-blur-[2px]">
+                    <i class="fa-solid fa-bullhorn text-amber-400 text-xs"></i>
+                    <span>Buka Submenu Pengumuman</span>
                 </div>
             </div>
         </div>
