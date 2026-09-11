@@ -6,6 +6,7 @@
                 renderAdminNewsList();
                 renderAdminBannerList();
                 loadAdminPPDBData();
+                loadAdminStudentsData();
                 return;
             }
             if (typeof openAdminAuthModal === 'function') {
@@ -81,6 +82,7 @@
             const hubView = document.getElementById('admin-menu-hub');
             const beritaView = document.getElementById('admin-view-berita');
             const bannerView = document.getElementById('admin-view-banner');
+            const santriView = document.getElementById('admin-view-santri');
             const ppdbView = document.getElementById('admin-view-ppdb');
             const programView = document.getElementById('admin-view-program');
             const galeriView = document.getElementById('admin-view-galeri');
@@ -94,6 +96,7 @@
             hubView.classList.add('hidden');
             beritaView.classList.add('hidden');
             bannerView.classList.add('hidden');
+            if (santriView) santriView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
             if (programView) programView.classList.add('hidden');
             if (galeriView) galeriView.classList.add('hidden');
@@ -108,6 +111,9 @@
             } else if (viewName === 'banner') {
                 bannerView.classList.remove('hidden');
                 renderAdminBannerList();
+            } else if (viewName === 'santri') {
+                if (santriView) santriView.classList.remove('hidden');
+                loadAdminStudentsData();
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');
                 loadAdminNotifikasi();
@@ -3292,5 +3298,594 @@
             } catch (err) {
                 console.error("Gagal hapus notifikasi:", err);
                 if (typeof showToast === 'function') showToast("❌ " + err.message);
+            }
+        }
+
+        // ==================== DASHBOARD ADMIN: MANAJEMEN DATA SANTRI ====================
+        let adminStudentsData = [];
+        let filteredAdminStudentsData = [];
+        let pendingDeleteStudentId = null;
+        let selectedStudentPhotoFile = null;
+
+        /**
+         * Muat seluruh data santri dari backend API
+         */
+        async function loadAdminStudentsData() {
+            const loader = document.getElementById('admin-student-loader');
+            const tbody = document.getElementById('admin-student-table-tbody');
+            const mobileList = document.getElementById('admin-student-mobile-list');
+            const emptyState = document.getElementById('admin-student-empty-state');
+
+            if (loader) loader.classList.remove('hidden');
+            if (emptyState) emptyState.classList.add('hidden');
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+                let response = null;
+
+                if (typeof apiPost === 'function') {
+                    try {
+                        response = await apiPost("getStudents", { token });
+                    } catch (postErr) {
+                        console.warn("apiPost getStudents fallback:", postErr);
+                    }
+                }
+
+                if (!response || !response.success) {
+                    if (typeof apiGet === 'function') {
+                        response = await apiGet("getStudents", token ? { token } : {});
+                    }
+                }
+
+                if (response && (response.status === "success" || response.success)) {
+                    adminStudentsData = response.data || [];
+
+                    // Update Hub Badge
+                    const hubBadge = document.getElementById('admin-hub-santri-count');
+                    if (hubBadge) {
+                        hubBadge.innerText = `${adminStudentsData.length} Santri`;
+                    }
+
+                    // Update Statistik
+                    const summary = response.summary || {};
+                    const totalEl = document.getElementById('admin-student-stat-total');
+                    const putraEl = document.getElementById('admin-student-stat-putra');
+                    const putriEl = document.getElementById('admin-student-stat-putri');
+                    const aktifEl = document.getElementById('admin-student-stat-aktif');
+
+                    const totalCount = summary.total !== undefined ? summary.total : adminStudentsData.length;
+                    const putraCount = summary.putra !== undefined ? summary.putra : adminStudentsData.filter(s => (s.gender || '').toUpperCase() === 'L').length;
+                    const putriCount = summary.putri !== undefined ? summary.putri : adminStudentsData.filter(s => (s.gender || '').toUpperCase() === 'P').length;
+                    const aktifCount = summary.aktif !== undefined ? summary.aktif : adminStudentsData.filter(s => (s.status || '').toUpperCase() === 'ACTIVE').length;
+
+                    if (totalEl) totalEl.innerText = totalCount;
+                    if (putraEl) putraEl.innerText = putraCount;
+                    if (putriEl) putriEl.innerText = putriCount;
+                    if (aktifEl) aktifEl.innerText = aktifCount;
+
+                    // Update Dropdown Filter Program secara dinamis
+                    populateAdminStudentProgramFilter();
+
+                    // Filter & Render
+                    filterAdminStudentsList();
+                } else {
+                    const msg = (response && response.message) || "Gagal memuat data santri.";
+                    if (typeof showToast === 'function') showToast("⚠️ " + msg);
+                    if (emptyState) emptyState.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error("Gagal load data santri:", err);
+                if (typeof showToast === 'function') showToast("❌ Gagal memuat data santri: " + err.message);
+                if (emptyState) emptyState.classList.remove('hidden');
+            } finally {
+                if (loader) loader.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Isi dropdown filter program dari list santri
+         */
+        function populateAdminStudentProgramFilter() {
+            const selectEl = document.getElementById('admin-student-filter-program');
+            if (!selectEl) return;
+
+            const currentVal = selectEl.value;
+            const programs = new Set();
+            adminStudentsData.forEach(s => {
+                if (s.program && s.program.trim()) {
+                    programs.add(s.program.trim());
+                }
+            });
+
+            let html = '<option value="ALL">Semua Program</option>';
+            Array.from(programs).sort().forEach(prog => {
+                html += `<option value="${escapeHtml(prog)}">${escapeHtml(prog)}</option>`;
+            });
+            selectEl.innerHTML = html;
+            if (currentVal && Array.from(programs).includes(currentVal)) {
+                selectEl.value = currentVal;
+            }
+        }
+
+        /**
+         * Filter data santri secara real-time
+         */
+        function filterAdminStudentsList() {
+            const searchInput = (document.getElementById('admin-student-search')?.value || '').trim().toLowerCase();
+            const genderFilter = document.getElementById('admin-student-filter-gender')?.value || 'ALL';
+            const programFilter = document.getElementById('admin-student-filter-program')?.value || 'ALL';
+            const statusFilter = document.getElementById('admin-student-filter-status')?.value || 'ALL';
+
+            filteredAdminStudentsData = adminStudentsData.filter(student => {
+                // Search term (Nama, NIS, NIK)
+                if (searchInput) {
+                    const name = (student.name || '').toLowerCase();
+                    const nis = (student.nis || student.nisn || '').toLowerCase();
+                    const nik = (student.nik || '').toLowerCase();
+                    if (!name.includes(searchInput) && !nis.includes(searchInput) && !nik.includes(searchInput)) {
+                        return false;
+                    }
+                }
+
+                // Gender
+                if (genderFilter !== 'ALL') {
+                    const g = (student.gender || 'L').toUpperCase();
+                    if (g !== genderFilter) return false;
+                }
+
+                // Program
+                if (programFilter !== 'ALL') {
+                    const prog = (student.program || '').trim();
+                    if (prog !== programFilter) return false;
+                }
+
+                // Status
+                if (statusFilter !== 'ALL') {
+                    const st = (student.status || 'ACTIVE').toUpperCase();
+                    if (st !== statusFilter) return false;
+                }
+
+                return true;
+            });
+
+            renderAdminStudentsList();
+        }
+
+        /**
+         * Render data santri ke Desktop Table dan Mobile Cards
+         */
+        function renderAdminStudentsList() {
+            const tbody = document.getElementById('admin-student-table-tbody');
+            const mobileList = document.getElementById('admin-student-mobile-list');
+            const emptyState = document.getElementById('admin-student-empty-state');
+            const countBadge = document.getElementById('admin-student-list-count');
+
+            if (countBadge) {
+                countBadge.innerText = `${filteredAdminStudentsData.length} Santri`;
+            }
+
+            if (!filteredAdminStudentsData || filteredAdminStudentsData.length === 0) {
+                if (tbody) tbody.innerHTML = '';
+                if (mobileList) mobileList.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            // Render Desktop Table
+            if (tbody) {
+                tbody.innerHTML = filteredAdminStudentsData.map((s, index) => {
+                    const id = s.studentId || s.student_id || '';
+                    const nis = escapeHtml(s.nis || s.nisn || '-');
+                    const nik = escapeHtml(s.nik || '-');
+                    const name = escapeHtml(s.name || 'Tanpa Nama');
+                    const gender = (s.gender || 'L').toUpperCase() === 'P' ? 'P' : 'L';
+                    const genderBadge = gender === 'P' 
+                        ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-pink-100 text-pink-700 dark:bg-pink-950/80 dark:text-pink-300">P</span>`
+                        : `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">L</span>`;
+                    const birth = escapeHtml(s.birthDate || s.birth_date || '-');
+                    const prog = escapeHtml(s.program || 'Reguler');
+                    const isActive = (s.status || 'ACTIVE').toUpperCase() === 'ACTIVE';
+                    const statusBadge = isActive
+                        ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Aktif</span>`
+                        : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Nonaktif</span>`;
+
+                    const photoUrl = s.photoUrl || s.photo_url;
+                    const avatarHtml = photoUrl
+                        ? `<img src="${escapeHtml(photoUrl)}" alt="${name}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-[#253447] shadow-sm" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'36\\' height=\\'36\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'%2394a3b8\\' stroke-width=\\'2\\'><path d=\\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\\'/><circle cx=\\'12\\' cy=\\'7\\' r=\\'4\\'/></svg>';">`
+                        : `<div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] flex items-center justify-center text-slate-400 text-sm"><i class="fa-solid fa-user"></i></div>`;
+
+                    const studentJson = escapeHtml(JSON.stringify(s));
+
+                    return `
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836]/60 transition">
+                            <td class="py-3 px-3 font-semibold text-slate-400">${index + 1}</td>
+                            <td class="py-3 px-3">${avatarHtml}</td>
+                            <td class="py-3 px-3">
+                                <div class="font-bold text-slate-800 dark:text-slate-100">${name}</div>
+                                <div class="text-[10px] text-slate-400">ID: ${escapeHtml(id)}</div>
+                            </td>
+                            <td class="py-3 px-3 font-mono font-bold text-cyan-700 dark:text-cyan-400">${nis}</td>
+                            <td class="py-3 px-3 font-mono text-slate-500 dark:text-slate-400">${nik}</td>
+                            <td class="py-3 px-3 text-center">${genderBadge}</td>
+                            <td class="py-3 px-3 text-slate-600 dark:text-slate-300">${birth}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300">${prog}</span>
+                            </td>
+                            <td class="py-3 px-3 text-center">${statusBadge}</td>
+                            <td class="py-3 px-3 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <button type="button" onclick='openAdminStudentModal(${studentJson})' class="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded-lg flex items-center justify-center transition active:scale-95" title="Edit Santri">
+                                        <i class="fa-solid fa-pen text-xs"></i>
+                                    </button>
+                                    <button type="button" onclick="openAdminStudentDeleteModal('${escapeHtml(id)}', '${escapeHtml(name)}')" class="w-7 h-7 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg flex items-center justify-center transition active:scale-95" title="Hapus Santri">
+                                        <i class="fa-solid fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Render Mobile Cards
+            if (mobileList) {
+                mobileList.innerHTML = filteredAdminStudentsData.map(s => {
+                    const id = s.studentId || s.student_id || '';
+                    const nis = escapeHtml(s.nis || s.nisn || '-');
+                    const nik = escapeHtml(s.nik || '-');
+                    const name = escapeHtml(s.name || 'Tanpa Nama');
+                    const gender = (s.gender || 'L').toUpperCase() === 'P' ? 'P' : 'L';
+                    const genderBadge = gender === 'P'
+                        ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-pink-100 text-pink-700 dark:bg-pink-950/80 dark:text-pink-300">Putri (P)</span>`
+                        : `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">Putra (L)</span>`;
+                    const birth = escapeHtml(s.birthDate || s.birth_date || '-');
+                    const prog = escapeHtml(s.program || 'Reguler');
+                    const isActive = (s.status || 'ACTIVE').toUpperCase() === 'ACTIVE';
+                    const statusBadge = isActive
+                        ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Aktif</span>`
+                        : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Nonaktif</span>`;
+
+                    const photoUrl = s.photoUrl || s.photo_url;
+                    const avatarHtml = photoUrl
+                        ? `<img src="${escapeHtml(photoUrl)}" alt="${name}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-[#253447] shadow-sm shrink-0">`
+                        : `<div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] flex items-center justify-center text-slate-400 text-lg shrink-0"><i class="fa-solid fa-user"></i></div>`;
+
+                    const studentJson = escapeHtml(JSON.stringify(s));
+
+                    return `
+                        <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center space-x-3">
+                                    ${avatarHtml}
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100">${name}</h4>
+                                        <div class="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
+                                            <span class="font-mono font-bold text-cyan-700 dark:text-cyan-400">NIS: ${nis}</span>
+                                            <span>•</span>
+                                            <span>NIK: ${nik}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>${statusBadge}</div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-[#253447]">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Gender & Program</span>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        ${genderBadge}
+                                        <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">${prog}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Tanggal Lahir</span>
+                                    <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">${birth}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#253447]">
+                                <button type="button" onclick='openAdminStudentModal(${studentJson})' class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <button type="button" onclick="openAdminStudentDeleteModal('${escapeHtml(id)}', '${escapeHtml(name)}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                    <span>Hapus</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        /**
+         * Buka Modal Tambah / Edit Santri
+         */
+        function openAdminStudentModal(student = null) {
+            const modal = document.getElementById('modal-admin-student');
+            const titleEl = document.getElementById('modal-admin-student-title');
+            const submitText = document.getElementById('admin-student-submit-text');
+            const form = document.getElementById('adminStudentForm');
+
+            if (!modal) return;
+
+            selectedStudentPhotoFile = null;
+            if (form) form.reset();
+
+            const previewImg = document.getElementById('admin-student-avatar-preview');
+            const placeholder = document.getElementById('admin-student-avatar-placeholder');
+            const removeBtn = document.getElementById('admin-student-photo-remove-btn');
+
+            if (student) {
+                // EDIT MODE
+                if (titleEl) titleEl.innerText = "Edit Data Santri";
+                if (submitText) submitText.innerText = "Perbarui Santri";
+
+                document.getElementById('admin-student-form-id').value = student.studentId || student.student_id || '';
+                document.getElementById('admin-student-form-nis').value = student.nis || student.nisn || '';
+                document.getElementById('admin-student-form-nik').value = student.nik || '';
+                document.getElementById('admin-student-form-name').value = student.name || '';
+                document.getElementById('admin-student-form-gender').value = (student.gender || 'L').toUpperCase() === 'P' ? 'P' : 'L';
+                document.getElementById('admin-student-form-birthdate').value = student.birthDate || student.birth_date || '';
+                document.getElementById('admin-student-form-program').value = student.program || 'Reguler';
+                document.getElementById('admin-student-form-status').value = (student.status || 'ACTIVE').toUpperCase() === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
+                
+                const photoUrl = student.photoUrl || student.photo_url || '';
+                document.getElementById('admin-student-form-photo-url').value = photoUrl;
+
+                if (photoUrl && previewImg) {
+                    previewImg.src = photoUrl;
+                    previewImg.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                } else {
+                    if (previewImg) previewImg.classList.add('hidden');
+                    if (placeholder) placeholder.classList.remove('hidden');
+                    if (removeBtn) removeBtn.classList.add('hidden');
+                }
+            } else {
+                // TAMBAH MODE
+                if (titleEl) titleEl.innerText = "Tambah Data Santri Baru";
+                if (submitText) submitText.innerText = "Simpan Data Santri";
+
+                document.getElementById('admin-student-form-id').value = '';
+                document.getElementById('admin-student-form-photo-url').value = '';
+                document.getElementById('admin-student-form-gender').value = 'L';
+                document.getElementById('admin-student-form-program').value = 'Reguler';
+                document.getElementById('admin-student-form-status').value = 'ACTIVE';
+
+                if (previewImg) previewImg.classList.add('hidden');
+                if (placeholder) placeholder.classList.remove('hidden');
+                if (removeBtn) removeBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Tutup Modal Tambah / Edit Santri
+         */
+        function closeAdminStudentModal() {
+            const modal = document.getElementById('modal-admin-student');
+            if (modal) modal.classList.add('hidden');
+            selectedStudentPhotoFile = null;
+        }
+
+        /**
+         * Handler pemilihan file foto profil santri
+         */
+        function handleStudentPhotoSelect(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                if (typeof showToast === 'function') showToast("⚠️ File harus berupa gambar (JPG, PNG, atau WEBP).");
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                if (typeof showToast === 'function') showToast("⚠️ Ukuran foto maksimal 5 MB.");
+                return;
+            }
+
+            selectedStudentPhotoFile = file;
+
+            const previewImg = document.getElementById('admin-student-avatar-preview');
+            const placeholder = document.getElementById('admin-student-avatar-placeholder');
+            const removeBtn = document.getElementById('admin-student-photo-remove-btn');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (previewImg) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                }
+                if (placeholder) placeholder.classList.add('hidden');
+                if (removeBtn) removeBtn.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Hapus foto dari form
+         */
+        function removeStudentPhoto() {
+            selectedStudentPhotoFile = null;
+            const fileInput = document.getElementById('admin-student-photo-file');
+            if (fileInput) fileInput.value = '';
+
+            const photoUrlInput = document.getElementById('admin-student-form-photo-url');
+            if (photoUrlInput) photoUrlInput.value = '';
+
+            const previewImg = document.getElementById('admin-student-avatar-preview');
+            const placeholder = document.getElementById('admin-student-avatar-placeholder');
+            const removeBtn = document.getElementById('admin-student-photo-remove-btn');
+
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.classList.add('hidden');
+            }
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (removeBtn) removeBtn.classList.add('hidden');
+        }
+
+        /**
+         * Simpan Data Santri (Upload foto ke Drive jika ada file baru, lalu simpan ke database)
+         */
+        async function submitAdminStudent(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('admin-student-submit-btn');
+            const btnIcon = document.getElementById('admin-student-submit-icon');
+            const btnText = document.getElementById('admin-student-submit-text');
+
+            const studentId = document.getElementById('admin-student-form-id')?.value || '';
+            const nis = (document.getElementById('admin-student-form-nis')?.value || '').trim();
+            const nik = (document.getElementById('admin-student-form-nik')?.value || '').trim();
+            const name = (document.getElementById('admin-student-form-name')?.value || '').trim();
+            const gender = document.getElementById('admin-student-form-gender')?.value || 'L';
+            const birthDate = document.getElementById('admin-student-form-birthdate')?.value || '';
+            const program = (document.getElementById('admin-student-form-program')?.value || '').trim() || 'Reguler';
+            const status = document.getElementById('admin-student-form-status')?.value || 'ACTIVE';
+            let photoUrl = document.getElementById('admin-student-form-photo-url')?.value || '';
+
+            if (!nis || !name) {
+                if (typeof showToast === 'function') showToast("⚠️ NIS dan Nama Santri wajib diisi!");
+                return;
+            }
+
+            btn.disabled = true;
+            if (btnIcon) btnIcon.className = "fa-solid fa-spinner fa-spin";
+            if (btnText) btnText.innerText = "Menyimpan...";
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+
+                // STEP 1: Upload Foto ke Google Drive jika ada file baru
+                if (selectedStudentPhotoFile) {
+                    if (btnText) btnText.innerText = "Mengunggah Foto...";
+                    const compressed = await compressImageFile(selectedStudentPhotoFile, 800, 0.85);
+
+                    const uploadRes = await apiPost("uploadStudentPhoto", {
+                        token,
+                        file: compressed,
+                        nis: nis,
+                        studentId: studentId
+                    });
+
+                    if (uploadRes && (uploadRes.success || uploadRes.status === "success") && uploadRes.url) {
+                        photoUrl = uploadRes.url;
+                    } else {
+                        console.warn("Upload foto santri gagal:", uploadRes);
+                        if (typeof showToast === 'function') {
+                            showToast("⚠️ Peringatan: Gagal mengunggah foto ke Drive: " + ((uploadRes && uploadRes.message) || ""));
+                        }
+                    }
+                }
+
+                // STEP 2: Simpan data santri ke Spreadsheet Students
+                if (btnText) btnText.innerText = "Menyimpan Data...";
+
+                const payload = {
+                    token,
+                    studentId,
+                    student_id: studentId,
+                    nis,
+                    nik,
+                    name,
+                    gender,
+                    birthDate,
+                    birth_date: birthDate,
+                    photoUrl,
+                    photo_url: photoUrl,
+                    program,
+                    status
+                };
+
+                const saveRes = await apiPost("saveStudent", payload);
+
+                if (saveRes && (saveRes.success || saveRes.status === "success")) {
+                    if (typeof showToast === 'function') {
+                        showToast(saveRes.message || "Data santri berhasil disimpan!");
+                    }
+                    closeAdminStudentModal();
+                    await loadAdminStudentsData();
+                } else {
+                    const msg = (saveRes && saveRes.message) || "Gagal menyimpan data santri.";
+                    if (typeof showToast === 'function') showToast("❌ " + msg);
+                }
+            } catch (err) {
+                console.error("Gagal simpan data santri:", err);
+                if (typeof showToast === 'function') showToast("❌ " + err.message);
+            } finally {
+                btn.disabled = false;
+                if (btnIcon) btnIcon.className = "fa-solid fa-floppy-disk";
+                if (btnText) btnText.innerText = studentId ? "Perbarui Santri" : "Simpan Data Santri";
+            }
+        }
+
+        /**
+         * Buka Modal Konfirmasi Hapus Santri
+         */
+        function openAdminStudentDeleteModal(studentId, studentName) {
+            pendingDeleteStudentId = studentId;
+            const desc = document.getElementById('modal-admin-student-delete-desc');
+            if (desc) {
+                desc.innerText = `Apakah Anda yakin ingin menghapus data santri "${studentName}" (ID: ${studentId}) dari database?`;
+            }
+            const modal = document.getElementById('modal-admin-student-delete');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        /**
+         * Tutup Modal Konfirmasi Hapus Santri
+         */
+        function closeAdminStudentDeleteModal() {
+            const modal = document.getElementById('modal-admin-student-delete');
+            if (modal) modal.classList.add('hidden');
+            pendingDeleteStudentId = null;
+        }
+
+        /**
+         * Eksekusi Hapus Santri
+         */
+        async function executeDeleteAdminStudent() {
+            if (!pendingDeleteStudentId) return;
+
+            const btn = document.getElementById('admin-student-confirm-delete-btn');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menghapus...</span>';
+            }
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+                const response = await apiPost("deleteStudent", {
+                    token,
+                    studentId: pendingDeleteStudentId
+                });
+
+                if (response && (response.success || response.status === "success")) {
+                    if (typeof showToast === 'function') {
+                        showToast(response.message || "Data santri berhasil dihapus.");
+                    }
+                    closeAdminStudentDeleteModal();
+                    await loadAdminStudentsData();
+                } else {
+                    const msg = (response && response.message) || "Gagal menghapus santri.";
+                    if (typeof showToast === 'function') showToast("❌ " + msg);
+                }
+            } catch (err) {
+                console.error("Gagal menghapus santri:", err);
+                if (typeof showToast === 'function') showToast("❌ " + err.message);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
             }
         }

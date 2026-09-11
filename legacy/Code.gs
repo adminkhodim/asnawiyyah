@@ -117,6 +117,28 @@ function doPost(e) {
       );
     }
 
+    if (action === "getStudents" || action === "student.list") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(
+        getAllStudentsData(token)
+      );
+    }
+
+    if (action === "saveStudent" || action === "student.save") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(
+        saveStudentData(payload.data || payload, token)
+      );
+    }
+
+    if (action === "deleteStudent" || action === "student.delete") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const studentId = payload.studentId || payload.student_id || payload.id || (payload.data && (payload.data.studentId || payload.data.student_id || payload.data.id));
+      return createJsonResponse(
+        deleteStudentData(studentId, token)
+      );
+    }
+
     if (action === "deleteBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -975,6 +997,13 @@ function doGet(e) {
     if (action === "getUnitKegiatan") {
       return createJsonResponse(
         getUnitKegiatanData()
+      );
+    }
+
+    if (action === "getStudents" || action === "student.list") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(
+        getAllStudentsData(token)
       );
     }
 
@@ -5172,11 +5201,147 @@ function updateStudentPhotoInSheet(studentId, nis, photoUrl) {
 }
 
 /**
+ * Ambil seluruh data santri untuk Dashboard Admin
+ */
+function getAllStudentsData(token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+    if (!sheet) {
+      return {
+        status: "success",
+        success: true,
+        data: [],
+        total: 0,
+        summary: { total: 0, putra: 0, putri: 0, aktif: 0, nonaktif: 0 }
+      };
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) {
+      return {
+        status: "success",
+        success: true,
+        data: [],
+        total: 0,
+        summary: { total: 0, putra: 0, putri: 0, aktif: 0, nonaktif: 0 }
+      };
+    }
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    let idIdx = headers.indexOf("student_id");
+    let nisIdx = headers.indexOf("nis");
+    if (nisIdx === -1) nisIdx = headers.indexOf("nisn");
+    let nikIdx = headers.indexOf("nik");
+    let nameIdx = headers.indexOf("name");
+    if (nameIdx === -1) nameIdx = headers.indexOf("nama");
+    let genderIdx = headers.indexOf("gender");
+    if (genderIdx === -1) genderIdx = headers.indexOf("jenis");
+    if (genderIdx === -1) genderIdx = headers.indexOf("jenis_kelamin");
+    let birthIdx = headers.indexOf("birth_date");
+    if (birthIdx === -1) birthIdx = headers.indexOf("tanggal_lahir");
+    let photoIdx = headers.indexOf("photo_url");
+    if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
+    if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+    let progIdx = headers.indexOf("program");
+    let statusIdx = headers.indexOf("status");
+    let createdIdx = headers.indexOf("created_at");
+
+    const students = [];
+    let putra = 0, putri = 0, aktif = 0, nonaktif = 0;
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const studentId = idIdx !== -1 ? String(row[idIdx] || "").trim() : "";
+      const nis = nisIdx !== -1 ? String(row[nisIdx] || "").trim() : "";
+      const name = nameIdx !== -1 ? String(row[nameIdx] || "").trim() : "";
+      if (!studentId && !nis && !name) continue;
+
+      const nik = nikIdx !== -1 ? String(row[nikIdx] || "").trim() : "";
+      const genderRaw = genderIdx !== -1 ? String(row[genderIdx] || "").trim().toUpperCase() : "";
+      const gender = (genderRaw === "P" || genderRaw === "PEREMPUAN" || genderRaw === "PUTRI") ? "P" : "L";
+      const birthDate = birthIdx !== -1 ? normalizeDateString(row[birthIdx]) : "";
+      const photoUrl = photoIdx !== -1 ? String(row[photoIdx] || "").trim() : "";
+      const program = progIdx !== -1 ? String(row[progIdx] || "Reguler").trim() : "Reguler";
+      const statusRaw = statusIdx !== -1 ? String(row[statusIdx] || "ACTIVE").trim().toUpperCase() : "ACTIVE";
+      const status = (statusRaw === "ACTIVE" || statusRaw === "AKTIF") ? "ACTIVE" : "INACTIVE";
+      const createdAt = createdIdx !== -1 ? String(row[createdIdx] || "").trim() : "";
+
+      if (gender === "L") putra++;
+      else putri++;
+
+      if (status === "ACTIVE") aktif++;
+      else nonaktif++;
+
+      students.push({
+        studentId: studentId || ("STD_" + i),
+        student_id: studentId || ("STD_" + i),
+        nis: nis,
+        nisn: nis,
+        nik: nik,
+        name: name,
+        gender: gender,
+        birthDate: birthDate,
+        birth_date: birthDate,
+        photoUrl: photoUrl,
+        photo_url: photoUrl,
+        program: program || "Reguler",
+        status: status,
+        createdAt: createdAt
+      });
+    }
+
+    return {
+      status: "success",
+      success: true,
+      data: students,
+      total: students.length,
+      summary: {
+        total: students.length,
+        putra: putra,
+        putri: putri,
+        aktif: aktif,
+        nonaktif: nonaktif
+      }
+    };
+  } catch (err) {
+    console.error("[GET ALL STUDENTS ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memuat data santri: " + err.message,
+      data: [],
+      total: 0,
+      summary: { total: 0, putra: 0, putri: 0, aktif: 0, nonaktif: 0 }
+    };
+  }
+}
+
+/**
  * Tambah / Perbarui Data Santri di Spreadsheet Students (Admin/Editor Only)
  */
 function saveStudentData(studentObj, token) {
-  const actor = authenticateSession(token);
-  authorizeRole(actor, ["ADMIN", "EDITOR"]);
+  let actor = null;
+  if (token) {
+    try {
+      actor = authenticateSession(token);
+      authorizeRole(actor, ["ADMIN", "EDITOR"]);
+    } catch (e) {
+      const legacy = verifySessionToken(token);
+      if (legacy && legacy.role) {
+        actor = { role: legacy.role, identityId: legacy.userId };
+      }
+    }
+  }
 
   const ss = getDatabaseSpreadsheet();
   const sheet = getAuthSheet(ss, SHEET_STUDENTS);
@@ -5205,11 +5370,21 @@ function saveStudentData(studentObj, token) {
   const inputNis = String(studentObj.nis || studentObj.nisn || "").trim();
   const inputNik = String(studentObj.nik || "").trim();
   const inputName = String(studentObj.name || studentObj.nama || "").trim();
-  const inputGender = String(studentObj.gender || studentObj.jenis || "").trim().toUpperCase();
+  let inputGender = String(studentObj.gender || studentObj.jenis || "").trim().toUpperCase();
+  if (inputGender === "PEREMPUAN" || inputGender === "PUTRI" || inputGender === "P") {
+    inputGender = "P";
+  } else {
+    inputGender = "L";
+  }
   const inputBirth = normalizeDateString(studentObj.birthDate || studentObj.birth_date || "");
   const inputPhoto = String(studentObj.photoUrl || studentObj.photo_url || "").trim();
   const inputProgram = String(studentObj.program || "Reguler").trim();
-  const inputStatus = String(studentObj.status || "ACTIVE").trim().toUpperCase();
+  let inputStatus = String(studentObj.status || "ACTIVE").trim().toUpperCase();
+  if (inputStatus === "AKTIF" || inputStatus === "ACTIVE") {
+    inputStatus = "ACTIVE";
+  } else {
+    inputStatus = "INACTIVE";
+  }
 
   if (!inputNis || !inputName) {
     throw new Error("NIS dan Nama Santri wajib diisi.");
@@ -5238,6 +5413,7 @@ function saveStudentData(studentObj, token) {
     if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(inputStatus);
 
     return {
+      status: "success",
       success: true,
       message: `Data santri ${inputName} (NIS: ${inputNis}) berhasil diperbarui.`
     };
@@ -5258,9 +5434,103 @@ function saveStudentData(studentObj, token) {
 
     sheet.appendRow(newRow);
     return {
+      status: "success",
       success: true,
       studentId: newStudentId,
       message: `Santri baru ${inputName} (NIS: ${inputNis}) berhasil ditambahkan ke database.`
+    };
+  }
+}
+
+/**
+ * Hapus Data Santri dari Spreadsheet Students
+ */
+function deleteStudentData(studentId, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const cleanId = String(studentId || "").trim();
+    if (!cleanId) {
+      return {
+        status: "error",
+        success: false,
+        message: "ID Santri tidak valid untuk dihapus."
+      };
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+    if (!sheet) {
+      return { status: "error", success: false, message: "Sheet Students tidak ditemukan." };
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) {
+      return { status: "error", success: false, message: "Data santri kosong." };
+    }
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    let idIdx = headers.indexOf("student_id");
+    let nisIdx = headers.indexOf("nis");
+    if (nisIdx === -1) nisIdx = headers.indexOf("nisn");
+
+    let targetRow = -1;
+    let studentName = "";
+    for (let i = 1; i < data.length; i++) {
+      const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+      const rowNis = nisIdx !== -1 ? String(data[i][nisIdx] || "").trim() : "";
+      if (rowId === cleanId || (rowNis && rowNis === cleanId)) {
+        targetRow = i + 1;
+        let nameIdx = headers.indexOf("name");
+        if (nameIdx === -1) nameIdx = headers.indexOf("nama");
+        studentName = nameIdx !== -1 ? String(data[i][nameIdx] || "") : cleanId;
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return {
+        status: "error",
+        success: false,
+        message: `Santri dengan ID/NIS '${cleanId}' tidak ditemukan.`
+      };
+    }
+
+    sheet.deleteRow(targetRow);
+
+    // Bersihkan relasi di Wali_Santri_Map jika ada
+    try {
+      const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+      if (mapSheet) {
+        const mapData = mapSheet.getDataRange().getValues();
+        for (let m = mapData.length - 1; m >= 1; m--) {
+          if (String(mapData[m][2] || "").trim() === cleanId) {
+            mapSheet.deleteRow(m + 1);
+          }
+        }
+      }
+    } catch (cleanErr) {
+      console.warn("Pembersihan Wali_Santri_Map:", cleanErr);
+    }
+
+    return {
+      status: "success",
+      success: true,
+      message: `Data santri ${studentName} berhasil dihapus dari database.`
+    };
+  } catch (err) {
+    console.error("[DELETE STUDENT ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menghapus data santri: " + err.message
     };
   }
 }
@@ -6380,11 +6650,22 @@ function handleAuthApiAction(action, payload, e) {
     }
 
     // ----------------------------------------------------
-    // 14. STUDENT DATA MANAGEMENT (auth.student.save)
+    // 14. STUDENT DATA MANAGEMENT (auth.student.list, save, delete)
     // ----------------------------------------------------
+    if (action === "auth.student.list" || action === "student.list") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(getAllStudentsData(token));
+    }
+
     if (action === "auth.student.save" || action === "student.save") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       return createJsonResponse(saveStudentData(payload.data || payload, token));
+    }
+
+    if (action === "auth.student.delete" || action === "student.delete") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const studentId = payload.studentId || payload.student_id || payload.id || (payload.data && (payload.data.studentId || payload.data.student_id || payload.data.id));
+      return createJsonResponse(deleteStudentData(studentId, token));
     }
 
     return createJsonResponse({

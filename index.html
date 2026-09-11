@@ -3448,6 +3448,12 @@
                         </button>
                     </li>
                     <li>
+                        <button onclick="showAdminView('santri')" data-view="santri" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Data Santri">
+                            <i class="fa-solid fa-id-card-clip w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Santri</span>
+                        </button>
+                    </li>
+                    <li>
                         <button onclick="showAdminView('ppdb')" data-view="ppdb" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Data Pendaftar PPDB">
                             <i class="fa-solid fa-user-graduate w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pendaftar PPDB</span>
@@ -3612,6 +3618,26 @@
                                 Tautan & Sosmed</h4>
                             <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Atur Tautan Video & Sosial
                                 Media.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Icon Grid: Data Santri (Master Data) -->
+                    <div onclick="showAdminView('santri')"
+                        class="bg-white hover:bg-cyan-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-cyan-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-cyan-50 text-cyan-700 group-hover:bg-cyan-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-id-card-clip"></i>
+                            </div>
+                            <span id="admin-hub-santri-count"
+                                class="text-[9px] font-extrabold bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-md uppercase">0
+                                Santri</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-cyan-700 transition">
+                                Data Santri</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola data master santri, NIS, NIK, foto & status.</p>
                         </div>
                     </div>
 
@@ -4313,6 +4339,127 @@
                         </div>
                         <p class="text-xs font-semibold text-slate-500" id="admin-ppdb-empty-text">Belum ada data
                             pendaftar PPDB.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ================= VIEW: MODUL MASTER DATA SANTRI ================= -->
+            <div id="admin-view-santri" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="showAdminView('hub')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Menu Admin">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-cyan-700 dark:text-cyan-400 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Master Data Santri</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="openAdminStudentModal()" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-user-plus text-xs"></i>
+                            <span class="hidden sm:inline">Tambah Santri</span>
+                        </button>
+                        <button type="button" onclick="loadAdminStudentsData()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Refresh Data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARDS RINGKASAN DATA SANTRI -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Santri</span>
+                        <div id="admin-student-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800 dark:text-slate-100">0</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/20 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase">Santri Putra (L)</span>
+                        <div id="admin-student-stat-putra" class="text-lg md:text-xl font-extrabold text-blue-800 dark:text-blue-300">0</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-pink-100 dark:border-pink-900/40 bg-pink-50/30 dark:bg-pink-950/20 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-pink-700 dark:text-pink-400 uppercase">Santri Putri (P)</span>
+                        <div id="admin-student-stat-putri" class="text-lg md:text-xl font-extrabold text-pink-800 dark:text-pink-300">0</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/20 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Santri Aktif</span>
+                        <div id="admin-student-stat-aktif" class="text-lg md:text-xl font-extrabold text-emerald-800 dark:text-emerald-300">0</div>
+                    </div>
+                </div>
+
+                <!-- FITUR SEARCH & FILTER DATA SANTRI -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="admin-student-search" oninput="filterAdminStudentsList()" placeholder="Cari Nama, NIS, atau NIK Santri..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="admin-student-filter-gender" onchange="filterAdminStudentsList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="ALL">Semua Gender</option>
+                            <option value="L">Laki-laki (Putra)</option>
+                            <option value="P">Perempuan (Putri)</option>
+                        </select>
+                        <select id="admin-student-filter-program" onchange="filterAdminStudentsList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="ALL">Semua Program</option>
+                        </select>
+                        <select id="admin-student-filter-status" onchange="filterAdminStudentsList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="ALL">Semua Status</option>
+                            <option value="ACTIVE">Aktif</option>
+                            <option value="INACTIVE">Nonaktif</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- DAFTAR SANTRI TABLE & MOBILE LIST -->
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-2.5">
+                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-id-card-clip text-cyan-600 mr-2"></i> Master Data Santri
+                        </h3>
+                        <span id="admin-student-list-count" class="text-[11px] font-bold text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/60 px-2.5 py-0.5 rounded-lg">0 Santri</span>
+                    </div>
+
+                    <!-- DESKTOP TABLE VIEW (MD UP) -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-[#1c2836] text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100 dark:border-[#253447]">
+                                    <th class="py-2.5 px-3">No</th>
+                                    <th class="py-2.5 px-3">Foto</th>
+                                    <th class="py-2.5 px-3">Nama Santri</th>
+                                    <th class="py-2.5 px-3">NIS</th>
+                                    <th class="py-2.5 px-3">NIK</th>
+                                    <th class="py-2.5 px-3 text-center">L/P</th>
+                                    <th class="py-2.5 px-3">Tgl Lahir</th>
+                                    <th class="py-2.5 px-3">Program</th>
+                                    <th class="py-2.5 px-3 text-center">Status</th>
+                                    <th class="py-2.5 px-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-student-table-tbody" class="divide-y divide-slate-100 dark:divide-[#253447] text-slate-700 dark:text-slate-200">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- MOBILE CARD LIST VIEW (SM DOWN) -->
+                    <div id="admin-student-mobile-list" class="block md:hidden space-y-3">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+
+                    <!-- LOADING STATE -->
+                    <div id="admin-student-loader" class="hidden py-8 text-center space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl text-cyan-600"></i>
+                        <p class="text-xs text-slate-400">Memuat data master santri...</p>
+                    </div>
+
+                    <!-- EMPTY STATE -->
+                    <div id="admin-student-empty-state" class="hidden py-8 text-center space-y-2">
+                        <div class="w-12 h-12 bg-slate-100 dark:bg-[#1c2836] text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg">
+                            <i class="fa-solid fa-user-slash"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="admin-student-empty-text">Belum ada data santri ditemukan.</p>
                     </div>
                 </section>
             </div>
@@ -5412,6 +5559,174 @@
     </div>
 
 
+
+    <!-- ==================== MODAL TAMBAH / EDIT DATA SANTRI ==================== -->
+    <div id="modal-admin-student" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-id-card-clip"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-admin-student-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Tambah Data Santri Baru</h3>
+                        <p class="text-[10px] text-slate-400">Kelola informasi master santri & foto profil</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminStudentModal()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="adminStudentForm" onsubmit="submitAdminStudent(event)" class="flex flex-col flex-1 overflow-hidden">
+                <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                    <input type="hidden" id="admin-student-form-id">
+                    <input type="hidden" id="admin-student-form-photo-url">
+
+                    <!-- FOTO PROFIL SECTION WITH GOOGLE DRIVE SYNC -->
+                    <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#253447] flex flex-col sm:flex-row items-center gap-4">
+                        <div class="relative group shrink-0">
+                            <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed border-cyan-400/80 dark:border-cyan-500/50 bg-white dark:bg-[#15202d] flex items-center justify-center shadow-sm">
+                                <img id="admin-student-avatar-preview" src="" alt="Avatar" class="w-full h-full object-cover hidden">
+                                <div id="admin-student-avatar-placeholder" class="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                                    <i class="fa-solid fa-camera text-xl text-cyan-600"></i>
+                                    <span class="text-[9px] mt-1 font-semibold">Pilih Foto</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 space-y-1.5 text-center sm:text-left">
+                            <div class="flex items-center justify-center sm:justify-start gap-2">
+                                <span class="font-bold text-slate-700 dark:text-slate-200 text-xs">Foto Profil Santri</span>
+                                <span class="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md">Google Drive Sync</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 leading-relaxed">Format JPG, PNG, atau WEBP (Maks 5 MB). Foto otomatis tersimpan ke Folder Drive Pesantren.</p>
+                            <div class="flex flex-wrap gap-2 pt-1 justify-center sm:justify-start">
+                                <label for="admin-student-photo-file" class="cursor-pointer px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-[11px] font-bold transition inline-flex items-center gap-1.5 active:scale-95 shadow-sm">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>Unggah Foto</span>
+                                </label>
+                                <input type="file" id="admin-student-photo-file" accept="image/jpeg,image/png,image/webp" onchange="handleStudentPhotoSelect(event)" class="hidden">
+                                <button type="button" id="admin-student-photo-remove-btn" onclick="removeStudentPhoto()" class="hidden px-2.5 py-1.5 bg-slate-200 dark:bg-[#253447] hover:bg-rose-100 hover:text-rose-600 text-slate-600 dark:text-slate-300 rounded-xl text-[11px] font-semibold transition">
+                                    Hapus Foto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORM FIELDS -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <!-- NIS (Wajib) -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                NIS (Nomor Induk Santri) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="admin-student-form-nis" required placeholder="Contoh: 1234567890" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <span class="text-[9px] text-slate-400 block mt-0.5">Kunci autentikasi untuk wali santri.</span>
+                        </div>
+
+                        <!-- NIK (16 digit) -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                NIK Santri (16 Digit)
+                            </label>
+                            <input type="text" id="admin-student-form-nik" maxlength="16" placeholder="Contoh: 3319010101010001" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <span class="text-[9px] text-slate-400 block mt-0.5">Nomor Induk Kependudukan santri.</span>
+                        </div>
+
+                        <!-- Nama Lengkap (Wajib) -->
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Nama Lengkap Santri <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="admin-student-form-name" required placeholder="Masukkan nama santri sesuai akta/ijazah..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        </div>
+
+                        <!-- Jenis Kelamin (L/P) -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Jenis Kelamin <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="admin-student-form-gender" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                                <option value="L">Laki-laki (Putra)</option>
+                                <option value="P">Perempuan (Putri)</option>
+                            </select>
+                        </div>
+
+                        <!-- Tanggal Lahir (YYYY-MM-DD) -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Tanggal Lahir
+                            </label>
+                            <input type="date" id="admin-student-form-birthdate" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        </div>
+
+                        <!-- Program Santri -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Program Pesantren <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="admin-student-form-program" required list="admin-student-program-list" placeholder="Contoh: Tahfidz Al-Qur'an" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <datalist id="admin-student-program-list">
+                                <option value="Tahfidz Anak"></option>
+                                <option value="Tahfidz Al-Qur'an"></option>
+                                <option value="Kitab Kuning"></option>
+                                <option value="Madrasah Diniyah"></option>
+                                <option value="Reguler"></option>
+                            </datalist>
+                        </div>
+
+                        <!-- Status Santri -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Status Keaktifan <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="admin-student-form-status" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                                <option value="ACTIVE">Aktif (ACTIVE)</option>
+                                <option value="INACTIVE">Nonaktif (INACTIVE)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
+                    <button type="button" onclick="closeAdminStudentModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition active:scale-95">
+                        Batal
+                    </button>
+                    <button type="submit" id="admin-student-submit-btn" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-2 active:scale-95">
+                        <i id="admin-student-submit-icon" class="fa-solid fa-floppy-disk"></i>
+                        <span id="admin-student-submit-text">Simpan Data Santri</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL KONFIRMASI HAPUS SANTRI ==================== -->
+    <div id="modal-admin-student-delete" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] p-6 text-center space-y-4">
+            <div class="w-14 h-14 rounded-full bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Hapus Data Santri?</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="modal-admin-student-delete-desc">
+                    Apakah Anda yakin ingin menghapus data santri ini secara permanen dari database?
+                </p>
+            </div>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" onclick="closeAdminStudentDeleteModal()" class="flex-1 py-2 px-3 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition active:scale-95">
+                    Batal
+                </button>
+                <button type="button" id="admin-student-confirm-delete-btn" onclick="executeDeleteAdminStudent()" class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-trash"></i>
+                    <span>Ya, Hapus</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ==================== MODAL DETAIL PENDAFTAR PPDB ==================== -->
     <div id="adminPPDBDetailModal"
