@@ -195,6 +195,22 @@ function doPost(e) {
       return createJsonResponse(initTahfidzSheets(token));
     }
 
+    if (action === "getTahfidzSesiList" || action === "tahfidz.getSesi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getTahfidzSesiList(token));
+    }
+
+    if (action === "saveTahfidzSesi" || action === "tahfidz.saveSesi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveTahfidzSesi(payload.data || payload, token));
+    }
+
+    if (action === "deleteTahfidzSesi" || action === "tahfidz.deleteSesi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const sId = payload.sesiId || (payload.data && payload.data.sesiId) || "";
+      return createJsonResponse(deleteTahfidzSesi(sId, token));
+    }
+
     // ========================================================
     // DATA PEGAWAI (ASATIDZ & KARYAWAN) ACTIONS (doPost)
     // ========================================================
@@ -6828,6 +6844,22 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse(initTahfidzSheets(token));
     }
 
+    if (action === "auth.tahfidz.getSesi" || action === "tahfidz.getSesi" || action === "getTahfidzSesiList") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(getTahfidzSesiList(token));
+    }
+
+    if (action === "auth.tahfidz.saveSesi" || action === "tahfidz.saveSesi" || action === "saveTahfidzSesi") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveTahfidzSesi(payload.data || payload, token));
+    }
+
+    if (action === "auth.tahfidz.deleteSesi" || action === "tahfidz.deleteSesi" || action === "deleteTahfidzSesi") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const sId = payload.sesiId || (payload.data && payload.data.sesiId) || "";
+      return createJsonResponse(deleteTahfidzSesi(sId, token));
+    }
+
     // ----------------------------------------------------
     // 16. DATA PEGAWAI (ASATIDZ & KARYAWAN)
     // ----------------------------------------------------
@@ -6872,6 +6904,7 @@ function handleAuthApiAction(action, payload, e) {
 const SHEET_TAHFIDZ_LOGS = "Tahfidz_Logs";
 const SHEET_TAHFIDZ_TARGET = "Tahfidz_Target";
 const SHEET_TAHFIDZ_HALAQAH = "Tahfidz_Halaqah";
+const SHEET_TAHFIDZ_SESI = "Tahfidz_Jadwal_Sesi";
 
 /**
  * Helper untuk mendapatkan atau membuat sheet tahfidz secara otomatis dengan styling header rapi
@@ -6974,6 +7007,34 @@ function initTahfidzSheets(token) {
       created.push(SHEET_TAHFIDZ_HALAQAH);
     } else {
       existing.push(SHEET_TAHFIDZ_HALAQAH);
+    }
+
+    // 4. Tab: Tahfidz_Jadwal_Sesi
+    const headersSesi = [
+      "sesi_id", "nama_sesi", "jenis_sesi", "status", "jam_mulai", "jam_selesai", "hari_list", "created_at"
+    ];
+    let sheetSesi = ss.getSheetByName(SHEET_TAHFIDZ_SESI);
+    if (!sheetSesi) {
+      sheetSesi = ss.insertSheet(SHEET_TAHFIDZ_SESI);
+      sheetSesi.getRange(1, 1, 1, headersSesi.length).setValues([headersSesi]);
+      sheetSesi.getRange(1, 1, 1, headersSesi.length)
+        .setFontWeight("bold")
+        .setBackground("#4f46e5")
+        .setFontColor("#ffffff");
+      sheetSesi.setFrozenRows(1);
+
+      // Default Sesi Waktu Awal
+      const nowIso = new Date().toISOString();
+      const defaultSesi = [
+        ["SESI-01", "Pagi (Ba'da Subuh)", "Muroja'ah", "Aktif Digunakan", "05:00", "06:00", "Sen,Rab,Kam,Sab,Min", nowIso],
+        ["SESI-02", "Pagi (MA Tahfidz)", "Ziyadah (Setoran Hafalan Baru)", "Aktif Digunakan", "08:30", "09:30", "Sen,Sel,Rab,Kam,Sab", nowIso],
+        ["SESI-03", "Sore (Ba'da Ashar)", "Ziyadah (Setoran Hafalan Baru)", "Aktif Digunakan", "16:00", "17:15", "Sen,Sel,Rab,Kam,Sab,Min", nowIso],
+        ["SESI-04", "Malam (Ba'da Isya')", "Muroja'ah", "Aktif Digunakan", "19:30", "20:30", "Sen,Sel,Rab,Kam,Sab,Min", nowIso]
+      ];
+      sheetSesi.getRange(2, 1, defaultSesi.length, headersSesi.length).setValues(defaultSesi);
+      created.push(SHEET_TAHFIDZ_SESI);
+    } else {
+      existing.push(SHEET_TAHFIDZ_SESI);
     }
 
     const msg = created.length > 0
@@ -7290,6 +7351,38 @@ function getTahfidzDashboard(token) {
         return Array.from(programSet).sort();
       })(),
       halaqahs: halaqahList,
+      muhafizMatrix: (function() {
+        return halaqahList.map((hlq, idx) => {
+          const memberStudents = enrichedStudents.filter(st => {
+            return (st.halaqah && st.halaqah.halaqahId === hlq.halaqahId) ||
+                   (Array.isArray(hlq.studentIds) && (hlq.studentIds.includes(st.studentId) || hlq.studentIds.includes(st.nis)));
+          });
+          let totalJuz = 0;
+          memberStudents.forEach(st => {
+            totalJuz += (st.progress && st.progress.currentJuz) || 0;
+          });
+          const avgJuz = memberStudents.length > 0 ? (totalJuz / memberStudents.length).toFixed(1) : "0.0";
+
+          return {
+            index: idx + 1,
+            huruf: String.fromCharCode(65 + (idx % 26)),
+            muhafiz: hlq.muhafiz || "Belum Ditunjuk",
+            halaqahId: hlq.halaqahId,
+            namaHalaqah: hlq.namaHalaqah,
+            kategori: hlq.kategori || "Tahfidz",
+            binaanCount: memberStudents.length,
+            rataRataCapaian: `Juz ${avgJuz} / 30`,
+            avgJuzNum: Number(avgJuz)
+          };
+        });
+      })(),
+      sesiList: (function() {
+        try {
+          return getTahfidzSesiList(token).data || [];
+        } catch(e) {
+          return [];
+        }
+      })(),
       muhafizList: (function() {
         const muhafizSet = new Set();
         try {
@@ -7968,6 +8061,164 @@ function deleteTahfidzHalaqah(halaqahId, token) {
       };
     }
     return { status: "error", success: false, message: "Halaqah tidak ditemukan." };
+  } catch (err) {
+    return { status: "error", success: false, message: err.message };
+  }
+}
+
+// ====================================================================
+// MODUL BACKEND: JADWAL & SESI WAKTU TAHFIDZ (SCREENSHOT 4)
+// ====================================================================
+
+/**
+ * 9. Ambil Daftar Jadwal Sesi Waktu Aktif
+ */
+function getTahfidzSesiList(token) {
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_SESI, [
+      "sesi_id", "nama_sesi", "jenis_sesi", "status", "jam_mulai", "jam_selesai", "hari_list", "created_at"
+    ], "#4f46e5");
+
+    const data = sheet.getDataRange().getValues();
+    const list = [];
+    if (data && data.length > 1) {
+      const h = data[0].map(x => String(x || "").trim().toLowerCase());
+      for (let i = 1; i < data.length; i++) {
+        const id = String(data[i][h.indexOf("sesi_id")] || "").trim();
+        if (!id) continue;
+        list.push({
+          sesiId: id,
+          namaSesi: String(data[i][h.indexOf("nama_sesi")] || "").trim(),
+          jenisSesi: String(data[i][h.indexOf("jenis_sesi")] || "Ziyadah (Setoran Hafalan Baru)").trim(),
+          status: String(data[i][h.indexOf("status")] || "Aktif Digunakan").trim(),
+          jamMulai: String(data[i][h.indexOf("jam_mulai")] || "").trim(),
+          jamSelesai: String(data[i][h.indexOf("jam_selesai")] || "").trim(),
+          hariList: String(data[i][h.indexOf("hari_list")] || "Sen,Sel,Rab,Kam,Jum,Sab,Min").split(",").map(x => x.trim()).filter(Boolean),
+          createdAt: String(data[i][h.indexOf("created_at")] || "")
+        });
+      }
+    }
+
+    return {
+      status: "success",
+      success: true,
+      data: list
+    };
+  } catch (err) {
+    return { status: "error", success: false, message: err.message };
+  }
+}
+
+/**
+ * 10. Simpan / Perbarui Jadwal Sesi Waktu Baru
+ */
+function saveTahfidzSesi(payload, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const namaSesi = String(payload.namaSesi || payload.nama_sesi || "").trim();
+    if (!namaSesi) throw new Error("Nama sesi wajib diisi.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_SESI, [
+      "sesi_id", "nama_sesi", "jenis_sesi", "status", "jam_mulai", "jam_selesai", "hari_list", "created_at"
+    ], "#4f46e5");
+
+    const sesiId = payload.sesiId || payload.sesi_id || ("SESI-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd-HHmm"));
+    const jenisSesi = String(payload.jenisSesi || payload.jenis_sesi || "Ziyadah (Setoran Hafalan Baru)").trim();
+    const status = String(payload.status || "Aktif Digunakan").trim();
+    const jamMulai = String(payload.jamMulai || payload.jam_mulai || "05:00").trim();
+    const jamSelesai = String(payload.jamSelesai || payload.jam_selesai || "06:30").trim();
+    const hariList = Array.isArray(payload.hariList) ? payload.hariList.join(",") : String(payload.hariList || "Sen,Sel,Rab,Kam,Sab");
+    const createdAt = new Date().toISOString();
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("sesi_id");
+    let foundRow = -1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === sesiId) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    const rowValues = [sesiId, namaSesi, jenisSesi, status, jamMulai, jamSelesai, hariList, createdAt];
+
+    if (foundRow > 0) {
+      sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+    } else {
+      sheet.appendRow(rowValues);
+    }
+
+    return {
+      status: "success",
+      success: true,
+      sesiId: sesiId,
+      message: `Jadwal sesi ${namaSesi} berhasil disimpan.`
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan sesi: " + err.message
+    };
+  }
+}
+
+/**
+ * 11. Hapus Jadwal Sesi Waktu
+ */
+function deleteTahfidzSesi(sesiId, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const cleanId = String(sesiId || "").trim();
+    if (!cleanId) throw new Error("ID Sesi wajib diisi.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_TAHFIDZ_SESI);
+    if (!sheet) throw new Error("Sheet sesi belum dibuat.");
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { status: "error", success: false, message: "Sesi tidak ditemukan." };
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("sesi_id");
+    let foundRow = -1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === cleanId) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    if (foundRow > 0) {
+      sheet.deleteRow(foundRow);
+      return {
+        status: "success",
+        success: true,
+        message: "Jadwal sesi berhasil dihapus."
+      };
+    }
+    return { status: "error", success: false, message: "Sesi tidak ditemukan." };
   } catch (err) {
     return { status: "error", success: false, message: err.message };
   }

@@ -4810,9 +4810,21 @@
                             <option value="BELUM_SETOR">Belum Setor</option>
                         </select>
 
-                        <button type="button" onclick="openTahfidzHalaqahModal()" class="col-span-2 sm:col-auto w-full sm:w-auto px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-emerald-200 dark:border-emerald-800/60">
+                        <button type="button" onclick="openTahfidzHalaqahModal(1)" class="col-span-2 sm:col-auto w-full sm:w-auto px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-emerald-200 dark:border-emerald-800/60">
                             <i class="fa-solid fa-users-gear text-xs"></i>
                             <span>Kelola Halaqah & Plotting</span>
+                        </button>
+                        <button type="button" onclick="openTahfidzHalaqahModal(4)" class="col-span-2 sm:col-auto w-full sm:w-auto px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-slate-200 dark:border-[#283a4e]">
+                            <i class="fa-regular fa-clock text-xs"></i>
+                            <span>Jadwal & Sesi</span>
+                        </button>
+                        <button type="button" onclick="exportTahfidzDataCSV()" class="w-full sm:w-auto px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-slate-200 dark:border-[#283a4e]">
+                            <i class="fa-solid fa-download text-xs"></i>
+                            <span>Expor Data</span>
+                        </button>
+                        <button type="button" onclick="printTahfidzRekap()" class="w-full sm:w-auto px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-slate-200 dark:border-[#283a4e]">
+                            <i class="fa-solid fa-print text-xs"></i>
+                            <span>Cetak</span>
                         </button>
                     </div>
                 </div>
@@ -6297,21 +6309,21 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL 2: DETAIL SANTRI / MUTABA'AH REALITA VS TARGET (MATCH SCREENSHOT 4) ==================== -->
-    <div id="modal-tahfidz-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
-        <div class="bg-white dark:bg-[#15202d] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[94vh] transform transition-all">
+    <!-- ==================== MODAL 2: DETAIL SANTRI / MUTABA'AH REALITA VS TARGET (MATCH SCREENSHOT 5) ==================== -->
+    <div id="modal-tahfidz-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[94vh] transform transition-all">
             <!-- Modal Header -->
             <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
                 <div class="flex items-center space-x-3 min-w-0">
-                    <div id="tahfidz-detail-avatar" class="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm overflow-hidden">
+                    <div id="tahfidz-detail-avatar" class="w-11 h-11 rounded-2xl bg-emerald-700 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-sm overflow-hidden">
                         NA
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center space-x-2">
-                            <h3 id="tahfidz-detail-name" class="text-sm font-black text-slate-800 dark:text-slate-100 truncate">Nama Santri</h3>
-                            <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">Ziyadah Aktif</span>
+                            <h3 id="tahfidz-detail-name" class="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 truncate">Nabila Niswatul Jannah</h3>
+                            <span id="tahfidz-detail-badge-ziyadah" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">Ziyadah Aktif</span>
                         </div>
-                        <p id="tahfidz-detail-nis" class="text-[10px] text-slate-400">NIS: 2017002 • Bil Hifdhi</p>
+                        <p id="tahfidz-detail-nis" class="text-[11px] text-slate-400">NIS: 2017002 • Bil Hifdhi • C</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5">
@@ -6325,118 +6337,182 @@
             </div>
 
             <!-- Modal Content Body -->
-            <div id="tahfidz-detail-content" class="p-5 overflow-y-auto space-y-4 custom-scrollbar flex-1 text-xs">
-                <!-- 4 Strip Stat Cards (Matches Screenshot 4) -->
+            <div id="tahfidz-detail-content" class="p-4 sm:p-5 overflow-y-auto space-y-4 custom-scrollbar flex-1 text-xs">
+                <!-- 4 Strip Stat Cards (Matches Screenshot 5) -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">CAPAIAN SAAT INI</span>
-                        <div id="tahfidz-detail-stat-capaian" class="text-sm font-black text-emerald-600 dark:text-emerald-400">Juz 1 (3%)</div>
+                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CAPAIAN SAAT INI</span>
+                        <div id="tahfidz-detail-stat-capaian" class="text-sm font-black text-emerald-600 dark:text-emerald-400">Juz 1 <span class="text-xs font-bold text-slate-400">(3%)</span></div>
                     </div>
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">TARGET CAPAIAN</span>
-                        <div id="tahfidz-detail-stat-target" class="text-sm font-black text-slate-700 dark:text-slate-200">30 Juz</div>
+                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">TARGET CAPAIAN</span>
+                        <div id="tahfidz-detail-stat-target" class="text-sm font-black text-amber-500 dark:text-amber-400">-</div>
                     </div>
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">TOTAL SETORAN</span>
-                        <div id="tahfidz-detail-stat-total" class="text-sm font-black text-slate-800 dark:text-slate-100">0 Kali</div>
+                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">TOTAL SETORAN</span>
+                        <div id="tahfidz-detail-stat-total" class="text-sm font-black text-slate-800 dark:text-slate-100">2 Kali</div>
                     </div>
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">RATA-RATA NILAI</span>
-                        <div id="tahfidz-detail-stat-nilai" class="text-sm font-black text-slate-700 dark:text-slate-200">Mumtaz (A)</div>
+                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">RATA-RATA NILAI</span>
+                        <div id="tahfidz-detail-stat-nilai" class="text-sm font-black text-emerald-600 dark:text-emerald-400">-</div>
                     </div>
                 </div>
 
                 <!-- Progress Hafalan 30 Juz Bar -->
-                <div class="p-3.5 bg-slate-50/70 dark:bg-[#1c2836]/50 rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1.5">
-                    <div class="flex justify-between items-center text-xs font-extrabold">
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center text-[11px] font-extrabold">
                         <span class="text-slate-700 dark:text-slate-300">Progress Hafalan 30 Juz</span>
                         <span id="tahfidz-detail-progress-text" class="text-emerald-600">1 / 30 Juz</span>
                     </div>
-                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
-                        <div id="tahfidz-detail-progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" style="width: 3%;"></div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                        <div id="tahfidz-detail-progress-bar" class="bg-emerald-600 h-full rounded-full transition-all duration-500" style="width: 3%;"></div>
                     </div>
                 </div>
 
-                <!-- Tabs: 1. Rekapitulasi (3 Indikator) | 2. Riwayat Setoran -->
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2">
+                <!-- Tabs Navigation & Analisis Pill -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-[#253447] pb-2 pt-1">
                     <div class="flex items-center space-x-2">
-                        <button type="button" id="btn-detail-tab-1" onclick="switchTahfidzDetailTab(1)" class="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow-sm transition">
-                            <i class="fa-solid fa-chart-column mr-1"></i> 1. Tab Rekapitulasi (3 Indikator)
+                        <button type="button" id="btn-detail-tab-1" onclick="switchTahfidzDetailTab(1)" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-700 text-white shadow-sm transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check"></i> 1. Tab Rekapitulasi (3 Indikator)
                         </button>
-                        <button type="button" id="btn-detail-tab-2" onclick="switchTahfidzDetailTab(2)" class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">
-                            <i class="fa-solid fa-clock-rotate-left mr-1"></i> 2. Tab Riwayat Setoran
+                        <button type="button" id="btn-detail-tab-2" onclick="switchTahfidzDetailTab(2)" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left"></i> 2. Tab Riwayat Setoran
                         </button>
+                    </div>
+                    <div class="self-end sm:self-auto">
+                        <span class="px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 text-[11px] font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-line text-[10px]"></i>
+                            <span>Analisis Realita vs Target</span>
+                        </span>
                     </div>
                 </div>
 
                 <!-- PANEL TAB 1: REKAPITULASI REALITA VS TARGET (3 INDIKATOR) -->
                 <div id="panel-detail-tab-1" class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                            <i class="fa-solid fa-arrow-trend-up text-emerald-600"></i> REKAPITULASI REALITA VS TARGET (3 INDIKATOR)
-                        </span>
-                        <span class="text-[10px] text-slate-400">Kalkulasi akurat halaman & setoran</span>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div>
+                            <h4 class="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <i class="fa-solid fa-chart-column text-emerald-600"></i> REKAPITULASI REALITA VS TARGET (3 INDIKATOR)
+                            </h4>
+                            <p class="text-[10px] text-slate-400">Kalkulasi akurat halaman & setoran riil berdasarkan kalender interaktif</p>
+                        </div>
+                        <!-- Filter Pill Tipe Setoran (Screenshot 5) -->
+                        <div class="flex items-center gap-1.5 self-end sm:self-auto">
+                            <button type="button" id="btn-filter-detail-all" onclick="setTahfidzDetailTipeFilter('ALL')" class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-700 text-white transition">
+                                Semua
+                            </button>
+                            <button type="button" id="btn-filter-detail-ziyadah" onclick="setTahfidzDetailTipeFilter('ZIYADAH')" class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1">
+                                <input type="checkbox" id="chk-detail-ziyadah" class="rounded text-emerald-600 pointer-events-none" checked>
+                                <span>Ziyadah</span>
+                            </button>
+                            <button type="button" id="btn-filter-detail-murajaah" onclick="setTahfidzDetailTipeFilter('MURAJAAH')" class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1">
+                                <input type="checkbox" id="chk-detail-murajaah" class="rounded text-emerald-600 pointer-events-none" checked>
+                                <span>Muroja'ah</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- 3 Cards Indikator: Harian, Pekan, Bulan -->
+                    <!-- 3 Cards Indikator (Harian, Pekan, Bulan) Sesuai Screenshot 5 -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <!-- Indikator 1: Capaian Harian -->
-                        <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e] space-y-2.5">
+                        <!-- Indikator 1: Capaian Harian (Border Emerald) -->
+                        <div class="p-3.5 bg-white dark:bg-[#15202d] rounded-2xl border-2 border-emerald-200 dark:border-emerald-900/60 shadow-sm space-y-2.5">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                <span class="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 text-xs">
                                     <i class="fa-regular fa-calendar text-emerald-600"></i> Capaian Harian
                                 </span>
-                                <span id="tahfidz-ind-harian-status" class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Belum Ada Setoran</span>
+                                <span id="tahfidz-ind-harian-status" class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">Belum Ada Setoran</span>
                             </div>
-                            <div class="space-y-1 text-[11px]">
+
+                            <!-- Selector Tanggal Harian -->
+                            <div class="flex items-center space-x-1">
+                                <input type="date" id="tahfidz-date-harian" onchange="onChangeIndikatorDate('daily', this.value)" class="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-[#283a4e] bg-slate-50 dark:bg-[#1c2836] text-[10px] font-bold outline-none">
+                                <button type="button" onclick="setIndikatorPreset('today')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2836] text-[9px] font-bold hover:bg-slate-200">Hari Ini</button>
+                                <button type="button" onclick="setIndikatorPreset('yesterday')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2836] text-[9px] font-bold hover:bg-slate-200">Kemarin</button>
+                            </div>
+
+                            <div class="space-y-1 text-[11px] pt-1">
                                 <div class="flex justify-between text-slate-500 dark:text-slate-400">
                                     <span>Target:</span>
-                                    <span id="tahfidz-ind-harian-target" class="font-bold text-slate-700 dark:text-slate-200">1 Hal (Z) • 2 Hal (M)</span>
+                                    <span id="tahfidz-ind-harian-target" class="font-bold text-slate-800 dark:text-slate-200">1 Halaman / Setor (Z) • 2 Halaman / Setor (M)</span>
                                 </div>
                                 <div class="flex justify-between text-slate-500 dark:text-slate-400">
                                     <span>Realita:</span>
-                                    <span id="tahfidz-ind-harian-realita" class="font-bold text-emerald-600">0 Hal (0x Setor)</span>
+                                    <span id="tahfidz-ind-harian-realita" class="font-bold text-sky-600">0 Hal (0x Setor)</span>
                                 </div>
+                            </div>
+
+                            <div class="p-2 rounded-xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200/60 dark:border-[#283a4e] text-[9px] text-slate-500 leading-tight">
+                                Target: 1 Halaman / Setor (Z) • 2 Halaman / Setor (M) | Realita: 0 Hal
                             </div>
                         </div>
 
-                        <!-- Indikator 2: Capaian Pekan -->
-                        <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e] space-y-2.5">
+                        <!-- Indikator 2: Capaian Pekan (Border Teal) -->
+                        <div class="p-3.5 bg-white dark:bg-[#15202d] rounded-2xl border-2 border-teal-200 dark:border-teal-900/60 shadow-sm space-y-2.5">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                <span class="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 text-xs">
                                     <i class="fa-solid fa-calendar-week text-teal-600"></i> Capaian Pekan
                                 </span>
-                                <span id="tahfidz-ind-pekan-status" class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">0% Capaian</span>
+                                <span id="tahfidz-ind-pekan-status" class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">0% Capaian</span>
                             </div>
-                            <div class="space-y-1 text-[11px]">
+
+                            <!-- Selector Pekan -->
+                            <div class="flex items-center space-x-1">
+                                <div class="flex-1 flex items-center justify-between px-2 py-1 rounded-lg border border-slate-200 dark:border-[#283a4e] bg-slate-50 dark:bg-[#1c2836] text-[10px] font-bold">
+                                    <button type="button" onclick="shiftIndikatorWeek(-1)" class="text-slate-400 hover:text-slate-700">&lt;</button>
+                                    <span id="tahfidz-pekan-label">07 Sep 2026...</span>
+                                    <button type="button" onclick="shiftIndikatorWeek(1)" class="text-slate-400 hover:text-slate-700">&gt;</button>
+                                </div>
+                                <button type="button" onclick="setIndikatorPreset('thisWeek')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2836] text-[9px] font-bold hover:bg-slate-200">Pekan Ini</button>
+                            </div>
+
+                            <div class="space-y-1 text-[11px] pt-1">
                                 <div class="flex justify-between text-slate-500 dark:text-slate-400">
                                     <span>Target:</span>
-                                    <span id="tahfidz-ind-pekan-target" class="font-bold text-slate-700 dark:text-slate-200">10 Hal (Z) + 10 Hal (M)</span>
+                                    <span id="tahfidz-ind-pekan-target" class="font-bold text-slate-800 dark:text-slate-200">10 Halaman (Z) + 10 Halaman (M)</span>
                                 </div>
                                 <div class="flex justify-between text-slate-500 dark:text-slate-400">
                                     <span>Realita:</span>
-                                    <span id="tahfidz-ind-pekan-realita" class="font-bold text-teal-600">0 Hal (0x Setor)</span>
+                                    <span id="tahfidz-ind-pekan-realita" class="font-bold text-teal-600">1 Hal (2x Setor)</span>
                                 </div>
+                            </div>
+
+                            <div class="p-2 rounded-xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200/60 dark:border-[#283a4e] text-[9px] text-slate-500 leading-tight">
+                                Target: 10 Halaman (Z) + 10 Halaman (M) | Realita: 1 Hal • Status: Kurang
                             </div>
                         </div>
 
-                        <!-- Indikator 3: Capaian Bulan -->
-                        <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e] space-y-2.5">
+                        <!-- Indikator 3: Capaian Bulan (Border Purple) -->
+                        <div class="p-3.5 bg-white dark:bg-[#15202d] rounded-2xl border-2 border-purple-200 dark:border-purple-900/60 shadow-sm space-y-2.5">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                <span class="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 text-xs">
                                     <i class="fa-regular fa-calendar-check text-purple-600"></i> Capaian Bulan
                                 </span>
-                                <span id="tahfidz-ind-bulan-status" class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">0% Capaian</span>
+                                <span id="tahfidz-ind-bulan-status" class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">0% Capaian</span>
                             </div>
-                            <div class="space-y-1 text-[11px]">
+
+                            <!-- Selector Bulan -->
+                            <div class="flex items-center space-x-1">
+                                <div class="flex-1 flex items-center justify-between px-2 py-1 rounded-lg border border-slate-200 dark:border-[#283a4e] bg-slate-50 dark:bg-[#1c2836] text-[10px] font-bold">
+                                    <button type="button" onclick="shiftIndikatorMonth(-1)" class="text-slate-400 hover:text-slate-700">&lt;</button>
+                                    <span id="tahfidz-bulan-label">September</span>
+                                    <button type="button" onclick="shiftIndikatorMonth(1)" class="text-slate-400 hover:text-slate-700">&gt;</button>
+                                </div>
+                                <button type="button" onclick="setIndikatorPreset('thisMonth')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2836] text-[9px] font-bold hover:bg-slate-200">Bulan Ini</button>
+                            </div>
+
+                            <div class="space-y-1 text-[11px] pt-1">
                                 <div class="flex justify-between text-slate-500 dark:text-slate-400">
                                     <span>Target:</span>
-                                    <span id="tahfidz-ind-bulan-target" class="font-bold text-slate-700 dark:text-slate-200">40 Hal (Z) + 40 Hal (M)</span>
+                                    <span id="tahfidz-ind-bulan-target" class="font-bold text-slate-800 dark:text-slate-200">40 Halaman (Z) + 40 Halaman (M)</span>
                                 </div>
                                 <div class="flex justify-between text-slate-500 dark:text-slate-400">
                                     <span>Realita:</span>
-                                    <span id="tahfidz-ind-bulan-realita" class="font-bold text-purple-600">0 Hal (0x Setor)</span>
+                                    <span id="tahfidz-ind-bulan-realita" class="font-bold text-purple-600">1 Hal (2x Setor)</span>
                                 </div>
+                            </div>
+
+                            <div class="p-2 rounded-xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200/60 dark:border-[#283a4e] text-[9px] text-slate-500 leading-tight">
+                                Target: 40 Halaman (Z) + 40 Halaman (M) | Realita: 1 Hal • Status: Sisa 1599
                             </div>
                         </div>
                     </div>
@@ -6444,10 +6520,10 @@
 
                 <!-- PANEL TAB 2: RIWAYAT SETORAN LENGKAP -->
                 <div id="panel-detail-tab-2" class="hidden space-y-3">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#253447]">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr class="bg-slate-50 dark:bg-[#1c2836] text-slate-500 uppercase text-[10px] font-bold border-b border-slate-100 dark:border-[#253447]">
+                                <tr class="bg-slate-50 dark:bg-[#1c2836] text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200 dark:border-[#253447]">
                                     <th class="py-2.5 px-3">Tanggal</th>
                                     <th class="py-2.5 px-3">Tipe</th>
                                     <th class="py-2.5 px-3">Juz / Surah</th>
@@ -6464,14 +6540,14 @@
                 </div>
             </div>
 
-            <!-- Modal Footer -->
+            <!-- Modal Footer (Matches Screenshot 5) -->
             <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
                 <div class="flex items-center space-x-2">
-                    <button type="button" onclick="openTahfidzCatatModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
-                        <i class="fa-solid fa-plus text-[10px]"></i>
+                    <button type="button" onclick="openTahfidzCatatModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-plus text-[10px]"></i><i class="fa-solid fa-plus text-[10px] -ml-1"></i>
                         <span>+ Setor Baru</span>
                     </button>
-                    <button type="button" onclick="openTahfidzTargetModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center gap-1.5 active:scale-95">
+                    <button type="button" onclick="openTahfidzTargetModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-3.5 py-2 bg-white hover:bg-slate-100 dark:bg-[#15202d] dark:hover:bg-[#1c2836] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition border border-slate-200 dark:border-[#283a4e] flex items-center gap-1.5 active:scale-95">
                         <i class="fa-solid fa-pencil text-[10px]"></i>
                         <span>Edit Target</span>
                     </button>
@@ -6694,9 +6770,9 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL 4: KELOLA HALAQAH & PLOTTING (MATCH SCREENSHOT 2) ==================== -->
-    <div id="modal-tahfidz-halaqah" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
-        <div class="bg-white dark:bg-[#15202d] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+    <!-- ==================== MODAL 4: KELOLA HALAQAH & PLOTTING (4 TAB LENGKAP) ==================== -->
+    <div id="modal-tahfidz-halaqah" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[94vh] transform transition-all">
             <!-- Modal Header -->
             <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
                 <div class="flex items-center space-x-2.5">
@@ -6705,7 +6781,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Kelola Halaqah & Plotting Santri</h3>
-                        <p class="text-[10px] text-slate-400">Atur kelompok halaqah, tunjuk Ustadz Muhafiz dan plotting santri binaan</p>
+                        <p class="text-[10px] text-slate-400">Atur kelompok halaqah (Kategori Anak & Dewasa), tunjuk Ustadz Muhafiz dan alokasikan santri binaan</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeTahfidzHalaqahModal()" class="w-8 h-8 rounded-full bg-slate-200/60 dark:bg-slate-700 hover:bg-slate-300 text-slate-500 dark:text-slate-300 flex items-center justify-center transition">
@@ -6713,61 +6789,292 @@
                 </button>
             </div>
 
-            <!-- Modal Content Body -->
-            <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
-                <!-- Sub-section: Buat Halaqah Baru -->
-                <form id="form-new-halaqah" onsubmit="submitNewHalaqah(event)" class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3">
-                    <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-plus text-emerald-600"></i> BUAT KELOMPOK HALAQAH BARU
-                    </span>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Halaqah <span class="text-rose-500">*</span></label>
-                            <input type="text" id="input-halaqah-nama" required placeholder="Contoh: Halaqah Abu Ubaidah" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Kategori Program <span class="text-rose-500">*</span></label>
-                            <select id="input-halaqah-kategori" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
-                                <option value="Pesantren Tahfidz Anak">Pesantren Tahfidz Anak</option>
-                                <option value="Tahfidz Dewasa">Tahfidz Dewasa</option>
-                                <option value="Madrasah Diniyah">Madrasah Diniyah</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ustadz Muhafiz Pembina</label>
-                            <select id="input-halaqah-muhafiz" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
-                                <option value="">-- Pilih Ustadz / Muhafiz Pembina --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Kurikulum</label>
-                            <input type="text" id="input-halaqah-target" placeholder="Contoh: 1 Halaman Per Hari" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none">
-                        </div>
-                    </div>
-                    <div class="flex justify-end pt-1">
-                        <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
-                            <i class="fa-solid fa-plus text-[10px]"></i>
-                            <span>Tambah Halaqah</span>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Sub-section: Daftar Kelompok Halaqah Aktif -->
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">DAFTAR KELOMPOK HALAQAH AKTIF</span>
-                    </div>
-                    <div id="tahfidz-halaqah-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- Rendered dynamically by JS -->
-                    </div>
-                </div>
+            <!-- Tab Navigation Bar (4 TAB) -->
+            <div class="flex items-center space-x-1 border-b border-slate-200 dark:border-[#253447] px-5 pt-2 bg-slate-50/70 dark:bg-[#1c2836]/60 overflow-x-auto custom-scrollbar shrink-0">
+                <button type="button" id="tab-btn-hlq-1" onclick="switchHalaqahTab(1)" class="px-4 py-2.5 text-xs font-extrabold border-b-2 border-emerald-600 text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-layer-group"></i> 1. KELOMPOK HALAQAH
+                </button>
+                <button type="button" id="tab-btn-hlq-2" onclick="switchHalaqahTab(2)" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-user-plus"></i> 2. PLOTTING SANTRI
+                </button>
+                <button type="button" id="tab-btn-hlq-3" onclick="switchHalaqahTab(3)" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-table-list"></i> 3. MATRIKS BEBAN
+                </button>
+                <button type="button" id="tab-btn-hlq-4" onclick="switchHalaqahTab(4)" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-regular fa-clock"></i> 4. JADWAL & SESI WAKTU
+                </button>
             </div>
 
-            <!-- Modal Footer -->
-            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-end gap-3 shrink-0">
-                <button type="button" onclick="closeTahfidzHalaqahModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
-                    Tutup
-                </button>
+            <!-- Modal Content Body -->
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 text-xs">
+                
+                <!-- ==================== TAB 1: KELOMPOK HALAQAH ==================== -->
+                <div id="panel-hlq-tab-1" class="space-y-4">
+                    <!-- Sub-section: Buat Halaqah Baru -->
+                    <form id="form-new-halaqah" onsubmit="submitNewHalaqah(event)" class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3">
+                        <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-plus text-emerald-600"></i> BUAT KELOMPOK HALAQAH BARU
+                        </span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Halaqah <span class="text-rose-500">*</span></label>
+                                <input type="text" id="input-halaqah-nama" required placeholder="Misal: Halaqah Abu Ubaidah" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Kategori Program <span class="text-rose-500">*</span></label>
+                                <select id="input-halaqah-kategori" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                    <option value="Tahfidz Anak">Tahfidz Anak (Juz 'Amma / B)</option>
+                                    <option value="Tahfidz Dewasa">Tahfidz Dewasa</option>
+                                    <option value="Kitab Kuning">Kitab Kuning</option>
+                                    <option value="Madrasah Diniyah">Madrasah Diniyah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ustadz Muhafiz Pembina <span class="text-rose-500">*</span></label>
+                                <select id="input-halaqah-muhafiz" required class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                    <option value="">-- Pilih Ustadz Pengampu --</option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Kurikulum Program</label>
+                                <input type="text" id="input-halaqah-target" placeholder="Misal: Juz 30 Mutqin & Tahsin Huruf / 1 Halaman Per Hari" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-1.5 active:scale-95">
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                    <span>Tambah Halaqah</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Sub-section: Daftar Kelompok Halaqah Aktif -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">DAFTAR KELOMPOK HALAQAH AKTIF</span>
+                            <span id="tahfidz-halaqah-count-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">0 Halaqah</span>
+                        </div>
+                        <div id="tahfidz-halaqah-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Rendered dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 2: PLOTTING SANTRI ==================== -->
+                <div id="panel-hlq-tab-2" class="hidden space-y-4">
+                    <!-- Selector Halaqah & Info Card -->
+                    <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                            <div class="flex items-center space-x-2">
+                                <label class="font-bold text-slate-700 dark:text-slate-300 text-xs shrink-0">Pilih Halaqah:</label>
+                                <select id="select-plotting-halaqah" onchange="onSelectPlottingHalaqah(this.value)" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="tab2-plotting-count-badge" class="font-extrabold text-emerald-700 dark:text-emerald-300 text-xs bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-xl border border-emerald-200/60">0 Santri Terplot</span>
+                            </div>
+                        </div>
+
+                        <!-- Summary Banner Halaqah Terpilih -->
+                        <div class="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/40 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Ustadz Muhafiz:</span>
+                                <p id="tab2-plotting-muhafiz" class="font-bold text-slate-800 dark:text-slate-100">-</p>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Target Kurikulum:</span>
+                                <p id="tab2-plotting-target" class="font-semibold text-slate-700 dark:text-slate-300">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Santri Terdaftar di Halaqah Ini -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5 uppercase">
+                                <i class="fa-solid fa-user-check text-emerald-600"></i>
+                                <span>Santri Terdaftar di Halaqah Ini (<span id="tab2-plotting-enrolled-count">0</span>)</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400">Klik Keluarkan untuk melepas santri</span>
+                        </div>
+                        <div id="tab2-plotting-enrolled-container" class="max-h-48 overflow-y-auto space-y-1.5 p-2 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] custom-scrollbar">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tambah Santri Lain -->
+                    <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-[#283a4e]">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5 uppercase">
+                                <i class="fa-solid fa-user-plus text-indigo-600"></i>
+                                <span>Tambah Santri Lain ke Halaqah Ini</span>
+                            </span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="tab2-plotting-search" oninput="filterTahfidzPlottingAvailableList()" placeholder="Cari santri berdasarkan Nama atau NIS..." class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <select id="tab2-plotting-filter-gender" onchange="filterTahfidzPlottingAvailableList()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs font-semibold outline-none">
+                                <option value="ALL">Semua Gender</option>
+                                <option value="L">Putra (L)</option>
+                                <option value="P">Putri (P)</option>
+                            </select>
+                        </div>
+                        <div id="tab2-plotting-available-container" class="max-h-56 overflow-y-auto space-y-1.5 p-2 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] custom-scrollbar">
+                            <!-- Populated by JS -->
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button type="button" id="tab2-btn-save-plotting" onclick="submitTahfidzPlotting()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Simpan Plotting Santri</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 3: MATRIKS BEBAN (MATCH SCREENSHOT 3) ==================== -->
+                <div id="panel-hlq-tab-3" class="hidden space-y-4">
+                    <!-- Banner Header -->
+                    <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-1">
+                        <h4 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-simple text-emerald-600"></i>
+                            <span>REKAPITULASI DISTRIBUSI & BEBAN BINAAN USTADZ MUHAFIZ</span>
+                        </h4>
+                        <p class="text-[10px] text-slate-400">Gambaran rasio kapasitas bimbingan tahfidz santri per tenaga pendidik</p>
+                    </div>
+
+                    <!-- Tabel Matriks Beban -->
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-[#283a4e]">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-[#1c2836] text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold border-b border-slate-200 dark:border-[#283a4e]">
+                                    <th class="py-3 px-4">USTADZ MUHAFIZ</th>
+                                    <th class="py-3 px-4">KELOMPOK HALAQAH</th>
+                                    <th class="py-3 px-4">KATEGORI</th>
+                                    <th class="py-3 px-4">BINAAN</th>
+                                    <th class="py-3 px-4">RATA-RATA CAPAIAN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tahfidz-matriks-beban-tbody" class="divide-y divide-slate-100 dark:divide-[#253447] bg-white dark:bg-[#15202d]">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 4: JADWAL & SESI WAKTU (MATCH SCREENSHOT 4) ==================== -->
+                <div id="panel-hlq-tab-4" class="hidden space-y-4">
+                    <!-- Form Tambah Jadwal Sesi Baru -->
+                    <form id="form-tahfidz-sesi" onsubmit="submitTahfidzSesi(event)" class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3">
+                        <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-plus text-emerald-600"></i> TAMBAH JADWAL SESI BARU
+                        </span>
+                        <input type="hidden" id="input-sesi-id" value="">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Sesi <span class="text-rose-500">*</span></label>
+                                <input type="text" id="input-sesi-nama" required placeholder="Misal: Pagi (Ba'da Subuh)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Jenis Sesi Bimbingan <span class="text-rose-500">*</span></label>
+                                <select id="input-sesi-tipe" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                    <option value="Ziyadah (Setoran Hafalan Baru)">Ziyadah (Setoran Hafalan Baru)</option>
+                                    <option value="Muroja'ah (Pengulangan)">Muroja'ah (Pengulangan)</option>
+                                    <option value="Tasmi' (Ujian Bil Ghaib)">Tasmi' (Ujian Bil Ghaib)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Status Operasional</label>
+                                <select id="input-sesi-status" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                    <option value="Aktif Digunakan">Aktif Digunakan</option>
+                                    <option value="Nonaktif">Nonaktif</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Rentang Jam Sesi</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="time" id="input-sesi-jam-mulai" value="05:15" class="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                    <span class="text-slate-400 font-bold text-xs">s/d</span>
+                                    <input type="time" id="input-sesi-jam-selesai" value="06:30" class="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Hari Berlakunya Sesi</label>
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Sen" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Sen</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Sel" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Sel</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Rab" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Rab</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Kam" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Kam</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Jum" class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Jum</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Sab" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Sab</span>
+                                    </label>
+                                    <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" name="sesi-hari" value="Min" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span>Min</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-1">
+                            <button type="submit" id="btn-submit-sesi" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span id="btn-submit-sesi-text">Simpan Sesi</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Daftar Jadwal Sesi Aktif -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">DAFTAR JADWAL SESI WAKTU AKTIF TENANT</span>
+                            <span id="tahfidz-sesi-count-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">4 Sesi Aktif</span>
+                        </div>
+                        <div id="tahfidz-sesi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer (Matches Screenshots 1, 3, 4) -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <p class="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                    <span>Perubahan langsung tersimpan ke Google Sheets & local cache.</span>
+                </p>
+                <div class="flex items-center gap-2 self-end sm:self-auto">
+                    <button type="button" onclick="closeTahfidzHalaqahModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
+                        Tutup
+                    </button>
+                    <button type="button" onclick="saveAllHalaqahChanges()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Perubahan</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
