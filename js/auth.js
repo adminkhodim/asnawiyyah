@@ -693,6 +693,15 @@ const ASNIdentity = {
                 if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1.5 text-amber-400"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || '-')}`;
             }
         } else if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
+            if (window.innerWidth >= 768) {
+                const pagePengaturan = document.getElementById('page-pengaturan');
+                if (pagePengaturan && !pagePengaturan.classList.contains('hidden')) {
+                    setTimeout(() => {
+                        if (typeof switchTab === 'function') switchTab('admin');
+                        if (typeof showAdminView === 'function') showAdminView('hub');
+                    }, 50);
+                }
+            }
             adminStateEl.classList.remove('hidden');
             const nameEl = document.getElementById('admin-display-name');
             const emailEl = document.getElementById('admin-display-email');
@@ -940,7 +949,7 @@ async function handleAdminVerifyOtp(e) {
             if (typeof showToast === 'function') {
                 showToast('Login Admin Berhasil!');
             }
-            if (window.innerWidth >= 1024 && (window.location.pathname.replace(/\/+$/, '') === '/administrator' || document.getElementById('page-admin')?.classList.contains('block'))) {
+            if (window.innerWidth >= 768) {
                 if (typeof switchTab === 'function') switchTab('admin');
                 if (typeof showAdminView === 'function') showAdminView('hub');
             }

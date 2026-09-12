@@ -201,7 +201,7 @@
             } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
                 switchTab('maulid-index', false);
             } else if (path === '/administrator') {
-                const isMobile = window.innerWidth < 1024;
+                const isMobile = window.innerWidth < 768;
                 if (isMobile) {
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
                     switchTab('pengaturan', false);
@@ -209,7 +209,14 @@
                     switchTab('admin', false);
                 }
             } else if (path === '/pengaturan') {
-                switchTab('pengaturan', false);
+                const isMobile = window.innerWidth < 768;
+                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor'));
+                if (!isMobile && isAdmin) {
+                    window.history.replaceState({ tab: 'admin' }, '', '/administrator');
+                    switchTab('admin', false);
+                } else {
+                    switchTab('pengaturan', false);
+                }
             } else {
                 switchTab('beranda', false);
             }
@@ -227,12 +234,20 @@
         }
 
         function switchTab(tabId, updateUrl = true, customUrl = null) {
-            if (tabId === 'admin' && window.innerWidth < 1024 && (typeof isAdminLoggedIn === 'undefined' || !isAdminLoggedIn)) {
+            if (tabId === 'admin' && window.innerWidth < 768 && (typeof isAdminLoggedIn === 'undefined' || !isAdminLoggedIn)) {
                 if (updateUrl) {
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
                 }
                 switchTab('pengaturan', updateUrl);
                 return;
+            }
+
+            if (tabId === 'pengaturan' && window.innerWidth >= 768) {
+                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor'));
+                if (isAdmin) {
+                    switchTab('admin', updateUrl);
+                    return;
+                }
             }
 
             if (updateUrl) {
@@ -655,7 +670,7 @@
         }
 
         function renderHeroSlider() {
-            const isDesktop = window.innerWidth >= 1024;
+            const isDesktop = window.innerWidth >= 768;
             const sliderPairs = [
                 {
                     slider: document.getElementById('hero-slider-container'),

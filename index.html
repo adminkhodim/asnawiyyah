@@ -281,9 +281,9 @@
         <div id="page-beranda" class="tab-content block">
 
             <!-- =================================================================== -->
-            <!-- 1. KHUSUS TAMPILAN MOBILE (Hanya tampil di layar kecil / < 1024px) -->
+            <!-- 1. KHUSUS TAMPILAN MOBILE (Hanya tampil di layar kecil / < 768px)  -->
             <!-- =================================================================== -->
-            <div class="block lg:hidden max-w-xl mx-auto px-4 py-5 space-y-4">
+            <div id="beranda-mobile-section" class="block md:hidden max-w-xl mx-auto px-4 py-5 space-y-4">
 
                 <!-- Widget Lokasi & Jadwal Shalat (Mobile) -->
                 <section
@@ -405,9 +405,9 @@
 
 
             <!-- ================================================================= -->
-            <!-- 2. DESKTOP INSTITUTIONAL FLOW (Hanya tampil di lg: >= 1024px)      -->
+            <!-- 2. DESKTOP INSTITUTIONAL FLOW (Hanya tampil di md: >= 768px)       -->
             <!-- ================================================================= -->
-            <div class="hidden lg:block w-full bg-slate-50 dark:bg-[#0b131e] text-slate-800 dark:text-slate-100 pb-24 space-y-12">
+            <div id="beranda-desktop-section" class="hidden md:block w-full bg-slate-50 dark:bg-[#0b131e] text-slate-800 dark:text-slate-100 pb-24 space-y-12">
 
                 <!-- 1. INSTITUTIONAL HERO SECTION (Full-Width Edge-to-Edge) -->
                 <section
@@ -4685,10 +4685,6 @@
 
                     <!-- Action Buttons in One Clean Flex Row -->
                     <div class="flex items-center gap-1.5 flex-wrap ml-auto">
-                        <button type="button" onclick="triggerInitTahfidzSheets()" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-amber-200 dark:border-amber-800/60 active:scale-95" title="Inisialisasi Tab Sheet Spreadsheet">
-                            <i class="fa-solid fa-table-cells text-xs"></i>
-                            <span class="hidden sm:inline">Init Sheet</span>
-                        </button>
                         <button type="button" onclick="exportTahfidzDataCSV()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Ekspor Data CSV">
                             <i class="fa-solid fa-file-export text-xs"></i>
                             <span class="hidden sm:inline">Ekspor</span>

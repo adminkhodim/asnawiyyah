@@ -111,3 +111,27 @@ html.dark option {
   background-color: #15202d;
   color: #f1f5f9;
 }
+
+/* ========================================================================= */
+/* PROTEKSI MUTLAK ISOLASI LAYOUT DESKTOP VS MOBILE (ANTI-LEAKAGE)           */
+/* ========================================================================= */
+@media (min-width: 768px) {
+  #beranda-mobile-section {
+    display: none !important;
+  }
+  #beranda-desktop-section {
+    display: block !important;
+  }
+  #account-state-admin {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  #beranda-mobile-section {
+    display: block !important;
+  }
+  #beranda-desktop-section {
+    display: none !important;
+  }
+}
