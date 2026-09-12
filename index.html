@@ -6573,17 +6573,17 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL 3: TARGET CAPAIAN SANTRI (MATCH SCREENSHOT 3) ==================== -->
+    <!-- ==================== MODAL 3: TARGET CAPAIAN SANTRI (MATCH KHODIM.COM) ==================== -->
     <div id="modal-tahfidz-target" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
-        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
             <!-- Modal Header -->
             <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center text-base font-bold">
-                        <i class="fa-solid fa-bullseye"></i>
+                        <i class="fa-solid fa-flag"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Target Capaian Santri</h3>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-slate-100">Target Capaian Santri (Ziyadah & Muroja'ah)</h3>
                         <p id="tahfidz-target-student-name" class="text-[10px] text-slate-400">Nabila Niswatul Jannah • NIS: 2017002</p>
                     </div>
                 </div>
@@ -6594,105 +6594,121 @@
 
             <!-- Modal Content Body -->
             <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
-                <!-- Jadwal Sesi Waktu Aktif (Dinamis dari Sheet Tahfidz_Jadwal_Sesi) -->
+                <!-- Jadwal Sesi Waktu Aktif Tenant (Dinamis dari Sheet Tahfidz_Jadwal_Sesi) -->
                 <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e] space-y-2.5">
                     <div class="flex flex-wrap items-center justify-between gap-1.5">
                         <span class="font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-regular fa-clock text-emerald-600"></i> JADWAL SESI WAKTU AKTIF
+                            <i class="fa-regular fa-clock text-emerald-600"></i> JADWAL SESI WAKTU AKTIF TENANT
                         </span>
                         <div class="flex items-center gap-1.5">
-                            <span id="tahfidz-target-badge-ziyadah" class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded">0 Sesi Ziyadah/Pekan</span>
-                            <span id="tahfidz-target-badge-murajaah" class="text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 rounded">0 Sesi Muroja'ah/Pekan</span>
+                            <span id="tahfidz-target-badge-ziyadah" class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full">10 Sesi Ziyadah/Pekan</span>
+                            <span id="tahfidz-target-badge-murajaah" class="text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2.5 py-0.5 rounded-full">5 Sesi Muroja'ah/Pekan</span>
                         </div>
                     </div>
-                    <div id="tahfidz-target-sesi-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                    <div id="tahfidz-target-sesi-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[10px]">
                         <!-- Populated dynamically from ASNTahfidz.data.sesiList -->
                     </div>
-                </div>
 
-                <!-- Info Box: Rumus Otomatis & Standar Mushaf (Standar Madinah) -->
-                <div class="p-3 bg-indigo-50/70 dark:bg-[#192433] rounded-2xl border border-indigo-100 dark:border-[#253952] space-y-1 text-slate-700 dark:text-slate-300">
-                    <div class="flex items-start gap-2">
-                        <i class="fa-solid fa-calculator text-indigo-600 dark:text-indigo-400 mt-0.5 text-xs"></i>
-                        <div class="space-y-0.5 leading-tight">
-                            <p class="font-extrabold text-[11px] text-indigo-900 dark:text-indigo-300">
-                                Rumus Otomatis: Target Mingguan = Target Sesi x Jumlah Sesi Aktif Pekan
-                            </p>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-                                <i class="fa-solid fa-book-open text-emerald-600 text-[9px]"></i> <strong>Standar Mushaf:</strong> 2 Hlm = 1 Lembar • 20 Hlm = 1 Juz (10 Lembar)
-                            </p>
-                        </div>
+                    <!-- Footer Sesi: Rumus Otomatis & Standar Mushaf (Standar Madinah) -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[9px] sm:text-[10px] text-slate-400 pt-1.5 border-t border-slate-200/60 dark:border-[#283a4e]">
+                        <span class="font-semibold text-slate-600 dark:text-slate-400">Rumus Otomatis: Target Mingguan = Target Sesi x Jumlah Sesi Aktif Pekan</span>
+                        <span class="font-semibold text-slate-600 dark:text-slate-400">Standar Mushaf: 2 Hlm = 1 Lembar • 20 Hlm = 1 Juz (10 Lembar)</span>
                     </div>
                 </div>
 
-                <!-- TARGET ZIYADAH (HAFALAN BARU) -->
-                <div class="p-4 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-plus"></i> TARGET ZIYADAH (HAFALAN BARU)
-                        </span>
-                        <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded">Ziyadah</span>
-                    </div>
+                <!-- 2 KOLOM BERDAMPINGAN: TARGET ZIYADAH & TARGET MUROJA'AH -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <!-- KOLOM 1: TARGET ZIYADAH (HAFALAN BARU) -->
+                    <div class="p-4 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-plus"></i> TARGET ZIYADAH (HAFALAN BARU)
+                            </span>
+                            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded">Ziyadah</span>
+                        </div>
 
-                    <!-- 1. Target Ziyadah per Sesi -->
-                    <div class="space-y-1.5">
-                        <label class="font-bold text-slate-700 dark:text-slate-300 block">1. Target Ziyadah per Sesi / Setor</label>
-                        <input type="number" id="input-target-ziyadah-sesi" oninput="recalculateTahfidzTargetWeekly()" value="1" min="0.5" step="0.5" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white dark:bg-[#1c2836] outline-none">
-                        <!-- Quick Chips -->
-                        <div class="flex items-center gap-1.5 pt-1">
-                            <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 0.5)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 0,5 Hlm</button>
-                            <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 1)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 1 Hlm</button>
-                            <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 1.5)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 1,5 Hlm</button>
-                            <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 2)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 2 Hlm</button>
+                        <!-- 1. Target Ziyadah per Sesi -->
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-300 block">1. Target Ziyadah per Sesi / Setor <span class="text-rose-500">*</span></label>
+                            <input type="number" id="input-target-ziyadah-sesi" oninput="recalculateTahfidzTargetWeekly()" value="1" min="0.5" step="0.5" placeholder="1 Halaman / Setor" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white dark:bg-[#1c2836] outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Quick Chips -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 0.5)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-emerald-50 transition">+ 0,5 Hlm</button>
+                                <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 1)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-emerald-50 transition">+ 1 Hlm</button>
+                                <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 1.5)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-emerald-50 transition">+ 1,5 Hlm</button>
+                                <button type="button" onclick="setTahfidzTargetChip('ZIYADAH', 2)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-emerald-50 transition">+ 2 Hlm</button>
+                            </div>
+                        </div>
+
+                        <!-- 2. Target Ziyadah Mingguan -->
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-700 dark:text-slate-300 block">2. Target Ziyadah Mingguan (Pekan Ini) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="input-target-ziyadah-pekan" readonly value="10 Halaman (5 Lembar / ~0.5 Juz / Pekan)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white/70 dark:bg-[#15202d] text-slate-700 dark:text-slate-200">
+                            <p class="text-[9px] text-slate-400">Otomatis: Target Sesi x Jumlah Sesi Ziyadah Pekan</p>
+                        </div>
+
+                        <!-- 3. Target Ziyadah Bulanan -->
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-700 dark:text-slate-300 block">3. Target Ziyadah Bulanan <span class="text-rose-500">*</span></label>
+                            <input type="text" id="input-target-ziyadah-bulan" readonly value="40 Halaman (20 Lembar / ~2 Juz / Bulan)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white/70 dark:bg-[#15202d] text-slate-700 dark:text-slate-200">
+                            <p class="text-[9px] text-slate-400">Otomatis: Target Sesi x Jumlah Sesi Ziyadah Bulanan (4 Pekan)</p>
                         </div>
                     </div>
 
-                    <!-- 2. Target Ziyadah Mingguan -->
-                    <div class="space-y-1">
-                        <label class="font-bold text-slate-700 dark:text-slate-300 block">2. Target Ziyadah Mingguan (Pekan Ini)</label>
-                        <input type="text" id="input-target-ziyadah-pekan" readonly value="10 Halaman (5 Lembar / ~0.5 Juz / Pekan)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-500">
-                    </div>
-                </div>
-
-                <!-- TARGET MUROJA'AH (PENGULANGAN) -->
-                <div class="p-4 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-rotate"></i> TARGET MUROJA'AH (PENGULANGAN)
-                        </span>
-                        <span class="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded">Muroja'ah</span>
-                    </div>
-
-                    <!-- 1. Target Muroja'ah per Sesi -->
-                    <div class="space-y-1.5">
-                        <label class="font-bold text-slate-700 dark:text-slate-300 block">1. Target Muroja'ah per Sesi / Setor</label>
-                        <input type="number" id="input-target-murajaah-sesi" oninput="recalculateTahfidzTargetWeekly()" value="2" min="0.5" step="0.5" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white dark:bg-[#1c2836] outline-none">
-                        <!-- Quick Chips -->
-                        <div class="flex items-center gap-1.5 pt-1">
-                            <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 1)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 1 Hlm</button>
-                            <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 2)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 2 Hlm</button>
-                            <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 5)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 5 Hlm</button>
-                            <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 10)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border text-[10px]">+ 10 Hlm (0,5 Juz)</button>
+                    <!-- KOLOM 2: TARGET MUROJA'AH (PENGULANGAN) -->
+                    <div class="p-4 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate"></i> TARGET MUROJA'AH (PENGULANGAN)
+                            </span>
+                            <span class="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded">Muroja'ah</span>
                         </div>
-                    </div>
 
-                    <!-- 2. Target Muroja'ah Mingguan -->
-                    <div class="space-y-1">
-                        <label class="font-bold text-slate-700 dark:text-slate-300 block">2. Target Muroja'ah Mingguan (Pekan Ini)</label>
-                        <input type="text" id="input-target-murajaah-pekan" readonly value="10 Halaman (5 Lembar / ~0.5 Juz / Pekan)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-500">
+                        <!-- 1. Target Muroja'ah per Sesi -->
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-300 block">1. Target Muroja'ah per Sesi / Setor <span class="text-rose-500">*</span></label>
+                            <input type="number" id="input-target-murajaah-sesi" oninput="recalculateTahfidzTargetWeekly()" value="2" min="0.5" step="0.5" placeholder="2 Halaman / Setor" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white dark:bg-[#1c2836] outline-none focus:ring-2 focus:ring-amber-500">
+                            <!-- Quick Chips -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 1)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-amber-50 transition">+ 1 Hlm</button>
+                                <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 2)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-amber-50 transition">+ 2 Hlm</button>
+                                <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 5)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-amber-50 transition">+ 5 Hlm</button>
+                                <button type="button" onclick="setTahfidzTargetChip('MURAJAAH', 10)" class="px-2 py-1 bg-white dark:bg-[#1c2836] font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] hover:bg-amber-50 transition">+ 10 Hlm (0,5 Juz)</button>
+                            </div>
+                        </div>
+
+                        <!-- 2. Target Muroja'ah Mingguan -->
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-700 dark:text-slate-300 block">2. Target Muroja'ah Mingguan (Pekan Ini) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="input-target-murajaah-pekan" readonly value="10 Halaman (5 Lembar / ~0.5 Juz / Pekan)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white/70 dark:bg-[#15202d] text-slate-700 dark:text-slate-200">
+                            <p class="text-[9px] text-slate-400">Otomatis: Target Sesi x Jumlah Sesi Muroja'ah Pekan</p>
+                        </div>
+
+                        <!-- 3. Target Muroja'ah Bulanan -->
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-700 dark:text-slate-300 block">3. Target Muroja'ah Bulanan <span class="text-rose-500">*</span></label>
+                            <input type="text" id="input-target-murajaah-bulan" readonly value="40 Halaman (20 Lembar / ~2 Juz / Bulan)" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold bg-white/70 dark:bg-[#15202d] text-slate-700 dark:text-slate-200">
+                            <p class="text-[9px] text-slate-400">Otomatis: Target Sesi x Jumlah Sesi Muroja'ah Bulanan (4 Pekan)</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal Footer -->
+            <!-- Modal Footer (Khodim.com style) -->
             <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
-                <button type="button" onclick="closeTahfidzTargetModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
-                    Batal
-                </button>
-                <button type="button" id="btn-save-tahfidz-target" onclick="submitTahfidzTarget()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    <span>Simpan Target Santri</span>
-                </button>
+                <span class="text-[10px] text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-database text-slate-400"></i>
+                    <span>Tersimpan ke database Sheet Tahfidz_Target</span>
+                </span>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeTahfidzTargetModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="button" id="btn-save-tahfidz-target" onclick="submitTahfidzTarget()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Simpan Target Santri</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

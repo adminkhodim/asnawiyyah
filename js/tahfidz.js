@@ -1051,6 +1051,24 @@ async function deleteTahfidzLogEntry(logId) {
 // ====================================================================
 
 /**
+ * Bersihkan format jam dari Google Sheets epoch / Date string menjadi HH:mm rapi
+ */
+function cleanSesiTime(timeVal, defaultVal = "00:00") {
+    if (!timeVal) return defaultVal;
+    const str = String(timeVal).trim();
+    // Tangkap pola HH:mm
+    const match = str.match(/(?:(?:1899|1900|\d{4})[^\d]+)?(\d{1,2}):(\d{2})(?::\d{2})?/);
+    if (match) {
+        return `${match[1].padStart(2, '0')}:${match[2].padStart(2, '0')}`;
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+    return defaultVal;
+}
+
+/**
  * Hitung jumlah sesi aktif per pekan untuk Ziyadah dan Muroja'ah berdasarkan Sheet Tahfidz_Jadwal_Sesi
  */
 function getTahfidzActiveWeeklySessionCounts() {
@@ -1069,17 +1087,16 @@ function getTahfidzActiveWeeklySessionCounts() {
     let murajaahCount = 0;
 
     activeSessions.forEach(s => {
-        const jenis = (s.jenisSesi || s.jenis || '').toUpperCase();
+        const j = (s.jenisSesi || s.jenis || '').toUpperCase();
         const rawHari = s.hariList || s.hari || [];
         const hariArr = Array.isArray(rawHari) ? rawHari : String(rawHari).split(',').map(x => x.trim()).filter(Boolean);
         const dayCount = Math.max(1, hariArr.length);
 
-        if (jenis.includes('ZIYADAH')) {
-            ziyadahCount += dayCount;
-        } else if (jenis.includes('MURAJA') || jenis.includes('TASMI')) {
+        const isMurajaah = j.includes('MURAJA') || j.includes('MUROJA') || j.includes('TASMI') || j.includes('ULANG') || j.includes('UJIAN');
+        if (isMurajaah) {
             murajaahCount += dayCount;
         } else {
-            // Default jika tipe lain, anggap Ziyadah
+            // Default Ziyadah (Hafalan Baru)
             ziyadahCount += dayCount;
         }
     });
@@ -1092,7 +1109,7 @@ function getTahfidzActiveWeeklySessionCounts() {
 }
 
 /**
- * Render kartu jadwal sesi aktif di dalam Modal Target Capaian Santri
+ * Render kartu jadwal sesi aktif di dalam Modal Target Capaian Santri (Konsep Khodim.com)
  */
 function renderTahfidzTargetModalSessions() {
     const container = document.getElementById('tahfidz-target-sesi-container');
@@ -1108,7 +1125,7 @@ function renderTahfidzTargetModalSessions() {
 
     if (!counts.activeSessions || counts.activeSessions.length === 0) {
         container.innerHTML = `
-            <div class="col-span-2 p-2.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200/60 dark:border-[#283a4e] text-center text-slate-400">
+            <div class="col-span-full p-2.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200/60 dark:border-[#283a4e] text-center text-slate-400">
                 Belum ada jadwal sesi aktif di sheet Tahfidz_Jadwal_Sesi.
             </div>
         `;
@@ -1117,28 +1134,37 @@ function renderTahfidzTargetModalSessions() {
 
     container.innerHTML = counts.activeSessions.map((s, idx) => {
         const nama = s.namaSesi || s.nama || `Sesi 0${idx + 1}`;
-        const jam = `${s.jamMulai || '05:00'} - ${s.jamSelesai || '06:00'} WIB`;
-        const jenis = s.jenisSesi || s.jenis || 'Ziyadah';
+        const jamMulai = cleanSesiTime(s.jamMulai, '05:00');
+        const jamSelesai = cleanSesiTime(s.jamSelesai, '06:00');
+        const jamStr = `${jamMulai} - ${jamSelesai} WIB`;
+
+        const j = (s.jenisSesi || s.jenis || '').toUpperCase();
         const rawHari = s.hariList || s.hari || [];
         const hariArr = Array.isArray(rawHari) ? rawHari : String(rawHari).split(',').map(x => x.trim()).filter(Boolean);
-        const hariStr = hariArr.join(', ');
-        const isZiyadah = jenis.toUpperCase().includes('ZIYADAH');
-        const badgeColor = isZiyadah ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        const dayCount = hariArr.length || 5;
+
+        let badgeLabel = 'Ziyadah';
+        let badgeColor = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+
+        if (j.includes('TASMI') || j.includes('UJIAN')) {
+            badgeLabel = s.jenisSesi || s.jenis || 'Ujian Kenaikan Juz';
+            badgeColor = 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300';
+        } else if (j.includes('MURAJA') || j.includes('MUROJA')) {
+            badgeLabel = "Muroja'ah";
+            badgeColor = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        }
 
         return `
-        <div class="p-2.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200/70 dark:border-[#283a4e] space-y-1">
-            <div class="flex items-center justify-between">
-                <span class="font-extrabold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(nama)}</span>
-                <span class="px-1.5 py-0.5 rounded text-[8px] font-extrabold ${badgeColor}">
-                    ${isZiyadah ? 'Ziyadah' : "Muroja'ah"} (${hariArr.length}x/mgg)
+        <div class="p-2.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200/70 dark:border-[#283a4e] space-y-1.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+                <span class="font-extrabold text-slate-800 dark:text-slate-100 truncate text-[11px]">${escapeHtml(nama)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[8px] font-extrabold shrink-0 ${badgeColor}">
+                    ${escapeHtml(badgeLabel)}
                 </span>
             </div>
-            <div class="text-slate-500 dark:text-slate-400 text-[10px] flex items-center gap-1.5">
-                <i class="fa-regular fa-clock text-[9px]"></i>
-                <span class="font-semibold">${escapeHtml(jam)}</span>
-            </div>
-            <div class="text-[9px] text-slate-400 truncate">
-                Hari: ${escapeHtml(hariStr || 'Setiap Hari')}
+            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] pt-0.5">
+                <span class="font-semibold">${escapeHtml(jamStr)}</span>
+                <span class="text-slate-400 font-bold shrink-0">${dayCount} Hari/Pekan</span>
             </div>
         </div>
         `;
@@ -1146,37 +1172,58 @@ function renderTahfidzTargetModalSessions() {
 }
 
 /**
- * Hitung otomatis Target Mingguan berdasarkan Rumus:
+ * Hitung otomatis Target Mingguan & Bulanan berdasarkan Rumus:
  * Target Mingguan = Target Sesi x Jumlah Sesi Aktif Pekan
- * Standar Mushaf: 2 Hlm = 1 Lembar (20 Hlm) = 1 Juz (10 Lembar)
+ * Target Bulanan = Target Mingguan x 4 Pekan
+ * Standar Mushaf: 2 Hlm = 1 Lembar • 20 Hlm = 1 Juz (10 Lembar)
  */
 function recalculateTahfidzTargetWeekly() {
     const counts = getTahfidzActiveWeeklySessionCounts();
 
     const elZSesi = document.getElementById('input-target-ziyadah-sesi');
     const elZPekan = document.getElementById('input-target-ziyadah-pekan');
+    const elZBulan = document.getElementById('input-target-ziyadah-bulan');
+
     const elMSesi = document.getElementById('input-target-murajaah-sesi');
     const elMPekan = document.getElementById('input-target-murajaah-pekan');
+    const elMBulan = document.getElementById('input-target-murajaah-bulan');
 
     const zSesi = Math.max(0.5, parseFloat(elZSesi?.value) || 1);
     const mSesi = Math.max(0.5, parseFloat(elMSesi?.value) || 2);
 
     const zPekanTotal = Number((zSesi * counts.ziyadahWeeklySessions).toFixed(1));
+    const zBulanTotal = Number((zPekanTotal * 4).toFixed(1));
+
     const mPekanTotal = Number((mSesi * counts.murajaahWeeklySessions).toFixed(1));
+    const mBulanTotal = Number((mPekanTotal * 4).toFixed(1));
+
+    const formatHal = (n) => (Number.isInteger(n) ? n.toString() : n.toFixed(1));
 
     if (elZPekan) {
-        const lembar = Number((zPekanTotal / 2).toFixed(1));
-        const juz = Number((zPekanTotal / 20).toFixed(1));
-        elZPekan.value = `${zPekanTotal} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan) • Rumus: ${zSesi} Hlm x ${counts.ziyadahWeeklySessions} Sesi`;
+        const lembar = formatHal(Number((zPekanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((zPekanTotal / 20).toFixed(1)));
+        elZPekan.value = `${formatHal(zPekanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan)`;
+    }
+
+    if (elZBulan) {
+        const lembar = formatHal(Number((zBulanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((zBulanTotal / 20).toFixed(1)));
+        elZBulan.value = `${formatHal(zBulanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Bulan)`;
     }
 
     if (elMPekan) {
-        const lembar = Number((mPekanTotal / 2).toFixed(1));
-        const juz = Number((mPekanTotal / 20).toFixed(1));
-        elMPekan.value = `${mPekanTotal} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan) • Rumus: ${mSesi} Hlm x ${counts.murajaahWeeklySessions} Sesi`;
+        const lembar = formatHal(Number((mPekanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((mPekanTotal / 20).toFixed(1)));
+        elMPekan.value = `${formatHal(mPekanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan)`;
     }
 
-    return { zPekanTotal, mPekanTotal };
+    if (elMBulan) {
+        const lembar = formatHal(Number((mBulanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((mBulanTotal / 20).toFixed(1)));
+        elMBulan.value = `${formatHal(mBulanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Bulan)`;
+    }
+
+    return { zPekanTotal, zBulanTotal, mPekanTotal, mBulanTotal };
 }
 
 /**
@@ -1194,7 +1241,7 @@ function openTahfidzTargetModal(studentId) {
     const nameEl = document.getElementById('tahfidz-target-student-name');
     if (nameEl) nameEl.innerText = `${student.name} • NIS: ${student.nis || '-'}`;
 
-    // Render sesi dinamis dari sheet Tahfidz_Jadwal_Sesi
+    // Render sesi dinamis dari sheet Tahfidz_Jadwal_Sesi (Konsep Khodim)
     renderTahfidzTargetModalSessions();
 
     const zSesi = student.target?.ziyadahSesi || 1;
@@ -1206,7 +1253,7 @@ function openTahfidzTargetModal(studentId) {
     if (elZSesi) elZSesi.value = zSesi;
     if (elMSesi) elMSesi.value = mSesi;
 
-    // Hitung otomatis Target Mingguan
+    // Hitung otomatis Target Mingguan & Bulanan
     recalculateTahfidzTargetWeekly();
 
     modal.classList.remove('hidden');
@@ -1861,7 +1908,7 @@ function renderTahfidzSesiCards() {
             </div>
             <div class="text-[11px] text-slate-600 dark:text-slate-300 flex items-center space-x-2">
                 <i class="fa-solid ${iconSesi}"></i>
-                <span class="font-bold">${escapeHtml(s.jamMulai || '05:00')} - ${escapeHtml(s.jamSelesai || '06:00')} WIB</span>
+                <span class="font-bold">${cleanSesiTime(s.jamMulai, '05:00')} - ${cleanSesiTime(s.jamSelesai, '06:00')} WIB</span>
                 <span class="text-slate-400">•</span>
                 <span class="text-slate-500 dark:text-slate-400 font-semibold truncate">${escapeHtml(jenis)}</span>
             </div>
@@ -1980,8 +2027,8 @@ function editTahfidzSesi(sesiId) {
     const nama = sesi.namaSesi || sesi.nama || '';
     const jenis = sesi.jenisSesi || sesi.jenis || '';
     const status = sesi.status || 'Aktif Digunakan';
-    const jamMulai = sesi.jamMulai || '05:15';
-    const jamSelesai = sesi.jamSelesai || '06:30';
+    const jamMulai = cleanSesiTime(sesi.jamMulai, '05:15');
+    const jamSelesai = cleanSesiTime(sesi.jamSelesai, '06:30');
 
     if (idInput) idInput.value = id;
     if (namaInput) namaInput.value = nama;
@@ -2231,7 +2278,7 @@ window.closeTahfidzStudentDetail = closeTahfidzStudentDetail;
 window.switchTahfidzDetailTab = switchTahfidzDetailTab;
 window.deleteTahfidzLogEntry = deleteTahfidzLogEntry;
 window.openTahfidzTargetModal = openTahfidzTargetModal;
-window.openTahfidzTargetModal = openTahfidzTargetModal;
+window.cleanSesiTime = cleanSesiTime;
 window.closeTahfidzTargetModal = closeTahfidzTargetModal;
 window.setTahfidzTargetChip = setTahfidzTargetChip;
 window.submitTahfidzTarget = submitTahfidzTarget;
