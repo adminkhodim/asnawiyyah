@@ -1197,9 +1197,41 @@ function openTahfidzPengasuhView() {
     }
 }
 
+/**
+ * Inisialisasi Tab Sheet Database Tahfidz di Google Spreadsheet
+ */
+async function triggerInitTahfidzSheets() {
+    const ok = confirm("Inisialisasi Database Tahfidz di Google Spreadsheet?\n\nSistem akan membuat 3 tab sheet baru secara otomatis jika belum ada:\n1. Tahfidz_Logs (Riwayat Setoran)\n2. Tahfidz_Target (Target Individual)\n3. Tahfidz_Halaqah (Kelompok Halaqah)\n\nLanjutkan?");
+    if (!ok) return;
+
+    try {
+        if (typeof showToast === 'function') {
+            showToast("⏳ Menghubungi Spreadsheet untuk membuat tab sheet...");
+        }
+
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const res = await apiPost("initTahfidzSheets", { token });
+
+        if (res && (res.success || res.status === "success")) {
+            const msg = res.message || "Tab sheet Tahfidz berhasil dibuat di Spreadsheet!";
+            if (typeof showToast === 'function') {
+                showToast("✅ " + msg);
+            }
+            alert("SUKSES:\n" + msg);
+            loadAdminTahfidzData();
+        } else {
+            alert("Pemberitahuan:\n" + ((res && res.message) || "Gagal membuat tab sheet. Pastikan Anda sudah login sebagai Admin."));
+        }
+    } catch (err) {
+        console.error("Error triggerInitTahfidzSheets:", err);
+        alert("Terjadi kendala koneksi: " + err.message);
+    }
+}
+
 // Auto-export to global window
 window.ASNTahfidz = ASNTahfidz;
 window.loadAdminTahfidzData = loadAdminTahfidzData;
+window.triggerInitTahfidzSheets = triggerInitTahfidzSheets;
 window.filterTahfidzList = filterTahfidzList;
 window.openTahfidzCatatModal = openTahfidzCatatModal;
 window.closeTahfidzCatatModal = closeTahfidzCatatModal;
@@ -1222,3 +1254,4 @@ window.printTahfidzStudentCard = printTahfidzStudentCard;
 window.printTahfidzRekap = printTahfidzRekap;
 window.exportTahfidzDataCSV = exportTahfidzDataCSV;
 window.openTahfidzPengasuhView = openTahfidzPengasuhView;
+

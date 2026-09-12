@@ -145,8 +145,35 @@
             } else {
                 hubView.classList.remove('hidden');
             }
+
+            // Sembunyikan double header di layar mobile saat sub-view aktif
+            const mobileNavBar = document.getElementById('admin-mobile-nav-bar');
+            if (mobileNavBar) {
+                if (!viewName || viewName === 'hub') {
+                    mobileNavBar.classList.remove('hidden');
+                } else {
+                    mobileNavBar.classList.add('hidden');
+                }
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        /**
+         * Navigasi Kembali Pintar untuk Sub-View Admin:
+         * - Pada layar ponsel (< 1024px), kembali langsung ke Pusat Kontrol Tab Pengaturan
+         * - Pada desktop, kembali ke Hub Menu Admin
+         */
+        function backFromAdminModule() {
+            if (window.innerWidth < 1024) {
+                if (typeof switchTab === 'function') {
+                    switchTab('pengaturan');
+                    return;
+                }
+            }
+            showAdminView('hub');
+        }
+        window.backFromAdminModule = backFromAdminModule;
 
         // ==================== DASHBOARD ADMIN: MANAJEMEN DATA PPDB ====================
         let mockPPDBData = [];

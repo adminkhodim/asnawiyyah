@@ -4030,9 +4030,9 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button onclick="showAdminView('hub')"
+                        <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Utama">
+                            title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
                         <div>
@@ -4161,9 +4161,9 @@
                 <div
                     class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button onclick="showAdminView('hub')"
+                        <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali ke Menu Utama">
+                            title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
                         <div>
@@ -4408,7 +4408,7 @@
                 <!-- Header Sub-View -->
                 <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Menu Admin">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
                         <div>
@@ -4527,131 +4527,150 @@
             <!-- ================= VIEW: MODUL TAHFIDZ AL-QUR'AN ================= -->
             <div id="admin-view-tahfidz" class="hidden space-y-4">
                 <!-- Header Sub-View -->
-                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-center space-x-2.5">
-                        <button type="button" onclick="showAdminView('hub')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Menu Admin">
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
-                        </button>
-                        <div>
-                            <span class="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block">Akademik / Tahfidz</span>
-                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Tahfidz Al-Qur'an (30 Juz)</h2>
-                            <p class="text-[11px] text-slate-400 hidden sm:block">Pencatatan mutaba'ah ziyadah, muraja'ah, dan pemantauan hafalan Al-Qur'an 30 Juz.</p>
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                                <i class="fa-solid fa-arrow-left text-xs"></i>
+                            </button>
+                            <div class="min-w-0">
+                                <span class="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block truncate">Akademik / Tahfidz</span>
+                                <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 truncate">Tahfidz Al-Qur'an (30 Juz)</h2>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center space-x-2 self-end sm:self-auto">
-                        <button type="button" onclick="exportTahfidzDataCSV()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Ekspor Data CSV">
-                            <i class="fa-solid fa-file-export text-xs"></i>
-                            <span class="hidden sm:inline">Expor Data</span>
-                        </button>
-                        <button type="button" onclick="printTahfidzRekap()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Cetak Rekapitulasi">
-                            <i class="fa-solid fa-print text-xs"></i>
-                            <span class="hidden sm:inline">Cetak Rekap</span>
-                        </button>
-                        <button type="button" onclick="openTahfidzCatatModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                        <!-- Tombol Utama Catat Setoran (Desktop Right) -->
+                        <button type="button" onclick="openTahfidzCatatModal()" class="hidden sm:flex px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition items-center space-x-1.5 shadow-sm active:scale-95 shrink-0">
                             <i class="fa-solid fa-plus text-xs"></i>
                             <span>Catat Setoran</span>
                         </button>
                     </div>
+
+                    <!-- Action Bar Sekunder & Mobile Primary Action -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-[#253447]/60">
+                        <p class="text-[11px] text-slate-400 hidden sm:block truncate">Pencatatan mutaba'ah ziyadah, muraja'ah, dan capaian hafalan 30 Juz.</p>
+                        
+                        <!-- Mobile Primary Button -->
+                        <button type="button" onclick="openTahfidzCatatModal()" class="sm:hidden w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>+ Catat Setoran Santri</span>
+                        </button>
+
+                        <!-- Sekunder: Inisialisasi, Ekspor, Cetak -->
+                        <div class="flex items-center gap-1.5 justify-end">
+                            <button type="button" onclick="triggerInitTahfidzSheets()" class="flex-1 sm:flex-initial px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1 border border-amber-200 dark:border-amber-800/60 active:scale-95" title="Inisialisasi Tab Sheet Spreadsheet">
+                                <i class="fa-solid fa-table-cells text-xs"></i>
+                                <span>Init Sheet</span>
+                            </button>
+                            <button type="button" onclick="exportTahfidzDataCSV()" class="flex-1 sm:flex-initial px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1 active:scale-95" title="Ekspor Data CSV">
+                                <i class="fa-solid fa-file-export text-xs"></i>
+                                <span>Ekspor</span>
+                            </button>
+                            <button type="button" onclick="printTahfidzRekap()" class="flex-1 sm:flex-initial px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1 active:scale-95" title="Cetak Rekapitulasi">
+                                <i class="fa-solid fa-print text-xs"></i>
+                                <span>Cetak</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 4 KARTU RINGKASAN MAKRO (MATCH SCREENSHOT 1) -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- 4 KARTU RINGKASAN MAKRO (RESPONSIF MOBILE) -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3">
                     <!-- 1. Khatam 30 Juz -->
-                    <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">KHATAM 30 JUZ</span>
-                            <div class="flex items-baseline space-x-1.5">
-                                <span id="tahfidz-stat-khatam" class="text-2xl font-black text-slate-800 dark:text-slate-100">0</span>
-                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Santri</span>
+                    <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
+                        <div class="space-y-0.5 min-w-0">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">KHATAM 30 JUZ</span>
+                            <div class="flex items-baseline space-x-1">
+                                <span id="tahfidz-stat-khatam" class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">0</span>
+                                <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Santri</span>
                             </div>
-                            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                                <i class="fa-solid fa-check-circle text-[9px]"></i> Telah Ujian Tasmi' Bil-Ghaib
+                            <p class="text-[9px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold truncate">
+                                <i class="fa-solid fa-check-circle text-[8px]"></i> Ujian Bil-Ghaib
                             </p>
                         </div>
-                        <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center text-lg shrink-0">
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center text-sm md:text-lg shrink-0">
                             <i class="fa-solid fa-award"></i>
                         </div>
                     </div>
 
                     <!-- 2. Rata-Rata Hafalan -->
-                    <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">RATA-RATA HAFALAN</span>
-                            <div id="tahfidz-stat-rata" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                                0.0 <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Juz / Santri</span>
+                    <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
+                        <div class="space-y-0.5 min-w-0">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">RATA-RATA HAFALAN</span>
+                            <div id="tahfidz-stat-rata" class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+                                0.0 <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Juz</span>
                             </div>
-                            <p class="text-[10px] text-slate-400">Capaian kumulatif santri</p>
+                            <p class="text-[9px] text-slate-400 truncate">Capaian per santri</p>
                         </div>
-                        <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-lg shrink-0">
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-sm md:text-lg shrink-0">
                             <i class="fa-solid fa-chart-line"></i>
                         </div>
                     </div>
 
                     <!-- 3. Total Hafalan -->
-                    <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">TOTAL HAFALAN</span>
-                            <div class="flex items-baseline space-x-1.5">
-                                <span id="tahfidz-stat-total" class="text-2xl font-black text-slate-800 dark:text-slate-100">0</span>
-                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Akumulasi Juz</span>
+                    <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
+                        <div class="space-y-0.5 min-w-0">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">TOTAL HAFALAN</span>
+                            <div class="flex flex-col sm:flex-row sm:items-baseline sm:space-x-1">
+                                <span id="tahfidz-stat-total" class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none">0</span>
+                                <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 leading-tight">Akumulasi Juz</span>
                             </div>
-                            <p class="text-[10px] text-slate-400">Dari seluruh santri aktif</p>
+                            <p class="text-[9px] text-slate-400 truncate">Seluruh santri aktif</p>
                         </div>
-                        <div class="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center text-lg shrink-0">
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center text-sm md:text-lg shrink-0">
                             <i class="fa-solid fa-book-open"></i>
                         </div>
                     </div>
 
                     <!-- 4. Aktivitas Pekan Ini -->
-                    <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-2 relative overflow-hidden">
+                    <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1.5 relative overflow-hidden">
                         <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AKTIVITAS PEKAN INI</span>
-                            <span class="w-6 h-6 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-[10px]">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">AKTIVITAS PEKAN INI</span>
+                            <span class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-[9px] shrink-0">
                                 <i class="fa-solid fa-chart-pie"></i>
                             </span>
                         </div>
-                        <div class="flex items-center space-x-3 text-[10px] font-bold">
-                            <span class="flex items-center gap-1 text-emerald-600" id="tahfidz-stat-text-ziyadah">
-                                <span class="w-2 h-2 rounded-full bg-emerald-600"></span> Ziyadah ( 100% )
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-[9px] md:text-[10px] font-bold gap-0.5 sm:gap-0">
+                            <span class="flex items-center gap-1 text-emerald-600 truncate" id="tahfidz-stat-text-ziyadah">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"></span> Ziyadah (100%)
                             </span>
-                            <span class="flex items-center gap-1 text-amber-500" id="tahfidz-stat-text-murajaah">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Muraja'ah
+                            <span class="flex items-center gap-1 text-amber-500 truncate" id="tahfidz-stat-text-murajaah">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span> Muraja'ah
                             </span>
                         </div>
-                        <div class="w-full bg-amber-400 h-2 rounded-full overflow-hidden flex">
+                        <div class="w-full bg-amber-400 h-1.5 md:h-2 rounded-full overflow-hidden flex mt-1">
                             <div id="tahfidz-stat-bar-ziyadah" class="bg-emerald-600 h-full transition-all duration-500" style="width: 100%;"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- FILTER BAR & AKSI KELOLA -->
-                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+                <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-2.5">
                     <!-- Search Input -->
-                    <div class="relative flex-1">
+                    <div class="relative w-full">
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" id="tahfidz-search-input" oninput="filterTahfidzList()" placeholder="Cari santri, NIS, atau halaqah..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
                     </div>
 
-                    <!-- Dropdowns Filter -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <select id="tahfidz-filter-kategori" onchange="filterTahfidzList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                    <!-- Dropdowns Filter Grid di Mobile -->
+                    <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                        <select id="tahfidz-filter-kategori" onchange="filterTahfidzList()" class="w-full sm:w-auto px-2.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
                             <option value="ALL">Semua Kategori</option>
                         </select>
-                        <select id="tahfidz-filter-halaqah" onchange="filterTahfidzList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        <select id="tahfidz-filter-halaqah" onchange="filterTahfidzList()" class="w-full sm:w-auto px-2.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
                             <option value="ALL">Semua Halaqah</option>
                         </select>
-                        <select id="tahfidz-filter-muhafiz" onchange="filterTahfidzList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        <select id="tahfidz-filter-muhafiz" onchange="filterTahfidzList()" class="w-full sm:w-auto px-2.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
                             <option value="ALL">Semua Muhafiz</option>
                         </select>
-                        <select id="tahfidz-filter-status" onchange="filterTahfidzList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        <select id="tahfidz-filter-status" onchange="filterTahfidzList()" class="w-full sm:w-auto px-2.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
                             <option value="ALL">Semua Status</option>
                             <option value="ON_TRACK">On-Track</option>
                             <option value="BELUM_SETOR">Belum Setor</option>
                         </select>
 
-                        <button type="button" onclick="openTahfidzHalaqahModal()" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 border border-emerald-200 dark:border-emerald-800/60">
+                        <button type="button" onclick="openTahfidzHalaqahModal()" class="col-span-2 sm:col-auto w-full sm:w-auto px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-emerald-200 dark:border-emerald-800/60">
                             <i class="fa-solid fa-users-gear text-xs"></i>
-                            <span class="hidden sm:inline">Kelola Halaqah & Plotting</span>
+                            <span>Kelola Halaqah & Plotting</span>
                         </button>
                     </div>
                 </div>
@@ -4828,7 +4847,7 @@
                 <!-- Header Sub-View -->
                 <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <button onclick="showAdminView('hub')" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
                         <div>

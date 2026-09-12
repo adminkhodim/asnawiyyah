@@ -179,6 +179,11 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
+    if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(initTahfidzSheets(token));
+    }
+
     if (action === "deleteBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -1059,6 +1064,13 @@ function doGet(e) {
       const studentId = e.parameter.studentId || e.parameter.student_id || null;
       return createJsonResponse(
         getTahfidzStudentDetail(studentId, token)
+      );
+    }
+
+    if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(
+        initTahfidzSheets(token)
       );
     }
 
@@ -6763,6 +6775,11 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
+    if (action === "auth.tahfidz.initSheets" || action === "tahfidz.initSheets" || action === "initTahfidzSheets") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(initTahfidzSheets(token));
+    }
+
     return createJsonResponse({
       success: false,
       message: `Action '${action}' tidak dikenali pada modul autentikasi Phase 2B.`,
@@ -6790,17 +6807,139 @@ const SHEET_TAHFIDZ_TARGET = "Tahfidz_Target";
 const SHEET_TAHFIDZ_HALAQAH = "Tahfidz_Halaqah";
 
 /**
- * Helper untuk mendapatkan atau membuat sheet tahfidz secara otomatis
+ * Helper untuk mendapatkan atau membuat sheet tahfidz secara otomatis dengan styling header rapi
  */
-function getOrCreateTahfidzSheet(ss, sheetName, defaultHeaders) {
+function getOrCreateTahfidzSheet(ss, sheetName, defaultHeaders, headerBgColor) {
   let sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
     if (defaultHeaders && defaultHeaders.length > 0) {
-      sheet.appendRow(defaultHeaders);
+      sheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
+      sheet.getRange(1, 1, 1, defaultHeaders.length)
+        .setFontWeight("bold")
+        .setBackground(headerBgColor || "#059669")
+        .setFontColor("#ffffff");
+      sheet.setFrozenRows(1);
     }
   }
   return sheet;
+}
+
+/**
+ * FUNGSI UTAMA INISIALISASI TAB SHEET TAHFIDZ
+ * Dapat dijalankan langsung dari menu Run Apps Script Editor (pilih: initTahfidzSheets)
+ * Atau dipanggil via API Frontend / Web App.
+ * Membuat 3 tab sheet:
+ * 1. Tahfidz_Logs
+ * 2. Tahfidz_Target
+ * 3. Tahfidz_Halaqah (disertai data awal)
+ */
+function initTahfidzSheets(token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) {
+      throw new Error("Spreadsheet database tidak ditemukan. Pastikan SPREADSHEET_ID sudah diatur di Script Properties atau script terhubung ke Spreadsheet.");
+    }
+
+    const created = [];
+    const existing = [];
+
+    // 1. Tab: Tahfidz_Logs
+    const headersLogs = [
+      "log_id", "student_id", "nis", "student_name", "gender",
+      "tanggal", "sesi", "tipe", "juz", "surah",
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "created_at"
+    ];
+    let sheetLogs = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
+    if (!sheetLogs) {
+      sheetLogs = ss.insertSheet(SHEET_TAHFIDZ_LOGS);
+      sheetLogs.getRange(1, 1, 1, headersLogs.length).setValues([headersLogs]);
+      sheetLogs.getRange(1, 1, 1, headersLogs.length)
+        .setFontWeight("bold")
+        .setBackground("#059669")
+        .setFontColor("#ffffff");
+      sheetLogs.setFrozenRows(1);
+      created.push(SHEET_TAHFIDZ_LOGS);
+    } else {
+      existing.push(SHEET_TAHFIDZ_LOGS);
+    }
+
+    // 2. Tab: Tahfidz_Target
+    const headersTarget = [
+      "student_id", "student_name", "target_ziyadah_sesi", "target_ziyadah_pekan", "target_murajaah_sesi", "target_murajaah_pekan", "target_juz", "updated_at"
+    ];
+    let sheetTarget = ss.getSheetByName(SHEET_TAHFIDZ_TARGET);
+    if (!sheetTarget) {
+      sheetTarget = ss.insertSheet(SHEET_TAHFIDZ_TARGET);
+      sheetTarget.getRange(1, 1, 1, headersTarget.length).setValues([headersTarget]);
+      sheetTarget.getRange(1, 1, 1, headersTarget.length)
+        .setFontWeight("bold")
+        .setBackground("#0d9488")
+        .setFontColor("#ffffff");
+      sheetTarget.setFrozenRows(1);
+      created.push(SHEET_TAHFIDZ_TARGET);
+    } else {
+      existing.push(SHEET_TAHFIDZ_TARGET);
+    }
+
+    // 3. Tab: Tahfidz_Halaqah
+    const headersHalaqah = [
+      "halaqah_id", "nama_halaqah", "kategori", "muhafiz", "target_kurikulum", "student_ids", "created_at"
+    ];
+    let sheetHalaqah = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+    if (!sheetHalaqah) {
+      sheetHalaqah = ss.insertSheet(SHEET_TAHFIDZ_HALAQAH);
+      sheetHalaqah.getRange(1, 1, 1, headersHalaqah.length).setValues([headersHalaqah]);
+      sheetHalaqah.getRange(1, 1, 1, headersHalaqah.length)
+        .setFontWeight("bold")
+        .setBackground("#0284c7")
+        .setFontColor("#ffffff");
+      sheetHalaqah.setFrozenRows(1);
+
+      // Sisipkan data awal halaqah contoh
+      const nowIso = new Date().toISOString();
+      sheetHalaqah.appendRow([
+        "HLQ-01", "Halaqah Abu Ubaidah", "Tahfidz Anak", "Ustadzah Laila Luthfiana, Al-Hafidzah",
+        "Juz 30 Mutqin & Tahsin Huruf / 1 Halaman Per Hari", "", nowIso
+      ]);
+      sheetHalaqah.appendRow([
+        "HLQ-02", "Halaqah Utsman bin Affan", "Tahfidz Dewasa", "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah",
+        "Ziyadah 1 Halaman / Hari & Deresan 1/2 Juz / Hari", "", nowIso
+      ]);
+      created.push(SHEET_TAHFIDZ_HALAQAH);
+    } else {
+      existing.push(SHEET_TAHFIDZ_HALAQAH);
+    }
+
+    const msg = created.length > 0
+      ? "Tab sheet berhasil dibuat di Spreadsheet: " + created.join(", ") + (existing.length > 0 ? " (Sudah ada: " + existing.join(", ") + ")" : "")
+      : "Semua tab sheet tahfidz (" + existing.join(", ") + ") sudah ada di Spreadsheet dan siap digunakan.";
+
+    console.log("[INIT TAHFIDZ SHEETS]", msg);
+    return {
+      status: "success",
+      success: true,
+      message: msg,
+      createdSheets: created,
+      existingSheets: existing
+    };
+  } catch (err) {
+    console.error("[INIT TAHFIDZ SHEETS ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal membuat tab sheet tahfidz: " + err.message
+    };
+  }
 }
 
 /**
