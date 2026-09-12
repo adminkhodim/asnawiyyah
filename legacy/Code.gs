@@ -4763,6 +4763,11 @@ function hashOtpCode(otpCode) {
   return digest.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, '0')).join('');
 }
 
+function verifyOtpHash(otpCode, storedHash) {
+  if (!otpCode || !storedHash) return false;
+  return hashOtpCode(otpCode) === String(storedHash).trim();
+}
+
 function hashIdentifier(identifier) {
   const secret = getServerSecret("IDENTIFIER_HASH_SECRET", getServerSecret("PASSWORD_SALT", "ASNAWIYYAH_IDENTIFIER_SALT_2026"));
   const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(identifier).trim().toLowerCase() + secret, Utilities.Charset.UTF_8);
