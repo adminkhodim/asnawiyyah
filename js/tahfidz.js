@@ -157,26 +157,44 @@ function populateTahfidzFilters() {
     const selHal = document.getElementById('tahfidz-filter-halaqah');
     const selMuh = document.getElementById('tahfidz-filter-muhafiz');
 
-    if (selKat && ASNTahfidz.data.categories) {
+    if (selKat) {
         const currentVal = selKat.value;
-        selKat.innerHTML = ASNTahfidz.data.categories.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
-        if (currentVal) selKat.value = currentVal;
+        const categories = (ASNTahfidz.data.categories || []).filter(c => c && c !== 'ALL' && c !== 'Semua Kategori');
+        let optKat = `<option value="ALL">Semua Kategori</option>`;
+        categories.forEach(k => {
+            optKat += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
+        });
+        selKat.innerHTML = optKat;
+        if (currentVal && Array.from(selKat.options).some(o => o.value === currentVal)) {
+            selKat.value = currentVal;
+        }
     }
 
-    if (selHal && ASNTahfidz.data.halaqahs) {
+    if (selHal) {
         const currentVal = selHal.value;
         let optHtml = `<option value="ALL">Semua Halaqah</option>`;
-        ASNTahfidz.data.halaqahs.forEach(h => {
-            optHtml += `<option value="${escapeHtml(h.namaHalaqah)}">${escapeHtml(h.namaHalaqah)}</option>`;
+        (ASNTahfidz.data.halaqahs || []).forEach(h => {
+            if (h && h.namaHalaqah) {
+                optHtml += `<option value="${escapeHtml(h.namaHalaqah)}">${escapeHtml(h.namaHalaqah)}</option>`;
+            }
         });
         selHal.innerHTML = optHtml;
-        if (currentVal) selHal.value = currentVal;
+        if (currentVal && Array.from(selHal.options).some(o => o.value === currentVal)) {
+            selHal.value = currentVal;
+        }
     }
 
-    if (selMuh && ASNTahfidz.data.muhafizList) {
+    if (selMuh) {
         const currentVal = selMuh.value;
-        selMuh.innerHTML = ASNTahfidz.data.muhafizList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
-        if (currentVal) selMuh.value = currentVal;
+        const muhafizList = (ASNTahfidz.data.muhafizList || []).filter(m => m && m !== 'ALL' && m !== 'Semua Muhafiz');
+        let optMuh = `<option value="ALL">Semua Muhafiz</option>`;
+        muhafizList.forEach(m => {
+            optMuh += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
+        });
+        selMuh.innerHTML = optMuh;
+        if (currentVal && Array.from(selMuh.options).some(o => o.value === currentVal)) {
+            selMuh.value = currentVal;
+        }
     }
 }
 
@@ -281,15 +299,15 @@ function renderTahfidzStudentTable() {
             return `
             <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836]/60 transition border-b border-slate-100 dark:border-[#253447]">
                 <!-- 1. SANTRI & HALAQAH -->
-                <td class="px-4 py-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-black flex items-center justify-center text-xs shrink-0 border border-emerald-200 dark:border-emerald-800/40">
+                <td class="px-3.5 py-2.5">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-black flex items-center justify-center text-xs shrink-0 border border-emerald-200 dark:border-emerald-800/40">
                             ${st.photoUrl ? `<img src="${escapeHtml(st.photoUrl)}" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.parentElement.innerText='${initials}';">` : initials}
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-extrabold text-xs md:text-sm text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
-                            <p class="text-[10px] text-slate-400 mt-0.5">NIS: ${escapeHtml(st.nis || '-')} • Bil Hifdhi</p>
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300">
+                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • Bil Hifdhi</p>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 mt-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 ${escapeHtml(halaqahName)}
                             </span>
@@ -297,104 +315,91 @@ function renderTahfidzStudentTable() {
                     </div>
                 </td>
 
-                <!-- 2. TARGET CAPAIAN -->
-                <td class="px-4 py-4">
-                    <div class="relative group bg-slate-50/70 dark:bg-[#1c2836]/40 p-2 rounded-xl border border-slate-100 dark:border-[#253447] space-y-1.5 w-60">
-                        <button type="button" onclick="openTahfidzTargetModal('${st.studentId}')" class="absolute top-1.5 right-1.5 text-slate-400 hover:text-emerald-600 text-xs p-1" title="Ubah Target Santri">
-                            <i class="fa-solid fa-pencil"></i>
-                        </button>
-                        <!-- Ziyadah Target -->
-                        <div class="flex items-center justify-between text-[10px]">
-                            <span class="inline-flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
-                                <i class="fa-solid fa-circle-plus text-[8px]"></i> Ziyadah
-                            </span>
-                            <span class="font-bold text-slate-700 dark:text-slate-200">${targetZ} Halaman</span>
+                <!-- 2. TARGET CAPAIAN (COMPACT INTERACTIVE PILLS) -->
+                <td class="px-3.5 py-2.5">
+                    <div onclick="openTahfidzTargetModal('${st.studentId}')" class="inline-flex flex-col gap-1 group cursor-pointer" title="Klik untuk atur target capaian santri">
+                        <!-- Ziyadah Pill -->
+                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 text-[10px] transition hover:bg-emerald-100/90">
+                            <i class="fa-solid fa-book-open text-[8px] text-emerald-600 shrink-0"></i>
+                            <span class="font-bold">Ziyadah:</span>
+                            <span>${targetZ} Hlm/Setor</span>
+                            <span class="text-emerald-700/70 dark:text-emerald-400/70 font-semibold text-[9px]">(${targetZPekan}P / ${targetZBulan}B)</span>
+                            <i class="fa-solid fa-pencil text-[8px] text-slate-400 group-hover:text-emerald-600 ml-1 opacity-0 group-hover:opacity-100 transition"></i>
                         </div>
-                        <div class="text-[9px] text-slate-400 flex justify-between">
-                            <span>Pekan: ${targetZPekan} Hlm</span>
-                            <span>Bln: ${targetZBulan} Hlm</span>
-                        </div>
-                        <hr class="border-slate-200/60 dark:border-[#283a4e]">
-                        <!-- Muroja'ah Target -->
-                        <div class="flex items-center justify-between text-[10px]">
-                            <span class="inline-flex items-center gap-1 font-bold text-amber-700 dark:text-amber-400">
-                                <i class="fa-solid fa-rotate text-[8px]"></i> Muroja'ah
-                            </span>
-                            <span class="font-bold text-slate-700 dark:text-slate-200">${targetM} Halaman</span>
-                        </div>
-                        <div class="text-[9px] text-slate-400 flex justify-between">
-                            <span>Pekan: ${targetMPekan} Hlm</span>
-                            <span>Bln: ${targetMBulan} Hlm</span>
+                        <!-- Muroja'ah Pill -->
+                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50/90 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40 text-[10px] transition hover:bg-amber-100/90">
+                            <i class="fa-solid fa-rotate text-[8px] text-amber-600 shrink-0"></i>
+                            <span class="font-bold">Muroja'ah:</span>
+                            <span>${targetM} Hlm/Setor</span>
+                            <span class="text-amber-700/70 dark:text-amber-400/70 font-semibold text-[9px]">(${targetMPekan}P / ${targetMBulan}B)</span>
+                            <i class="fa-solid fa-pencil text-[8px] text-slate-400 group-hover:text-amber-600 ml-1 opacity-0 group-hover:opacity-100 transition"></i>
                         </div>
                     </div>
                 </td>
 
-                <!-- 3. SETORAN TERAKHIR -->
-                <td class="px-4 py-4 text-xs">
+                <!-- 3. SETORAN TERAKHIR (STREAMLINED) -->
+                <td class="px-3.5 py-2.5 text-xs">
                     ${last ? `
-                    <div class="space-y-1">
+                    <div class="space-y-0.5">
                         <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1">
-                            <span class="text-emerald-600 font-extrabold">Juz ${last.juz}</span> • <span>${escapeHtml(last.surah)}</span>
+                            <span class="text-emerald-600 font-extrabold">Juz ${last.juz}</span>
+                            <span class="text-slate-400">•</span>
+                            <span class="truncate max-w-[140px]">${escapeHtml(last.surah)}</span>
                         </div>
                         <p class="text-[10px] text-slate-500 dark:text-slate-400">
-                            (${escapeHtml(last.halaman)} [${last.totalHalaman || 1} Halaman])
+                            Hlm ${escapeHtml(last.halaman)} • <span class="text-slate-400">${escapeHtml(last.sesi)}</span>
                         </p>
-                        <p class="text-[9px] text-slate-400">
-                            ${escapeHtml(last.tanggal)} • ${escapeHtml(last.sesi)}
-                        </p>
-                        <p class="text-[9px] text-slate-400 italic truncate max-w-[180px]">
-                            <i class="fa-regular fa-user mr-0.5"></i> ${escapeHtml(last.muhafiz)}
+                        <p class="text-[9px] text-slate-400 truncate max-w-[170px]">
+                            ${escapeHtml(last.tanggal)} • <span class="italic">${escapeHtml(last.muhafiz)}</span>
                         </p>
                     </div>
                     ` : `
-                    <div class="text-[10px] text-slate-400 italic">
-                        Belum ada riwayat setoran tercatat.
-                    </div>
+                    <span class="text-[10px] text-slate-400 italic">Belum ada riwayat setoran.</span>
                     `}
                 </td>
 
                 <!-- 4. STATUS & NILAI -->
-                <td class="px-4 py-4">
+                <td class="px-3.5 py-2.5">
                     ${last ? `
-                    <div class="space-y-1.5">
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-extrabold ${last.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : (last.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300')}">
+                    <div class="space-y-1">
+                        <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold ${last.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : (last.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300')}">
                             ${escapeHtml(last.tipe)}
                         </span>
-                        <div class="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                            Nilai: <span class="text-emerald-600">${last.nilai === 'MUMTAZ' ? 'A (Mumtaz)' : (last.nilai === 'JAYYID_JIDDAN' ? 'B+ (Jayyid Jiddan)' : (last.nilai === 'JAYYID' ? 'B (Jayyid)' : 'C (Dha\'if)'))}</span>
+                        <div class="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                            Nilai: <span class="text-emerald-600 font-extrabold">${last.nilai === 'MUMTAZ' ? 'A (Mumtaz)' : (last.nilai === 'JAYYID_JIDDAN' ? 'B+ (Jayyid)' : (last.nilai === 'JAYYID' ? 'B (Jayyid)' : 'C (Dha\'if)'))}</span>
                         </div>
                     </div>
                     ` : `<span class="text-[10px] text-slate-400">-</span>`}
                 </td>
 
                 <!-- 5. PROGRESS (0 - 30 JUZ) -->
-                <td class="px-4 py-4 w-48">
-                    <div class="space-y-1.5">
+                <td class="px-3.5 py-2.5 w-44">
+                    <div class="space-y-1">
                         <div class="flex justify-between items-center text-xs">
-                            <span class="font-extrabold text-slate-800 dark:text-slate-100">Juz ${currentJuz} <span class="text-slate-400 font-normal">/ 30</span></span>
-                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">${percent}%</span>
+                            <span class="font-black text-slate-800 dark:text-slate-100">Juz ${currentJuz} <span class="text-slate-400 font-normal text-[10px]">/ 30</span></span>
+                            <span class="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">${percent}%</span>
                         </div>
-                        <div class="w-full bg-slate-100 dark:bg-[#1c2836] h-2 rounded-full overflow-hidden">
+                        <div class="w-full bg-slate-100 dark:bg-[#1c2836] h-1.5 rounded-full overflow-hidden">
                             <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%;"></div>
                         </div>
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold ${isOnTrack ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-[#1c2836] dark:text-slate-400'}">
+                        <span class="inline-block px-1.5 py-0.2 text-[8px] font-extrabold rounded ${isOnTrack ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-[#1c2836] dark:text-slate-400'}">
                             ${escapeHtml(onTrackStatus)}
                         </span>
                     </div>
                 </td>
 
                 <!-- 6. AKSI -->
-                <td class="px-4 py-4 text-right">
-                    <div class="flex items-center justify-end space-x-1.5">
-                        <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-sm active:scale-95" title="Catat Setoran">
-                            <i class="fa-solid fa-plus text-[10px]"></i>
+                <td class="px-3.5 py-2.5 text-right">
+                    <div class="flex items-center justify-end space-x-1">
+                        <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-sm active:scale-95" title="Catat Setoran">
+                            <i class="fa-solid fa-plus text-[9px]"></i>
                             <span>Catat</span>
                         </button>
-                        <button type="button" onclick="openTahfidzStudentDetail('${st.studentId}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 flex items-center justify-center transition active:scale-95" title="Detail Riwayat & Mutaba'ah">
-                            <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                        <button type="button" onclick="openTahfidzStudentDetail('${st.studentId}')" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 flex items-center justify-center transition active:scale-95" title="Detail Riwayat & Mutaba'ah">
+                            <i class="fa-solid fa-clock-rotate-left text-[11px]"></i>
                         </button>
-                        <button type="button" onclick="printTahfidzStudentCard('${st.studentId}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 flex items-center justify-center transition active:scale-95" title="Cetak Rapor Mutaba'ah">
-                            <i class="fa-solid fa-print text-xs"></i>
+                        <button type="button" onclick="printTahfidzStudentCard('${st.studentId}')" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 flex items-center justify-center transition active:scale-95" title="Cetak Rapor Mutaba'ah">
+                            <i class="fa-solid fa-print text-[11px]"></i>
                         </button>
                     </div>
                 </td>
@@ -403,7 +408,7 @@ function renderTahfidzStudentTable() {
         }).join('');
     }
 
-    // Mobile List Card HTML
+    // Mobile List Card HTML (Compact)
     if (mobileContainer) {
         mobileContainer.innerHTML = students.map(st => {
             const initials = (st.name || 'Santri').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'SN';
@@ -411,31 +416,43 @@ function renderTahfidzStudentTable() {
             const last = st.setoranTerakhir;
             const currentJuz = st.progress?.currentJuz || 1;
             const percent = st.progress?.percent || 3;
+            const targetZ = st.target?.ziyadahSesi || 1;
+            const targetM = st.target?.murajaahSesi || 2;
 
             return `
-            <div class="p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-3">
+            <div class="p-3 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-2.5">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3 min-w-0">
-                        <div class="w-11 h-11 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0">
                             ${st.photoUrl ? `<img src="${escapeHtml(st.photoUrl)}" class="w-full h-full object-cover rounded-full">` : initials}
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
-                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')}</p>
-                            <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">${escapeHtml(halaqahName)}</span>
+                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • <span class="text-emerald-600 font-semibold">${escapeHtml(halaqahName)}</span></p>
                         </div>
                     </div>
-                    <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-3 py-1.5 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm">
+                    <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-2.5 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow-sm">
                         + Catat
                     </button>
                 </div>
 
+                <!-- Mini Target Pills -->
+                <div class="flex items-center gap-1.5 text-[9px] font-bold">
+                    <span onclick="openTahfidzTargetModal('${st.studentId}')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer">
+                        Ziyadah: ${targetZ} Hlm/Setor
+                    </span>
+                    <span onclick="openTahfidzTargetModal('${st.studentId}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 cursor-pointer">
+                        Muroja'ah: ${targetM} Hlm/Setor
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-bold">
                         <span>Capaian: Juz ${currentJuz} / 30</span>
                         <span class="text-emerald-600">${percent}%</span>
                     </div>
-                    <div class="w-full bg-slate-100 dark:bg-[#1c2836] h-2 rounded-full overflow-hidden">
+                    <div class="w-full bg-slate-100 dark:bg-[#1c2836] h-1.5 rounded-full overflow-hidden">
                         <div class="bg-emerald-600 h-full rounded-full" style="width: ${percent}%;"></div>
                     </div>
                 </div>
