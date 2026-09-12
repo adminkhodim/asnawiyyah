@@ -730,7 +730,22 @@ async function submitTahfidzCatat(e) {
 /**
  * Buka modal detail mutaba'ah (bisa diakses Admin, Pengasuh, & Wali Santri)
  */
-async function openTahfidzStudentDetail(studentId) {
+async function openTahfidzStudentDetail(studentId, viewerRole = null) {
+    if (viewerRole) {
+        ASNTahfidz.viewerRole = viewerRole;
+    } else if (typeof ASNIdentity !== 'undefined') {
+        const r = String(ASNIdentity.currentRole || '').toUpperCase();
+        if (r === 'WALI_SANTRI' || r === 'PARENT') {
+            ASNTahfidz.viewerRole = 'parent';
+        } else if (r === 'PENGASUH') {
+            ASNTahfidz.viewerRole = 'pengasuh';
+        } else {
+            ASNTahfidz.viewerRole = 'admin';
+        }
+    } else {
+        ASNTahfidz.viewerRole = 'admin';
+    }
+
     const modal = document.getElementById('modal-tahfidz-detail');
     if (!modal) return;
 
@@ -770,7 +785,15 @@ async function openTahfidzStudentDetail(studentId) {
     }
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof ASNIdentity !== 'undefined' ? (
+            sessionStorage.getItem('asnawiyyah_parent_token') ||
+            localStorage.getItem('asnawiyyah_parent_token') ||
+            sessionStorage.getItem('asnawiyyah_pengasuh_token') ||
+            localStorage.getItem('asnawiyyah_pengasuh_token') ||
+            sessionStorage.getItem('asnawiyyah_admin_token') ||
+            localStorage.getItem('asnawiyyah_admin_token')
+        ) : '') || (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+
         const response = await apiPost("getTahfidzStudentDetail", { token, studentId });
 
         if (response && (response.success || response.status === "success")) {
@@ -1011,6 +1034,7 @@ function renderTahfidzStudentDetailView() {
 
     // Render Riwayat Setoran Table (Tab 2)
     const riwayatTbody = document.getElementById('tahfidz-detail-riwayat-tbody');
+    const isParentOrPengasuh = ASNTahfidz.viewerRole === 'parent' || ASNTahfidz.viewerRole === 'pengasuh';
     if (riwayatTbody) {
         if (riwayat.length === 0) {
             riwayatTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">Belum ada riwayat setoran hafalan untuk kriteria ini.</td></tr>`;
@@ -1030,9 +1054,10 @@ function renderTahfidzStudentDetailView() {
                 <td class="px-3 py-2.5">Halaman ${escapeHtml(r.halamanList || '1')} (${r.totalHalaman} Hlm)</td>
                 <td class="px-3 py-2.5 font-bold text-emerald-600">${escapeHtml(r.nilai)}</td>
                 <td class="px-3 py-2.5 text-right">
+                    ${isParentOrPengasuh ? '<span class="text-[9px] font-semibold text-slate-400">Tercatat</span>' : `
                     <button type="button" onclick="deleteTahfidzLogEntry('${r.logId}')" class="text-slate-400 hover:text-rose-600 text-xs p-1 transition" title="Hapus Riwayat">
                         <i class="fa-solid fa-trash"></i>
-                    </button>
+                    </button>`}
                 </td>
             </tr>
             `).join('');
@@ -2242,10 +2267,23 @@ function exportTahfidzDataCSV() {
  * Buka Pantauan Lengkap Tahfidz untuk Pengasuh
  */
 function openTahfidzPengasuhView() {
-    // Arahkan ke tab admin view tahfidz
+    ASNTahfidz.viewerRole = 'pengasuh';
+    if (typeof loadAdminTahfidzData === 'function') {
+        loadAdminTahfidzData();
+    }
+    if (typeof switchTab === 'function') {
+        switchTab('admin', false);
+    }
     if (typeof showAdminView === 'function') {
         showAdminView('tahfidz');
     }
+
+    // Sembunyikan kontrol administratif harian agar tampilan Pengasuh fokus pada evaluasi mutu
+    setTimeout(() => {
+        document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
+            el.style.display = 'none';
+        });
+    }, 150);
 }
 
 /**

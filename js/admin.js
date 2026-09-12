@@ -128,6 +128,10 @@
                 if (typeof loadAdminTahfidzData === 'function') {
                     loadAdminTahfidzData();
                 }
+                const isPengasuh = typeof ASNTahfidz !== 'undefined' && ASNTahfidz.viewerRole === 'pengasuh';
+                document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
+                    el.style.display = isPengasuh ? 'none' : '';
+                });
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');
                 loadAdminNotifikasi();
