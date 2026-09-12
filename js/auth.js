@@ -889,30 +889,27 @@ const ASNIdentity = {
                     </div>
                     <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none"></div>
 
-                    <!-- Header Kartu: Logo Brand di Kiri, QR NIS di Sudut Kanan Atas -->
-                    <div class="flex items-center justify-between border-b border-emerald-500/30 pb-2.5 relative z-10">
-                        <div class="flex items-center space-x-2.5">
+                    <!-- Header Kartu: Logo Brand di Kiri, QR NIS Minimalis Seukuran Logo di Kanan -->
+                    <div class="flex items-center justify-between relative z-10">
+                        <div class="flex items-center space-x-2">
                             <img src="assets/img/brand-header.png" alt="PPTQ Asnawiyyah" class="h-7 sm:h-8 w-auto object-contain drop-shadow-sm">
-                            <div class="leading-none border-l border-emerald-400/30 pl-2">
+                            <div class="leading-none pl-1.5">
                                 <span class="text-[9px] font-extrabold text-amber-300 tracking-wider block uppercase">KTS Digital</span>
                                 <span class="text-[8px] text-emerald-200/80 block">Madrasah & Tahfidz</span>
                             </div>
                         </div>
                         
-                        <!-- QR NIS Interaktif (Pengganti Badge Lama) -->
+                        <!-- QR NIS Minimalis (Ukuran Sama dengan Logo h-7 sm:h-8) -->
                         <button type="button" 
                             onclick="openStudentQrModal('${escapeHtml(studentNis)}', '${escapeHtml(studentName)}', '${escapeHtml(studentQrCode)}')"
-                            class="group flex flex-col items-center bg-white/95 hover:bg-white p-1 rounded-xl border border-amber-400/60 shadow-md cursor-pointer active:scale-95 transition-all text-slate-900 shrink-0"
-                            title="Ketuk untuk memperbesar QR Code">
-                            <img src="${escapeHtml(studentQrCode)}" alt="QR NIS" class="w-10 h-10 sm:w-11 sm:h-11 rounded-md object-contain bg-white">
-                            <span class="text-[8px] font-extrabold text-emerald-950 flex items-center gap-0.5 mt-0.5 leading-none tracking-tight">
-                                <i class="fa-solid fa-qrcode text-[7px] text-emerald-700"></i> Zoom
-                            </span>
+                            class="h-7 w-7 sm:h-8 sm:w-8 p-0.5 rounded-lg bg-white/95 hover:bg-white border border-amber-400/50 shadow-sm cursor-pointer active:scale-95 transition-all flex items-center justify-center shrink-0"
+                            title="Ketuk untuk memperbesar QR Code NIS">
+                            <img src="${escapeHtml(studentQrCode)}" alt="QR NIS" class="w-full h-full object-contain rounded-sm">
                         </button>
                     </div>
 
                     <!-- Body Kartu: Pasfoto 3x4 di Kiri & Identitas Lengkap di Kanan -->
-                    <div class="flex items-center space-x-3 sm:space-x-4 relative z-10 py-0.5">
+                    <div class="flex items-center space-x-3 sm:space-x-4 relative z-10 py-1">
                         <!-- Frame Foto Santri (Format 3x4 Proporsional) -->
                         <div id="kts-photo-box-${cleanId}" class="w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden border-2 border-amber-400/60 shadow-md bg-emerald-950 flex items-center justify-center shrink-0 relative">
                             ${studentPhoto ? `
@@ -955,18 +952,6 @@ const ASNIdentity = {
                                 <span class="text-amber-300 font-semibold">Muhafiz:</span>
                                 <span id="kts-muhafiz-${cleanId}" class="font-bold text-white">${escapeHtml(studentMuhafiz)}</span>
                             </p>
-                        </div>
-                    </div>
-
-                    <!-- Footer Kartu: Status Santri Aktif & ID Chip Digital -->
-                    <div class="pt-2 flex items-center justify-between border-t border-emerald-500/25 relative z-10 text-[10px]">
-                        <div class="text-emerald-200/90 font-medium flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span class="font-bold">${escapeHtml(s.status || 'Santri Aktif')}</span>
-                        </div>
-                        <div class="text-right text-[9px] font-mono text-emerald-300/80 tracking-wider flex items-center gap-1.5">
-                            <i class="fa-solid fa-microchip text-amber-300/80"></i>
-                            <span>ID: ${escapeHtml(studentNis)}</span>
                         </div>
                     </div>
                 </div>
