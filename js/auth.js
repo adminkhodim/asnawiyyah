@@ -379,18 +379,59 @@ const ASNIdentity = {
     studentsLoadFailed: false,
 
     init() {
-        // Non-blocking hydration at startup
-        this.hydrateSession().catch(err => {
-            console.warn('[ASNIdentity] Hydration caught error:', err);
-        });
+        // Optimistic cache load: periksa sesi lokal terlebih dahulu agar UI instan (0 ms)
+        const pengasuhToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
+        const adminToken = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
+        const parentToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+
+        if (pengasuhToken) {
+            this.currentRole = ASN_ROLES.PENGASUH;
+            this.currentState = ASN_STATES.PENGASUH_AUTH_ACTIVE;
+            try {
+                const saved = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
+                if (saved) this.currentUser = JSON.parse(saved);
+            } catch (e) {}
+        } else if (adminToken) {
+            this.currentRole = ASN_ROLES.ADMIN;
+            this.currentState = ASN_STATES.ADMIN_AUTH_ACTIVE;
+            try {
+                const savedRole = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_ROLE) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
+                const savedData = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_DATA);
+                this.currentUser = savedData ? JSON.parse(savedData) : { name: 'Administrator Pesantren', email: 'admin@asnawiyyah.sch.id', role: savedRole || 'ADMIN' };
+            } catch (e) {}
+        } else if (parentToken) {
+            this.currentRole = ASN_ROLES.WALI_SANTRI;
+            this.currentState = ASN_STATES.PARENT_AUTH_ACTIVE;
+            try {
+                const saved = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA);
+                if (saved) this.currentUser = JSON.parse(saved);
+                const savedStuds = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
+                if (savedStuds) this.linkedStudents = JSON.parse(savedStuds);
+            } catch (e) {}
+        } else {
+            this.currentRole = ASN_ROLES.PUBLIC;
+            this.currentState = ASN_STATES.PUBLIC;
+            this.currentUser = null;
+        }
+
+        // Tampilkan antarmuka seketika (0 ms) tanpa kedipan skeleton
         this.renderAccountCenterUI();
+
+        // Silent background session re-validation
+        if (pengasuhToken || adminToken || parentToken) {
+            this.hydrateSession(true).catch(err => {
+                console.warn('[ASNIdentity] Silent hydration caught error:', err);
+            });
+        }
     },
 
-    async hydrateSession() {
+    async hydrateSession(isSilent = false) {
         if (this.isHydrating) return;
         this.isHydrating = true;
-        this.currentState = ASN_STATES.HYDRATING;
-        this.renderAccountCenterUI();
+        if (!isSilent) {
+            this.currentState = ASN_STATES.HYDRATING;
+            this.renderAccountCenterUI();
+        }
 
         const pengasuhToken = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
         const adminToken = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
@@ -451,8 +492,10 @@ const ASNIdentity = {
                 this.renderAccountCenterUI();
             } else if (serverRole === 'WALI_SANTRI') {
                 this.currentRole = ASN_ROLES.WALI_SANTRI;
-                this.currentState = ASN_STATES.WALI_HYDRATING;
-                this.renderAccountCenterUI();
+                if (!isSilent) {
+                    this.currentState = ASN_STATES.WALI_HYDRATING;
+                    this.renderAccountCenterUI();
+                }
 
                 // Hydrate parent profile & student relationships from server
                 const [profRes, studRes] = await Promise.all([

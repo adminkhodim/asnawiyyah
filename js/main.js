@@ -108,15 +108,25 @@
             } else if (path === '/kehidupan-santri/poskestren') {
                 switchTab('poskestren', false);
             } else if (path === '/administrator') {
-                const isMobile = window.innerWidth < 1024;
+                const isMobile = window.innerWidth < 768;
                 if (isMobile) {
-                    window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                     switchTab('pengaturan', false);
                 } else {
                     switchTab('admin', false);
                 }
             } else if (path === '/pengaturan') {
-                  switchTab('pengaturan', false);
+                const isMobile = window.innerWidth < 768;
+                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor'));
+                if (isMobile) {
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
+                    switchTab('pengaturan', false);
+                } else if (isAdmin) {
+                    window.history.replaceState({ tab: 'admin' }, '', '/administrator');
+                    switchTab('admin', false);
+                } else {
+                    switchTab('pengaturan', false);
+                }
             } else if (path === '/notifikasi') {
                   switchTab('notifikasi', false);
                   const notifIdParam = params.get('id');
@@ -203,7 +213,7 @@
             } else if (path === '/administrator') {
                 const isMobile = window.innerWidth < 768;
                 if (isMobile) {
-                    window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                     switchTab('pengaturan', false);
                 } else {
                     switchTab('admin', false);
@@ -211,7 +221,10 @@
             } else if (path === '/pengaturan') {
                 const isMobile = window.innerWidth < 768;
                 const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor'));
-                if (!isMobile && isAdmin) {
+                if (isMobile) {
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
+                    switchTab('pengaturan', false);
+                } else if (isAdmin) {
                     window.history.replaceState({ tab: 'admin' }, '', '/administrator');
                     switchTab('admin', false);
                 } else {
@@ -236,7 +249,7 @@
         function switchTab(tabId, updateUrl = true, customUrl = null) {
             if (tabId === 'admin' && window.innerWidth < 768 && (typeof isAdminLoggedIn === 'undefined' || !isAdminLoggedIn)) {
                 if (updateUrl) {
-                    window.history.replaceState({ tab: 'pengaturan' }, '', '/pengaturan');
+                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                 }
                 switchTab('pengaturan', updateUrl);
                 return;
@@ -248,6 +261,11 @@
                     switchTab('admin', updateUrl);
                     return;
                 }
+            }
+
+            // Pada mobile, navigasi ke tab 'pengaturan' tidak memodifikasi URL browser (tetap di URL saat ini / bersih tanpa /pengaturan)
+            if (tabId === 'pengaturan' && window.innerWidth < 768) {
+                updateUrl = false;
             }
 
             if (updateUrl) {
@@ -350,14 +368,8 @@
             } else if (tabId === 'maulid-index') {
                 renderMaulidIndex();
             } else if (tabId === 'pengaturan') {
-                if (typeof ASNIdentity !== 'undefined') {
-                    if (typeof ASNIdentity.hydrateSession === 'function') {
-                        ASNIdentity.hydrateSession().catch(err => {
-                            console.warn("Hydration error on tab switch:", err);
-                        });
-                    } else if (typeof ASNIdentity.renderAccountCenterUI === 'function') {
-                        ASNIdentity.renderAccountCenterUI();
-                    }
+                if (typeof ASNIdentity !== 'undefined' && typeof ASNIdentity.renderAccountCenterUI === 'function') {
+                    ASNIdentity.renderAccountCenterUI();
                 }
             } else if (tabId === 'notifikasi') {
                 loadNotifikasi();
