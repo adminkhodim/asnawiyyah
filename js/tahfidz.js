@@ -1051,13 +1051,142 @@ async function deleteTahfidzLogEntry(logId) {
 // ====================================================================
 
 /**
+ * Hitung jumlah sesi aktif per pekan untuk Ziyadah dan Muroja'ah berdasarkan Sheet Tahfidz_Jadwal_Sesi
+ */
+function getTahfidzActiveWeeklySessionCounts() {
+    let sesiList = ASNTahfidz.data.sesiList || [];
+    if (!sesiList || sesiList.length === 0) {
+        // Fallback default jika data sesi belum dimuat
+        return {
+            ziyadahWeeklySessions: 10,
+            murajaahWeeklySessions: 5,
+            activeSessions: []
+        };
+    }
+
+    const activeSessions = sesiList.filter(s => (s.status || 'Aktif Digunakan').includes('Aktif'));
+    let ziyadahCount = 0;
+    let murajaahCount = 0;
+
+    activeSessions.forEach(s => {
+        const jenis = (s.jenisSesi || s.jenis || '').toUpperCase();
+        const rawHari = s.hariList || s.hari || [];
+        const hariArr = Array.isArray(rawHari) ? rawHari : String(rawHari).split(',').map(x => x.trim()).filter(Boolean);
+        const dayCount = Math.max(1, hariArr.length);
+
+        if (jenis.includes('ZIYADAH')) {
+            ziyadahCount += dayCount;
+        } else if (jenis.includes('MURAJA') || jenis.includes('TASMI')) {
+            murajaahCount += dayCount;
+        } else {
+            // Default jika tipe lain, anggap Ziyadah
+            ziyadahCount += dayCount;
+        }
+    });
+
+    return {
+        ziyadahWeeklySessions: ziyadahCount > 0 ? ziyadahCount : 10,
+        murajaahWeeklySessions: murajaahCount > 0 ? murajaahCount : 5,
+        activeSessions: activeSessions
+    };
+}
+
+/**
+ * Render kartu jadwal sesi aktif di dalam Modal Target Capaian Santri
+ */
+function renderTahfidzTargetModalSessions() {
+    const container = document.getElementById('tahfidz-target-sesi-container');
+    const badgeZ = document.getElementById('tahfidz-target-badge-ziyadah');
+    const badgeM = document.getElementById('tahfidz-target-badge-murajaah');
+
+    const counts = getTahfidzActiveWeeklySessionCounts();
+
+    if (badgeZ) badgeZ.innerText = `${counts.ziyadahWeeklySessions} Sesi Ziyadah/Pekan`;
+    if (badgeM) badgeM.innerText = `${counts.murajaahWeeklySessions} Sesi Muroja'ah/Pekan`;
+
+    if (!container) return;
+
+    if (!counts.activeSessions || counts.activeSessions.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-2 p-2.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200/60 dark:border-[#283a4e] text-center text-slate-400">
+                Belum ada jadwal sesi aktif di sheet Tahfidz_Jadwal_Sesi.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = counts.activeSessions.map((s, idx) => {
+        const nama = s.namaSesi || s.nama || `Sesi 0${idx + 1}`;
+        const jam = `${s.jamMulai || '05:00'} - ${s.jamSelesai || '06:00'} WIB`;
+        const jenis = s.jenisSesi || s.jenis || 'Ziyadah';
+        const rawHari = s.hariList || s.hari || [];
+        const hariArr = Array.isArray(rawHari) ? rawHari : String(rawHari).split(',').map(x => x.trim()).filter(Boolean);
+        const hariStr = hariArr.join(', ');
+        const isZiyadah = jenis.toUpperCase().includes('ZIYADAH');
+        const badgeColor = isZiyadah ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+
+        return `
+        <div class="p-2.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200/70 dark:border-[#283a4e] space-y-1">
+            <div class="flex items-center justify-between">
+                <span class="font-extrabold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(nama)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[8px] font-extrabold ${badgeColor}">
+                    ${isZiyadah ? 'Ziyadah' : "Muroja'ah"} (${hariArr.length}x/mgg)
+                </span>
+            </div>
+            <div class="text-slate-500 dark:text-slate-400 text-[10px] flex items-center gap-1.5">
+                <i class="fa-regular fa-clock text-[9px]"></i>
+                <span class="font-semibold">${escapeHtml(jam)}</span>
+            </div>
+            <div class="text-[9px] text-slate-400 truncate">
+                Hari: ${escapeHtml(hariStr || 'Setiap Hari')}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Hitung otomatis Target Mingguan berdasarkan Rumus:
+ * Target Mingguan = Target Sesi x Jumlah Sesi Aktif Pekan
+ * Standar Mushaf: 2 Hlm = 1 Lembar (20 Hlm) = 1 Juz (10 Lembar)
+ */
+function recalculateTahfidzTargetWeekly() {
+    const counts = getTahfidzActiveWeeklySessionCounts();
+
+    const elZSesi = document.getElementById('input-target-ziyadah-sesi');
+    const elZPekan = document.getElementById('input-target-ziyadah-pekan');
+    const elMSesi = document.getElementById('input-target-murajaah-sesi');
+    const elMPekan = document.getElementById('input-target-murajaah-pekan');
+
+    const zSesi = Math.max(0.5, parseFloat(elZSesi?.value) || 1);
+    const mSesi = Math.max(0.5, parseFloat(elMSesi?.value) || 2);
+
+    const zPekanTotal = Number((zSesi * counts.ziyadahWeeklySessions).toFixed(1));
+    const mPekanTotal = Number((mSesi * counts.murajaahWeeklySessions).toFixed(1));
+
+    if (elZPekan) {
+        const lembar = Number((zPekanTotal / 2).toFixed(1));
+        const juz = Number((zPekanTotal / 20).toFixed(1));
+        elZPekan.value = `${zPekanTotal} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan) • Rumus: ${zSesi} Hlm x ${counts.ziyadahWeeklySessions} Sesi`;
+    }
+
+    if (elMPekan) {
+        const lembar = Number((mPekanTotal / 2).toFixed(1));
+        const juz = Number((mPekanTotal / 20).toFixed(1));
+        elMPekan.value = `${mPekanTotal} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan) • Rumus: ${mSesi} Hlm x ${counts.murajaahWeeklySessions} Sesi`;
+    }
+
+    return { zPekanTotal, mPekanTotal };
+}
+
+/**
  * Buka modal atur target santri
  */
 function openTahfidzTargetModal(studentId) {
     const modal = document.getElementById('modal-tahfidz-target');
     if (!modal) return;
 
-    const student = (ASNTahfidz.data.students || []).find(s => s.studentId === studentId);
+    const student = (ASNTahfidz.data.students || []).find(s => s.studentId === studentId || s.nis === studentId);
     if (!student) return;
 
     ASNTahfidz.targetState.studentId = studentId;
@@ -1065,20 +1194,20 @@ function openTahfidzTargetModal(studentId) {
     const nameEl = document.getElementById('tahfidz-target-student-name');
     if (nameEl) nameEl.innerText = `${student.name} • NIS: ${student.nis || '-'}`;
 
+    // Render sesi dinamis dari sheet Tahfidz_Jadwal_Sesi
+    renderTahfidzTargetModalSessions();
+
     const zSesi = student.target?.ziyadahSesi || 1;
-    const zPekan = student.target?.ziyadahPekan || 10;
     const mSesi = student.target?.murajaahSesi || 2;
-    const mPekan = student.target?.murajaahPekan || 10;
 
     const elZSesi = document.getElementById('input-target-ziyadah-sesi');
-    const elZPekan = document.getElementById('input-target-ziyadah-pekan');
     const elMSesi = document.getElementById('input-target-murajaah-sesi');
-    const elMPekan = document.getElementById('input-target-murajaah-pekan');
 
     if (elZSesi) elZSesi.value = zSesi;
-    if (elZPekan) elZPekan.value = `${zPekan} Halaman (${zPekan / 2} Lembar / ~${(zPekan / 20).toFixed(1)} Juz / Pekan)`;
     if (elMSesi) elMSesi.value = mSesi;
-    if (elMPekan) elMPekan.value = `${mPekan} Halaman (${mPekan / 2} Lembar / ~${(mPekan / 20).toFixed(1)} Juz / Pekan)`;
+
+    // Hitung otomatis Target Mingguan
+    recalculateTahfidzTargetWeekly();
 
     modal.classList.remove('hidden');
 }
@@ -1097,17 +1226,12 @@ function closeTahfidzTargetModal() {
 function setTahfidzTargetChip(type, val) {
     if (type === 'ZIYADAH') {
         const el = document.getElementById('input-target-ziyadah-sesi');
-        const elPekan = document.getElementById('input-target-ziyadah-pekan');
         if (el) el.value = val;
-        const pekan = val * 10;
-        if (elPekan) elPekan.value = `${pekan} Halaman (${pekan / 2} Lembar / ~${(pekan / 20).toFixed(1)} Juz / Pekan)`;
     } else {
         const el = document.getElementById('input-target-murajaah-sesi');
-        const elPekan = document.getElementById('input-target-murajaah-pekan');
         if (el) el.value = val;
-        const pekan = val * 5;
-        if (elPekan) elPekan.value = `${pekan} Halaman (${pekan / 2} Lembar / ~${(pekan / 20).toFixed(1)} Juz / Pekan)`;
     }
+    recalculateTahfidzTargetWeekly();
 }
 
 /**
@@ -1120,6 +1244,8 @@ async function submitTahfidzTarget() {
     const zSesi = Number(document.getElementById('input-target-ziyadah-sesi')?.value || 1);
     const mSesi = Number(document.getElementById('input-target-murajaah-sesi')?.value || 2);
 
+    const { zPekanTotal, mPekanTotal } = recalculateTahfidzTargetWeekly();
+
     const btn = document.getElementById('btn-save-tahfidz-target');
     if (btn) btn.disabled = true;
 
@@ -1129,13 +1255,22 @@ async function submitTahfidzTarget() {
             token,
             studentId,
             targetZiyadahSesi: zSesi,
-            targetZiyadahPekan: zSesi * 10,
+            targetZiyadahPekan: zPekanTotal,
             targetMurajaahSesi: mSesi,
-            targetMurajaahPekan: mSesi * 5
+            targetMurajaahPekan: mPekanTotal
         });
 
         if (response && (response.success || response.status === "success")) {
-            if (typeof showToast === 'function') showToast("Target santri berhasil diperbarui.");
+            if (typeof showToast === 'function') showToast("✅ Target santri berhasil diperbarui!");
+            // Update local student target in memory
+            const st = (ASNTahfidz.data.students || []).find(s => s.studentId === studentId || s.nis === studentId);
+            if (st) {
+                if (!st.target) st.target = {};
+                st.target.ziyadahSesi = zSesi;
+                st.target.ziyadahPekan = zPekanTotal;
+                st.target.murajaahSesi = mSesi;
+                st.target.murajaahPekan = mPekanTotal;
+            }
             closeTahfidzTargetModal();
             loadAdminTahfidzData();
         } else {
@@ -1143,6 +1278,7 @@ async function submitTahfidzTarget() {
         }
     } catch (err) {
         console.error(err);
+        if (typeof showToast === 'function') showToast("❌ Terjadi kesalahan saat menyimpan target: " + (err.message || err));
     } finally {
         if (btn) btn.disabled = false;
     }
@@ -2129,5 +2265,8 @@ window.removeStudentFromPlotting = removeStudentFromPlotting;
 window.filterTahfidzPlottingAvailableList = filterTahfidzPlottingAvailableList;
 window.submitTahfidzPlotting = submitTahfidzPlotting;
 window.resetTahfidzSesiForm = resetTahfidzSesiForm;
+window.recalculateTahfidzTargetWeekly = recalculateTahfidzTargetWeekly;
+window.renderTahfidzTargetModalSessions = renderTahfidzTargetModalSessions;
+window.getTahfidzActiveWeeklySessionCounts = getTahfidzActiveWeeklySessionCounts;
 
 
