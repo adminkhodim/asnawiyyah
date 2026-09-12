@@ -4401,7 +4401,7 @@ const AUTH_SHEET_SCHEMAS = Object.freeze({
   [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at"],
   [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at"],
   [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at"],
-  [SHEET_STUDENTS]: ["student_id", "nis", "nik", "name", "gender", "birth_date", "photo_url", "program", "status", "created_at"],
+  [SHEET_STUDENTS]: ["student_id", "nis", "nik", "name", "gender", "birth_date", "photo_url", "program", "status", "created_at", "qr_code"],
   [SHEET_WALI_SANTRI_MAP]: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"],
   [SHEET_OTP_CHALLENGES]: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"],
   [SHEET_AUTH_SESSIONS]: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"],
@@ -4824,8 +4824,11 @@ function getAuthSheet(ss, targetName) {
     const sheets = ss.getSheets();
     for (let i = 0; i < sheets.length; i++) {
       const name = sheets[i].getName();
+      const cleanName = name.replace(/[\s_]+/g, "").toLowerCase();
       if (name.trim().toLowerCase() === String(targetName).trim().toLowerCase() ||
-          name.replace(/[\s_]+/g, "").toLowerCase() === cleanTarget) {
+          cleanName === cleanTarget ||
+          (cleanTarget === "students" && cleanName === "student") ||
+          (cleanTarget === "student" && cleanName === "students")) {
         targetSheet = sheets[i];
         break;
       }
@@ -5382,9 +5385,12 @@ function getAllStudentsData(token) {
     let photoIdx = headers.indexOf("photo_url");
     if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
     if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+    if (photoIdx === -1 && headers.length >= 10) photoIdx = 9; // Kolom J (indeks 9)
     let progIdx = headers.indexOf("program");
     let statusIdx = headers.indexOf("status");
     let createdIdx = headers.indexOf("created_at");
+    let qrIdx = headers.indexOf("qr_code");
+    if (qrIdx === -1) qrIdx = headers.indexOf("qrcode");
 
     const students = [];
     let putra = 0, putri = 0, aktif = 0, nonaktif = 0;
@@ -5400,7 +5406,19 @@ function getAllStudentsData(token) {
       const genderRaw = genderIdx !== -1 ? String(row[genderIdx] || "").trim().toUpperCase() : "";
       const gender = (genderRaw === "P" || genderRaw === "PEREMPUAN" || genderRaw === "PUTRI") ? "P" : "L";
       const birthDate = birthIdx !== -1 ? normalizeDateString(row[birthIdx]) : "";
-      const photoUrl = photoIdx !== -1 ? String(row[photoIdx] || "").trim() : "";
+      let photoUrl = photoIdx !== -1 ? String(row[photoIdx] || "").trim() : "";
+      if (photoUrl) {
+        const driveMatch = photoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || photoUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+          photoUrl = "https://lh3.googleusercontent.com/d/" + driveMatch[1];
+        }
+      }
+
+      let qrCode = qrIdx !== -1 ? String(row[qrIdx] || "").trim() : "";
+      if (!qrCode) {
+        qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(nis || studentId);
+      }
+
       const program = progIdx !== -1 ? String(row[progIdx] || "Reguler").trim() : "Reguler";
       const statusRaw = statusIdx !== -1 ? String(row[statusIdx] || "ACTIVE").trim().toUpperCase() : "ACTIVE";
       const status = (statusRaw === "ACTIVE" || statusRaw === "AKTIF") ? "ACTIVE" : "INACTIVE";
@@ -5424,6 +5442,8 @@ function getAllStudentsData(token) {
         birth_date: birthDate,
         photoUrl: photoUrl,
         photo_url: photoUrl,
+        qrCode: qrCode,
+        qr_code: qrCode,
         program: program || "Reguler",
         status: status,
         createdAt: createdAt
@@ -5812,7 +5832,10 @@ function getLinkedStudentsForWali(waliId) {
   if (!waliId) return [];
   const ss = getDatabaseSpreadsheet();
   const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
-  const studentsSheet = getAuthSheet(ss, SHEET_STUDENTS);
+  let studentsSheet = getAuthSheet(ss, SHEET_STUDENTS);
+  if (!studentsSheet) {
+    studentsSheet = ss.getSheetByName("Student") || ss.getSheetByName("Students");
+  }
 
   if (!mapSheet || !studentsSheet) return [];
 
@@ -5851,8 +5874,11 @@ function getLinkedStudentsForWali(waliId) {
   let photoIdx = header.indexOf("photo_url");
   if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
   if (photoIdx === -1) photoIdx = header.indexOf("foto");
+  if (photoIdx === -1 && header.length >= 10) photoIdx = 9; // Kolom J (indeks ke-9 array)
   let progIdx = header.indexOf("program");
   let statusIdx = header.indexOf("status");
+  let qrIdx = header.indexOf("qr_code");
+  if (qrIdx === -1) qrIdx = header.indexOf("qrcode");
 
   if (idIdx === -1) idIdx = 0;
   if (nisIdx === -1) nisIdx = 1;
@@ -5864,6 +5890,19 @@ function getLinkedStudentsForWali(waliId) {
     const id = String(studentData[i][idIdx]).trim();
     if (activeStudentIds.includes(id)) {
       const rowNis = nisIdx !== -1 ? String(studentData[i][nisIdx] || "") : "";
+      let rawPhoto = photoIdx !== -1 ? String(studentData[i][photoIdx] || "").trim() : "";
+      if (rawPhoto) {
+        const driveMatch = rawPhoto.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || rawPhoto.match(/id=([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+          rawPhoto = "https://lh3.googleusercontent.com/d/" + driveMatch[1];
+        }
+      }
+
+      let rawQr = qrIdx !== -1 ? String(studentData[i][qrIdx] || "").trim() : "";
+      if (!rawQr) {
+        rawQr = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(rowNis || id);
+      }
+
       results.push({
         studentId: id,
         nis: rowNis,
@@ -5872,7 +5911,10 @@ function getLinkedStudentsForWali(waliId) {
         name: nameIdx !== -1 ? String(studentData[i][nameIdx] || "Santri") : "Santri",
         gender: genderIdx !== -1 ? String(studentData[i][genderIdx] || "").trim().toUpperCase() : "",
         birthDate: birthIdx !== -1 ? normalizeDateString(studentData[i][birthIdx]) : "",
-        photoUrl: photoIdx !== -1 ? String(studentData[i][photoIdx] || "") : "",
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto,
+        qrCode: rawQr,
+        qr_code: rawQr,
         program: progIdx !== -1 ? String(studentData[i][progIdx] || "Reguler") : "Reguler",
         status: statusIdx !== -1 ? String(studentData[i][statusIdx] || "Aktif") : "Aktif",
         relationship: relationshipMap[id] || RELATIONSHIP_ENUM.GUARDIAN
@@ -5912,25 +5954,7 @@ function getLinkedStudentsForWali(waliId) {
         }
       }
 
-      // 2. Halaqah & Muhafiz
-      let namaHalaqah = "Halaqah Utama";
-      let muhafiz = "Ustadz Pembimbing";
-      if (halaqahData && halaqahData.length > 1) {
-        const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase());
-        const halNameIdx = hHal.indexOf("nama_halaqah");
-        const muhIdx = hHal.indexOf("muhafiz");
-        const stIdsIdx = hHal.indexOf("student_ids");
-        for (let h = 1; h < halaqahData.length; h++) {
-          const members = stIdsIdx !== -1 ? String(halaqahData[h][stIdsIdx] || "").split(",").map(m => m.trim()) : [];
-          if (members.includes(cleanId) || members.includes(cleanNis)) {
-            if (halNameIdx !== -1) namaHalaqah = String(halaqahData[h][halNameIdx] || "Halaqah Utama").trim();
-            if (muhIdx !== -1) muhafiz = String(halaqahData[h][muhIdx] || "Ustadz Pembimbing").trim();
-            break;
-          }
-        }
-      }
-
-      // 3. Riwayat Logs & Capaian
+      // 2. Riwayat Logs & Capaian
       let maxJuz = 0;
       let totalLogs = 0;
       let scorePoints = 0;
@@ -5962,10 +5986,6 @@ function getLinkedStudentsForWali(waliId) {
             else if (nVal === "JAYYID") scorePoints += 2;
             else scorePoints += 1;
 
-            if (muhIdx !== -1 && logsData[l][muhIdx] && muhafiz === "Ustadz Pembimbing") {
-              muhafiz = String(logsData[l][muhIdx]).trim();
-            }
-
             const logDate = logsData[l][tglIdx] ? normalizeDateString(logsData[l][tglIdx]) : "";
             if (!lastLog || new Date(logDate || logsData[l][createdIdx]) > new Date(lastLog.tanggal || lastLog.createdAt)) {
               lastLog = {
@@ -5981,6 +6001,30 @@ function getLinkedStudentsForWali(waliId) {
           }
         }
       }
+
+      // 3. Halaqah & Muhafiz Asli (Data Real)
+      let namaHalaqah = "";
+      let muhafiz = "";
+      if (halaqahData && halaqahData.length > 1) {
+        const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase());
+        const halNameIdx = hHal.indexOf("nama_halaqah");
+        const muhIdx = hHal.indexOf("muhafiz");
+        const stIdsIdx = hHal.indexOf("student_ids");
+        for (let h = 1; h < halaqahData.length; h++) {
+          const members = stIdsIdx !== -1 ? String(halaqahData[h][stIdsIdx] || "").split(",").map(m => m.trim()) : [];
+          if (members.includes(cleanId) || members.includes(cleanNis)) {
+            if (halNameIdx !== -1 && halaqahData[h][halNameIdx]) namaHalaqah = String(halaqahData[h][halNameIdx]).trim();
+            if (muhIdx !== -1 && halaqahData[h][muhIdx]) muhafiz = String(halaqahData[h][muhIdx]).trim();
+            break;
+          }
+        }
+      }
+
+      if (!muhafiz && lastLog && lastLog.muhafiz) {
+        muhafiz = lastLog.muhafiz;
+      }
+      if (!namaHalaqah) namaHalaqah = "Belum Terplot";
+      if (!muhafiz) muhafiz = "Menunggu Jadwal";
 
       if (maxJuz === 0) maxJuz = 1;
       const percent = Math.min(100, Math.round((maxJuz / 30) * 100));
@@ -6003,7 +6047,7 @@ function getLinkedStudentsForWali(waliId) {
         murajaahPekan: murajaahPekan,
         avgNilai: avgNilaiText,
         halaqah: namaHalaqah,
-        muhafiz: (lastLog && lastLog.muhafiz) || muhafiz,
+        muhafiz: muhafiz,
         lastSetoran: lastLog ? {
           tanggal: lastLog.tanggal,
           surah: lastLog.surah,

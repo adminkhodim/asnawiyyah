@@ -841,9 +841,16 @@ const ASNIdentity = {
             return;
         }
 
-        // Render Kartu Digital Santri (KTS Digital) with Real Tahfidz Indicators
+        // Render Kartu Digital Santri (KTS Digital) & Kotak Indikator Tahfidz Terpisah
         listContainer.innerHTML = students.map((s, idx) => {
-            const studentPhoto = s.photoUrl || s.photo_url || '';
+            let studentPhoto = s.photoUrl || s.photo_url || '';
+            if (studentPhoto) {
+                const driveMatch = studentPhoto.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || studentPhoto.match(/id=([a-zA-Z0-9_-]+)/);
+                if (driveMatch && driveMatch[1]) {
+                    studentPhoto = "https://lh3.googleusercontent.com/d/" + driveMatch[1];
+                }
+            }
+
             const studentGender = (s.gender || s.jenis || '').toUpperCase();
             const studentNis = s.nis || s.nisn || '-';
             const studentName = s.name || s.nama || 'Santri';
@@ -851,16 +858,17 @@ const ASNIdentity = {
             const studentId = s.studentId || s.student_id || s.id || s.nis;
             const cleanId = String(studentId || idx).replace(/[^a-zA-Z0-9_-]/g, '_');
             const tahfidz = s.tahfidzSummary || {};
-            const studentHalaqah = tahfidz.halaqah || 'Halaqah Utama';
-            const studentMuhafiz = tahfidz.muhafiz || 'Ustadz Pembimbing';
+            const studentHalaqah = tahfidz.halaqah || 'Belum Terplot';
+            const studentMuhafiz = tahfidz.muhafiz || 'Menunggu Jadwal';
             const currentJuz = tahfidz.currentJuz || 1;
             const percent = tahfidz.percent || Math.round((currentJuz / 30) * 100);
             const targetPekan = tahfidz.targetPekan || 10;
             const avgNilai = tahfidz.avgNilai || (tahfidz.lastSetoran && tahfidz.lastSetoran.nilai) || 'Mumtaz';
             const lastSurah = (tahfidz.lastSetoran && tahfidz.lastSetoran.surah) ? tahfidz.lastSetoran.surah : 'Aktif Bimbingan';
+            const studentQrCode = s.qrCode || s.qr_code || ('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(studentNis || studentId));
 
             // Monogram Initials Fallback
-            const initials = studentName.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'ST';
+            const initials = studentName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'ST';
 
             // Trigger client-side real-data enrichment if tahfidzSummary is not yet present
             if (!s.tahfidzSummary) {
@@ -870,81 +878,97 @@ const ASNIdentity = {
             }
 
             return `
-            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-[#064e3b] to-[#042f2e] text-white p-5 border border-emerald-500/40 shadow-xl space-y-4 transition-all duration-300">
-                <!-- Background Ambient Ornaments -->
-                <div class="absolute -right-6 -bottom-6 text-emerald-400/5 text-9xl pointer-events-none select-none">
-                    <i class="fa-solid fa-kaaba"></i>
-                </div>
-                <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none"></div>
-
-                <!-- 1. Header Kartu Digital Santri -->
-                <div class="flex items-center justify-between border-b border-emerald-500/30 pb-3 relative z-10">
-                    <div class="flex items-center space-x-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-300 text-sm shadow-inner">
-                            <i class="fa-solid fa-mosque"></i>
-                        </div>
-                        <div>
-                            <h5 class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-200">PPTQ ASNAWIYYAH</h5>
-                            <p class="text-[9px] text-emerald-300/80 font-medium">KTS Digital & Mutaba'ah</p>
-                        </div>
+            <div class="space-y-3 pb-2">
+                <!-- 1. KOTAK KARTU SANTRI DIGITAL (KTS Digital) -->
+                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-[#064e3b] to-[#042f2e] text-white p-5 border border-emerald-500/40 shadow-xl space-y-4 transition-all duration-300">
+                    <!-- Background Ambient Watermark -->
+                    <div class="absolute -right-6 -bottom-6 text-emerald-400/5 text-9xl pointer-events-none select-none">
+                        <i class="fa-solid fa-kaaba"></i>
                     </div>
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 backdrop-blur-md shadow-sm">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <span>${escapeHtml(s.status || 'Santri Aktif')}</span>
-                    </span>
-                </div>
+                    <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none"></div>
 
-                <!-- 2. Profil & Identitas Santri -->
-                <div class="flex items-center space-x-3.5 relative z-10">
-                    <!-- Frame Foto Santri -->
-                    <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-md bg-emerald-950 flex items-center justify-center shrink-0 relative">
-                        ${studentPhoto ? `
-                            <img src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(studentName)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950\\'><i class=\\'fa-solid fa-user-graduate text-2xl\\'></i><span class=\\'text-[9px] mt-1 font-bold text-amber-200\\'>${escapeHtml(initials)}</span></div>';">
-                        ` : `
-                            <div class="w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950">
-                                <i class="fa-solid fa-user-graduate text-2xl"></i>
-                                <span class="text-[9px] mt-1 font-bold text-amber-200">${escapeHtml(initials)}</span>
-                            </div>
-                        `}
-                    </div>
-
-                    <!-- Identitas Detail -->
-                    <div class="min-w-0 flex-1 space-y-1">
-                        <h4 class="text-sm sm:text-base font-extrabold text-white tracking-wide leading-tight line-clamp-2">
-                            ${escapeHtml(studentName)}
-                        </h4>
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="px-2 py-0.5 rounded-md bg-white/10 text-amber-200 text-[10px] font-mono font-bold tracking-wider border border-white/10">
-                                NIS: ${escapeHtml(studentNis)}
-                            </span>
-                            ${studentGender ? `
-                                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${studentGender === 'L' ? 'bg-blue-500/25 text-blue-200 border border-blue-400/30' : 'bg-pink-500/25 text-pink-200 border border-pink-400/30'}">
-                                    ${studentGender === 'L' ? 'Santri Putra' : 'Santri Putri'}
-                                </span>
-                            ` : ''}
+                    <!-- Header Kartu: Logo Header Aplikasi di Kiri, 'Kartu Santri Digital' di Kanan -->
+                    <div class="flex items-center justify-between border-b border-emerald-500/30 pb-3 relative z-10">
+                        <div class="flex items-center space-x-2">
+                            <img src="assets/img/brand-header.png" alt="PPTQ Asnawiyyah" class="h-7 sm:h-8 w-auto object-contain drop-shadow-sm">
                         </div>
-                        <p class="text-[11px] text-emerald-100/90 font-medium flex items-center gap-1.5 truncate pt-0.5">
-                            <i class="fa-solid fa-book-bookmark text-amber-300 text-[10px]"></i>
-                            <span>${escapeHtml(studentProgram)}</span>
-                        </p>
-                        <p class="text-[10px] text-slate-300/90 flex items-center gap-1.5 truncate">
-                            <i class="fa-solid fa-chalkboard-user text-emerald-400 text-[10px]"></i>
-                            <span>Halaqah: ${escapeHtml(studentHalaqah)}</span>
-                        </p>
-                        <p class="text-[10px] text-slate-300/80 flex items-center gap-1.5 truncate">
-                            <i class="fa-solid fa-user-tie text-emerald-300 text-[10px]"></i>
-                            <span>Muhafiz: ${escapeHtml(studentMuhafiz)}</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- 3. Strip Indikator Tahfidz (Mini Dashboard) -->
-                <div class="rounded-2xl bg-black/30 backdrop-blur-md border border-emerald-500/25 p-3 space-y-2.5 relative z-10">
-                    <div class="flex items-center justify-between text-[10px] text-emerald-200 font-bold uppercase tracking-wider">
-                        <span class="flex items-center gap-1.5 text-amber-300">
-                            <i class="fa-solid fa-star text-[10px]"></i> Indikator Tahfidz
+                        <span class="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider text-emerald-200 bg-white/10 border border-white/20 backdrop-blur-md shadow-sm">
+                            Kartu Santri Digital
                         </span>
-                        <span class="text-emerald-300 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    </div>
+
+                    <!-- Profil & Identitas Santri -->
+                    <div class="flex items-start space-x-3.5 relative z-10">
+                        <!-- Frame Foto Santri (Kolom J) -->
+                        <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-md bg-emerald-950 flex items-center justify-center shrink-0 relative">
+                            ${studentPhoto ? `
+                                <img src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(studentName)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950\\'><i class=\\'fa-solid fa-user-graduate text-2xl\\'></i><span class=\\'text-[9px] mt-1 font-bold text-amber-200\\'>${escapeHtml(initials)}</span></div>';">
+                            ` : `
+                                <div class="w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950">
+                                    <i class="fa-solid fa-user-graduate text-2xl"></i>
+                                    <span class="text-[9px] mt-1 font-bold text-amber-200">${escapeHtml(initials)}</span>
+                                </div>
+                            `}
+                        </div>
+
+                        <!-- Identitas Detail -->
+                        <div class="min-w-0 flex-1 space-y-1">
+                            <h4 class="text-sm sm:text-base font-extrabold text-white tracking-wide leading-tight line-clamp-2">
+                                ${escapeHtml(studentName)}
+                            </h4>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="px-2 py-0.5 rounded-md bg-white/10 text-amber-200 text-[10px] font-mono font-bold tracking-wider border border-white/10">
+                                    NIS: ${escapeHtml(studentNis)}
+                                </span>
+                                ${studentGender ? `
+                                    <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${studentGender === 'L' ? 'bg-blue-500/25 text-blue-200 border border-blue-400/30' : 'bg-pink-500/25 text-pink-200 border border-pink-400/30'}">
+                                        ${studentGender === 'L' ? 'Santri Putra' : 'Santri Putri'}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <p class="text-[11px] text-emerald-100/90 font-medium flex items-center gap-1.5 truncate pt-0.5">
+                                <i class="fa-solid fa-book-bookmark text-amber-300 text-[10px]"></i>
+                                <span>${escapeHtml(studentProgram)}</span>
+                            </p>
+                            <p class="text-[10px] text-slate-300/90 flex items-center gap-1.5 truncate">
+                                <i class="fa-solid fa-chalkboard-user text-emerald-400 text-[10px]"></i>
+                                <span>Halaqah: ${escapeHtml(studentHalaqah)}</span>
+                            </p>
+                            <p class="text-[10px] text-slate-300/80 flex items-center gap-1.5 truncate">
+                                <i class="fa-solid fa-user-tie text-emerald-300 text-[10px]"></i>
+                                <span>Muhafiz: ${escapeHtml(studentMuhafiz)}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer Kartu: QR Code Mini Berbasis NIS (Klik untuk Perbesar) -->
+                    <div class="pt-2 flex items-center justify-between border-t border-emerald-500/25 relative z-10">
+                        <div class="text-[10px] text-emerald-200/90 font-medium flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>${escapeHtml(s.status || 'Santri Aktif')}</span>
+                        </div>
+                        <button type="button" 
+                            onclick="openStudentQrModal('${escapeHtml(studentNis)}', '${escapeHtml(studentName)}', '${escapeHtml(studentQrCode)}')"
+                            class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-xl border border-white/20 cursor-pointer active:scale-95 transition-all text-left shadow-sm"
+                            title="Ketuk untuk memperbesar QR Code">
+                            <img src="${escapeHtml(studentQrCode)}" alt="QR NIS" class="w-7 h-7 rounded-md bg-white p-0.5 object-contain shrink-0">
+                            <div class="leading-none">
+                                <span class="text-[10px] font-bold text-amber-300 block flex items-center gap-1">
+                                    <i class="fa-solid fa-qrcode text-[9px]"></i> QR NIS
+                                </span>
+                                <span class="text-[8px] text-slate-300">Ketuk perbesar</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. KOTAK INDIKATOR TAHFIDZ & BUKU MUTABA'AH (Terpisah Mandiri) -->
+                <div class="relative overflow-hidden rounded-3xl bg-slate-900/95 dark:bg-[#15202d] text-white p-4 sm:p-5 border border-emerald-500/30 shadow-lg space-y-3.5 transition-all">
+                    <div class="flex items-center justify-between text-xs font-bold">
+                        <span class="flex items-center gap-1.5 text-amber-300 uppercase tracking-wider text-[11px]">
+                            <i class="fa-solid fa-star text-xs"></i> Indikator Capaian Tahfidz
+                        </span>
+                        <span class="text-emerald-300 text-[10px] bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-extrabold">
                             Standar 30 Juz
                         </span>
                     </div>
@@ -952,45 +976,45 @@ const ASNIdentity = {
                     <!-- 3 Metrik Box -->
                     <div class="grid grid-cols-3 gap-2 text-center">
                         <!-- 1. Capaian Juz -->
-                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-300 font-medium">Capaian</span>
+                        <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
+                            <span class="text-[9px] text-slate-400 font-medium">Capaian</span>
                             <span class="text-xs sm:text-sm font-extrabold text-amber-300 mt-0.5" id="kts-juz-${cleanId}">Juz ${currentJuz}</span>
-                            <span class="text-[8px] text-emerald-300 mt-0.5 font-bold" id="kts-percent-${cleanId}">${percent}% Juz</span>
+                            <span class="text-[8px] text-emerald-400 mt-0.5 font-bold" id="kts-percent-${cleanId}">${percent}% Juz</span>
                         </div>
 
                         <!-- 2. Target Pekanan -->
-                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-300 font-medium">Target Pekan</span>
+                        <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
+                            <span class="text-[9px] text-slate-400 font-medium">Target Pekan</span>
                             <span class="text-xs sm:text-sm font-extrabold text-white mt-0.5" id="kts-target-${cleanId}">${targetPekan} Hlm</span>
-                            <span class="text-[8px] text-slate-300 mt-0.5">Ziyadah/Muraja'ah</span>
+                            <span class="text-[8px] text-slate-400 mt-0.5">Ziyadah/Muraja'ah</span>
                         </div>
 
                         <!-- 3. Nilai / Setoran Terakhir -->
-                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-300 font-medium">Nilai Terakhir</span>
-                            <span class="text-xs sm:text-sm font-extrabold text-emerald-300 mt-0.5 truncate" id="kts-nilai-${cleanId}">${escapeHtml(avgNilai)}</span>
-                            <span class="text-[8px] text-slate-300 mt-0.5 truncate" id="kts-surah-${cleanId}">${escapeHtml(lastSurah)}</span>
+                        <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
+                            <span class="text-[9px] text-slate-400 font-medium">Nilai Terakhir</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-emerald-400 mt-0.5 truncate" id="kts-nilai-${cleanId}">${escapeHtml(avgNilai)}</span>
+                            <span class="text-[8px] text-slate-400 mt-0.5 truncate" id="kts-surah-${cleanId}">${escapeHtml(lastSurah)}</span>
                         </div>
                     </div>
 
                     <!-- Progress Bar 30 Juz -->
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[9px] text-emerald-200/90 font-medium">
+                    <div class="space-y-1 pt-0.5">
+                        <div class="flex justify-between text-[10px] text-emerald-200/90 font-medium">
                             <span>Progres Khatam Hafalan</span>
                             <span id="kts-bar-label-${cleanId}">Juz ${currentJuz} dari 30 Juz (${percent}%)</span>
                         </div>
-                        <div class="w-full h-2 rounded-full bg-black/40 overflow-hidden p-0.5 border border-emerald-500/20">
+                        <div class="w-full h-2.5 rounded-full bg-black/40 overflow-hidden p-0.5 border border-emerald-500/20">
                             <div id="kts-bar-${cleanId}" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-700" style="width: ${Math.max(4, percent)}%;"></div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 4. Tombol Aksi Mutaba'ah Lengkap -->
-                <div class="relative z-10 pt-1">
-                    <button type="button" data-student-id="${escapeHtml(studentId)}" onclick="openTahfidzStudentDetail(this.getAttribute('data-student-id'), 'parent')" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-amber-900/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2" title="Buka Buku Mutaba'ah & Capaian Santri">
-                        <i class="fa-solid fa-book-quran text-sm text-slate-950"></i>
-                        <span>Buka Buku Mutaba'ah Lengkap</span>
-                    </button>
+                    <!-- Tombol Aksi Mutaba'ah Lengkap -->
+                    <div class="pt-1">
+                        <button type="button" data-student-id="${escapeHtml(studentId)}" onclick="openTahfidzStudentDetail(this.getAttribute('data-student-id'), 'parent')" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-amber-900/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2" title="Buka Buku Mutaba'ah & Capaian Santri">
+                            <i class="fa-solid fa-book-quran text-sm text-slate-950"></i>
+                            <span>Buka Buku Mutaba'ah Lengkap</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             `;
@@ -1060,6 +1084,40 @@ const ASNIdentity = {
         });
     }
 };
+
+// =====================================================================
+// QR CODE MODAL PREVIEW CONTROLLER
+// =====================================================================
+function openStudentQrModal(nis, name, qrUrl) {
+    const modal = document.getElementById('modal-student-qr-preview');
+    if (!modal) return;
+    const nameEl = document.getElementById('qr-modal-student-name');
+    const nisEl = document.getElementById('qr-modal-student-nis');
+    const imgEl = document.getElementById('qr-modal-image');
+
+    if (nameEl) nameEl.innerText = name || 'Santri';
+    if (nisEl) nisEl.innerText = 'NIS: ' + (nis || '-');
+    if (imgEl) {
+        const finalUrl = qrUrl || ('https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=' + encodeURIComponent(nis || 'ASN'));
+        imgEl.src = finalUrl;
+    }
+
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        const content = document.getElementById('modal-student-qr-content');
+        if (content) content.classList.remove('scale-95', 'opacity-0');
+    }, 30);
+}
+
+function closeStudentQrModal() {
+    const modal = document.getElementById('modal-student-qr-preview');
+    const content = document.getElementById('modal-student-qr-content');
+    if (!modal) return;
+    if (content) content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 200);
+}
 
 // =====================================================================
 // PHASE 2A: AUTHENTICATION UI CONTROLLERS
