@@ -179,9 +179,34 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
+    if (action === "deleteTahfidzHalaqah" || action === "tahfidz.deleteHalaqah") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const hId = payload.halaqahId || (payload.data && payload.data.halaqahId) || "";
+      return createJsonResponse(deleteTahfidzHalaqah(hId, token));
+    }
+
     if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(initTahfidzSheets(token));
+    }
+
+    // ========================================================
+    // DATA PEGAWAI (ASATIDZ & KARYAWAN) ACTIONS (doPost)
+    // ========================================================
+    if (action === "getEmployees" || action === "employee.list") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getAllEmployeesData(token));
+    }
+
+    if (action === "saveEmployee" || action === "employee.save") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveEmployeeData(payload.data || payload, token));
+    }
+
+    if (action === "deleteEmployee" || action === "employee.delete") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const employeeId = payload.employeeId || payload.employee_id || payload.id || (payload.data && (payload.data.employeeId || payload.data.employee_id || payload.data.id));
+      return createJsonResponse(deleteEmployeeData(employeeId, token));
     }
 
     if (action === "deleteBanner") {
@@ -1071,6 +1096,13 @@ function doGet(e) {
       const token = e.parameter.token || null;
       return createJsonResponse(
         initTahfidzSheets(token)
+      );
+    }
+
+    if (action === "getEmployees" || action === "employee.list") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(
+        getAllEmployeesData(token)
       );
     }
 
@@ -6775,9 +6807,34 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
+    if (action === "auth.tahfidz.deleteHalaqah" || action === "tahfidz.deleteHalaqah" || action === "deleteTahfidzHalaqah") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const hId = payload.halaqahId || (payload.data && payload.data.halaqahId) || "";
+      return createJsonResponse(deleteTahfidzHalaqah(hId, token));
+    }
+
     if (action === "auth.tahfidz.initSheets" || action === "tahfidz.initSheets" || action === "initTahfidzSheets") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       return createJsonResponse(initTahfidzSheets(token));
+    }
+
+    // ----------------------------------------------------
+    // 16. DATA PEGAWAI (ASATIDZ & KARYAWAN)
+    // ----------------------------------------------------
+    if (action === "auth.employee.list" || action === "employee.list" || action === "getEmployees") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(getAllEmployeesData(token));
+    }
+
+    if (action === "auth.employee.save" || action === "employee.save" || action === "saveEmployee") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveEmployeeData(payload.data || payload, token));
+    }
+
+    if (action === "auth.employee.delete" || action === "employee.delete" || action === "deleteEmployee") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const employeeId = payload.employeeId || payload.employee_id || payload.id || (payload.data && (payload.data.employeeId || payload.data.employee_id || payload.data.id));
+      return createJsonResponse(deleteEmployeeData(employeeId, token));
     }
 
     return createJsonResponse({
@@ -6904,17 +6961,6 @@ function initTahfidzSheets(token) {
         .setBackground("#0284c7")
         .setFontColor("#ffffff");
       sheetHalaqah.setFrozenRows(1);
-
-      // Sisipkan data awal halaqah contoh
-      const nowIso = new Date().toISOString();
-      sheetHalaqah.appendRow([
-        "HLQ-01", "Halaqah Abu Ubaidah", "Tahfidz Anak", "Ustadzah Laila Luthfiana, Al-Hafidzah",
-        "Juz 30 Mutqin & Tahsin Huruf / 1 Halaman Per Hari", "", nowIso
-      ]);
-      sheetHalaqah.appendRow([
-        "HLQ-02", "Halaqah Utsman bin Affan", "Tahfidz Dewasa", "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah",
-        "Ziyadah 1 Halaman / Hari & Deresan 1/2 Juz / Hari", "", nowIso
-      ]);
       created.push(SHEET_TAHFIDZ_HALAQAH);
     } else {
       existing.push(SHEET_TAHFIDZ_HALAQAH);
@@ -7058,6 +7104,12 @@ function getTahfidzDashboard(token) {
         const stIds = String(halaqahData[i][hHal.indexOf("student_ids")] || "").split(",").map(x => x.trim()).filter(Boolean);
 
         if (hid) {
+          // Abaikan data dummy fiktif bawaan template lama
+          const isLegacyDummy = (hid === "HLQ-01" || hid === "HLQ-02") && 
+            (hname === "Halaqah Abu Ubaidah" || hname === "Halaqah Utsman bin Affan") && 
+            stIds.length === 0;
+          if (isLegacyDummy) continue;
+
           halaqahList.push({
             halaqahId: hid,
             namaHalaqah: hname,
@@ -7077,26 +7129,6 @@ function getTahfidzDashboard(token) {
           });
         }
       }
-    }
-
-    // Jika belum ada halaqah sama sekali, buatkan 2 halaqah awal default
-    if (halaqahList.length === 0) {
-      halaqahList.push({
-        halaqahId: "HLQ-01",
-        namaHalaqah: "Halaqah Abu Ubaidah",
-        kategori: "Tahfidz Anak",
-        muhafiz: "Ustadzah Laila Luthfiana, Al-Hafidzah",
-        targetKurikulum: "Juz 30 Mutqin & Tahsin Huruf / 1 Halaman Per Hari",
-        studentCount: 0
-      });
-      halaqahList.push({
-        halaqahId: "HLQ-02",
-        namaHalaqah: "Halaqah Utsman bin Affan",
-        kategori: "Tahfidz Dewasa",
-        muhafiz: "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah",
-        targetKurikulum: "Ziyadah 1 Halaman / Hari & Deresan 1/2 Juz / Hari",
-        studentCount: 0
-      });
     }
 
     // 6. Kelompokkan Logs per Santri
@@ -7230,15 +7262,46 @@ function getTahfidzDashboard(token) {
       },
       students: enrichedStudents,
       totalStudents: enrichedStudents.length,
-      categories: ["Semua Kategori", "Tahfidz Anak", "Tahfidz Dewasa", "Kitab Kuning", "Reguler"],
+      categories: (function() {
+        const programSet = new Set();
+        allStudents.forEach(st => {
+          const p = String(st.program || "").trim();
+          if (p) programSet.add(p);
+        });
+        const uniquePrograms = Array.from(programSet).sort();
+        return ["Semua Kategori", ...(uniquePrograms.length > 0 ? uniquePrograms : ["Tahfidz Intensif", "Tahfidz Dewasa", "Tahfidz Anak", "Kitab Kuning", "Reguler"])];
+      })(),
+      rawCategories: (function() {
+        const programSet = new Set();
+        allStudents.forEach(st => {
+          const p = String(st.program || "").trim();
+          if (p) programSet.add(p);
+        });
+        return Array.from(programSet).sort();
+      })(),
       halaqahs: halaqahList,
-      muhafizList: [
-        "Semua Muhafiz",
-        "Ustadzah Laila Luthfiana, Al-Hafidzah",
-        "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah",
-        "Ustadz Pengampu Tahfidz Putra",
-        "Ustadzah Pengampu Tahfidz Putri"
-      ]
+      muhafizList: (function() {
+        const muhafizSet = new Set();
+        try {
+          const empRes = getAllEmployeesData(token);
+          const employees = (empRes && empRes.data) || [];
+          employees.forEach(emp => {
+            if (emp.status === "ACTIVE") {
+              const j = (emp.jabatan || "").toLowerCase();
+              const s = (emp.spesialisasi || "").toLowerCase();
+              if (j.includes("muhafiz") || j.includes("ustadz") || j.includes("guru") || s.includes("tahfidz") || employees.length <= 20) {
+                if (emp.nama) muhafizSet.add(emp.nama);
+              }
+            }
+          });
+        } catch (e) {
+          console.warn("[MUHAFIZ LIST EMP ERROR]", e);
+        }
+        halaqahList.forEach(hlq => {
+          if (hlq.muhafiz) muhafizSet.add(hlq.muhafiz);
+        });
+        return ["Semua Muhafiz", ...Array.from(muhafizSet).sort()];
+      })()
     };
 
   } catch (err) {
@@ -7694,7 +7757,14 @@ function getTahfidzHalaqahList(token) {
       for (let i = 1; i < data.length; i++) {
         const id = String(data[i][h.indexOf("halaqah_id")] || "").trim();
         if (!id) continue;
+        const hName = String(data[i][h.indexOf("nama_halaqah")] || "");
         const stIds = String(data[i][h.indexOf("student_ids")] || "").split(",").map(s => s.trim()).filter(Boolean);
+        
+        // Abaikan data dummy fiktif lama
+        const isLegacyDummy = (id === "HLQ-01" || id === "HLQ-02") && 
+          (hName === "Halaqah Abu Ubaidah" || hName === "Halaqah Utsman bin Affan") && 
+          stIds.length === 0;
+        if (isLegacyDummy) continue;
         list.push({
           halaqahId: id,
           namaHalaqah: String(data[i][h.indexOf("nama_halaqah")] || ""),
@@ -7780,5 +7850,260 @@ function saveTahfidzHalaqah(payload, token) {
     };
   }
 }
+
+/**
+ * 8. Hapus Kelompok Halaqah
+ */
+function deleteTahfidzHalaqah(halaqahId, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const cleanId = String(halaqahId || "").trim();
+    if (!cleanId) throw new Error("ID Halaqah wajib diisi.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+    if (!sheet) throw new Error("Sheet halaqah belum dibuat.");
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { status: "error", success: false, message: "Halaqah tidak ditemukan." };
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("halaqah_id");
+    let foundRow = -1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === cleanId) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    if (foundRow > 0) {
+      sheet.deleteRow(foundRow);
+      return {
+        status: "success",
+        success: true,
+        message: "Halaqah berhasil dihapus."
+      };
+    }
+    return { status: "error", success: false, message: "Halaqah tidak ditemukan." };
+  } catch (err) {
+    return { status: "error", success: false, message: err.message };
+  }
+}
+
+// ====================================================================
+// MODUL BACKEND: DATA PEGAWAI (ASATIDZ, MUHAFIZ, GURU, KARYAWAN)
+// ====================================================================
+const SHEET_PEGAWAI = "Pegawai";
+
+function getOrCreatePegawaiSheet(ss) {
+  const headers = [
+    "employee_id", "nama", "nip", "gender", "jabatan", "spesialisasi", "telepon", "email", "status", "created_at"
+  ];
+  let sheet = ss.getSheetByName(SHEET_PEGAWAI);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_PEGAWAI);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length)
+      .setFontWeight("bold")
+      .setBackground("#047857")
+      .setFontColor("#ffffff");
+    sheet.setFrozenRows(1);
+
+    // Data awal Asatidz Pembina Tahfidz Asnawiyyah
+    const nowIso = new Date().toISOString();
+    sheet.appendRow([
+      "PEG-001", "Ustadzah Laila Luthfiana, Al-Hafidzah", "199208152021012001", "P",
+      "Muhafizah / Ustadzah", "Tahfidz Al-Qur'an (Juz 30 & Mutqin)", "081234567891", "laila.luthfiana@asnawiyyah.or.id", "ACTIVE", nowIso
+    ]);
+    sheet.appendRow([
+      "PEG-002", "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah", "198505102015012002", "P",
+      "Pengasuh / Muhafizah Utama", "Tahfidz 30 Juz & Sanad", "081234567892", "nasikhatul.fuadah@asnawiyyah.or.id", "ACTIVE", nowIso
+    ]);
+    sheet.appendRow([
+      "PEG-003", "Ustadz Pembina Tahfidz Putra", "199401012022011003", "L",
+      "Muhafiz / Ustadz", "Tahfidz Al-Qur'an Putra", "081234567893", "tahfidz.putra@asnawiyyah.or.id", "ACTIVE", nowIso
+    ]);
+  }
+  return sheet;
+}
+
+function getAllEmployeesData(token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreatePegawaiSheet(ss);
+    const data = sheet.getDataRange().getValues();
+    const list = [];
+    let totalL = 0, totalP = 0, totalAsatidz = 0, totalAktif = 0;
+
+    if (data && data.length > 1) {
+      const h = data[0].map(x => String(x || "").trim().toLowerCase());
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        const id = String(row[h.indexOf("employee_id")] || "").trim();
+        if (!id) continue;
+        const nama = String(row[h.indexOf("nama")] || "").trim();
+        const nip = String(row[h.indexOf("nip")] || "").trim();
+        const gender = String(row[h.indexOf("gender")] || "L").toUpperCase();
+        const jabatan = String(row[h.indexOf("jabatan")] || "Ustadz").trim();
+        const spesialisasi = String(row[h.indexOf("spesialisasi")] || "-").trim();
+        const telepon = String(row[h.indexOf("telepon")] || "").trim();
+        const email = String(row[h.indexOf("email")] || "").trim();
+        const status = String(row[h.indexOf("status")] || "ACTIVE").toUpperCase();
+        const createdAt = String(row[h.indexOf("created_at")] || "");
+
+        if (status === "ACTIVE") totalAktif++;
+        if (gender === "L") totalL++; else totalP++;
+        if (jabatan.toLowerCase().includes("ustadz") || jabatan.toLowerCase().includes("muhafiz") || jabatan.toLowerCase().includes("guru")) {
+          totalAsatidz++;
+        }
+
+        list.push({
+          employeeId: id,
+          id: id,
+          nama: nama,
+          name: nama,
+          nip: nip,
+          gender: gender,
+          jabatan: jabatan,
+          spesialisasi: spesialisasi,
+          telepon: telepon,
+          email: email,
+          status: status,
+          createdAt: createdAt
+        });
+      }
+    }
+
+    return {
+      status: "success",
+      success: true,
+      data: list,
+      total: list.length,
+      summary: {
+        total: list.length,
+        aktif: totalAktif,
+        putra: totalL,
+        putri: totalP,
+        asatidz: totalAsatidz
+      }
+    };
+  } catch (err) {
+    console.error("[GET ALL EMPLOYEES ERROR]", err);
+    return { status: "error", success: false, message: "Gagal memuat data pegawai: " + err.message };
+  }
+}
+
+function saveEmployeeData(payload, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const nama = String(payload.nama || payload.name || "").trim();
+    if (!nama) throw new Error("Nama pegawai / ustadz wajib diisi.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreatePegawaiSheet(ss);
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+
+    const idIdx = headers.indexOf("employee_id");
+    let employeeId = String(payload.employeeId || payload.id || "").trim();
+    let foundRow = -1;
+
+    if (employeeId && idIdx !== -1) {
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idIdx] || "").trim() === employeeId) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (!employeeId) {
+      employeeId = "PEG-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd-HHmmss");
+    }
+
+    const nip = String(payload.nip || "").trim();
+    const gender = String(payload.gender || "L").toUpperCase();
+    const jabatan = String(payload.jabatan || "Ustadz / Muhafiz").trim();
+    const spesialisasi = String(payload.spesialisasi || "Tahfidz Al-Qur'an").trim();
+    const telepon = String(payload.telepon || "").trim();
+    const email = String(payload.email || "").trim();
+    const status = String(payload.status || "ACTIVE").toUpperCase();
+    const createdAt = new Date().toISOString();
+
+    const rowValues = [employeeId, nama, nip, gender, jabatan, spesialisasi, telepon, email, status, createdAt];
+
+    if (foundRow > 0) {
+      sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+      return { status: "success", success: true, employeeId: employeeId, message: `Data pegawai ${nama} berhasil diperbarui.` };
+    } else {
+      sheet.appendRow(rowValues);
+      return { status: "success", success: true, employeeId: employeeId, message: `Pegawai ${nama} berhasil ditambahkan.` };
+    }
+  } catch (err) {
+    console.error("[SAVE EMPLOYEE ERROR]", err);
+    return { status: "error", success: false, message: "Gagal menyimpan data pegawai: " + err.message };
+  }
+}
+
+function deleteEmployeeData(employeeId, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    if (!employeeId) throw new Error("ID Pegawai wajib disertakan.");
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_PEGAWAI);
+    if (!sheet) throw new Error("Sheet Pegawai tidak ditemukan.");
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("employee_id");
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === String(employeeId).trim()) {
+        sheet.deleteRow(i + 1);
+        return { status: "success", success: true, message: "Data pegawai berhasil dihapus." };
+      }
+    }
+    return { status: "error", success: false, message: "Data pegawai tidak ditemukan." };
+  } catch (err) {
+    console.error("[DELETE EMPLOYEE ERROR]", err);
+    return { status: "error", success: false, message: "Gagal menghapus data pegawai: " + err.message };
+  }
+}
+
 
 

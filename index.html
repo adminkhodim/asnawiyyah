@@ -1608,7 +1608,7 @@
                             <h3 class="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest flex items-center">
                                 <span class="w-1.5 h-4 bg-emerald-600 rounded-full mr-2"></span> Pusat Kontrol Admin
                             </h3>
-                            <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">11 Modul CMS</span>
+                            <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">12 Modul CMS</span>
                         </div>
 
                         <!-- Grid Modul CMS -->
@@ -1643,6 +1643,14 @@
                                     <i class="fa-solid fa-id-card-clip"></i>
                                 </div>
                                 <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Data Santri</span>
+                            </button>
+
+                            <!-- 4b. Data Pegawai (Asatidz & Staf) -->
+                            <button type="button" onclick="openAdminModuleFromControlCenter('pegawai')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-50 dark:bg-[#1c2836] hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-slate-100 dark:border-[#253447] hover:border-indigo-300 transition group active:scale-95 text-center">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center text-base shadow-sm transition">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 mt-1.5 truncate w-full">Pegawai</span>
                             </button>
 
                             <!-- 5. Tahfidz Al-Qur'an (Mutaba'ah) -->
@@ -3489,6 +3497,12 @@
                         </button>
                     </li>
                     <li>
+                        <button onclick="showAdminView('pegawai')" data-view="pegawai" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Data Pegawai & Asatidz">
+                            <i class="fa-solid fa-user-tie w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pegawai</span>
+                        </button>
+                    </li>
+                    <li>
                         <button onclick="showAdminView('tahfidz')" data-view="tahfidz" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Tahfidz Al-Qur'an">
                             <i class="fa-solid fa-book-quran w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Tahfidz Qur'an</span>
@@ -3679,6 +3693,25 @@
                                 class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-cyan-700 transition">
                                 Data Santri</h4>
                             <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola data master santri, NIS, NIK, foto & status.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Icon Grid: Data Pegawai & Asatidz -->
+                    <div onclick="showAdminView('pegawai')"
+                        class="bg-white hover:bg-indigo-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-indigo-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-indigo-50 text-indigo-700 group-hover:bg-indigo-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                            <span id="admin-hub-pegawai-count"
+                                class="text-[9px] font-extrabold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-md uppercase">0 Pegawai</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-indigo-700 transition">
+                                Data Pegawai</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola asatidz, muhafiz, guru, NIP, kontak & hak pembina.</p>
                         </div>
                     </div>
 
@@ -4520,6 +4553,115 @@
                             <i class="fa-solid fa-user-slash"></i>
                         </div>
                         <p class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="admin-student-empty-text">Belum ada data santri ditemukan.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ================= VIEW: MODUL MASTER DATA PEGAWAI ================= -->
+            <div id="admin-view-pegawai" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Master Data Pegawai & Asatidz</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="openAdminEmployeeModal()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-user-plus text-xs"></i>
+                            <span class="hidden sm:inline">Tambah Pegawai</span>
+                        </button>
+                        <button type="button" onclick="loadAdminEmployeesData()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Refresh Data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARDS RINGKASAN DATA PEGAWAI -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Pegawai</span>
+                        <div id="admin-pegawai-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800 dark:text-slate-100">0</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/30 dark:bg-indigo-950/20 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">Asatidz / Muhafiz</span>
+                        <div id="admin-pegawai-stat-asatidz" class="text-lg md:text-xl font-extrabold text-indigo-800 dark:text-indigo-300">0</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-950/20 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">Tenaga Kependidikan</span>
+                        <div id="admin-pegawai-stat-staf" class="text-lg md:text-xl font-extrabold text-amber-800 dark:text-amber-300">0</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/20 shadow-sm space-y-1">
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Status Aktif</span>
+                        <div id="admin-pegawai-stat-aktif" class="text-lg md:text-xl font-extrabold text-emerald-800 dark:text-emerald-300">0</div>
+                    </div>
+                </div>
+
+                <!-- FITUR SEARCH & FILTER DATA PEGAWAI -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="admin-pegawai-search" oninput="filterAdminPegawaiList()" placeholder="Cari Nama, NIP, atau Keahlian Pegawai..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="admin-pegawai-filter-jabatan" onchange="filterAdminPegawaiList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="ALL">Semua Jabatan</option>
+                            <option value="muhafiz">Ustadz / Muhafiz</option>
+                            <option value="guru">Pengajar Diniyah / Kitab</option>
+                            <option value="pembina">Musyrif / Pembina Asrama</option>
+                            <option value="staf">Tata Usaha & Administrasi</option>
+                        </select>
+                        <select id="admin-pegawai-filter-status" onchange="filterAdminPegawaiList()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="ALL">Semua Status</option>
+                            <option value="ACTIVE">Aktif</option>
+                            <option value="INACTIVE">Nonaktif</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TABLE SECTION -->
+                <section class="bg-white dark:bg-[#15202d] rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] overflow-hidden p-3.5 md:p-4 space-y-3">
+                    <!-- DESKTOP TABLE VIEW (MD UP) -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-[#1c2836] text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100 dark:border-[#253447]">
+                                    <th class="py-2.5 px-4 text-center w-12">No</th>
+                                    <th class="py-2.5 px-4">Nama Pegawai & NIP</th>
+                                    <th class="py-2.5 px-4">Jabatan & Spesialisasi</th>
+                                    <th class="py-2.5 px-4">Kontak WhatsApp</th>
+                                    <th class="py-2.5 px-4 text-center">Status</th>
+                                    <th class="py-2.5 px-4 text-center w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-pegawai-table-tbody" class="divide-y divide-slate-100 dark:divide-[#253447] text-slate-700 dark:text-slate-200">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- MOBILE CARD LIST VIEW (SM DOWN) -->
+                    <div id="admin-pegawai-mobile-list" class="block md:hidden space-y-3">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+
+                    <!-- LOADING STATE -->
+                    <div id="admin-pegawai-loader" class="hidden py-8 text-center space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-600"></i>
+                        <p class="text-xs text-slate-400">Memuat data pegawai & asatidz...</p>
+                    </div>
+
+                    <!-- EMPTY STATE -->
+                    <div id="admin-pegawai-empty-state" class="hidden py-8 text-center space-y-2">
+                        <div class="w-12 h-12 bg-slate-100 dark:bg-[#1c2836] text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg">
+                            <i class="fa-solid fa-user-slash"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Belum ada data pegawai ditemukan.</p>
                     </div>
                 </section>
             </div>
@@ -6457,6 +6599,101 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL FORM DATA PEGAWAI & ASATIDZ ==================== -->
+    <div id="modal-employee-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 rounded-xl flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-employee-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Tambah Pegawai / Ustadz Baru</h3>
+                        <p class="text-[10px] text-slate-400">Kelola master data asatidz, muhafiz, dan staf administrasi</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminEmployeeModal()" class="w-8 h-8 rounded-full bg-slate-200/60 dark:bg-slate-700 hover:bg-slate-300 text-slate-500 dark:text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body Form -->
+            <form id="form-employee" onsubmit="saveAdminEmployee(event)" class="p-5 overflow-y-auto space-y-3.5 custom-scrollbar text-xs">
+                <input type="hidden" id="input-employee-id">
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Lengkap & Gelar <span class="text-rose-500">*</span></label>
+                    <input type="text" id="input-employee-nama" required placeholder="Contoh: Ustadzah Laila Luthfiana, Al-Hafidzah" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 dark:text-slate-100">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">NIP / ID Pegawai</label>
+                        <input type="text" id="input-employee-nip" placeholder="Contoh: 19940812-001" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Jenis Kelamin</label>
+                        <select id="input-employee-gender" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 dark:text-slate-100">
+                            <option value="L">Laki-laki (Ustadz)</option>
+                            <option value="P">Perempuan (Ustadzah)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Jabatan / Amanah <span class="text-rose-500">*</span></label>
+                        <select id="input-employee-jabatan" required class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 dark:text-slate-100">
+                            <option value="Ustadz / Muhafiz">Ustadz / Muhafiz</option>
+                            <option value="Ustadzah / Muhafizah">Ustadzah / Muhafizah</option>
+                            <option value="Guru Diniyah / Kitab">Guru Diniyah / Kitab</option>
+                            <option value="Musyrif Asrama Putra">Musyrif Asrama Putra</option>
+                            <option value="Musyrifah Asrama Putri">Musyrifah Asrama Putri</option>
+                            <option value="Tata Usaha & Administrasi">Tata Usaha & Administrasi</option>
+                            <option value="Pengasuhan & Keamanan">Pengasuhan & Keamanan</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Status Kepegawaian</label>
+                        <select id="input-employee-status" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 dark:text-slate-100">
+                            <option value="ACTIVE">Aktif Bertugas</option>
+                            <option value="INACTIVE">Nonaktif / Cuti</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Spesialisasi / Bidang Keahlian</label>
+                    <input type="text" id="input-employee-spesialisasi" placeholder="Contoh: Tahfidz 30 Juz & Qira'ah Sab'ah / Nahwu Shorof" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">No. WhatsApp / HP</label>
+                        <input type="tel" id="input-employee-telepon" placeholder="Contoh: 08123456789" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input type="email" id="input-employee-email" placeholder="email@asnawiyyah.or.id" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100">
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#283a4e]">
+                    <button type="button" onclick="closeAdminEmployeeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btn-save-employee" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Pegawai</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ==================== MODAL 4: KELOLA HALAQAH & PLOTTING (MATCH SCREENSHOT 2) ==================== -->
     <div id="modal-tahfidz-halaqah" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
         <div class="bg-white dark:bg-[#15202d] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
@@ -6491,14 +6728,16 @@
                         <div>
                             <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Kategori Program <span class="text-rose-500">*</span></label>
                             <select id="input-halaqah-kategori" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
-                                <option value="Tahfidz Anak">Tahfidz Anak (Juz 'Amma / B)</option>
-                                <option value="Tahfidz Dewasa">Tahfidz Dewasa (Putra/Putri)</option>
+                                <option value="Pesantren Tahfidz Anak">Pesantren Tahfidz Anak</option>
+                                <option value="Tahfidz Dewasa">Tahfidz Dewasa</option>
                                 <option value="Madrasah Diniyah">Madrasah Diniyah</option>
                             </select>
                         </div>
                         <div>
                             <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ustadz Muhafiz Pembina</label>
-                            <input type="text" id="input-halaqah-muhafiz" placeholder="Nama Ustadz / Ustadzah Pembina" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none">
+                            <select id="input-halaqah-muhafiz" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none font-bold">
+                                <option value="">-- Pilih Ustadz / Muhafiz Pembina --</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Kurikulum</label>
@@ -7203,6 +7442,7 @@
     <script src="js/admin.js"></script>
     <script src="js/alumni.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/pegawai.js"></script>
     <script src="js/tahfidz.js"></script>
 
     <!-- Main Controller & Navigation -->

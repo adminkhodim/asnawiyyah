@@ -1026,6 +1026,30 @@ function openTahfidzHalaqahModal() {
     const modal = document.getElementById('modal-tahfidz-halaqah');
     if (!modal) return;
 
+    // 1. Sinkronkan Kategori Program dari kolom D (program) tab Students
+    const selKat = document.getElementById('input-halaqah-kategori');
+    if (selKat) {
+        let programs = (ASNTahfidz.data && (ASNTahfidz.data.rawCategories || ASNTahfidz.data.categories)) || [];
+        programs = programs.filter(p => p !== 'Semua Kategori' && p !== 'ALL');
+        if (programs.length === 0) {
+            programs = ["Pesantren Tahfidz Anak", "Tahfidz Dewasa", "Madrasah Diniyah", "Kitab Kuning"];
+        }
+        const currentKat = selKat.value;
+        selKat.innerHTML = programs.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+        if (currentKat && programs.includes(currentKat)) {
+            selKat.value = currentKat;
+        }
+    }
+
+    // 2. Sinkronkan Dropdown Ustadz Muhafiz Pembina dari Data Pegawai
+    if (typeof populateTahfidzMuhafizDropdown === 'function') {
+        populateTahfidzMuhafizDropdown();
+    } else if (typeof loadAdminEmployeesData === 'function') {
+        loadAdminEmployeesData().then(() => {
+            if (typeof populateTahfidzMuhafizDropdown === 'function') populateTahfidzMuhafizDropdown();
+        });
+    }
+
     renderTahfidzHalaqahCards();
     modal.classList.remove('hidden');
 }
@@ -1039,7 +1063,7 @@ function closeTahfidzHalaqahModal() {
 }
 
 /**
- * Render daftar kartu halaqah aktif (Screenshot 2)
+ * Render daftar kartu halaqah aktif (Clean empty state bila belum ada data)
  */
 function renderTahfidzHalaqahCards() {
     const container = document.getElementById('tahfidz-halaqah-cards-container');
@@ -1048,12 +1072,19 @@ function renderTahfidzHalaqahCards() {
     const halaqahs = ASNTahfidz.data.halaqahs || [];
 
     if (halaqahs.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-center py-6 text-xs text-slate-400">Belum ada kelompok halaqah aktif.</div>`;
+        container.innerHTML = `
+        <div class="col-span-1 sm:col-span-2 text-center py-7 px-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-dashed border-slate-200 dark:border-[#283a4e] space-y-2">
+            <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                <i class="fa-solid fa-users-rectangle"></i>
+            </div>
+            <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Belum Ada Kelompok Halaqah Aktif</p>
+            <p class="text-[10px] text-slate-400 max-w-sm mx-auto">Silakan buat kelompok halaqah baru di atas dan tunjuk Ustadz Muhafiz Pembina untuk mulai memplot santri binaan.</p>
+        </div>`;
         return;
     }
 
     container.innerHTML = halaqahs.map((h, i) => `
-    <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3">
+    <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3 relative group">
         <div class="flex justify-between items-start">
             <div>
                 <h4 class="font-black text-sm text-slate-800 dark:text-slate-100">${escapeHtml(h.namaHalaqah)}</h4>
@@ -1061,12 +1092,17 @@ function renderTahfidzHalaqahCards() {
                     ${escapeHtml(h.kategori || 'Tahfidz')}
                 </span>
             </div>
-            <span class="w-7 h-7 rounded-lg bg-white dark:bg-[#15202d] text-slate-400 flex items-center justify-center text-xs font-bold shadow-sm">
-                ${String.fromCharCode(65 + i)}
-            </span>
+            <div class="flex items-center space-x-1.5">
+                <button type="button" onclick="deleteTahfidzHalaqahConfirm('${h.halaqahId}', '${escapeHtml(h.namaHalaqah)}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center text-[10px] transition" title="Hapus Halaqah">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <span class="w-7 h-7 rounded-lg bg-white dark:bg-[#15202d] text-slate-400 flex items-center justify-center text-xs font-bold shadow-sm">
+                    ${String.fromCharCode(65 + i)}
+                </span>
+            </div>
         </div>
         <div class="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-            <p class="flex items-center gap-1.5 truncate">
+            <p class="flex items-center gap-1.5 truncate font-semibold">
                 <i class="fa-solid fa-user-tie text-emerald-600"></i>
                 <span>${escapeHtml(h.muhafiz || 'Ustadz Pembina')}</span>
             </p>
@@ -1082,6 +1118,32 @@ function renderTahfidzHalaqahCards() {
         </div>
     </div>
     `).join('');
+}
+
+/**
+ * Konfirmasi & Hapus Kelompok Halaqah
+ */
+async function deleteTahfidzHalaqahConfirm(halaqahId, namaHalaqah) {
+    if (!halaqahId) return;
+    if (!confirm(`Hapus kelompok halaqah "${namaHalaqah || halaqahId}"? Santri yang terplotting akan dilepas dari halaqah ini.`)) {
+        return;
+    }
+
+    try {
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const res = await apiPost("deleteTahfidzHalaqah", { halaqahId, token });
+
+        if (res && (res.success || res.status === "success")) {
+            if (typeof showToast === 'function') showToast("🗑️ Halaqah berhasil dihapus!");
+            await loadAdminTahfidzData();
+            renderTahfidzHalaqahCards();
+        } else {
+            if (typeof showToast === 'function') showToast("❌ Gagal menghapus halaqah: " + ((res && res.message) || "Terjadi kesalahan"));
+        }
+    } catch (err) {
+        console.error(err);
+        if (typeof showToast === 'function') showToast("❌ Terjadi kesalahan saat menghapus halaqah.");
+    }
 }
 
 /**
@@ -1111,16 +1173,18 @@ async function submitNewHalaqah(e) {
         });
 
         if (res && (res.success || res.status === "success")) {
-            if (typeof showToast === 'function') showToast("Halaqah baru berhasil dibuat!");
-            // Reset form
+            if (typeof showToast === 'function') showToast("✅ Halaqah baru berhasil dibuat!");
+            // Reset form nama & target
             if (document.getElementById('input-halaqah-nama')) document.getElementById('input-halaqah-nama').value = '';
+            if (document.getElementById('input-halaqah-target')) document.getElementById('input-halaqah-target').value = '';
             await loadAdminTahfidzData();
             renderTahfidzHalaqahCards();
         } else {
-            if (typeof showToast === 'function') showToast("❌ Gagal membuat halaqah.");
+            if (typeof showToast === 'function') showToast("❌ Gagal membuat halaqah: " + ((res && res.message) || "Terjadi kesalahan"));
         }
     } catch (err) {
         console.error(err);
+        if (typeof showToast === 'function') showToast("❌ Gagal menghubungi server.");
     }
 }
 
@@ -1254,4 +1318,5 @@ window.printTahfidzStudentCard = printTahfidzStudentCard;
 window.printTahfidzRekap = printTahfidzRekap;
 window.exportTahfidzDataCSV = exportTahfidzDataCSV;
 window.openTahfidzPengasuhView = openTahfidzPengasuhView;
+window.deleteTahfidzHalaqahConfirm = deleteTahfidzHalaqahConfirm;
 

@@ -91,6 +91,7 @@
             const profilLembagaView = document.getElementById('admin-view-profil-lembaga');
             const unitKegiatanView = document.getElementById('admin-view-unit-kegiatan');
             const notifikasiView = document.getElementById('admin-view-notifikasi');
+            const pegawaiView = document.getElementById('admin-view-pegawai');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -106,6 +107,7 @@
             if (profilLembagaView) profilLembagaView.classList.add('hidden');
             if (unitKegiatanView) unitKegiatanView.classList.add('hidden');
             if (notifikasiView) notifikasiView.classList.add('hidden');
+            if (pegawaiView) pegawaiView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -116,6 +118,11 @@
             } else if (viewName === 'santri') {
                 if (santriView) santriView.classList.remove('hidden');
                 loadAdminStudentsData();
+            } else if (viewName === 'pegawai') {
+                if (pegawaiView) pegawaiView.classList.remove('hidden');
+                if (typeof loadAdminEmployeesData === 'function') {
+                    loadAdminEmployeesData();
+                }
             } else if (viewName === 'tahfidz') {
                 if (tahfidzView) tahfidzView.classList.remove('hidden');
                 if (typeof loadAdminTahfidzData === 'function') {
