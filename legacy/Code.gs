@@ -4906,6 +4906,13 @@ function sendWaliActivationOtpEmail(email, otpCode, waliName = "", studentName =
 }
 
 /**
+ * Dispatcher Universal Pengiriman Email OTP
+ */
+function sendOtpEmail(email, otpCode, subject = "Kode OTP — PPTQ Asnawiyyah") {
+  return sendWaliActivationOtpEmail(email, otpCode, "Wali Santri", "Santri");
+}
+
+/**
  * Verifikasi Google ID Token secara Server-Side via Tokeninfo Endpoint
  */
 function verifyGoogleIdToken(idToken) {
@@ -7792,12 +7799,35 @@ function handleAuthApiAction(action, payload, e) {
 
         let emailSuccess = false;
         try {
-          emailSuccess = sendOtpEmail(waliEmail, otpCode, "Aktivasi Akun Wali Santri PPTQ Asnawiyyah");
+          emailSuccess = sendWaliActivationOtpEmail(waliEmail, otpCode, waliName, student.name);
         } catch (mailErr) {
-          console.error("Gagal kirim email OTP aktivasi:", mailErr);
+          console.error("Gagal kirim email OTP aktivasi via sendWaliActivationOtpEmail:", mailErr);
+          try {
+            MailApp.sendEmail({
+              to: waliEmail,
+              subject: "Kode OTP Aktivasi Akun Wali Santri — PPTQ Asnawiyyah",
+              body: `Assalamu'alaikum,\n\nKode OTP aktivasi akun Anda adalah: ${otpCode}\n\nBerlaku selama 5 menit.\n\nPPTQ Asnawiyyah`
+            });
+            emailSuccess = true;
+          } catch (mErr2) {
+            console.error("Gagal fallback MailApp.sendEmail:", mErr2);
+            emailSuccess = false;
+          }
         }
 
-        writeAuthAuditLog("OTP_CHALLENGE_ISSUED", "ACTIVATION_" + student.studentId, challengeId, "EMAIL_ACTIVATION", emailSuccess, requestId, {
+        if (!emailSuccess) {
+          otpSheet.getRange(otpSheet.getLastRow(), 9).setValue("CANCELLED");
+          writeAuthAuditLog("OTP_DISPATCH_FAIL", "ACTIVATION_" + student.studentId, challengeId, "EMAIL_ACTIVATION", false, requestId, {
+            email: waliEmail,
+            error: "Email delivery failed"
+          });
+          return createJsonResponse({
+            success: false,
+            message: "Gagal mengirimkan email OTP ke " + waliEmail + ". Mohon pastikan kuota email akun Apps Script atau alamat email tujuan valid."
+          });
+        }
+
+        writeAuthAuditLog("OTP_CHALLENGE_ISSUED", "ACTIVATION_" + student.studentId, challengeId, "EMAIL_ACTIVATION", true, requestId, {
           email: waliEmail,
           nis: nis,
           studentName: student.name
@@ -7805,9 +7835,7 @@ function handleAuthApiAction(action, payload, e) {
 
         return createJsonResponse({
           success: true,
-          message: emailSuccess
-            ? `Kode OTP aktivasi telah dikirim ke ${waliEmail}. Masukkan kode untuk konfirmasi.`
-            : "Kode OTP berhasil digenerate. Periksa kotak masuk/spam email Anda.",
+          message: `Kode OTP aktivasi telah dikirim ke ${waliEmail}. Masukkan kode untuk konfirmasi.`,
           studentName: student.name,
           cooldownSeconds: 60,
           requestId: requestId
