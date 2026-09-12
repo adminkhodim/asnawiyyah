@@ -51,7 +51,10 @@ const ASN_AUTH_ACTIONS = Object.freeze({
     PENGASUH_ME: 'auth.pengasuh.me',
     SSO_GOOGLE: 'auth.sso.google',
     LOGOUT: 'auth.logout',
-    USER_UPLOAD_PHOTO: 'auth.user.uploadPhoto'
+    USER_UPLOAD_PHOTO: 'auth.user.uploadPhoto',
+    ADMIN_USER_LIST: 'auth.admin.userList',
+    ADMIN_USER_SAVE: 'auth.admin.userSave',
+    ADMIN_USER_TOGGLE_STATUS: 'auth.admin.userToggleStatus'
 });
 
 /**
@@ -1682,9 +1685,9 @@ async function handleParentActivationRequest(e) {
     const alertBox = document.getElementById('activation-alert');
     const alertText = document.getElementById('activation-alert-text');
 
-    if (!nis || !birthDate || !waliEmail) {
+    if (!nis || !waliEmail) {
         if (alertBox && alertText) {
-            alertText.innerText = 'NIS, Tanggal Lahir, dan Email Wali wajib diisi.';
+            alertText.innerText = 'NIS Santri dan Email Wali wajib diisi.';
             alertBox.classList.remove('hidden');
         }
         return;
@@ -1697,7 +1700,7 @@ async function handleParentActivationRequest(e) {
     const payload = {
         nis,
         nisn: nis, // alias backward compatible
-        birthDate,
+        birthDate: birthDate || '',
         waliName,
         waliEmail,
         waliPhone,

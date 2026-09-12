@@ -3511,6 +3511,12 @@
                         </button>
                     </li>
                     <li>
+                        <button onclick="showAdminView('users')" data-view="users" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Pengguna">
+                            <i class="fa-solid fa-users-gear w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Pengguna</span>
+                        </button>
+                    </li>
+                    <li>
                         <button onclick="showAdminView('santri')" data-view="santri" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Data Santri">
                             <i class="fa-solid fa-id-card-clip w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Santri</span>
@@ -3693,6 +3699,25 @@
                                 Tautan & Sosmed</h4>
                             <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Atur Tautan Video & Sosial
                                 Media.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Icon Grid: Manajemen Pengguna -->
+                    <div onclick="showAdminView('users')"
+                        class="bg-white hover:bg-emerald-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-emerald-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </div>
+                            <span id="admin-hub-users-count"
+                                class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">0 Pengguna</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition">
+                                Manajemen Pengguna</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola akun Wali Santri, Pengasuh, Admin & foto profil.</p>
                         </div>
                     </div>
 
@@ -4454,6 +4479,115 @@
                             pendaftar PPDB.</p>
                     </div>
                 </section>
+            </div>
+
+            <!-- ================= VIEW: MODUL MANAJEMEN PENGGUNA ================= -->
+            <div id="admin-view-users" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Pengguna Terpadu</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="openAdminUserModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-user-plus text-xs"></i>
+                            <span class="hidden sm:inline">Tambah Pengguna</span>
+                        </button>
+                        <button type="button" onclick="loadAdminUsersData()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Refresh Data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metric Summary Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                    <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Total Pengguna</span>
+                        <div class="flex items-baseline space-x-1 mt-0.5">
+                            <span class="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100" id="user-count-total">0</span>
+                            <span class="text-[10px] text-slate-400">Akun</span>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase block">Wali Santri</span>
+                        <div class="flex items-baseline space-x-1 mt-0.5">
+                            <span class="text-lg md:text-xl font-black text-emerald-700 dark:text-emerald-300" id="user-count-wali">0</span>
+                            <span class="text-[10px] text-slate-400">Akun</span>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                        <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase block">Pengasuh</span>
+                        <div class="flex items-baseline space-x-1 mt-0.5">
+                            <span class="text-lg md:text-xl font-black text-amber-600 dark:text-amber-400" id="user-count-pengasuh">0</span>
+                            <span class="text-[10px] text-slate-400">Akun</span>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                        <span class="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase block">Administrator</span>
+                        <div class="flex items-baseline space-x-1 mt-0.5">
+                            <span class="text-lg md:text-xl font-black text-brand-700 dark:text-brand-300" id="user-count-admin">0</span>
+                            <span class="text-[10px] text-slate-400">Akun</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter & Search Bar -->
+                <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center space-x-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                        <button type="button" onclick="filterAdminUsers('ALL')" data-role-filter="ALL" class="admin-user-tab active px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white transition shadow-sm shrink-0">Semua (<span id="user-tab-count-all">0</span>)</button>
+                        <button type="button" onclick="filterAdminUsers('WALI_SANTRI')" data-role-filter="WALI_SANTRI" class="admin-user-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Wali Santri (<span id="user-tab-count-wali">0</span>)</button>
+                        <button type="button" onclick="filterAdminUsers('PENGASUH')" data-role-filter="PENGASUH" class="admin-user-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Pengasuh (<span id="user-tab-count-pengasuh">0</span>)</button>
+                        <button type="button" onclick="filterAdminUsers('ADMIN')" data-role-filter="ADMIN" class="admin-user-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Admin (<span id="user-tab-count-admin">0</span>)</button>
+                    </div>
+
+                    <div class="relative w-full sm:w-64 shrink-0">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                        <input type="text" id="admin-users-search-input" oninput="handleAdminUsersSearch(this.value)" placeholder="Cari nama, email, NIS..." class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 pl-8 pr-3 py-1.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 dark:bg-[#1c2836]/60 text-slate-400 dark:text-slate-300 font-bold uppercase tracking-wider text-[10px] border-b border-slate-100 dark:border-[#253447]">
+                                <tr>
+                                    <th class="p-3.5">Pengguna</th>
+                                    <th class="p-3.5">WhatsApp / HP</th>
+                                    <th class="p-3.5">Peran</th>
+                                    <th class="p-3.5">Santri Terhubung</th>
+                                    <th class="p-3.5 text-center">Status</th>
+                                    <th class="p-3.5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-table-body" class="divide-y divide-slate-100 dark:divide-[#253447]">
+                                <!-- Dynamic rows via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="admin-users-empty" class="hidden p-8 text-center space-y-2">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1c2836] text-slate-400 flex items-center justify-center mx-auto text-lg">
+                            <i class="fa-solid fa-users-slash"></i>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200">Tidak Ada Pengguna Ditemukan</h4>
+                        <p class="text-[10px] text-slate-400 max-w-xs mx-auto">Silakan ubah filter atau tambahkan pengguna baru.</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="admin-users-loading" class="p-8 text-center space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-emerald-600 text-xl"></i>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Memuat data pengguna dari Sheet Users...</p>
+                    </div>
+                </div>
             </div>
 
             <!-- ================= VIEW: MODUL MASTER DATA SANTRI ================= -->
@@ -5793,15 +5927,10 @@
 
                 <!-- STEP 1: INPUT DATA SANTRI & WALI -->
                 <form id="form-activation-step1" onsubmit="handleParentActivationRequest(event)" class="space-y-3">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">NIS Santri *</label>
-                            <input type="text" id="activation-nis" required placeholder="Contoh: 1234567890" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Tanggal Lahir Santri *</label>
-                            <input type="date" id="activation-birth-date" required class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
-                        </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">NIS Santri *</label>
+                        <input type="text" id="activation-nis" required placeholder="Contoh: 202409012" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">NIS tercantum pada kartu santri atau kwitansi resmi madrasah.</p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -5970,6 +6099,121 @@
     </div>
 
 
+
+    <!-- ==================== MODAL TAMBAH / EDIT DATA PENGGUNA ==================== -->
+    <div id="modal-admin-user-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-admin-user-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Tambah Pengguna Baru</h3>
+                        <p class="text-[10px] text-slate-400">Kelola akun Wali Santri, Pengasuh, atau Administrator</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminUserModal()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="adminUserForm" onsubmit="handleAdminUserSubmit(event)" class="flex flex-col flex-1 overflow-hidden">
+                <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                    <input type="hidden" id="admin-user-form-id">
+
+                    <!-- Role Selection -->
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                            Peran Pengguna (Role) <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="admin-user-form-role" onchange="handleUserFormRoleChange(this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="WALI_SANTRI">Wali Santri</option>
+                            <option value="PENGASUH">Pengasuh / Dewan Masyayikh</option>
+                            <option value="ADMIN">Administrator</option>
+                            <option value="EDITOR">Staf / Editor</option>
+                        </select>
+                    </div>
+
+                    <!-- Nama Lengkap (Wajib) -->
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                            Nama Lengkap <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="admin-user-form-name" required placeholder="Contoh: H. Ahmad Fauzi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                    </div>
+
+                    <!-- Email (Wajib) & No HP -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Email (Login & OTP) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="email" id="admin-user-form-email" required placeholder="nama@gmail.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                No. WhatsApp / HP
+                            </label>
+                            <input type="tel" id="admin-user-form-phone" placeholder="08xxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <!-- Status Akun -->
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                            Status Akun <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="admin-user-form-status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                            <option value="ACTIVE">Aktif (Dapat Login)</option>
+                            <option value="SUSPENDED">Dinonaktifkan / Suspended</option>
+                            <option value="PENDING">Menunggu Verifikasi</option>
+                        </select>
+                    </div>
+
+                    <!-- Hubungkan Santri (Khusus Wali Santri) -->
+                    <div id="admin-user-wali-extra" class="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/40 space-y-3">
+                        <div class="flex items-center space-x-1.5">
+                            <i class="fa-solid fa-link text-emerald-700 dark:text-emerald-400 text-xs"></i>
+                            <span class="font-bold text-emerald-800 dark:text-emerald-300 text-xs">Hubungkan Santri Binaan</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 text-[11px] mb-1">
+                                    NIS Santri Anak
+                                </label>
+                                <input type="text" id="admin-user-form-student-nis" placeholder="Contoh: 202409012" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 text-[11px] mb-1">
+                                    Hubungan Keluarga
+                                </label>
+                                <select id="admin-user-form-relationship" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="FATHER">Ayah</option>
+                                    <option value="MOTHER">Ibu</option>
+                                    <option value="GUARDIAN" selected>Wali</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-emerald-700 dark:text-emerald-400">Akun wali santri akan otomatis terhubung ke riwayat hafalan & kartu santri dengan NIS di atas.</p>
+                    </div>
+                </div>
+
+                <!-- Modal Actions Footer -->
+                <div class="p-4 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-end items-center gap-2.5 shrink-0">
+                    <button type="button" onclick="closeAdminUserModal()" class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] font-semibold text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btn-admin-user-submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Pengguna</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- ==================== MODAL TAMBAH / EDIT DATA SANTRI ==================== -->
     <div id="modal-admin-student" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">

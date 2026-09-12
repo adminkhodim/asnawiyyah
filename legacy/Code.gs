@@ -4381,6 +4381,7 @@ function handleGoogleLogin(data) {
 // BACKEND IDENTITY & AUTHENTICATION ARCHITECTURE v2.0 (PHASE 2B)
 // =====================================================================
 
+// SHEET_USERS = "Users" telah dideklarasikan di baris 4154
 const SHEET_ADMIN_IDENTITIES = "Admin_Identities";
 const SHEET_WALI_IDENTITIES = "Wali_Identities";
 const SHEET_PENGASUH_IDENTITIES = "Pengasuh_Identities";
@@ -4390,6 +4391,8 @@ const SHEET_OTP_CHALLENGES = "OTP_Challenges";
 const SHEET_AUTH_SESSIONS = "Auth_Sessions";
 const SHEET_AUTH_AUDIT_LOG = "Auth_Audit_Log";
 
+const FOLDER_ID_USER_PHOTOS = "15N2sd_EtmR3vswxRyL4eUQBd06TyoWt3";
+
 const RELATIONSHIP_ENUM = Object.freeze({
   FATHER: "FATHER",
   MOTHER: "MOTHER",
@@ -4398,6 +4401,7 @@ const RELATIONSHIP_ENUM = Object.freeze({
 });
 
 const AUTH_SHEET_SCHEMAS = Object.freeze({
+  [SHEET_USERS]: ["user_id", "email", "phone", "name", "role", "photo_url", "status", "created_at", "last_login_at"],
   [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at", "photo_url"],
   [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at", "photo_url"],
   [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at", "photo_url"],
@@ -4501,7 +4505,104 @@ function setupAuthSystemSheets() {
     }
   });
 
+  // Migrasikan akun-akun lama ke sheet Users jika belum ada
+  migrateIdentitiesToUsersSheet(ss);
+
   return { status: "success", message: "Tabel autentikasi Phase 2B & Pengasuh terverifikasi dan siap digunakan." };
+}
+
+/**
+ * Otomatis migrasi data dari Admin_Identities, Pengasuh_Identities, Wali_Identities ke sheet Users
+ */
+function migrateIdentitiesToUsersSheet(ss) {
+  try {
+    if (!ss) ss = getDatabaseSpreadsheet();
+    if (!ss) return;
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return;
+
+    const existingUsers = usersSheet.getDataRange().getValues();
+    const existingEmails = new Set();
+    const existingIds = new Set();
+
+    if (existingUsers && existingUsers.length > 1) {
+      const header = existingUsers[0].map(h => String(h || "").trim().toLowerCase());
+      const emailIdx = header.indexOf("email");
+      const idIdx = header.indexOf("user_id");
+      for (let i = 1; i < existingUsers.length; i++) {
+        if (emailIdx !== -1 && existingUsers[i][emailIdx]) {
+          existingEmails.add(String(existingUsers[i][emailIdx]).trim().toLowerCase());
+        }
+        if (idIdx !== -1 && existingUsers[i][idIdx]) {
+          existingIds.add(String(existingUsers[i][idIdx]).trim().toLowerCase());
+        }
+      }
+    }
+
+    const legacySheets = [
+      { name: SHEET_ADMIN_IDENTITIES, defaultRole: "ADMIN" },
+      { name: SHEET_PENGASUH_IDENTITIES, defaultRole: "PENGASUH" },
+      { name: SHEET_WALI_IDENTITIES, defaultRole: "WALI_SANTRI" }
+    ];
+
+    const rowsToAdd = [];
+    legacySheets.forEach(item => {
+      const sheet = ss.getSheetByName(item.name);
+      if (!sheet) return;
+      const data = sheet.getDataRange().getValues();
+      if (!data || data.length < 2) return;
+
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("identity_id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone");
+      let nameIdx = header.indexOf("name");
+      if (nameIdx === -1) nameIdx = header.indexOf("title_name");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      const createdIdx = header.indexOf("created_at");
+      const photoIdx = header.indexOf("photo_url");
+
+      for (let i = 1; i < data.length; i++) {
+        const email = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+        const id = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+        if (!email && !id) continue;
+
+        if ((email && existingEmails.has(email)) || (id && existingIds.has(id.toLowerCase()))) {
+          continue; // sudah ada di Users
+        }
+
+        const role = roleIdx !== -1 && data[i][roleIdx] ? String(data[i][roleIdx]).trim().toUpperCase() : item.defaultRole;
+        const name = nameIdx !== -1 ? String(data[i][nameIdx] || "") : "";
+        const phone = phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "";
+        const status = statusIdx !== -1 && data[i][statusIdx] ? String(data[i][statusIdx]).trim().toUpperCase() : "ACTIVE";
+        const photoUrl = photoIdx !== -1 ? String(data[i][photoIdx] || "") : "";
+        const createdAt = createdIdx !== -1 && data[i][createdIdx] ? String(data[i][createdIdx]) : new Date().toISOString();
+
+        rowsToAdd.push([
+          id || ("USR_" + Utilities.getUuid().substring(0, 8)),
+          email,
+          phone,
+          name,
+          role,
+          photoUrl,
+          status,
+          createdAt,
+          "" // last_login_at
+        ]);
+
+        if (email) existingEmails.add(email);
+        if (id) existingIds.add(id.toLowerCase());
+      }
+    });
+
+    if (rowsToAdd.length > 0) {
+      usersSheet.getRange(usersSheet.getLastRow() + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
+      Logger.log(`[MIGRATION] ${rowsToAdd.length} pengguna berhasil dimigrasikan ke sheet Users.`);
+    }
+  } catch (err) {
+    console.error("[MIGRATION TO USERS ERROR]", err);
+  }
 }
 
 /**
@@ -5202,6 +5303,96 @@ function getPengasuhIdentityById(identityId) {
 }
 
 /**
+ * Lookup Identitas Pengguna Terpadu dari Sheet Users berdasarkan Email
+ */
+function getUserIdentityByEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized || !normalized.includes("@")) return null;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_USERS);
+  if (sheet) {
+    const data = sheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone");
+      const nameIdx = header.indexOf("name");
+      const roleIdx = header.indexOf("role");
+      const photoIdx = header.indexOf("photo_url");
+      const statusIdx = header.indexOf("status");
+
+      for (let i = 1; i < data.length; i++) {
+        if (emailIdx !== -1 && String(data[i][emailIdx] || "").trim().toLowerCase() === normalized) {
+          const photo = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+          return {
+            identityId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+            userId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+            email: normalized,
+            phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+            name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+            titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+            role: roleIdx !== -1 ? String(data[i][roleIdx] || "WALI_SANTRI").toUpperCase() : "WALI_SANTRI",
+            status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+            photoUrl: photo,
+            photo_url: photo
+          };
+        }
+      }
+    }
+  }
+
+  // Fallback ke legacy sheets jika belum dimigrasi
+  return getAdminIdentityByEmail(normalized) || getPengasuhIdentityByEmail(normalized) || getWaliIdentityByEmail(normalized);
+}
+
+/**
+ * Lookup Identitas Pengguna Terpadu dari Sheet Users berdasarkan ID
+ */
+function getUserIdentityById(userId) {
+  if (!userId) return null;
+  const targetId = String(userId).trim().toLowerCase();
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_USERS);
+  if (sheet) {
+    const data = sheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone");
+      const nameIdx = header.indexOf("name");
+      const roleIdx = header.indexOf("role");
+      const photoIdx = header.indexOf("photo_url");
+      const statusIdx = header.indexOf("status");
+
+      for (let i = 1; i < data.length; i++) {
+        if (idIdx !== -1 && String(data[i][idIdx] || "").trim().toLowerCase() === targetId) {
+          const photo = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+          return {
+            identityId: String(data[i][idIdx] || ""),
+            userId: String(data[i][idIdx] || ""),
+            email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
+            phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+            name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+            titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+            role: roleIdx !== -1 ? String(data[i][roleIdx] || "WALI_SANTRI").toUpperCase() : "WALI_SANTRI",
+            status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+            photoUrl: photo,
+            photo_url: photo
+          };
+        }
+      }
+    }
+  }
+
+  // Fallback ke legacy sheets
+  return getAdminIdentityById(userId) || getPengasuhIdentityById(userId) || getWaliIdentityById(userId);
+}
+
+/**
  * Normalisasi format tanggal untuk pencocokan toleran (YYYY-MM-DD)
  */
 function normalizeDateString(val) {
@@ -5445,7 +5636,7 @@ function uploadUserProfilePhoto(filePayload, token) {
     const role = String(filePayload.role || actor.role || "").toUpperCase();
     const identifier = String(filePayload.identityId || filePayload.identifier || filePayload.email || actor.identityId || actor.email || "").trim();
 
-    const folder = DriveApp.getFolderById(FOLDER_ID_STUDENT_PHOTOS);
+    const folder = DriveApp.getFolderById(FOLDER_ID_USER_PHOTOS);
     const cleanId = identifier.replace(/[^a-zA-Z0-9_-]/g, "");
     const fileName = "AVATAR_" + role + "_" + (cleanId || "USER") + "_" + new Date().getTime() + ".jpg";
     const blob = Utilities.newBlob(decodedData, rawMime, fileName);
@@ -5455,7 +5646,7 @@ function uploadUserProfilePhoto(filePayload, token) {
     const fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
     const driveViewUrl = "https://drive.google.com/file/d/" + newFile.getId() + "/view?usp=sharing";
 
-    // Update foto ke spreadsheet identitas yang sesuai
+    // Update foto ke spreadsheet Users dan identitas yang sesuai
     const updated = updateUserPhotoInSheet(role, identifier, fileUrl);
 
     return {
@@ -5468,7 +5659,7 @@ function uploadUserProfilePhoto(filePayload, token) {
       fileId: newFile.getId(),
       role: role,
       updatedInSheet: updated,
-      message: "Foto profil berhasil diunggah dan diperbarui!"
+      message: "Foto profil berhasil diunggah ke folder Drive Pengguna dan diperbarui!"
     };
   } catch (err) {
     console.error("[UPLOAD USER PHOTO ERROR]", err);
@@ -5481,13 +5672,52 @@ function uploadUserProfilePhoto(filePayload, token) {
 }
 
 /**
- * Update kolom photo_url di spreadsheet sesuai role pengguna
+ * Update kolom photo_url di spreadsheet Users dan sheet sesuai role pengguna
  */
 function updateUserPhotoInSheet(role, identifier, photoUrl) {
   if (!photoUrl || !identifier) return false;
   const ss = getDatabaseSpreadsheet();
   if (!ss) return false;
 
+  let updatedAny = false;
+  const cleanTarget = String(identifier).trim().toLowerCase();
+  const cleanTargetPhone = cleanTarget.replace(/[^0-9]/g, "");
+
+  // 1. Update di sheet Users (Master)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      let idIdx = header.indexOf("user_id");
+      let emailIdx = header.indexOf("email");
+      let phoneIdx = header.indexOf("phone");
+      let photoIdx = header.indexOf("photo_url");
+
+      if (photoIdx === -1) {
+        photoIdx = header.length;
+        usersSheet.getRange(1, photoIdx + 1).setValue("photo_url").setFontWeight("bold").setBackground("#dcfce7");
+      }
+
+      for (let i = 1; i < data.length; i++) {
+        const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim().toLowerCase() : "";
+        const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+        const rowPhone = phoneIdx !== -1 ? String(data[i][phoneIdx] || "").replace(/[^0-9]/g, "") : "";
+
+        if (
+          (rowId && rowId === cleanTarget) ||
+          (rowEmail && rowEmail === cleanTarget) ||
+          (cleanTargetPhone && rowPhone && rowPhone === cleanTargetPhone)
+        ) {
+          usersSheet.getRange(i + 1, photoIdx + 1).setValue(photoUrl);
+          updatedAny = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // 2. Update di legacy sheet jika ada
   const normalizedRole = String(role || "").trim().toUpperCase();
   let targetSheetName = "";
   if (normalizedRole === "PENGASUH") {
@@ -5499,44 +5729,348 @@ function updateUserPhotoInSheet(role, identifier, photoUrl) {
   }
 
   const sheet = getAuthSheet(ss, targetSheetName);
-  if (!sheet) return false;
+  if (sheet) {
+    const data = sheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      let idIdx = header.indexOf("identity_id");
+      let emailIdx = header.indexOf("email");
+      let phoneIdx = header.indexOf("phone");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
-  const data = sheet.getDataRange().getValues();
-  if (!data || data.length < 2) return false;
+      if (photoIdx === -1) {
+        photoIdx = header.length;
+        sheet.getRange(1, photoIdx + 1).setValue("photo_url").setFontWeight("bold").setBackground("#dcfce7");
+      }
 
-  const header = data[0].map(h => String(h || "").trim().toLowerCase());
-  let idIdx = header.indexOf("identity_id");
-  let emailIdx = header.indexOf("email");
-  let phoneIdx = header.indexOf("phone");
-  let photoIdx = header.indexOf("photo_url");
-  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
-  if (photoIdx === -1) photoIdx = header.indexOf("foto");
+      for (let i = 1; i < data.length; i++) {
+        const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim().toLowerCase() : "";
+        const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+        const rowPhone = phoneIdx !== -1 ? String(data[i][phoneIdx] || "").replace(/[^0-9]/g, "") : "";
 
-  // Jika kolom photo_url belum ada, buat di kolom terakhir
-  if (photoIdx === -1) {
-    photoIdx = header.length;
-    sheet.getRange(1, photoIdx + 1).setValue("photo_url").setFontWeight("bold").setBackground("#dcfce7");
-  }
-
-  const cleanTarget = String(identifier).trim().toLowerCase();
-
-  for (let i = 1; i < data.length; i++) {
-    const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim().toLowerCase() : "";
-    const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
-    const rowPhone = phoneIdx !== -1 ? String(data[i][phoneIdx] || "").replace(/[^0-9]/g, "") : "";
-    const cleanTargetPhone = cleanTarget.replace(/[^0-9]/g, "");
-
-    if (
-      (rowId && rowId === cleanTarget) ||
-      (rowEmail && rowEmail === cleanTarget) ||
-      (cleanTargetPhone && rowPhone && rowPhone === cleanTargetPhone)
-    ) {
-      sheet.getRange(i + 1, photoIdx + 1).setValue(photoUrl);
-      return true;
+        if (
+          (rowId && rowId === cleanTarget) ||
+          (rowEmail && rowEmail === cleanTarget) ||
+          (cleanTargetPhone && rowPhone && rowPhone === cleanTargetPhone)
+        ) {
+          sheet.getRange(i + 1, photoIdx + 1).setValue(photoUrl);
+          updatedAny = true;
+          break;
+        }
+      }
     }
   }
 
-  return false;
+  return updatedAny;
+}
+
+/**
+ * Mengambil seluruh data pengguna dari sheet Users beserta santri terhubung untuk Manajemen Pengguna
+ */
+function getAllUsersWithLinkedStudents(token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) {
+      return { success: false, status: "error", message: "Spreadsheet database tidak dapat diakses." };
+    }
+
+    // Pastikan sheet Users diinisialisasi dan termigrasi
+    setupAuthSystemSheets();
+
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) {
+      return { success: true, status: "success", users: [], total: 0 };
+    }
+
+    const usersData = usersSheet.getDataRange().getValues();
+    if (!usersData || usersData.length < 2) {
+      return { success: true, status: "success", users: [], total: 0 };
+    }
+
+    const uHeaders = usersData[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = uHeaders.indexOf("user_id");
+    const emailIdx = uHeaders.indexOf("email");
+    const phoneIdx = uHeaders.indexOf("phone");
+    const nameIdx = uHeaders.indexOf("name");
+    const roleIdx = uHeaders.indexOf("role");
+    const photoIdx = uHeaders.indexOf("photo_url");
+    const statusIdx = uHeaders.indexOf("status");
+    const createdIdx = uHeaders.indexOf("created_at");
+    const lastLoginIdx = uHeaders.indexOf("last_login_at");
+
+    // Ambil mapping santri untuk Wali Santri
+    const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+    const studSheet = getAuthSheet(ss, SHEET_STUDENTS);
+    const studentMap = {};
+    if (studSheet) {
+      const sData = studSheet.getDataRange().getValues();
+      if (sData && sData.length > 1) {
+        const sHeaders = sData[0].map(h => String(h || "").trim().toLowerCase());
+        const sIdIdx = sHeaders.indexOf("student_id");
+        const sNisIdx = sHeaders.indexOf("nis") !== -1 ? sHeaders.indexOf("nis") : sHeaders.indexOf("nisn");
+        const sNameIdx = sHeaders.indexOf("name");
+        for (let s = 1; s < sData.length; s++) {
+          const sId = String(sData[s][sIdIdx] || "").trim();
+          if (sId) {
+            studentMap[sId] = {
+              studentId: sId,
+              nis: sNisIdx !== -1 ? String(sData[s][sNisIdx] || "").trim() : "",
+              name: sNameIdx !== -1 ? String(sData[s][sNameIdx] || "").trim() : "Santri"
+            };
+          }
+        }
+      }
+    }
+
+    const userLinkedMap = {};
+    if (mapSheet) {
+      const mData = mapSheet.getDataRange().getValues();
+      if (mData && mData.length > 1) {
+        for (let m = 1; m < mData.length; m++) {
+          const waliId = String(mData[m][1] || "").trim();
+          const studentId = String(mData[m][2] || "").trim();
+          const rel = String(mData[m][3] || "").trim();
+          if (waliId && studentId && studentMap[studentId]) {
+            if (!userLinkedMap[waliId]) userLinkedMap[waliId] = [];
+            userLinkedMap[waliId].push({
+              ...studentMap[studentId],
+              relationship: rel
+            });
+          }
+        }
+      }
+    }
+
+    const users = [];
+    for (let i = 1; i < usersData.length; i++) {
+      const uId = idIdx !== -1 ? String(usersData[i][idIdx] || "").trim() : "";
+      const email = emailIdx !== -1 ? String(usersData[i][emailIdx] || "").trim() : "";
+      if (!uId && !email) continue;
+
+      const role = roleIdx !== -1 ? String(usersData[i][roleIdx] || "WALI_SANTRI").trim().toUpperCase() : "WALI_SANTRI";
+      const linked = userLinkedMap[uId] || userLinkedMap[email] || [];
+
+      users.push({
+        userId: uId,
+        identityId: uId,
+        email: email,
+        phone: phoneIdx !== -1 ? String(usersData[i][phoneIdx] || "").trim() : "",
+        name: nameIdx !== -1 ? String(usersData[i][nameIdx] || "").trim() : "",
+        role: role,
+        photoUrl: photoIdx !== -1 ? String(usersData[i][photoIdx] || "").trim() : "",
+        status: statusIdx !== -1 ? String(usersData[i][statusIdx] || "ACTIVE").trim().toUpperCase() : "ACTIVE",
+        createdAt: createdIdx !== -1 ? String(usersData[i][createdIdx] || "").trim() : "",
+        lastLoginAt: lastLoginIdx !== -1 ? String(usersData[i][lastLoginIdx] || "").trim() : "",
+        linkedStudents: linked
+      });
+    }
+
+    return {
+      success: true,
+      status: "success",
+      users: users,
+      total: users.length,
+      summary: {
+        total: users.length,
+        wali: users.filter(u => u.role === "WALI_SANTRI").length,
+        pengasuh: users.filter(u => u.role === "PENGASUH").length,
+        admin: users.filter(u => u.role === "ADMIN" || u.role === "EDITOR").length
+      }
+    };
+  } catch (err) {
+    console.error("[GET ALL USERS ERROR]", err);
+    return {
+      success: false,
+      status: "error",
+      message: "Gagal memuat data pengguna: " + err.message
+    };
+  }
+}
+
+/**
+ * Menambah atau memperbarui akun pengguna dari menu Manajemen Pengguna
+ */
+function saveAdminUserData(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const userData = payload.user || payload;
+    const email = String(userData.email || "").trim().toLowerCase();
+    const name = String(userData.name || "").trim();
+    const role = String(userData.role || "WALI_SANTRI").trim().toUpperCase();
+    const phone = String(userData.phone || "").trim();
+    const status = String(userData.status || "ACTIVE").trim().toUpperCase();
+    const targetUserId = String(userData.userId || userData.user_id || userData.identityId || "").trim();
+    const studentNis = String(userData.studentNis || userData.nis || "").trim();
+
+    if (!email || !email.includes("@")) {
+      return { success: false, status: "error", message: "Alamat email pengguna wajib diisi dengan format valid." };
+    }
+    if (!name) {
+      return { success: false, status: "error", message: "Nama pengguna wajib diisi." };
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) return { success: false, status: "error", message: "Spreadsheet database tidak dapat diakses." };
+
+    setupAuthSystemSheets();
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return { success: false, status: "error", message: "Sheet Users tidak tersedia." };
+
+    const usersData = usersSheet.getDataRange().getValues();
+    const uHeaders = usersData[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = uHeaders.indexOf("user_id");
+    const emailIdx = uHeaders.indexOf("email");
+    const phoneIdx = uHeaders.indexOf("phone");
+    const nameIdx = uHeaders.indexOf("name");
+    const roleIdx = uHeaders.indexOf("role");
+    const photoIdx = uHeaders.indexOf("photo_url");
+    const statusIdx = uHeaders.indexOf("status");
+    const createdIdx = uHeaders.indexOf("created_at");
+
+    let foundRow = -1;
+    let actualUserId = targetUserId;
+
+    for (let i = 1; i < usersData.length; i++) {
+      const rowId = idIdx !== -1 ? String(usersData[i][idIdx] || "").trim() : "";
+      const rowEmail = emailIdx !== -1 ? String(usersData[i][emailIdx] || "").trim().toLowerCase() : "";
+      if ((actualUserId && rowId === actualUserId) || (rowEmail && rowEmail === email)) {
+        foundRow = i + 1;
+        actualUserId = rowId || actualUserId;
+        break;
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+
+    if (foundRow !== -1) {
+      // Update data baris pengguna yang sudah ada
+      if (nameIdx !== -1) usersSheet.getRange(foundRow, nameIdx + 1).setValue(name);
+      if (emailIdx !== -1) usersSheet.getRange(foundRow, emailIdx + 1).setValue(email);
+      if (phoneIdx !== -1 && phone) usersSheet.getRange(foundRow, phoneIdx + 1).setValue(phone);
+      if (roleIdx !== -1) usersSheet.getRange(foundRow, roleIdx + 1).setValue(role);
+      if (statusIdx !== -1) usersSheet.getRange(foundRow, statusIdx + 1).setValue(status);
+    } else {
+      // Baris baru
+      if (!actualUserId) {
+        actualUserId = "USR_" + Utilities.getUuid().replace(/-/g, "").substring(0, 12);
+      }
+      usersSheet.appendRow([
+        actualUserId,
+        email,
+        phone,
+        name,
+        role,
+        userData.photoUrl || "",
+        status,
+        nowIso,
+        ""
+      ]);
+    }
+
+    // Jika role WALI_SANTRI dan ada studentNis, hubungkan di Wali_Santri_Map
+    if (role === "WALI_SANTRI" && studentNis) {
+      const student = getStudentByNis(studentNis);
+      if (student && student.studentId) {
+        const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+        if (mapSheet) {
+          const mData = mapSheet.getDataRange().getValues();
+          let exists = false;
+          for (let m = 1; m < mData.length; m++) {
+            if (String(mData[m][1]).trim() === actualUserId && String(mData[m][2]).trim() === student.studentId) {
+              exists = true;
+              break;
+            }
+          }
+          if (!exists) {
+            const mapId = "MAP_" + Utilities.getUuid().replace(/-/g, "").substring(0, 12);
+            mapSheet.appendRow([mapId, actualUserId, student.studentId, userData.relationship || "GUARDIAN", "VERIFIED", nowIso]);
+          }
+        }
+      }
+    }
+
+    return {
+      success: true,
+      status: "success",
+      userId: actualUserId,
+      message: foundRow !== -1 ? "Data pengguna berhasil diperbarui!" : "Pengguna baru berhasil ditambahkan!"
+    };
+  } catch (err) {
+    console.error("[SAVE USER ERROR]", err);
+    return {
+      success: false,
+      status: "error",
+      message: "Gagal menyimpan pengguna: " + err.message
+    };
+  }
+}
+
+/**
+ * Toggle status aktif / suspend akun pengguna
+ */
+function toggleUserStatus(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const userId = String(payload.userId || payload.user_id || "").trim();
+    if (!userId) return { success: false, message: "User ID wajib dikirimkan." };
+
+    const ss = getDatabaseSpreadsheet();
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return { success: false, message: "Sheet Users tidak ditemukan." };
+
+    const data = usersSheet.getDataRange().getValues();
+    const uHeaders = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = uHeaders.indexOf("user_id");
+    const statusIdx = uHeaders.indexOf("status");
+
+    for (let i = 1; i < data.length; i++) {
+      if (idIdx !== -1 && String(data[i][idIdx] || "").trim() === userId) {
+        const currentStatus = statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE";
+        const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+        usersSheet.getRange(i + 1, statusIdx + 1).setValue(newStatus);
+        return {
+          success: true,
+          status: "success",
+          newStatus: newStatus,
+          message: `Status pengguna berhasil diubah menjadi ${newStatus}.`
+        };
+      }
+    }
+
+    return { success: false, message: "Pengguna tidak ditemukan." };
+  } catch (err) {
+    return { success: false, message: "Gagal mengubah status: " + err.message };
+  }
 }
 
 /**
@@ -5983,6 +6517,65 @@ function getStudentByNisnAndBirthDate(nisn, birthDate) {
   return getStudentByNisAndBirthDate(nisn, birthDate);
 }
 
+/**
+ * Cari data santri berdasarkan NIS saja (tanpa syarat tanggal lahir)
+ */
+function getStudentByNis(nisOrNisn) {
+  const cleanNis = String(nisOrNisn || "").trim();
+  if (!cleanNis) return null;
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+  if (!sheet) return null;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("student_id");
+  let nisIdx = header.indexOf("nis");
+  if (nisIdx === -1) nisIdx = header.indexOf("nisn");
+  let nikIdx = header.indexOf("nik");
+  let nameIdx = header.indexOf("name");
+  if (nameIdx === -1) nameIdx = header.indexOf("nama");
+  let genderIdx = header.indexOf("gender");
+  if (genderIdx === -1) genderIdx = header.indexOf("jenis");
+  if (genderIdx === -1) genderIdx = header.indexOf("jenis_kelamin");
+  let birthIdx = header.indexOf("birth_date");
+  if (birthIdx === -1) birthIdx = header.indexOf("tanggal_lahir");
+  if (birthIdx === -1) birthIdx = header.indexOf("tgl_lahir");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
+  let progIdx = header.indexOf("program");
+  let statusIdx = header.indexOf("status");
+
+  if (idIdx === -1) idIdx = 0;
+  if (nisIdx === -1) nisIdx = 1;
+  if (nameIdx === -1) nameIdx = 2;
+
+  const cleanLower = cleanNis.toLowerCase();
+
+  for (let i = 1; i < data.length; i++) {
+    const rowNis = String(data[i][nisIdx] || "").trim();
+    if (rowNis.toLowerCase() === cleanLower) {
+      return {
+        studentId: String(data[i][idIdx] || ""),
+        nis: rowNis,
+        nisn: rowNis,
+        nik: nikIdx !== -1 ? String(data[i][nikIdx] || "") : "",
+        name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Santri",
+        gender: genderIdx !== -1 ? String(data[i][genderIdx] || "").trim().toUpperCase() : "",
+        birthDate: birthIdx !== -1 ? normalizeDateString(data[i][birthIdx]) : "",
+        photoUrl: photoIdx !== -1 ? String(data[i][photoIdx] || "") : "",
+        program: progIdx !== -1 ? String(data[i][progIdx] || "Reguler") : "Reguler",
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "AKTIF") : "AKTIF"
+      };
+    }
+  }
+  return null;
+}
+
 function getSessionById(sessionId) {
   if (!sessionId) return null;
   const ss = getDatabaseSpreadsheet();
@@ -6419,14 +7012,16 @@ function authenticateSession(tokenString) {
     throw new AuthenticationError("Server session is not active or has been revoked.");
   }
 
-  // P0-1: Cek Status Identitas di Master (Admin / Wali / Pengasuh)
-  let identity = null;
-  if (claims.role === "ADMIN" || claims.role === "EDITOR") {
-    identity = getAdminIdentityById(claims.identityId);
-  } else if (claims.role === "WALI_SANTRI") {
-    identity = getWaliIdentityById(claims.identityId);
-  } else if (claims.role === "PENGASUH") {
-    identity = getPengasuhIdentityById(claims.identityId);
+  // P0-1: Cek Status Identitas di Master (Sheet Users first, then fallback)
+  let identity = getUserIdentityById(claims.identityId);
+  if (!identity) {
+    if (claims.role === "ADMIN" || claims.role === "EDITOR") {
+      identity = getAdminIdentityById(claims.identityId);
+    } else if (claims.role === "WALI_SANTRI") {
+      identity = getWaliIdentityById(claims.identityId);
+    } else if (claims.role === "PENGASUH") {
+      identity = getPengasuhIdentityById(claims.identityId);
+    }
   }
 
   if (!identity || identity.status !== "ACTIVE") {
@@ -6989,7 +7584,7 @@ function handleAuthApiAction(action, payload, e) {
     }
 
     // ----------------------------------------------------
-    // 10. WALI SANTRI ACTIVATION REQUEST (Matching NIS + Tanggal Lahir)
+    // 10. WALI SANTRI ACTIVATION REQUEST (Matching NIS Saja + OTP Email)
     // ----------------------------------------------------
     if (action === "auth.parent.activate") {
       return withAuthScriptLock(() => {
@@ -7000,19 +7595,19 @@ function handleAuthApiAction(action, payload, e) {
         const waliPhone = String(payload.waliPhone || "").trim();
         const relationship = String(payload.relationship || "GUARDIAN").trim().toUpperCase();
 
-        if (!nis || !birthDate || !waliEmail || !waliEmail.includes("@")) {
+        if (!nis || !waliEmail || !waliEmail.includes("@")) {
           return createJsonResponse({
             success: false,
-            message: "NIS, Tanggal Lahir, dan Email Wali wajib diisi dengan benar."
+            message: "NIS Santri dan Email Wali wajib diisi dengan benar."
           });
         }
 
-        const student = getStudentByNisAndBirthDate(nis, birthDate);
+        const student = getStudentByNis(nis) || (birthDate ? getStudentByNisAndBirthDate(nis, birthDate) : null);
         if (!student) {
           writeAuthAuditLog("ACTIVATION_REJECTED_STUDENT_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { nis: nis });
           return createJsonResponse({
             success: false,
-            message: "Data santri dengan NIS dan tanggal lahir tersebut tidak ditemukan. Mohon periksa kembali atau hubungi pengurus madrasah."
+            message: "Data santri dengan NIS tersebut tidak ditemukan. Mohon periksa kembali NIS santri Anda atau hubungi pengurus madrasah."
           });
         }
 
@@ -7068,24 +7663,22 @@ function handleAuthApiAction(action, payload, e) {
 
         let emailSuccess = false;
         try {
-          emailSuccess = sendWaliActivationOtpEmail(waliEmail, otpCode, waliName, student.name);
+          emailSuccess = sendOtpEmail(waliEmail, otpCode, "Aktivasi Akun Wali Santri PPTQ Asnawiyyah");
         } catch (mailErr) {
-          console.error("Gagal mengirim email OTP aktivasi Wali:", mailErr);
-          emailSuccess = false;
+          console.error("Gagal kirim email OTP aktivasi:", mailErr);
         }
 
-        if (!emailSuccess) {
-          writeAuthAuditLog("OTP_DISPATCH_FAIL", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { reason: "MailApp error" });
-          return createJsonResponse({
-            success: false,
-            message: "Gagal mengirimkan email verifikasi. Pastikan alamat email aktif dan coba kembali."
-          });
-        }
+        writeAuthAuditLog("OTP_CHALLENGE_ISSUED", "ACTIVATION_" + student.studentId, challengeId, "EMAIL_ACTIVATION", emailSuccess, requestId, {
+          email: waliEmail,
+          nis: nis,
+          studentName: student.name
+        });
 
-        writeAuthAuditLog("ACTIVATION_OTP_SENT", student.studentId, "", "EMAIL_ACTIVATION", true, requestId, { email: waliEmail, studentName: student.name });
         return createJsonResponse({
           success: true,
-          message: `Kode verifikasi 6 digit telah dikirimkan ke ${waliEmail}. Masukkan kode untuk menyelesaikan aktivasi.`,
+          message: emailSuccess
+            ? `Kode OTP aktivasi telah dikirim ke ${waliEmail}. Masukkan kode untuk konfirmasi.`
+            : "Kode OTP berhasil digenerate. Periksa kotak masuk/spam email Anda.",
           studentName: student.name,
           cooldownSeconds: 60,
           requestId: requestId
@@ -7094,39 +7687,45 @@ function handleAuthApiAction(action, payload, e) {
     }
 
     // ----------------------------------------------------
-    // 11. WALI SANTRI VERIFY ACTIVATION (Create/Link Identity & Issue Session)
+    // 11. WALI SANTRI ACTIVATION VERIFICATION
     // ----------------------------------------------------
     if (action === "auth.parent.verifyActivation") {
       return withAuthScriptLock(() => {
         const nis = String(payload.nis || payload.nisn || "").trim();
         const birthDate = String(payload.birthDate || "").trim();
         const waliEmail = String(payload.waliEmail || "").trim().toLowerCase();
+        const otp = String(payload.otp || "").trim();
         const waliName = String(payload.waliName || "").trim();
         const waliPhone = String(payload.waliPhone || "").trim();
         const relationship = String(payload.relationship || "GUARDIAN").trim().toUpperCase();
-        const otp = String(payload.otp || "").trim();
+
+        if (!nis || !waliEmail || !otp) {
+          return createJsonResponse({ success: false, message: "NIS, Email, dan Kode OTP wajib diisi." });
+        }
 
         const idHash = hashIdentifier(waliEmail);
         const challenge = findPendingOtpChallenge("EMAIL_ACTIVATION", idHash);
 
         if (!challenge) {
-          writeAuthAuditLog("ACTIVATION_OTP_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, {});
-          return createJsonResponse({ success: false, message: "Kode OTP aktivasi tidak ditemukan atau sudah kedaluwarsa." });
+          writeAuthAuditLog("OTP_NOT_FOUND", "ANONYMOUS", "", "EMAIL_ACTIVATION", false, requestId, { email: waliEmail });
+          return createJsonResponse({
+            success: false,
+            message: "Tidak ada permintaan aktivasi yang aktif untuk email ini. Silakan ajukan aktivasi ulang."
+          });
         }
 
         if (challenge.isExpired) {
-          return createJsonResponse({ success: false, message: "Kode OTP aktivasi telah kedaluwarsa. Silakan minta kode baru." });
+          writeAuthAuditLog("OTP_EXPIRED", challenge.identityId, challenge.challengeId, "EMAIL_ACTIVATION", false, requestId, {});
+          return createJsonResponse({
+            success: false,
+            message: "Kode OTP aktivasi telah kedaluwarsa. Silakan minta kode baru."
+          });
         }
 
-        if (challenge.attempts >= challenge.maxAttempts) {
-          return createJsonResponse({ success: false, message: "Batas percobaan verifikasi telah habis. Silakan ulangi aktivasi." });
-        }
-
-        const inputHash = hashOtpCode(otp);
         const ss = getDatabaseSpreadsheet();
         const otpSheet = getAuthSheet(ss, SHEET_OTP_CHALLENGES);
 
-        if (inputHash !== challenge.otpHash) {
+        if (!verifyOtpHash(otp, challenge.otpHash)) {
           const newAttempts = challenge.attempts + 1;
           otpSheet.getRange(challenge.rowIndex, 6).setValue(newAttempts);
           if (newAttempts >= challenge.maxAttempts) {
@@ -7143,29 +7742,46 @@ function handleAuthApiAction(action, payload, e) {
         otpSheet.getRange(challenge.rowIndex, 11).setValue(new Date().toISOString());
 
         // Cari data santri
-        const student = getStudentByNisAndBirthDate(nis, birthDate);
+        const student = getStudentByNis(nis) || (birthDate ? getStudentByNisAndBirthDate(nis, birthDate) : null);
         if (!student) {
           return createJsonResponse({ success: false, message: "Data santri tidak ditemukan." });
         }
 
-        // Cari atau buat Wali Identity
-        let wali = getWaliIdentityByEmail(waliEmail);
+        // Cari atau buat User Identity di sheet Users & Wali_Identities
+        let wali = getUserIdentityByEmail(waliEmail) || getWaliIdentityByEmail(waliEmail);
+        const usersSheet = getAuthSheet(ss, SHEET_USERS);
         const waliSheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
         const nowIso = new Date().toISOString();
 
         if (!wali) {
-          const newWaliId = "WLI_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
-          waliSheet.appendRow([
-            newWaliId,
-            waliEmail,
-            waliPhone,
-            waliName || "Wali Santri",
-            "WALI_SANTRI",
-            "ACTIVE",
-            nowIso
-          ]);
+          const newUserId = "USR_WLI_" + Utilities.getUuid().replace(/-/g, "").substring(0, 12);
+          if (usersSheet) {
+            usersSheet.appendRow([
+              newUserId,
+              waliEmail,
+              waliPhone,
+              waliName || "Wali Santri",
+              "WALI_SANTRI",
+              "",
+              "ACTIVE",
+              nowIso,
+              nowIso
+            ]);
+          }
+          if (waliSheet) {
+            waliSheet.appendRow([
+              newUserId,
+              waliEmail,
+              waliPhone,
+              waliName || "Wali Santri",
+              "WALI_SANTRI",
+              "ACTIVE",
+              nowIso
+            ]);
+          }
           wali = {
-            identityId: newWaliId,
+            identityId: newUserId,
+            userId: newUserId,
             email: waliEmail,
             phone: waliPhone,
             name: waliName || "Wali Santri",
@@ -7184,7 +7800,7 @@ function handleAuthApiAction(action, payload, e) {
         if (mapSheet) {
           const mapData = mapSheet.getDataRange().getValues();
           for (let i = 1; i < mapData.length; i++) {
-            if (String(mapData[i][1]).trim() === wali.identityId &&
+            if (String(mapData[i][1]).trim() === (wali.userId || wali.identityId) &&
                 String(mapData[i][2]).trim() === student.studentId) {
               alreadyMapped = true;
               break;
@@ -7194,7 +7810,7 @@ function handleAuthApiAction(action, payload, e) {
             const mapId = "MAP_" + Utilities.getUuid().replace(/-/g, "").substring(0, 16);
             mapSheet.appendRow([
               mapId,
-              wali.identityId,
+              wali.userId || wali.identityId,
               student.studentId,
               relationship,
               "VERIFIED",
@@ -7204,11 +7820,11 @@ function handleAuthApiAction(action, payload, e) {
         }
 
         // Buat Sesi Permanen (sampai logout manual)
-        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
-        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.identityId);
-        const students = getLinkedStudentsForWali(wali.identityId);
+        const session = createAuthSessionRecord(wali.userId || wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.userId || wali.identityId);
+        const students = getLinkedStudentsForWali(wali.userId || wali.identityId);
 
-        writeAuthAuditLog("WALI_ACTIVATION_SUCCESS", wali.identityId, session.sessionId, "EMAIL_ACTIVATION", true, requestId, {
+        writeAuthAuditLog("WALI_ACTIVATION_SUCCESS", wali.userId || wali.identityId, session.sessionId, "EMAIL_ACTIVATION", true, requestId, {
           studentId: student.studentId,
           studentName: student.name
         });
@@ -7257,6 +7873,24 @@ function handleAuthApiAction(action, payload, e) {
     if (action === "auth.user.uploadPhoto" || action === "user.uploadPhoto") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       return createJsonResponse(uploadUserProfilePhoto(payload.data || payload, token));
+    }
+
+    // ----------------------------------------------------
+    // 13c. USER MANAGEMENT (auth.admin.userList, userSave, userToggleStatus)
+    // ----------------------------------------------------
+    if (action === "auth.admin.userList" || action === "admin.users.list" || action === "admin.userList") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(getAllUsersWithLinkedStudents(token));
+    }
+
+    if (action === "auth.admin.userSave" || action === "admin.users.save" || action === "admin.userSave") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveAdminUserData(payload.data || payload, token));
+    }
+
+    if (action === "auth.admin.userToggleStatus" || action === "admin.users.toggleStatus" || action === "admin.userToggleStatus") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(toggleUserStatus(payload.data || payload, token));
     }
 
     // ----------------------------------------------------

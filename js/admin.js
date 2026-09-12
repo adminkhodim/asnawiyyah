@@ -92,6 +92,7 @@
             const unitKegiatanView = document.getElementById('admin-view-unit-kegiatan');
             const notifikasiView = document.getElementById('admin-view-notifikasi');
             const pegawaiView = document.getElementById('admin-view-pegawai');
+            const usersView = document.getElementById('admin-view-users');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -108,6 +109,7 @@
             if (unitKegiatanView) unitKegiatanView.classList.add('hidden');
             if (notifikasiView) notifikasiView.classList.add('hidden');
             if (pegawaiView) pegawaiView.classList.add('hidden');
+            if (usersView) usersView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -115,6 +117,9 @@
             } else if (viewName === 'banner') {
                 bannerView.classList.remove('hidden');
                 renderAdminBannerList();
+            } else if (viewName === 'users') {
+                if (usersView) usersView.classList.remove('hidden');
+                loadAdminUsersData();
             } else if (viewName === 'santri') {
                 if (santriView) santriView.classList.remove('hidden');
                 loadAdminStudentsData();
@@ -3932,5 +3937,431 @@
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
                 }
+            }
+        }
+
+        // =====================================================================
+        // MANAJEMEN PENGGUNA TERPADU (USERS MASTER CONTROLLER)
+        // =====================================================================
+        let adminUsersList = [];
+        let adminUsersFilterRole = 'ALL';
+        let adminUsersSearchQuery = '';
+
+        /**
+         * Helper sanitasi teks aman HTML
+         */
+        function escapeUserHtml(str) {
+            if (typeof escapeHtml === 'function') return escapeHtml(str);
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        /**
+         * Memuat data seluruh pengguna dari sheet Users via API
+         */
+        async function loadAdminUsersData() {
+            const loadingEl = document.getElementById('admin-users-loading');
+            const emptyEl = document.getElementById('admin-users-empty');
+            const tbody = document.getElementById('admin-users-table-body');
+
+            if (loadingEl) loadingEl.classList.remove('hidden');
+            if (emptyEl) emptyEl.classList.add('hidden');
+            if (tbody) tbody.innerHTML = '';
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || localStorage.getItem("asnawiyyah_admin_token") || "";
+                
+                let response = null;
+                if (typeof authApiPost === 'function') {
+                    response = await authApiPost('auth.admin.userList', { token });
+                } else if (typeof apiPost === 'function') {
+                    response = await apiPost('auth.admin.userList', { token });
+                }
+
+                if (response && (response.success || response.status === 'success')) {
+                    adminUsersList = response.users || [];
+
+                    // Update ringkasan metric card
+                    const summary = response.summary || {};
+                    const totalCount = summary.total !== undefined ? summary.total : adminUsersList.length;
+                    const waliCount = summary.wali !== undefined ? summary.wali : adminUsersList.filter(u => u.role === 'WALI_SANTRI').length;
+                    const pengasuhCount = summary.pengasuh !== undefined ? summary.pengasuh : adminUsersList.filter(u => u.role === 'PENGASUH').length;
+                    const adminCount = summary.admin !== undefined ? summary.admin : adminUsersList.filter(u => u.role === 'ADMIN' || u.role === 'EDITOR').length;
+
+                    const totalEl = document.getElementById('user-count-total');
+                    const waliEl = document.getElementById('user-count-wali');
+                    const pengasuhEl = document.getElementById('user-count-pengasuh');
+                    const adminEl = document.getElementById('user-count-admin');
+
+                    if (totalEl) totalEl.innerText = totalCount;
+                    if (waliEl) waliEl.innerText = waliCount;
+                    if (pengasuhEl) pengasuhEl.innerText = pengasuhCount;
+                    if (adminEl) adminEl.innerText = adminCount;
+
+                    // Update Hub Badge
+                    const hubBadge = document.getElementById('admin-hub-users-count');
+                    if (hubBadge) hubBadge.innerText = `${totalCount} Pengguna`;
+
+                    // Update Tab Counts
+                    const tabAll = document.getElementById('user-tab-count-all');
+                    const tabWali = document.getElementById('user-tab-count-wali');
+                    const tabPengasuh = document.getElementById('user-tab-count-pengasuh');
+                    const tabAdmin = document.getElementById('user-tab-count-admin');
+
+                    if (tabAll) tabAll.innerText = totalCount;
+                    if (tabWali) tabWali.innerText = waliCount;
+                    if (tabPengasuh) tabPengasuh.innerText = pengasuhCount;
+                    if (tabAdmin) tabAdmin.innerText = adminCount;
+
+                    renderAdminUsersTable();
+                } else {
+                    const msg = (response && response.message) || 'Gagal memuat data pengguna.';
+                    if (typeof showToast === 'function') showToast('⚠️ ' + msg);
+                    if (emptyEl) emptyEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('[LOAD USERS ERROR]', err);
+                if (typeof showToast === 'function') showToast('❌ Gagal memuat pengguna: ' + err.message);
+                if (emptyEl) emptyEl.classList.remove('hidden');
+            } finally {
+                if (loadingEl) loadingEl.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Render tabel pengguna dengan filter role dan pencarian
+         */
+        function renderAdminUsersTable() {
+            const tbody = document.getElementById('admin-users-table-body');
+            const emptyEl = document.getElementById('admin-users-empty');
+            if (!tbody) return;
+
+            let filtered = adminUsersList.slice();
+
+            // Filter Peran
+            if (adminUsersFilterRole && adminUsersFilterRole !== 'ALL') {
+                if (adminUsersFilterRole === 'ADMIN') {
+                    filtered = filtered.filter(u => u.role === 'ADMIN' || u.role === 'EDITOR');
+                } else {
+                    filtered = filtered.filter(u => u.role === adminUsersFilterRole);
+                }
+            }
+
+            // Filter Pencarian
+            if (adminUsersSearchQuery) {
+                const q = adminUsersSearchQuery.toLowerCase();
+                filtered = filtered.filter(u => {
+                    const matchName = String(u.name || '').toLowerCase().includes(q);
+                    const matchEmail = String(u.email || '').toLowerCase().includes(q);
+                    const matchPhone = String(u.phone || '').includes(q);
+                    const matchId = String(u.userId || '').toLowerCase().includes(q);
+                    const matchStudent = (u.linkedStudents || []).some(s => 
+                        String(s.name || '').toLowerCase().includes(q) || 
+                        String(s.nis || '').includes(q)
+                    );
+                    return matchName || matchEmail || matchPhone || matchId || matchStudent;
+                });
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            tbody.innerHTML = filtered.map(user => {
+                const safeUserId = String(user.userId || user.identityId || '').replace(/'/g, "\\'");
+                const safeName = escapeUserHtml(user.name || 'Pengguna');
+                const safeEmail = escapeUserHtml(user.email || '-');
+                const safePhone = escapeUserHtml(user.phone || '-');
+                const photoUrl = user.photoUrl || '';
+                const role = String(user.role || 'WALI_SANTRI').toUpperCase();
+                const status = String(user.status || 'ACTIVE').toUpperCase();
+                const isActive = status === 'ACTIVE';
+
+                // Badge Role Styling
+                let roleBadge = '';
+                if (role === 'WALI_SANTRI') {
+                    roleBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40"><i class="fa-solid fa-user-group text-[9px] mr-1"></i>Wali Santri</span>`;
+                } else if (role === 'PENGASUH') {
+                    roleBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40"><i class="fa-solid fa-hands-praying text-[9px] mr-1"></i>Pengasuh</span>`;
+                } else {
+                    roleBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-brand-100 text-brand-800 dark:bg-brand-950/80 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/40"><i class="fa-solid fa-shield-halved text-[9px] mr-1"></i>${role === 'EDITOR' ? 'Staf Editor' : 'Administrator'}</span>`;
+                }
+
+                // Avatar / Foto Profil
+                const avatarHtml = photoUrl
+                    ? `<img src="${photoUrl}" alt="${safeName}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-[#253447] shadow-sm shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=059669&color=fff'">`
+                    : `<div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">${(user.name || 'U').charAt(0).toUpperCase()}</div>`;
+
+                // Santri Terhubung
+                let linkedHtml = '';
+                if (role === 'WALI_SANTRI') {
+                    const students = user.linkedStudents || [];
+                    if (students.length > 0) {
+                        linkedHtml = `<div class="flex flex-wrap gap-1">${students.map(s => `
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-[#1c2836] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#253447]" title="NIS: ${s.nis || '-'} (${s.relationship || 'Wali'})">
+                                <i class="fa-solid fa-child-reaching text-[9px] text-cyan-600 mr-1"></i>${escapeUserHtml(s.name || 'Santri')}
+                                ${s.nis ? `<span class="ml-1 text-[9px] text-slate-400 font-mono">#${s.nis}</span>` : ''}
+                            </span>
+                        `).join('')}</div>`;
+                    } else {
+                        linkedHtml = `<span class="text-[10px] text-slate-400 italic">Belum terhubung</span>`;
+                    }
+                } else {
+                    linkedHtml = `<span class="text-[10px] text-slate-400">-</span>`;
+                }
+
+                // Status Badge
+                const statusBadge = isActive
+                    ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Aktif</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>Nonaktif</span>`;
+
+                // WhatsApp link
+                const cleanPhone = String(user.phone || '').replace(/[^0-9]/g, '');
+                const waLink = cleanPhone ? (cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone) : '';
+                const phoneHtml = user.phone ? `
+                    <div class="flex items-center space-x-1">
+                        <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${safePhone}</span>
+                        ${waLink ? `<a href="https://wa.me/${waLink}" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-700 ml-1" title="Chat WhatsApp"><i class="fa-brands fa-whatsapp text-xs"></i></a>` : ''}
+                    </div>
+                ` : `<span class="text-slate-400 text-[10px]">-</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50/70 dark:hover:bg-[#1c2836]/40 transition">
+                        <td class="p-3.5">
+                            <div class="flex items-center space-x-3">
+                                ${avatarHtml}
+                                <div>
+                                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-xs leading-tight">${safeName}</h4>
+                                    <p class="text-[10px] text-slate-400 font-mono mt-0.5">${safeEmail}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-3.5 whitespace-nowrap">${phoneHtml}</td>
+                        <td class="p-3.5 whitespace-nowrap">${roleBadge}</td>
+                        <td class="p-3.5 max-w-xs">${linkedHtml}</td>
+                        <td class="p-3.5 text-center whitespace-nowrap">${statusBadge}</td>
+                        <td class="p-3.5 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end space-x-1.5">
+                                <button type="button" onclick="openAdminUserModal('${safeUserId}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition active:scale-95" title="Edit Akun">
+                                    <i class="fa-solid fa-pen-to-square text-[11px] mr-1"></i>Edit
+                                </button>
+                                <button type="button" onclick="toggleAdminUserStatus('${safeUserId}', '${status}')" class="px-2 py-1 rounded-lg text-xs font-semibold transition active:scale-95 ${isActive ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'}" title="${isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}">
+                                    <i class="fa-solid ${isActive ? 'fa-user-slash' : 'fa-user-check'} text-[11px]"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Filter peran pengguna (Semua, Wali, Pengasuh, Admin)
+         */
+        function filterAdminUsers(role) {
+            adminUsersFilterRole = role;
+            document.querySelectorAll('.admin-user-tab').forEach(btn => {
+                if (btn.dataset.roleFilter === role) {
+                    btn.classList.add('active', 'bg-emerald-600', 'text-white');
+                    btn.classList.remove('text-slate-600', 'dark:text-slate-300');
+                } else {
+                    btn.classList.remove('active', 'bg-emerald-600', 'text-white');
+                    btn.classList.add('text-slate-600', 'dark:text-slate-300');
+                }
+            });
+            renderAdminUsersTable();
+        }
+
+        /**
+         * Live search filter pengguna
+         */
+        function handleAdminUsersSearch(query) {
+            adminUsersSearchQuery = String(query || '').trim();
+            renderAdminUsersTable();
+        }
+
+        /**
+         * Buka modal form tambah / edit pengguna
+         */
+        function openAdminUserModal(userId) {
+            const modal = document.getElementById('modal-admin-user-form');
+            const titleEl = document.getElementById('modal-admin-user-title');
+            const form = document.getElementById('adminUserForm');
+            if (!modal) return;
+
+            if (form) form.reset();
+
+            const idInput = document.getElementById('admin-user-form-id');
+            const roleSelect = document.getElementById('admin-user-form-role');
+            const nameInput = document.getElementById('admin-user-form-name');
+            const emailInput = document.getElementById('admin-user-form-email');
+            const phoneInput = document.getElementById('admin-user-form-phone');
+            const statusSelect = document.getElementById('admin-user-form-status');
+            const studentNisInput = document.getElementById('admin-user-form-student-nis');
+            const relationshipSelect = document.getElementById('admin-user-form-relationship');
+
+            if (userId) {
+                const user = adminUsersList.find(u => String(u.userId || u.identityId || '') === String(userId));
+                if (user) {
+                    if (titleEl) titleEl.innerText = 'Edit Data Pengguna';
+                    if (idInput) idInput.value = user.userId || user.identityId || '';
+                    if (roleSelect) roleSelect.value = user.role || 'WALI_SANTRI';
+                    if (nameInput) nameInput.value = user.name || '';
+                    if (emailInput) {
+                        emailInput.value = user.email || '';
+                    }
+                    if (phoneInput) phoneInput.value = user.phone || '';
+                    if (statusSelect) statusSelect.value = user.status || 'ACTIVE';
+
+                    // Linked student info jika ada
+                    const linked = (user.linkedStudents && user.linkedStudents[0]) || null;
+                    if (studentNisInput) studentNisInput.value = linked ? (linked.nis || '') : '';
+                    if (relationshipSelect) relationshipSelect.value = linked ? (linked.relationship || 'GUARDIAN') : 'GUARDIAN';
+
+                    handleUserFormRoleChange(user.role || 'WALI_SANTRI');
+                }
+            } else {
+                if (titleEl) titleEl.innerText = 'Tambah Pengguna Baru';
+                if (idInput) idInput.value = '';
+                if (roleSelect) roleSelect.value = 'WALI_SANTRI';
+                if (statusSelect) statusSelect.value = 'ACTIVE';
+                handleUserFormRoleChange('WALI_SANTRI');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Tutup modal form pengguna
+         */
+        function closeAdminUserModal() {
+            const modal = document.getElementById('modal-admin-user-form');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        /**
+         * Penyesuaian form saat pilihan role berubah (tampilkan/sembunyikan input santri)
+         */
+        function handleUserFormRoleChange(role) {
+            const waliExtra = document.getElementById('admin-user-wali-extra');
+            if (!waliExtra) return;
+            if (role === 'WALI_SANTRI') {
+                waliExtra.classList.remove('hidden');
+            } else {
+                waliExtra.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Submit form simpan pengguna ke backend
+         */
+        async function handleAdminUserSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-admin-user-submit');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+            }
+
+            const id = (document.getElementById('admin-user-form-id')?.value || '').trim();
+            const role = (document.getElementById('admin-user-form-role')?.value || 'WALI_SANTRI').trim();
+            const name = (document.getElementById('admin-user-form-name')?.value || '').trim();
+            const email = (document.getElementById('admin-user-form-email')?.value || '').trim().toLowerCase();
+            const phone = (document.getElementById('admin-user-form-phone')?.value || '').trim();
+            const status = (document.getElementById('admin-user-form-status')?.value || 'ACTIVE').trim();
+            const studentNis = (document.getElementById('admin-user-form-student-nis')?.value || '').trim();
+            const relationship = (document.getElementById('admin-user-form-relationship')?.value || 'GUARDIAN').trim();
+
+            const payload = {
+                userId: id,
+                role: role,
+                name: name,
+                email: email,
+                phone: phone,
+                status: status,
+                studentNis: studentNis,
+                relationship: relationship
+            };
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || localStorage.getItem("asnawiyyah_admin_token") || "";
+                let response = null;
+
+                if (typeof authApiPost === 'function') {
+                    response = await authApiPost('auth.admin.userSave', { token, user: payload });
+                } else if (typeof apiPost === 'function') {
+                    response = await apiPost('auth.admin.userSave', { token, user: payload });
+                }
+
+                if (response && (response.success || response.status === 'success')) {
+                    if (typeof showToast === 'function') {
+                        showToast(response.message || 'Data pengguna berhasil disimpan!');
+                    }
+                    closeAdminUserModal();
+                    await loadAdminUsersData();
+                } else {
+                    const msg = (response && response.message) || 'Gagal menyimpan data pengguna.';
+                    if (typeof showToast === 'function') showToast('❌ ' + msg);
+                }
+            } catch (err) {
+                console.error('[SAVE USER ERROR]', err);
+                if (typeof showToast === 'function') showToast('❌ ' + err.message);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        /**
+         * Toggle status pengguna (ACTIVE <-> SUSPENDED)
+         */
+        async function toggleAdminUserStatus(userId, currentStatus) {
+            if (!userId) return;
+            const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+            const actionText = newStatus === 'ACTIVE' ? 'mengaktifkan' : 'menonaktifkan';
+
+            if (!confirm(`Apakah Anda yakin ingin ${actionText} akun pengguna ini?`)) {
+                return;
+            }
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || localStorage.getItem("asnawiyyah_admin_token") || "";
+                let response = null;
+
+                const payload = {
+                    userId: userId,
+                    status: newStatus
+                };
+
+                if (typeof authApiPost === 'function') {
+                    response = await authApiPost('auth.admin.userToggleStatus', { token, ...payload });
+                } else if (typeof apiPost === 'function') {
+                    response = await apiPost('auth.admin.userToggleStatus', { token, ...payload });
+                }
+
+                if (response && (response.success || response.status === 'success')) {
+                    if (typeof showToast === 'function') {
+                        showToast(response.message || `Status akun berhasil diubah menjadi ${newStatus}!`);
+                    }
+                    await loadAdminUsersData();
+                } else {
+                    const msg = (response && response.message) || 'Gagal mengubah status akun.';
+                    if (typeof showToast === 'function') showToast('❌ ' + msg);
+                }
+            } catch (err) {
+                console.error('[TOGGLE STATUS ERROR]', err);
+                if (typeof showToast === 'function') showToast('❌ ' + err.message);
             }
         }
