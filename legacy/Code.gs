@@ -5370,7 +5370,7 @@ function getAllStudentsData(token) {
       };
     }
 
-    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
     let idIdx = headers.indexOf("student_id");
     let nisIdx = headers.indexOf("nis");
     if (nisIdx === -1) nisIdx = headers.indexOf("nisn");
@@ -5382,10 +5382,28 @@ function getAllStudentsData(token) {
     if (genderIdx === -1) genderIdx = headers.indexOf("jenis_kelamin");
     let birthIdx = headers.indexOf("birth_date");
     if (birthIdx === -1) birthIdx = headers.indexOf("tanggal_lahir");
-    let photoIdx = headers.indexOf("photo_url");
-    if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
-    if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+
+    // Deteksi fleksibel untuk photo/foto
+    let photoIdx = -1;
+    for (let h = 0; h < headers.length; h++) {
+      const hn = headers[h];
+      if (hn === "photo_url" || hn === "foto_profil" || hn === "foto" || hn === "photo" || hn === "foto_santri" || hn === "link_foto" || hn.includes("foto") || hn.includes("photo")) {
+        photoIdx = h;
+        break;
+      }
+    }
     if (photoIdx === -1 && headers.length >= 10) photoIdx = 9; // Kolom J (indeks 9)
+
+    // Deteksi kolom Halaqah & Muhafiz jika tersedia langsung di sheet Student
+    let halaqahIdx = headers.indexOf("halaqah");
+    if (halaqahIdx === -1) halaqahIdx = headers.indexOf("nama_halaqah");
+    if (halaqahIdx === -1) halaqahIdx = headers.indexOf("kelompok_halaqah");
+    let muhafizIdx = headers.indexOf("muhafiz");
+    if (muhafizIdx === -1) muhafizIdx = headers.indexOf("muhafidz");
+    if (muhafizIdx === -1) muhafizIdx = headers.indexOf("pembimbing");
+    if (muhafizIdx === -1) muhafizIdx = headers.indexOf("ustadz");
+    if (muhafizIdx === -1) muhafizIdx = headers.indexOf("guru");
+
     let progIdx = headers.indexOf("program");
     let statusIdx = headers.indexOf("status");
     let createdIdx = headers.indexOf("created_at");
@@ -5423,6 +5441,8 @@ function getAllStudentsData(token) {
       const statusRaw = statusIdx !== -1 ? String(row[statusIdx] || "ACTIVE").trim().toUpperCase() : "ACTIVE";
       const status = (statusRaw === "ACTIVE" || statusRaw === "AKTIF") ? "ACTIVE" : "INACTIVE";
       const createdAt = createdIdx !== -1 ? String(row[createdIdx] || "").trim() : "";
+      const directHalaqah = halaqahIdx !== -1 ? String(row[halaqahIdx] || "").trim() : "";
+      const directMuhafiz = muhafizIdx !== -1 ? String(row[muhafizIdx] || "").trim() : "";
 
       if (gender === "L") putra++;
       else putri++;
@@ -5444,6 +5464,8 @@ function getAllStudentsData(token) {
         photo_url: photoUrl,
         qrCode: qrCode,
         qr_code: qrCode,
+        halaqah: directHalaqah,
+        muhafiz: directMuhafiz,
         program: program || "Reguler",
         status: status,
         createdAt: createdAt
@@ -5859,7 +5881,7 @@ function getLinkedStudentsForWali(waliId) {
   const studentData = studentsSheet.getDataRange().getValues();
   if (!studentData || studentData.length < 2) return [];
 
-  const header = studentData[0].map(h => String(h || "").trim().toLowerCase());
+  const header = studentData[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
   let idIdx = header.indexOf("student_id");
   let nisIdx = header.indexOf("nis");
   if (nisIdx === -1) nisIdx = header.indexOf("nisn");
@@ -5871,10 +5893,28 @@ function getLinkedStudentsForWali(waliId) {
   if (genderIdx === -1) genderIdx = header.indexOf("jenis_kelamin");
   let birthIdx = header.indexOf("birth_date");
   if (birthIdx === -1) birthIdx = header.indexOf("tanggal_lahir");
-  let photoIdx = header.indexOf("photo_url");
-  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
-  if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+  // Deteksi fleksibel untuk photo/foto
+  let photoIdx = -1;
+  for (let h = 0; h < header.length; h++) {
+    const hn = header[h];
+    if (hn === "photo_url" || hn === "foto_profil" || hn === "foto" || hn === "photo" || hn === "foto_santri" || hn === "link_foto" || hn.includes("foto") || hn.includes("photo")) {
+      photoIdx = h;
+      break;
+    }
+  }
   if (photoIdx === -1 && header.length >= 10) photoIdx = 9; // Kolom J (indeks ke-9 array)
+
+  // Deteksi kolom Halaqah & Muhafiz langsung dari sheet Student
+  let halaqahIdx = header.indexOf("halaqah");
+  if (halaqahIdx === -1) halaqahIdx = header.indexOf("nama_halaqah");
+  if (halaqahIdx === -1) halaqahIdx = header.indexOf("kelompok_halaqah");
+  let muhafizIdx = header.indexOf("muhafiz");
+  if (muhafizIdx === -1) muhafizIdx = header.indexOf("muhafidz");
+  if (muhafizIdx === -1) muhafizIdx = header.indexOf("pembimbing");
+  if (muhafizIdx === -1) muhafizIdx = header.indexOf("ustadz");
+  if (muhafizIdx === -1) muhafizIdx = header.indexOf("guru");
+
   let progIdx = header.indexOf("program");
   let statusIdx = header.indexOf("status");
   let qrIdx = header.indexOf("qr_code");
@@ -5903,6 +5943,9 @@ function getLinkedStudentsForWali(waliId) {
         rawQr = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(rowNis || id);
       }
 
+      const directHalaqah = halaqahIdx !== -1 ? String(studentData[i][halaqahIdx] || "").trim() : "";
+      const directMuhafiz = muhafizIdx !== -1 ? String(studentData[i][muhafizIdx] || "").trim() : "";
+
       results.push({
         studentId: id,
         nis: rowNis,
@@ -5915,6 +5958,10 @@ function getLinkedStudentsForWali(waliId) {
         photo_url: rawPhoto,
         qrCode: rawQr,
         qr_code: rawQr,
+        initialHalaqah: directHalaqah,
+        initialMuhafiz: directMuhafiz,
+        halaqah: directHalaqah,
+        muhafiz: directMuhafiz,
         program: progIdx !== -1 ? String(studentData[i][progIdx] || "Reguler") : "Reguler",
         status: statusIdx !== -1 ? String(studentData[i][statusIdx] || "Aktif") : "Aktif",
         relationship: relationshipMap[id] || RELATIONSHIP_ENUM.GUARDIAN
@@ -6002,29 +6049,67 @@ function getLinkedStudentsForWali(waliId) {
         }
       }
 
-      // 3. Halaqah & Muhafiz Asli (Data Real)
-      let namaHalaqah = "";
-      let muhafiz = "";
+      // 3. Halaqah & Muhafiz Asli (Multi-Source Matching)
+      let namaHalaqah = student.initialHalaqah || "";
+      let muhafiz = student.initialMuhafiz || "";
+
       if (halaqahData && halaqahData.length > 1) {
-        const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase());
-        const halNameIdx = hHal.indexOf("nama_halaqah");
-        const muhIdx = hHal.indexOf("muhafiz");
-        const stIdsIdx = hHal.indexOf("student_ids");
+        const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
+        const halNameIdx = hHal.indexOf("nama_halaqah") !== -1 ? hHal.indexOf("nama_halaqah") : hHal.indexOf("halaqah");
+        const muhIdx = hHal.indexOf("muhafiz") !== -1 ? hHal.indexOf("muhafiz") : hHal.indexOf("muhafidz");
+        const stIdsIdx = hHal.indexOf("student_ids") !== -1 ? hHal.indexOf("student_ids") : hHal.indexOf("anggota");
+
         for (let h = 1; h < halaqahData.length; h++) {
-          const members = stIdsIdx !== -1 ? String(halaqahData[h][stIdsIdx] || "").split(",").map(m => m.trim()) : [];
-          if (members.includes(cleanId) || members.includes(cleanNis)) {
-            if (halNameIdx !== -1 && halaqahData[h][halNameIdx]) namaHalaqah = String(halaqahData[h][halNameIdx]).trim();
-            if (muhIdx !== -1 && halaqahData[h][muhIdx]) muhafiz = String(halaqahData[h][muhIdx]).trim();
+          const members = stIdsIdx !== -1 ? String(halaqahData[h][stIdsIdx] || "").split(",").map(m => m.trim().toLowerCase()) : [];
+          const cleanIdLower = cleanId.toLowerCase();
+          const cleanNisLower = cleanNis.toLowerCase();
+          const cleanNameLower = String(student.name || "").trim().toLowerCase();
+
+          const isMatch = members.some(m => {
+            if (!m) return false;
+            return m === cleanIdLower || 
+                   m === cleanNisLower || 
+                   (cleanNameLower && m === cleanNameLower) ||
+                   m.replace(/[^a-z0-9]/g, "") === cleanIdLower.replace(/[^a-z0-9]/g, "");
+          });
+
+          if (isMatch) {
+            if (!namaHalaqah && halNameIdx !== -1 && halaqahData[h][halNameIdx]) {
+              namaHalaqah = String(halaqahData[h][halNameIdx]).trim();
+            }
+            if (!muhafiz && muhIdx !== -1 && halaqahData[h][muhIdx]) {
+              muhafiz = String(halaqahData[h][muhIdx]).trim();
+            }
             break;
           }
         }
       }
 
+      // Fallback: Jika muhafiz belum terisi, ambil dari riwayat setoran mutaba'ah terakhir
       if (!muhafiz && lastLog && lastLog.muhafiz) {
         muhafiz = lastLog.muhafiz;
       }
+
+      // Fallback: Jika halaqah belum terisi tapi muhafiz ada, temukan halaqah yang diampu muhafiz
+      if (!namaHalaqah && muhafiz && halaqahData && halaqahData.length > 1) {
+        const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
+        const halNameIdx = hHal.indexOf("nama_halaqah") !== -1 ? hHal.indexOf("nama_halaqah") : hHal.indexOf("halaqah");
+        const muhIdx = hHal.indexOf("muhafiz") !== -1 ? hHal.indexOf("muhafiz") : hHal.indexOf("muhafidz");
+        if (halNameIdx !== -1 && muhIdx !== -1) {
+          for (let h = 1; h < halaqahData.length; h++) {
+            if (String(halaqahData[h][muhIdx] || "").trim().toLowerCase() === muhafiz.toLowerCase()) {
+              namaHalaqah = String(halaqahData[h][halNameIdx] || "").trim();
+              break;
+            }
+          }
+        }
+      }
+
       if (!namaHalaqah) namaHalaqah = "Belum Terplot";
       if (!muhafiz) muhafiz = "Menunggu Jadwal";
+
+      student.halaqah = namaHalaqah;
+      student.muhafiz = muhafiz;
 
       if (maxJuz === 0) maxJuz = 1;
       const percent = Math.min(100, Math.round((maxJuz / 30) * 100));
@@ -7916,6 +8001,65 @@ function getTahfidzStudentDetail(studentId, token) {
     const realBulanTotal = bulanZReal + bulanMReal;
     const bulanPercent = targetBulanTotal > 0 ? Math.min(100, Math.round((realBulanTotal / targetBulanTotal) * 100)) : 0;
 
+    // 6. Ambil Data Halaqah & Muhafiz untuk Siswa Ini
+    let studentHalaqah = student.halaqah || "";
+    let studentMuhafiz = student.muhafiz || "";
+
+    const halaqahSheet = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+    const halaqahData = halaqahSheet ? halaqahSheet.getDataRange().getValues() : null;
+    if (halaqahData && halaqahData.length > 1) {
+      const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
+      const halNameIdx = hHal.indexOf("nama_halaqah") !== -1 ? hHal.indexOf("nama_halaqah") : hHal.indexOf("halaqah");
+      const muhIdx = hHal.indexOf("muhafiz") !== -1 ? hHal.indexOf("muhafiz") : hHal.indexOf("muhafidz");
+      const stIdsIdx = hHal.indexOf("student_ids") !== -1 ? hHal.indexOf("student_ids") : hHal.indexOf("anggota");
+
+      for (let h = 1; h < halaqahData.length; h++) {
+        const members = stIdsIdx !== -1 ? String(halaqahData[h][stIdsIdx] || "").split(",").map(m => m.trim().toLowerCase()) : [];
+        const cleanIdLower = cleanId.toLowerCase();
+        const cleanNisLower = String(student.nis || "").trim().toLowerCase();
+        const cleanNameLower = String(student.name || "").trim().toLowerCase();
+
+        const isMatch = members.some(m => {
+          if (!m) return false;
+          return m === cleanIdLower || 
+                 m === cleanNisLower || 
+                 (cleanNameLower && m === cleanNameLower) ||
+                 m.replace(/[^a-z0-9]/g, "") === cleanIdLower.replace(/[^a-z0-9]/g, "");
+        });
+
+        if (isMatch) {
+          if (!studentHalaqah && halNameIdx !== -1 && halaqahData[h][halNameIdx]) {
+            studentHalaqah = String(halaqahData[h][halNameIdx]).trim();
+          }
+          if (!studentMuhafiz && muhIdx !== -1 && halaqahData[h][muhIdx]) {
+            studentMuhafiz = String(halaqahData[h][muhIdx]).trim();
+          }
+          break;
+        }
+      }
+    }
+
+    if (!studentMuhafiz && riwayat.length > 0 && riwayat[0].muhafiz) {
+      studentMuhafiz = riwayat[0].muhafiz;
+    }
+
+    if (!studentHalaqah && studentMuhafiz && halaqahData && halaqahData.length > 1) {
+      const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
+      const halNameIdx = hHal.indexOf("nama_halaqah") !== -1 ? hHal.indexOf("nama_halaqah") : hHal.indexOf("halaqah");
+      const muhIdx = hHal.indexOf("muhafiz") !== -1 ? hHal.indexOf("muhafiz") : hHal.indexOf("muhafidz");
+      if (halNameIdx !== -1 && muhIdx !== -1) {
+        for (let h = 1; h < halaqahData.length; h++) {
+          if (String(halaqahData[h][muhIdx] || "").trim().toLowerCase() === studentMuhafiz.toLowerCase()) {
+            studentHalaqah = String(halaqahData[h][halNameIdx] || "").trim();
+            break;
+          }
+        }
+      }
+    }
+
+    if (!studentHalaqah) studentHalaqah = "Belum Terplot";
+    if (!studentMuhafiz) studentMuhafiz = "Menunggu Jadwal";
+
     return {
       status: "success",
       success: true,
@@ -7926,8 +8070,12 @@ function getTahfidzStudentDetail(studentId, token) {
         gender: student.gender || "L",
         photoUrl: student.photoUrl || "",
         program: student.program || "Tahfidz",
-        status: student.status || "ACTIVE"
+        status: student.status || "ACTIVE",
+        halaqah: studentHalaqah,
+        muhafiz: studentMuhafiz
       },
+      halaqah: studentHalaqah,
+      muhafiz: studentMuhafiz,
       stats: {
         capaianSaatIni: `Juz ${currentJuz} (${percent}%)`,
         targetCapaian: "30 Juz Mutqin",

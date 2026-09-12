@@ -844,10 +844,12 @@ const ASNIdentity = {
         // Render Kartu Digital Santri (KTS Digital) & Kotak Indikator Tahfidz Terpisah
         listContainer.innerHTML = students.map((s, idx) => {
             let studentPhoto = s.photoUrl || s.photo_url || '';
+            let thumbnailFallback = '';
             if (studentPhoto) {
-                const driveMatch = studentPhoto.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || studentPhoto.match(/id=([a-zA-Z0-9_-]+)/);
+                const driveMatch = studentPhoto.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || studentPhoto.match(/id=([a-zA-Z0-9_-]+)/) || studentPhoto.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 if (driveMatch && driveMatch[1]) {
                     studentPhoto = "https://lh3.googleusercontent.com/d/" + driveMatch[1];
+                    thumbnailFallback = "https://drive.google.com/thumbnail?id=" + driveMatch[1] + "&sz=w400";
                 }
             }
 
@@ -858,8 +860,8 @@ const ASNIdentity = {
             const studentId = s.studentId || s.student_id || s.id || s.nis;
             const cleanId = String(studentId || idx).replace(/[^a-zA-Z0-9_-]/g, '_');
             const tahfidz = s.tahfidzSummary || {};
-            const studentHalaqah = tahfidz.halaqah || 'Belum Terplot';
-            const studentMuhafiz = tahfidz.muhafiz || 'Menunggu Jadwal';
+            const studentHalaqah = s.halaqah || tahfidz.halaqah || 'Belum Terplot';
+            const studentMuhafiz = s.muhafiz || tahfidz.muhafiz || 'Menunggu Jadwal';
             const currentJuz = tahfidz.currentJuz || 1;
             const percent = tahfidz.percent || Math.round((currentJuz / 30) * 100);
             const targetPekan = tahfidz.targetPekan || 10;
@@ -879,30 +881,43 @@ const ASNIdentity = {
 
             return `
             <div class="space-y-3 pb-2">
-                <!-- 1. KOTAK KARTU SANTRI DIGITAL (KTS Digital) -->
-                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-[#064e3b] to-[#042f2e] text-white p-5 border border-emerald-500/40 shadow-xl space-y-4 transition-all duration-300">
-                    <!-- Background Ambient Watermark -->
+                <!-- 1. KOTAK KARTU SANTRI DIGITAL (KTS Digital - Proporsi ID Card Fisik Asli CR80) -->
+                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-[#064e3b] to-[#042f2e] text-white p-4 sm:p-5 border border-emerald-500/40 shadow-xl space-y-3.5 transition-all duration-300">
+                    <!-- Background Ambient Watermark & Ornaments -->
                     <div class="absolute -right-6 -bottom-6 text-emerald-400/5 text-9xl pointer-events-none select-none">
                         <i class="fa-solid fa-kaaba"></i>
                     </div>
                     <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none"></div>
 
-                    <!-- Header Kartu: Logo Header Aplikasi di Kiri, 'Kartu Santri Digital' di Kanan -->
-                    <div class="flex items-center justify-between border-b border-emerald-500/30 pb-3 relative z-10">
-                        <div class="flex items-center space-x-2">
+                    <!-- Header Kartu: Logo Brand di Kiri, QR NIS di Sudut Kanan Atas -->
+                    <div class="flex items-center justify-between border-b border-emerald-500/30 pb-2.5 relative z-10">
+                        <div class="flex items-center space-x-2.5">
                             <img src="assets/img/brand-header.png" alt="PPTQ Asnawiyyah" class="h-7 sm:h-8 w-auto object-contain drop-shadow-sm">
+                            <div class="leading-none border-l border-emerald-400/30 pl-2">
+                                <span class="text-[9px] font-extrabold text-amber-300 tracking-wider block uppercase">KTS Digital</span>
+                                <span class="text-[8px] text-emerald-200/80 block">Madrasah & Tahfidz</span>
+                            </div>
                         </div>
-                        <span class="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider text-emerald-200 bg-white/10 border border-white/20 backdrop-blur-md shadow-sm">
-                            Kartu Santri Digital
-                        </span>
+                        
+                        <!-- QR NIS Interaktif (Pengganti Badge Lama) -->
+                        <button type="button" 
+                            onclick="openStudentQrModal('${escapeHtml(studentNis)}', '${escapeHtml(studentName)}', '${escapeHtml(studentQrCode)}')"
+                            class="group flex flex-col items-center bg-white/95 hover:bg-white p-1 rounded-xl border border-amber-400/60 shadow-md cursor-pointer active:scale-95 transition-all text-slate-900 shrink-0"
+                            title="Ketuk untuk memperbesar QR Code">
+                            <img src="${escapeHtml(studentQrCode)}" alt="QR NIS" class="w-10 h-10 sm:w-11 sm:h-11 rounded-md object-contain bg-white">
+                            <span class="text-[8px] font-extrabold text-emerald-950 flex items-center gap-0.5 mt-0.5 leading-none tracking-tight">
+                                <i class="fa-solid fa-qrcode text-[7px] text-emerald-700"></i> Zoom
+                            </span>
+                        </button>
                     </div>
 
-                    <!-- Profil & Identitas Santri -->
-                    <div class="flex items-start space-x-3.5 relative z-10">
-                        <!-- Frame Foto Santri (Kolom J) -->
-                        <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-md bg-emerald-950 flex items-center justify-center shrink-0 relative">
+                    <!-- Body Kartu: Pasfoto 3x4 di Kiri & Identitas Lengkap di Kanan -->
+                    <div class="flex items-center space-x-3 sm:space-x-4 relative z-10 py-0.5">
+                        <!-- Frame Foto Santri (Format 3x4 Proporsional) -->
+                        <div id="kts-photo-box-${cleanId}" class="w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden border-2 border-amber-400/60 shadow-md bg-emerald-950 flex items-center justify-center shrink-0 relative">
                             ${studentPhoto ? `
-                                <img src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(studentName)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950\\'><i class=\\'fa-solid fa-user-graduate text-2xl\\'></i><span class=\\'text-[9px] mt-1 font-bold text-amber-200\\'>${escapeHtml(initials)}</span></div>';">
+                                <img id="kts-photo-img-${cleanId}" src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(studentName)}" class="w-full h-full object-cover" 
+                                    onerror="if (!this.dataset.triedThumbnail && '${escapeHtml(thumbnailFallback)}') { this.dataset.triedThumbnail='1'; this.src='${escapeHtml(thumbnailFallback)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950\\'><i class=\\'fa-solid fa-user-graduate text-2xl\\'></i><span class=\\'text-[9px] mt-1 font-bold text-amber-200\\'>${escapeHtml(initials)}</span></div>'; }">
                             ` : `
                                 <div class="w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950">
                                     <i class="fa-solid fa-user-graduate text-2xl"></i>
@@ -911,8 +926,8 @@ const ASNIdentity = {
                             `}
                         </div>
 
-                        <!-- Identitas Detail -->
-                        <div class="min-w-0 flex-1 space-y-1">
+                        <!-- Identitas Detail Santri -->
+                        <div class="min-w-0 flex-1 space-y-1 sm:space-y-1.5">
                             <h4 class="text-sm sm:text-base font-extrabold text-white tracking-wide leading-tight line-clamp-2">
                                 ${escapeHtml(studentName)}
                             </h4>
@@ -927,38 +942,32 @@ const ASNIdentity = {
                                 ` : ''}
                             </div>
                             <p class="text-[11px] text-emerald-100/90 font-medium flex items-center gap-1.5 truncate pt-0.5">
-                                <i class="fa-solid fa-book-bookmark text-amber-300 text-[10px]"></i>
+                                <i class="fa-solid fa-book-bookmark text-amber-300 text-[10px] w-3 text-center"></i>
                                 <span>${escapeHtml(studentProgram)}</span>
                             </p>
-                            <p class="text-[10px] text-slate-300/90 flex items-center gap-1.5 truncate">
-                                <i class="fa-solid fa-chalkboard-user text-emerald-400 text-[10px]"></i>
-                                <span>Halaqah: ${escapeHtml(studentHalaqah)}</span>
+                            <p class="text-[10px] text-slate-200 flex items-center gap-1.5 truncate">
+                                <i class="fa-solid fa-chalkboard-user text-emerald-400 text-[10px] w-3 text-center"></i>
+                                <span class="text-emerald-300 font-semibold">Halaqah:</span>
+                                <span id="kts-halaqah-${cleanId}" class="font-bold text-white">${escapeHtml(studentHalaqah)}</span>
                             </p>
-                            <p class="text-[10px] text-slate-300/80 flex items-center gap-1.5 truncate">
-                                <i class="fa-solid fa-user-tie text-emerald-300 text-[10px]"></i>
-                                <span>Muhafiz: ${escapeHtml(studentMuhafiz)}</span>
+                            <p class="text-[10px] text-slate-200 flex items-center gap-1.5 truncate">
+                                <i class="fa-solid fa-user-tie text-amber-300 text-[10px] w-3 text-center"></i>
+                                <span class="text-amber-300 font-semibold">Muhafiz:</span>
+                                <span id="kts-muhafiz-${cleanId}" class="font-bold text-white">${escapeHtml(studentMuhafiz)}</span>
                             </p>
                         </div>
                     </div>
 
-                    <!-- Footer Kartu: QR Code Mini Berbasis NIS (Klik untuk Perbesar) -->
-                    <div class="pt-2 flex items-center justify-between border-t border-emerald-500/25 relative z-10">
-                        <div class="text-[10px] text-emerald-200/90 font-medium flex items-center gap-1.5">
+                    <!-- Footer Kartu: Status Santri Aktif & ID Chip Digital -->
+                    <div class="pt-2 flex items-center justify-between border-t border-emerald-500/25 relative z-10 text-[10px]">
+                        <div class="text-emerald-200/90 font-medium flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span>${escapeHtml(s.status || 'Santri Aktif')}</span>
+                            <span class="font-bold">${escapeHtml(s.status || 'Santri Aktif')}</span>
                         </div>
-                        <button type="button" 
-                            onclick="openStudentQrModal('${escapeHtml(studentNis)}', '${escapeHtml(studentName)}', '${escapeHtml(studentQrCode)}')"
-                            class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-xl border border-white/20 cursor-pointer active:scale-95 transition-all text-left shadow-sm"
-                            title="Ketuk untuk memperbesar QR Code">
-                            <img src="${escapeHtml(studentQrCode)}" alt="QR NIS" class="w-7 h-7 rounded-md bg-white p-0.5 object-contain shrink-0">
-                            <div class="leading-none">
-                                <span class="text-[10px] font-bold text-amber-300 block flex items-center gap-1">
-                                    <i class="fa-solid fa-qrcode text-[9px]"></i> QR NIS
-                                </span>
-                                <span class="text-[8px] text-slate-300">Ketuk perbesar</span>
-                            </div>
-                        </button>
+                        <div class="text-right text-[9px] font-mono text-emerald-300/80 tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-microchip text-amber-300/80"></i>
+                            <span>ID: ${escapeHtml(studentNis)}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1060,6 +1069,36 @@ const ASNIdentity = {
                 const elBar = document.getElementById(`kts-bar-${cleanId}`);
                 if (elBar) elBar.style.width = `${Math.max(4, percent)}%`;
 
+                // Live Hydrate Halaqah & Muhafiz
+                const hName = res.halaqah || (res.student && res.student.halaqah);
+                if (hName && hName !== "Belum Terplot") {
+                    const elHal = document.getElementById(`kts-halaqah-${cleanId}`);
+                    if (elHal) elHal.innerText = hName;
+                }
+                const mName = res.muhafiz || (res.student && res.student.muhafiz);
+                if (mName && mName !== "Menunggu Jadwal") {
+                    const elMuh = document.getElementById(`kts-muhafiz-${cleanId}`);
+                    if (elMuh) elMuh.innerText = mName;
+                }
+
+                // Live Hydrate Foto Santri jika sebelumnya kosong/fallback
+                if (res.student && res.student.photoUrl) {
+                    const elImg = document.getElementById(`kts-photo-img-${cleanId}`);
+                    const photoBox = document.getElementById(`kts-photo-box-${cleanId}`);
+                    let nPhoto = res.student.photoUrl;
+                    const driveMatch = nPhoto.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || nPhoto.match(/id=([a-zA-Z0-9_-]+)/) || nPhoto.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    let fallbackUrl = '';
+                    if (driveMatch && driveMatch[1]) {
+                        nPhoto = "https://lh3.googleusercontent.com/d/" + driveMatch[1];
+                        fallbackUrl = "https://drive.google.com/thumbnail?id=" + driveMatch[1] + "&sz=w400";
+                    }
+                    if (elImg) {
+                        elImg.src = nPhoto;
+                    } else if (photoBox && photoBox.querySelector(".fa-user-graduate")) {
+                        photoBox.innerHTML = `<img id="kts-photo-img-${cleanId}" src="${escapeHtml(nPhoto)}" alt="Santri" class="w-full h-full object-cover" onerror="if (!this.dataset.triedThumbnail && '${escapeHtml(fallbackUrl)}') { this.dataset.triedThumbnail='1'; this.src='${escapeHtml(fallbackUrl)}'; }">`;
+                    }
+                }
+
                 // Update session storage cache
                 try {
                     const raw = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
@@ -1067,14 +1106,20 @@ const ASNIdentity = {
                         const cached = JSON.parse(raw);
                         const targetSt = cached.find(c => String(c.studentId || c.id || c.nis).trim() === String(studentId).trim());
                         if (targetSt) {
+                            if (hName) targetSt.halaqah = hName;
+                            if (mName) targetSt.muhafiz = mName;
+                            if (res.student && res.student.photoUrl) targetSt.photoUrl = res.student.photoUrl;
                             targetSt.tahfidzSummary = {
                                 currentJuz,
                                 percent,
                                 targetPekan,
                                 avgNilai,
+                                halaqah: hName || targetSt.halaqah || "Belum Terplot",
+                                muhafiz: mName || targetSt.muhafiz || "Menunggu Jadwal",
                                 lastSetoran: lastLog ? { surah: lastLog.surah, nilai: lastLog.nilai } : null
                             };
                             sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(cached));
+                            localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(cached));
                         }
                     }
                 } catch (e) {}
