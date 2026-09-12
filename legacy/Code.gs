@@ -4447,11 +4447,14 @@ function setupAuthSystemSheets() {
       Logger.log(`[SCHEMA] Sheet '${sheetName}' berhasil dibuat.`);
     } else {
       // Sheet sudah ada -> cek apakah ada header baru yang belum terpasang atau perlu rename
+      const lastRow = sheet.getLastRow();
       const lastCol = sheet.getLastColumn();
-      if (lastCol === 0) {
+      if (lastCol === 0 || (sheetName === SHEET_USERS && lastRow <= 1)) {
+        sheet.clear();
         sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
         sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
         sheet.setFrozenRows(1);
+        Logger.log(`[SCHEMA] Sheet '${sheetName}' berhasil diselaraskan ke schema standar terpadu.`);
       } else {
         // 1. Auto-rename header nisn -> nis jika ada pada sheet Students
         if (sheetName === SHEET_STUDENTS) {
@@ -4505,10 +4508,122 @@ function setupAuthSystemSheets() {
     }
   });
 
-  // Migrasikan akun-akun lama ke sheet Users jika belum ada
+  // 1. Bersihkan & standardisasi struktur sheet Users (buang kolom lama/duplikat dan rapikan data yang ada)
+  standardizeUsersSheet(ss);
+
+  // 2. Migrasikan akun-akun lama ke sheet Users jika belum ada
   migrateIdentitiesToUsersSheet(ss);
 
   return { status: "success", message: "Tabel autentikasi Phase 2B & Pengasuh terverifikasi dan siap digunakan." };
+}
+
+/**
+ * Trigger manual dari Apps Script Editor untuk merapikan sheet Users
+ */
+function triggerStandardizeUsersSheet() {
+  const ss = getDatabaseSpreadsheet();
+  standardizeUsersSheet(ss);
+  migrateIdentitiesToUsersSheet(ss);
+  Logger.log("Sheet Users berhasil dirapikan ke struktur 9 kolom standar!");
+  return "Sheet Users berhasil dirapikan ke struktur 9 kolom standar!";
+}
+
+/**
+ * Membersihkan dan menstandarisasi sheet Users agar tidak ada kolom menumpuk/duplikat
+ * Mentransfer data lama (ID, Email, Nama, Telepon, Dibuat_Pada) ke format 9 kolom resmi
+ */
+function standardizeUsersSheet(ss) {
+  try {
+    if (!ss) ss = getDatabaseSpreadsheet();
+    if (!ss) return;
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return;
+
+    const data = usersSheet.getDataRange().getValues();
+    if (!data || data.length === 0) return;
+
+    const firstRow = data[0].map(h => String(h || "").trim().toLowerCase());
+    const expectedHeaders = AUTH_SHEET_SCHEMAS[SHEET_USERS];
+
+    // Cek apakah ada kolom lama (seperti 'password', 'metode_login', 'dibuat_pada') atau duplikat 'id' dan 'user_id'
+    const hasOldColumns = firstRow.includes("password") || 
+                          firstRow.includes("metode_login") || 
+                          firstRow.includes("dibuat_pada") || 
+                          (firstRow.includes("id") && firstRow.includes("user_id")) ||
+                          (firstRow.includes("nama") && firstRow.includes("name")) ||
+                          (firstRow.includes("telepon") && firstRow.includes("phone"));
+
+    if (!hasOldColumns && firstRow.length === expectedHeaders.length && firstRow.every((h, idx) => h === expectedHeaders[idx].toLowerCase())) {
+      return; // Sudah rapi dan sesuai standar
+    }
+
+    // Identifikasi indeks kolom dari baris lama
+    const idIdx = firstRow.indexOf("user_id") !== -1 ? firstRow.indexOf("user_id") : firstRow.indexOf("id");
+    const emailIdx = firstRow.indexOf("email");
+    const phoneIdx = firstRow.indexOf("phone") !== -1 ? firstRow.indexOf("phone") : (firstRow.indexOf("telepon") !== -1 ? firstRow.indexOf("telepon") : firstRow.indexOf("no_hp"));
+    const nameIdx = firstRow.indexOf("name") !== -1 ? firstRow.indexOf("name") : firstRow.indexOf("nama");
+    const roleIdx = firstRow.indexOf("role");
+    const photoIdx = firstRow.indexOf("photo_url") !== -1 ? firstRow.indexOf("photo_url") : (firstRow.indexOf("foto_profil") !== -1 ? firstRow.indexOf("foto_profil") : firstRow.indexOf("foto"));
+    const statusIdx = firstRow.indexOf("status");
+    const createdIdx = firstRow.indexOf("created_at") !== -1 ? firstRow.indexOf("created_at") : firstRow.indexOf("dibuat_pada");
+    const lastLoginIdx = firstRow.indexOf("last_login_at");
+
+    const standardizedRows = [];
+    const seenEmails = new Set();
+
+    for (let r = 1; r < data.length; r++) {
+      const email = emailIdx !== -1 ? String(data[r][emailIdx] || "").trim().toLowerCase() : "";
+      const rawId = idIdx !== -1 ? String(data[r][idIdx] || "").trim() : "";
+      if (!email && !rawId) continue;
+      if (email && seenEmails.has(email)) continue;
+
+      const name = nameIdx !== -1 ? String(data[r][nameIdx] || "").trim() : "";
+      const phone = phoneIdx !== -1 ? String(data[r][phoneIdx] || "").trim() : "";
+      const role = roleIdx !== -1 && data[r][roleIdx] ? String(data[r][roleIdx]).trim().toUpperCase() : "ADMIN";
+      const photoUrl = photoIdx !== -1 ? String(data[r][photoIdx] || "").trim() : "";
+      const status = statusIdx !== -1 && data[r][statusIdx] ? String(data[r][statusIdx]).trim().toUpperCase() : "ACTIVE";
+      const createdAt = createdIdx !== -1 && data[r][createdIdx] ? String(data[r][createdIdx]) : new Date().toISOString();
+      const lastLoginAt = lastLoginIdx !== -1 ? String(data[r][lastLoginIdx] || "") : "";
+
+      standardizedRows.push([
+        rawId || ("USR_" + Utilities.getUuid().substring(0, 8)),
+        email,
+        phone,
+        name,
+        role,
+        photoUrl,
+        status,
+        createdAt,
+        lastLoginAt
+      ]);
+
+      if (email) seenEmails.add(email);
+    }
+
+    // Bersihkan seluruh sheet Users dan hapus kolom-kolom berlebih di kanan
+    usersSheet.clear();
+    const maxCols = usersSheet.getMaxColumns();
+    if (maxCols > expectedHeaders.length) {
+      try {
+        usersSheet.deleteColumns(expectedHeaders.length + 1, maxCols - expectedHeaders.length);
+      } catch (delErr) {
+        // Abaikan jika tidak bisa delete columns
+      }
+    }
+
+    // Tulis header 9 kolom standar
+    usersSheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+    usersSheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
+    usersSheet.setFrozenRows(1);
+
+    // Tulis data baris yang telah dirapikan
+    if (standardizedRows.length > 0) {
+      usersSheet.getRange(2, 1, standardizedRows.length, expectedHeaders.length).setValues(standardizedRows);
+    }
+    Logger.log(`[SCHEMA] Sheet 'Users' berhasil dirapikan: ${standardizedRows.length} akun distandardisasi ke 9 kolom resmi.`);
+  } catch (e) {
+    console.error("[STANDARDIZE USERS ERROR]", e);
+  }
 }
 
 /**
@@ -5800,14 +5915,21 @@ function getAllUsersWithLinkedStudents(token) {
     }
 
     const uHeaders = usersData[0].map(h => String(h || "").trim().toLowerCase());
-    const idIdx = uHeaders.indexOf("user_id");
+    let idIdx = uHeaders.indexOf("user_id");
+    if (idIdx === -1) idIdx = uHeaders.indexOf("id");
     const emailIdx = uHeaders.indexOf("email");
-    const phoneIdx = uHeaders.indexOf("phone");
-    const nameIdx = uHeaders.indexOf("name");
+    let phoneIdx = uHeaders.indexOf("phone");
+    if (phoneIdx === -1) phoneIdx = uHeaders.indexOf("telepon");
+    if (phoneIdx === -1) phoneIdx = uHeaders.indexOf("no_hp");
+    let nameIdx = uHeaders.indexOf("name");
+    if (nameIdx === -1) nameIdx = uHeaders.indexOf("nama");
     const roleIdx = uHeaders.indexOf("role");
-    const photoIdx = uHeaders.indexOf("photo_url");
+    let photoIdx = uHeaders.indexOf("photo_url");
+    if (photoIdx === -1) photoIdx = uHeaders.indexOf("foto_profil");
+    if (photoIdx === -1) photoIdx = uHeaders.indexOf("foto");
     const statusIdx = uHeaders.indexOf("status");
-    const createdIdx = uHeaders.indexOf("created_at");
+    let createdIdx = uHeaders.indexOf("created_at");
+    if (createdIdx === -1) createdIdx = uHeaders.indexOf("dibuat_pada");
     const lastLoginIdx = uHeaders.indexOf("last_login_at");
 
     // Ambil mapping santri untuk Wali Santri
@@ -5939,14 +6061,21 @@ function saveAdminUserData(payload, token) {
 
     const usersData = usersSheet.getDataRange().getValues();
     const uHeaders = usersData[0].map(h => String(h || "").trim().toLowerCase());
-    const idIdx = uHeaders.indexOf("user_id");
+    let idIdx = uHeaders.indexOf("user_id");
+    if (idIdx === -1) idIdx = uHeaders.indexOf("id");
     const emailIdx = uHeaders.indexOf("email");
-    const phoneIdx = uHeaders.indexOf("phone");
-    const nameIdx = uHeaders.indexOf("name");
+    let phoneIdx = uHeaders.indexOf("phone");
+    if (phoneIdx === -1) phoneIdx = uHeaders.indexOf("telepon");
+    if (phoneIdx === -1) phoneIdx = uHeaders.indexOf("no_hp");
+    let nameIdx = uHeaders.indexOf("name");
+    if (nameIdx === -1) nameIdx = uHeaders.indexOf("nama");
     const roleIdx = uHeaders.indexOf("role");
-    const photoIdx = uHeaders.indexOf("photo_url");
+    let photoIdx = uHeaders.indexOf("photo_url");
+    if (photoIdx === -1) photoIdx = uHeaders.indexOf("foto_profil");
+    if (photoIdx === -1) photoIdx = uHeaders.indexOf("foto");
     const statusIdx = uHeaders.indexOf("status");
-    const createdIdx = uHeaders.indexOf("created_at");
+    let createdIdx = uHeaders.indexOf("created_at");
+    if (createdIdx === -1) createdIdx = uHeaders.indexOf("dibuat_pada");
 
     let foundRow = -1;
     let actualUserId = targetUserId;
@@ -7577,7 +7706,7 @@ function handleAuthApiAction(action, payload, e) {
           notRegistered: true,
           email: email,
           name: gUser.name,
-          message: `Akun Google (${email}) belum terdaftar pada sistem pesantren. Jika Anda Wali Santri, silakan lakukan Aktivasi Akun terlebih dahulu menggunakan NISN & Tanggal Lahir santri.`,
+          message: `Akun Google (${email}) belum terdaftar pada sistem pesantren. Jika Anda Wali Santri, silakan lakukan Aktivasi Akun terlebih dahulu menggunakan NIS santri.`,
           requestId: requestId
         });
       });
