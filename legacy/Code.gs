@@ -179,6 +179,11 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
+    if (action === "saveTahfidzPlotting" || action === "tahfidz.savePlotting") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveTahfidzPlotting(payload.data || payload, token));
+    }
+
     if (action === "deleteTahfidzHalaqah" || action === "tahfidz.deleteHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       const hId = payload.halaqahId || (payload.data && payload.data.halaqahId) || "";
@@ -6807,6 +6812,11 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
+    if (action === "auth.tahfidz.savePlotting" || action === "tahfidz.savePlotting" || action === "saveTahfidzPlotting") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveTahfidzPlotting(payload.data || payload, token));
+    }
+
     if (action === "auth.tahfidz.deleteHalaqah" || action === "tahfidz.deleteHalaqah" || action === "deleteTahfidzHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       const hId = payload.halaqahId || (payload.data && payload.data.halaqahId) || "";
@@ -7847,6 +7857,69 @@ function saveTahfidzHalaqah(payload, token) {
       status: "error",
       success: false,
       message: "Gagal menyimpan halaqah: " + err.message
+    };
+  }
+}
+
+/**
+ * 7b. Simpan Plotting Santri Binaan ke Halaqah
+ */
+function saveTahfidzPlotting(payload, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const halaqahId = String(payload.halaqahId || payload.halaqah_id || "").trim();
+    if (!halaqahId) throw new Error("ID Halaqah wajib disertakan.");
+
+    let rawList = payload.studentIds || payload.student_ids || [];
+    if (typeof rawList === "string") {
+      rawList = rawList.split(",");
+    }
+    const cleanStudentIds = Array.isArray(rawList) ? rawList.map(s => String(s).trim()).filter(Boolean) : [];
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_HALAQAH, [
+      "halaqah_id", "nama_halaqah", "kategori", "muhafiz", "target_kurikulum", "student_ids", "created_at"
+    ]);
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) throw new Error("Data halaqah tidak ditemukan.");
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("halaqah_id");
+    const stIdsIdx = headers.indexOf("student_ids");
+
+    let foundRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === halaqahId) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    if (foundRow <= 0) throw new Error("Halaqah ID '" + halaqahId + "' tidak ditemukan.");
+
+    sheet.getRange(foundRow, stIdsIdx + 1).setValue(cleanStudentIds.join(","));
+
+    return {
+      status: "success",
+      success: true,
+      halaqahId: halaqahId,
+      totalPlotting: cleanStudentIds.length,
+      message: `Berhasil mengatur ${cleanStudentIds.length} santri binaan ke halaqah.`
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan plotting santri: " + err.message
     };
   }
 }

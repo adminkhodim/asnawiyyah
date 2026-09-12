@@ -1146,6 +1146,268 @@ async function deleteTahfidzHalaqahConfirm(halaqahId, namaHalaqah) {
     }
 }
 
+// ====================================================================
+// PLOTTING SANTRI BINAAN KE HALAQAH
+// ====================================================================
+
+ASNTahfidz.activePlottingHalaqah = null;
+ASNTahfidz.activePlottingStudentIds = [];
+
+/**
+ * Buka modal plotting santri untuk halaqah tertentu
+ */
+function openPlottingSantri(halaqahId) {
+    const modal = document.getElementById('modal-tahfidz-plotting');
+    if (!modal) return;
+
+    const halaqahs = ASNTahfidz.data.halaqahs || [];
+    const halaqah = halaqahs.find(h => h.halaqahId === halaqahId);
+
+    if (!halaqah) {
+        if (typeof showToast === 'function') showToast("⚠️ Data halaqah tidak ditemukan.");
+        return;
+    }
+
+    ASNTahfidz.activePlottingHalaqah = halaqah;
+
+    // Ambil daftar studentIds yang sudah ada di halaqah ini
+    let currentIds = [];
+    if (Array.isArray(halaqah.studentIds) && halaqah.studentIds.length > 0) {
+        currentIds = [...halaqah.studentIds];
+    } else if (Array.isArray(ASNTahfidz.data.students)) {
+        // Fallback cek dari santri yang halaqahnya match
+        currentIds = ASNTahfidz.data.students
+            .filter(st => st.halaqah && st.halaqah.halaqahId === halaqahId)
+            .map(st => st.studentId || st.nis);
+    }
+    ASNTahfidz.activePlottingStudentIds = currentIds.map(id => String(id).trim()).filter(Boolean);
+
+    // Update Header & Info Halaqah
+    const badgeEl = document.getElementById('tahfidz-plotting-badge-halaqah');
+    const infoEl = document.getElementById('tahfidz-plotting-halaqah-info');
+    const muhEl = document.getElementById('tahfidz-plotting-muhafiz');
+    const targetEl = document.getElementById('tahfidz-plotting-target');
+
+    if (badgeEl) badgeEl.innerText = halaqah.namaHalaqah || halaqahId;
+    if (infoEl) infoEl.innerText = `Atur santri binaan untuk ${halaqah.namaHalaqah} (${halaqah.kategori || 'Tahfidz'})`;
+    if (muhEl) muhEl.innerText = halaqah.muhafiz || 'Belum Ditunjuk';
+    if (targetEl) targetEl.innerText = halaqah.targetKurikulum || 'Target Standar';
+
+    // Reset search & filter
+    const searchInp = document.getElementById('tahfidz-plotting-search');
+    const filterGen = document.getElementById('tahfidz-plotting-filter-gender');
+    if (searchInp) searchInp.value = '';
+    if (filterGen) filterGen.value = 'ALL';
+
+    renderTahfidzPlottingLists();
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Tutup modal plotting santri
+ */
+function closeTahfidzPlottingModal() {
+    const modal = document.getElementById('modal-tahfidz-plotting');
+    if (modal) modal.classList.add('hidden');
+    ASNTahfidz.activePlottingHalaqah = null;
+    ASNTahfidz.activePlottingStudentIds = [];
+}
+
+/**
+ * Render daftar santri terplot (enrolled) dan santri yang tersedia (available)
+ */
+function renderTahfidzPlottingLists() {
+    const enrolledContainer = document.getElementById('tahfidz-plotting-enrolled-container');
+    const availableContainer = document.getElementById('tahfidz-plotting-available-container');
+    const countBadge = document.getElementById('tahfidz-plotting-count-badge');
+    const enrolledCountBadge = document.getElementById('tahfidz-plotting-enrolled-count');
+
+    const allStudents = ASNTahfidz.data.students || [];
+    const currentEnrolledIds = new Set(ASNTahfidz.activePlottingStudentIds.map(s => String(s).trim()));
+
+    // Pisahkan enrolled vs available
+    const enrolledStudents = allStudents.filter(st => {
+        const sId = String(st.studentId || "").trim();
+        const sNis = String(st.nis || "").trim();
+        return currentEnrolledIds.has(sId) || currentEnrolledIds.has(sNis);
+    });
+
+    const searchQuery = (document.getElementById('tahfidz-plotting-search')?.value || "").toLowerCase().trim();
+    const genderFilter = (document.getElementById('tahfidz-plotting-filter-gender')?.value || "ALL").toUpperCase();
+
+    const availableStudents = allStudents.filter(st => {
+        const sId = String(st.studentId || "").trim();
+        const sNis = String(st.nis || "").trim();
+        const isAlreadyEnrolled = currentEnrolledIds.has(sId) || currentEnrolledIds.has(sNis);
+        if (isAlreadyEnrolled) return false;
+
+        // Filter search
+        const matchSearch = !searchQuery ||
+            (st.name && st.name.toLowerCase().includes(searchQuery)) ||
+            (st.nis && st.nis.toLowerCase().includes(searchQuery)) ||
+            (st.program && st.program.toLowerCase().includes(searchQuery));
+
+        // Filter gender
+        const matchGender = (genderFilter === 'ALL') || (String(st.gender || 'L').toUpperCase() === genderFilter);
+
+        return matchSearch && matchGender;
+    });
+
+    // Update Counter
+    if (countBadge) countBadge.innerText = `${enrolledStudents.length} Santri Terplot`;
+    if (enrolledCountBadge) enrolledCountBadge.innerText = enrolledStudents.length;
+
+    // 1. Render Enrolled List
+    if (enrolledContainer) {
+        if (enrolledStudents.length === 0) {
+            enrolledContainer.innerHTML = `
+                <div class="py-5 text-center text-xs text-slate-400">
+                    <p>Belum ada santri yang dimasukkan ke halaqah ini.</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Pilih santri dari daftar di bawah untuk menambahkan.</p>
+                </div>
+            `;
+        } else {
+            enrolledContainer.innerHTML = enrolledStudents.map(st => {
+                const sId = st.studentId || st.nis;
+                const initials = (st.name || "S").substring(0, 2).toUpperCase();
+                return `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#15202d] border border-slate-200/80 dark:border-[#283a4e] text-xs">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-lg ${st.gender === 'P' ? 'bg-pink-100 text-pink-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-[10px] shrink-0">
+                            ${initials}
+                        </div>
+                        <div class="min-w-0">
+                            <h5 class="font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h5>
+                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • ${escapeHtml(st.program || 'Tahfidz')}</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeStudentFromPlotting('${sId}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold text-[10px] transition shrink-0 flex items-center gap-1">
+                        <i class="fa-solid fa-user-minus"></i>
+                        <span>Keluarkan</span>
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+    }
+
+    // 2. Render Available List
+    if (availableContainer) {
+        if (availableStudents.length === 0) {
+            availableContainer.innerHTML = `
+                <div class="py-6 text-center text-xs text-slate-400">
+                    <p>Tidak ada santri yang cocok atau semua santri sudah dimasukkan ke halaqah ini.</p>
+                </div>
+            `;
+        } else {
+            availableContainer.innerHTML = availableStudents.map(st => {
+                const sId = st.studentId || st.nis;
+                const initials = (st.name || "S").substring(0, 2).toUpperCase();
+                const curHal = st.halaqah && st.halaqah.namaHalaqah ? st.halaqah.namaHalaqah : null;
+                return `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#15202d] border border-slate-200/80 dark:border-[#283a4e] text-xs hover:border-indigo-300 transition">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-lg ${st.gender === 'P' ? 'bg-pink-100 text-pink-700' : 'bg-indigo-100 text-indigo-700'} flex items-center justify-center font-bold text-[10px] shrink-0">
+                            ${initials}
+                        </div>
+                        <div class="min-w-0">
+                            <h5 class="font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h5>
+                            <p class="text-[10px] text-slate-400 truncate">
+                                NIS: ${escapeHtml(st.nis || '-')} • ${escapeHtml(st.program || 'Tahfidz')}
+                                ${curHal ? ` • <span class="text-amber-600 dark:text-amber-400 font-semibold">(Saat ini: ${escapeHtml(curHal)})</span>` : ''}
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addStudentToPlotting('${sId}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-[10px] transition shrink-0 flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>+ Masukkan</span>
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
+/**
+ * Masukkan santri ke list halaqah
+ */
+function addStudentToPlotting(studentId) {
+    const cleanId = String(studentId || "").trim();
+    if (!cleanId) return;
+
+    if (!ASNTahfidz.activePlottingStudentIds.includes(cleanId)) {
+        ASNTahfidz.activePlottingStudentIds.push(cleanId);
+        renderTahfidzPlottingLists();
+    }
+}
+
+/**
+ * Keluarkan santri dari list halaqah
+ */
+function removeStudentFromPlotting(studentId) {
+    const cleanId = String(studentId || "").trim();
+    if (!cleanId) return;
+
+    ASNTahfidz.activePlottingStudentIds = ASNTahfidz.activePlottingStudentIds.filter(id => id !== cleanId);
+    renderTahfidzPlottingLists();
+}
+
+/**
+ * Filter list santri yang tersedia saat mengetik pencarian
+ */
+function filterTahfidzPlottingAvailableList() {
+    renderTahfidzPlottingLists();
+}
+
+/**
+ * Simpan Plotting Santri ke Backend
+ */
+async function submitTahfidzPlotting() {
+    if (!ASNTahfidz.activePlottingHalaqah) return;
+
+    const halaqahId = ASNTahfidz.activePlottingHalaqah.halaqahId;
+    const studentIds = ASNTahfidz.activePlottingStudentIds || [];
+
+    const btnSubmit = document.getElementById('btn-save-tahfidz-plotting');
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+    }
+
+    try {
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const res = await apiPost("saveTahfidzPlotting", {
+            token,
+            halaqahId: halaqahId,
+            studentIds: studentIds
+        });
+
+        if (res && (res.success || res.status === "success")) {
+            if (typeof showToast === 'function') {
+                showToast(`✅ Berhasil mengatur ${studentIds.length} santri binaan ke halaqah!`);
+            }
+            closeTahfidzPlottingModal();
+            await loadAdminTahfidzData();
+            renderTahfidzHalaqahCards();
+        } else {
+            if (typeof showToast === 'function') {
+                showToast("❌ Gagal menyimpan plotting: " + ((res && res.message) || "Terjadi kesalahan"));
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        if (typeof showToast === 'function') {
+            showToast("❌ Terjadi kendala jaringan saat menyimpan plotting.");
+        }
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Plotting Santri`;
+        }
+    }
+}
+
 /**
  * Tambah halaqah baru
  */
@@ -1319,4 +1581,10 @@ window.printTahfidzRekap = printTahfidzRekap;
 window.exportTahfidzDataCSV = exportTahfidzDataCSV;
 window.openTahfidzPengasuhView = openTahfidzPengasuhView;
 window.deleteTahfidzHalaqahConfirm = deleteTahfidzHalaqahConfirm;
+window.openPlottingSantri = openPlottingSantri;
+window.closeTahfidzPlottingModal = closeTahfidzPlottingModal;
+window.addStudentToPlotting = addStudentToPlotting;
+window.removeStudentFromPlotting = removeStudentFromPlotting;
+window.filterTahfidzPlottingAvailableList = filterTahfidzPlottingAvailableList;
+window.submitTahfidzPlotting = submitTahfidzPlotting;
 

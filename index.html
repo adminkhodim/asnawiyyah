@@ -6772,6 +6772,104 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL 5: PLOTTING SANTRI BINAAN KE HALAQAH ==================== -->
+    <div id="modal-tahfidz-plotting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid fa-users-viewfinder"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <span>Plotting Santri Binaan</span>
+                            <span id="tahfidz-plotting-badge-halaqah" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">-</span>
+                        </h3>
+                        <p id="tahfidz-plotting-halaqah-info" class="text-[10px] text-slate-400">Pilih dan tentukan santri binaan yang tergabung dalam halaqah ini</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTahfidzPlottingModal()" class="w-8 h-8 rounded-full bg-slate-200/60 dark:bg-slate-700 hover:bg-slate-300 text-slate-500 dark:text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-4 md:p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                <!-- Info Ringkas Halaqah -->
+                <div class="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-2">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Ustadz Muhafiz Pembina:</span>
+                        <div id="tahfidz-plotting-muhafiz" class="font-bold text-slate-800 dark:text-slate-100 text-xs">-</div>
+                    </div>
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Target Kurikulum:</span>
+                        <div id="tahfidz-plotting-target" class="font-semibold text-slate-700 dark:text-slate-300 text-xs">-</div>
+                    </div>
+                    <div class="space-y-0.5 text-right">
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Total Santri:</span>
+                        <div id="tahfidz-plotting-count-badge" class="font-extrabold text-emerald-700 dark:text-emerald-300 text-xs">0 Santri Terplot</div>
+                    </div>
+                </div>
+
+                <!-- Bagian 1: Santri Saat Ini di Halaqah Ini -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5 uppercase">
+                            <i class="fa-solid fa-user-check text-emerald-600"></i>
+                            <span>Santri Terdaftar di Halaqah Ini (<span id="tahfidz-plotting-enrolled-count">0</span>)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400">Klik tombol hapus untuk mengeluarkan santri</span>
+                    </div>
+                    <div id="tahfidz-plotting-enrolled-container" class="max-h-48 overflow-y-auto space-y-1.5 p-2 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] custom-scrollbar">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Bagian 2: Tambah Santri Lain ke Halaqah -->
+                <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-[#283a4e]">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5 uppercase">
+                            <i class="fa-solid fa-user-plus text-indigo-600"></i>
+                            <span>Tambah Santri Lain ke Halaqah Ini</span>
+                        </span>
+                    </div>
+
+                    <!-- Search & Filter Santri yang Tersedia -->
+                    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="tahfidz-plotting-search" oninput="filterTahfidzPlottingAvailableList()" placeholder="Cari santri berdasarkan Nama atau NIS..." class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs outline-none">
+                        </div>
+                        <select id="tahfidz-plotting-filter-gender" onchange="filterTahfidzPlottingAvailableList()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs font-semibold outline-none">
+                            <option value="ALL">Semua Gender</option>
+                            <option value="L">Putra (L)</option>
+                            <option value="P">Putri (P)</option>
+                        </select>
+                    </div>
+
+                    <div id="tahfidz-plotting-available-container" class="max-h-56 overflow-y-auto space-y-1.5 p-2 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] custom-scrollbar">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
+                <span id="tahfidz-plotting-status-text" class="text-[11px] text-slate-500 font-semibold">Pastikan klik Simpan setelah mengatur santri</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeTahfidzPlottingModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="button" id="btn-save-tahfidz-plotting" onclick="submitTahfidzPlotting()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Plotting Santri</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== MODAL DETAIL PENDAFTAR PPDB ==================== -->
     <div id="adminPPDBDetailModal"
         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
