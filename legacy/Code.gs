@@ -202,12 +202,12 @@ function doPost(e) {
 
     if (action === "saveTahfidzSesi" || action === "tahfidz.saveSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
-      return createJsonResponse(saveTahfidzSesi(payload.data || payload, token));
+      return createJsonResponse(saveTahfidzSesi(payload.data || payload.sesi || payload, token));
     }
 
     if (action === "deleteTahfidzSesi" || action === "tahfidz.deleteSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
-      const sId = payload.sesiId || (payload.data && payload.data.sesiId) || "";
+      const sId = payload.sesiId || payload.id || (payload.data && (payload.data.sesiId || payload.data.id)) || "";
       return createJsonResponse(deleteTahfidzSesi(sId, token));
     }
 
@@ -1111,6 +1111,16 @@ function doGet(e) {
       return createJsonResponse(
         getTahfidzStudentDetail(studentId, token)
       );
+    }
+
+    if (action === "getTahfidzSesiList" || action === "tahfidz.getSesi") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getTahfidzSesiList(token));
+    }
+
+    if (action === "getTahfidzHalaqahList" || action === "tahfidz.getHalaqah") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getTahfidzHalaqahList(token));
     }
 
     if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
@@ -8124,7 +8134,8 @@ function saveTahfidzSesi(payload, token) {
       }
     }
 
-    const namaSesi = String(payload.namaSesi || payload.nama_sesi || "").trim();
+    const p = (payload && (payload.sesi || payload.data)) ? (payload.sesi || payload.data) : (payload || {});
+    const namaSesi = String(p.namaSesi || p.nama_sesi || p.nama || "").trim();
     if (!namaSesi) throw new Error("Nama sesi wajib diisi.");
 
     const ss = getDatabaseSpreadsheet();
@@ -8132,12 +8143,14 @@ function saveTahfidzSesi(payload, token) {
       "sesi_id", "nama_sesi", "jenis_sesi", "status", "jam_mulai", "jam_selesai", "hari_list", "created_at"
     ], "#4f46e5");
 
-    const sesiId = payload.sesiId || payload.sesi_id || ("SESI-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd-HHmm"));
-    const jenisSesi = String(payload.jenisSesi || payload.jenis_sesi || "Ziyadah (Setoran Hafalan Baru)").trim();
-    const status = String(payload.status || "Aktif Digunakan").trim();
-    const jamMulai = String(payload.jamMulai || payload.jam_mulai || "05:00").trim();
-    const jamSelesai = String(payload.jamSelesai || payload.jam_selesai || "06:30").trim();
-    const hariList = Array.isArray(payload.hariList) ? payload.hariList.join(",") : String(payload.hariList || "Sen,Sel,Rab,Kam,Sab");
+    const rawId = String(p.sesiId || p.sesi_id || p.id || "").trim();
+    const sesiId = rawId || ("SESI-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd-HHmm"));
+    const jenisSesi = String(p.jenisSesi || p.jenis_sesi || p.jenis || "Ziyadah (Setoran Hafalan Baru)").trim();
+    const status = String(p.status || "Aktif Digunakan").trim();
+    const jamMulai = String(p.jamMulai || p.jam_mulai || "05:00").trim();
+    const jamSelesai = String(p.jamSelesai || p.jam_selesai || "06:30").trim();
+    const rawHari = p.hariList || p.hari || "Sen,Sel,Rab,Kam,Sab";
+    const hariList = Array.isArray(rawHari) ? rawHari.join(",") : String(rawHari);
     const createdAt = new Date().toISOString();
 
     const data = sheet.getDataRange().getValues();
@@ -8145,10 +8158,12 @@ function saveTahfidzSesi(payload, token) {
     const idIdx = headers.indexOf("sesi_id");
     let foundRow = -1;
 
-    for (let i = 1; i < data.length; i++) {
-      if (String(data[i][idIdx] || "").trim() === sesiId) {
-        foundRow = i + 1;
-        break;
+    if (rawId && idIdx >= 0) {
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idIdx] || "").trim() === rawId) {
+          foundRow = i + 1;
+          break;
+        }
       }
     }
 
@@ -8189,7 +8204,7 @@ function deleteTahfidzSesi(sesiId, token) {
       }
     }
 
-    const cleanId = String(sesiId || "").trim();
+    const cleanId = String((typeof sesiId === 'object' && sesiId ? (sesiId.sesiId || sesiId.id) : sesiId) || "").trim();
     if (!cleanId) throw new Error("ID Sesi wajib diisi.");
 
     const ss = getDatabaseSpreadsheet();
@@ -8203,10 +8218,12 @@ function deleteTahfidzSesi(sesiId, token) {
     const idIdx = headers.indexOf("sesi_id");
     let foundRow = -1;
 
-    for (let i = 1; i < data.length; i++) {
-      if (String(data[i][idIdx] || "").trim() === cleanId) {
-        foundRow = i + 1;
-        break;
+    if (idIdx >= 0) {
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idIdx] || "").trim() === cleanId) {
+          foundRow = i + 1;
+          break;
+        }
       }
     }
 

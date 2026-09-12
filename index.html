@@ -6338,9 +6338,22 @@
 
             <!-- Modal Content Body -->
             <div id="tahfidz-detail-content" class="p-4 sm:p-5 overflow-y-auto space-y-4 custom-scrollbar flex-1 text-xs">
-                <!-- 4 Strip Stat Cards (Matches Screenshot 5) -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                <!-- Loader State (Non-destructive) -->
+                <div id="tahfidz-detail-loader" class="py-16 text-center space-y-2 hidden">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-600"></i>
+                    <p class="text-xs text-slate-400 font-bold">Memuat rapor mutaba'ah santri...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="tahfidz-detail-error" class="p-6 text-center text-rose-600 text-xs hidden">
+                    <p id="tahfidz-detail-error-text">Gagal memuat detail santri.</p>
+                </div>
+
+                <!-- Main Details Body Container (Preserved) -->
+                <div id="tahfidz-detail-body" class="space-y-4">
+                    <!-- 4 Strip Stat Cards (Matches Screenshot 5) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
                         <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CAPAIAN SAAT INI</span>
                         <div id="tahfidz-detail-stat-capaian" class="text-sm font-black text-emerald-600 dark:text-emerald-400">Juz 1 <span class="text-xs font-bold text-slate-400">(3%)</span></div>
                     </div>
@@ -6537,6 +6550,7 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -7038,9 +7052,12 @@
                             </div>
                         </div>
 
-                        <div class="flex justify-end pt-1">
+                        <div class="flex justify-end items-center gap-2 pt-1">
+                            <button type="button" id="btn-cancel-sesi" onclick="resetTahfidzSesiForm()" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition hidden">
+                                Batal Edit
+                            </button>
                             <button type="submit" id="btn-submit-sesi" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
-                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <i id="btn-submit-sesi-icon" class="fa-solid fa-plus text-[10px]"></i>
                                 <span id="btn-submit-sesi-text">Simpan Sesi</span>
                             </button>
                         </div>

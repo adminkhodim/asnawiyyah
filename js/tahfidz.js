@@ -721,14 +721,35 @@ async function openTahfidzStudentDetail(studentId) {
     ASNTahfidz.detailActiveTab = 1;
     switchTahfidzDetailTab(1);
 
-    const container = document.getElementById('tahfidz-detail-content');
-    if (container) {
-        container.innerHTML = `
-        <div class="py-16 text-center space-y-2">
-            <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-600"></i>
-            <p class="text-xs text-slate-400 font-bold">Memuat rapor mutaba'ah santri...</p>
-        </div>
-        `;
+    const loader = document.getElementById('tahfidz-detail-loader');
+    const errorBox = document.getElementById('tahfidz-detail-error');
+    const errorText = document.getElementById('tahfidz-detail-error-text');
+    const bodyBox = document.getElementById('tahfidz-detail-body');
+
+    if (loader) loader.classList.remove('hidden');
+    if (errorBox) errorBox.classList.add('hidden');
+    if (bodyBox) bodyBox.classList.add('hidden');
+
+    // Pre-populate student header if available in memory for instant feedback
+    const existingStudent = (ASNTahfidz.data.students || []).find(s => {
+        const sId = String(s.studentId || s.student_id || s.id || '').trim();
+        const sNis = String(s.nis || '').trim();
+        const targetId = String(studentId || '').trim();
+        return sId === targetId || sNis === targetId;
+    });
+
+    if (existingStudent) {
+        const elName = document.getElementById('tahfidz-detail-name');
+        const elNis = document.getElementById('tahfidz-detail-nis');
+        const elAvatar = document.getElementById('tahfidz-detail-avatar');
+        const halaqahName = existingStudent.halaqah?.namaHalaqah || existingStudent.halaqah || 'Halaqah Utama';
+
+        if (elName) elName.innerText = existingStudent.name || "Santri";
+        if (elNis) elNis.innerText = `NIS: ${existingStudent.nis || '-'} • Bil Hifdhi • ${escapeHtml(halaqahName)}`;
+        if (elAvatar) {
+            const initials = (existingStudent.name || 'Santri').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+            elAvatar.innerHTML = existingStudent.photoUrl ? `<img src="${escapeHtml(existingStudent.photoUrl)}" class="w-full h-full object-cover rounded-2xl">` : initials;
+        }
     }
 
     try {
@@ -737,18 +758,24 @@ async function openTahfidzStudentDetail(studentId) {
 
         if (response && (response.success || response.status === "success")) {
             ASNTahfidz.activeStudentDetail = response;
+            if (loader) loader.classList.add('hidden');
+            if (errorBox) errorBox.classList.add('hidden');
+            if (bodyBox) bodyBox.classList.remove('hidden');
             renderTahfidzStudentDetailView();
         } else {
-            if (container) {
-                container.innerHTML = `
-                <div class="p-6 text-center text-rose-600 text-xs">
-                    Gagal memuat detail: ${response?.message || 'Data tidak ditemukan'}
-                </div>
-                `;
+            if (loader) loader.classList.add('hidden');
+            if (errorBox) {
+                errorBox.classList.remove('hidden');
+                if (errorText) errorText.innerText = `Gagal memuat detail: ${response?.message || 'Data tidak ditemukan'}`;
             }
         }
     } catch (err) {
         console.error("Gagal load detail santri:", err);
+        if (loader) loader.classList.add('hidden');
+        if (errorBox) {
+            errorBox.classList.remove('hidden');
+            if (errorText) errorText.innerText = `Terjadi kendala saat memuat data santri: ${err.message || err}`;
+        }
     }
 }
 
@@ -1614,7 +1641,36 @@ function renderTahfidzMatriksBeban() {
  */
 
 /**
- * Render daftar kartu sesi waktu aktif
+ * Reset form jadwal sesi waktu
+ */
+function resetTahfidzSesiForm() {
+    const idInput = document.getElementById('input-sesi-id');
+    const namaInput = document.getElementById('input-sesi-nama');
+    const tipeInput = document.getElementById('input-sesi-tipe');
+    const statusInput = document.getElementById('input-sesi-status');
+    const jamMulaiInput = document.getElementById('input-sesi-jam-mulai');
+    const jamSelesaiInput = document.getElementById('input-sesi-jam-selesai');
+    const btnText = document.getElementById('btn-submit-sesi-text');
+    const btnIcon = document.getElementById('btn-submit-sesi-icon');
+    const btnCancel = document.getElementById('btn-cancel-sesi');
+
+    if (idInput) idInput.value = '';
+    if (namaInput) namaInput.value = '';
+    if (tipeInput) tipeInput.value = 'Ziyadah (Setoran Hafalan Baru)';
+    if (statusInput) statusInput.value = 'Aktif Digunakan';
+    if (jamMulaiInput) jamMulaiInput.value = '05:15';
+    if (jamSelesaiInput) jamSelesaiInput.value = '06:30';
+    if (btnText) btnText.innerText = "Simpan Sesi";
+    if (btnIcon) btnIcon.className = "fa-solid fa-plus text-[10px]";
+    if (btnCancel) btnCancel.classList.add('hidden');
+
+    document.querySelectorAll('input[name="sesi-hari"]').forEach(chk => {
+        chk.checked = ['Sen', 'Sel', 'Rab', 'Kam', 'Sab', 'Min'].includes(chk.value);
+    });
+}
+
+/**
+ * Render daftar kartu sesi waktu aktif (Daftar Jadwal Sesi Waktu Aktif Tenant)
  */
 function renderTahfidzSesiCards() {
     const container = document.getElementById('tahfidz-sesi-cards-container');
@@ -1626,10 +1682,10 @@ function renderTahfidzSesiCards() {
     // Default sesi jika belum ada di database
     if (!sesiList || sesiList.length === 0) {
         sesiList = [
-            { id: "SESI-01", nama: "Pagi (Ba'da Subuh)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:00", hari: ["Sen", "Rab", "Kam", "Sab", "Min"], status: "Aktif Digunakan" },
-            { id: "SESI-02", nama: "Pagi (MA Tahfidz)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "08:30", jamSelesai: "09:30", hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
-            { id: "SESI-03", nama: "Sore (Ba'da Ashar)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "16:00", jamSelesai: "17:15", hari: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], status: "Aktif Digunakan" },
-            { id: "SESI-04", nama: "Malam (Ba'da Maghrib / Isya)", jenis: "Muroja'ah & Tasmi'", jamMulai: "18:45", jamSelesai: "20:30", hari: ["Sen", "Sel", "Rab", "Kam", "Min"], status: "Aktif Digunakan" }
+            { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:00", hariList: ["Sen", "Rab", "Kam", "Sab", "Min"], hari: ["Sen", "Rab", "Kam", "Sab", "Min"], status: "Aktif Digunakan" },
+            { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+            { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], status: "Aktif Digunakan" },
+            { sesiId: "SESI-04", id: "SESI-04", namaSesi: "Malam (Ba'da Maghrib / Isya)", nama: "Malam (Ba'da Maghrib / Isya)", jenisSesi: "Muroja'ah & Tasmi'", jenis: "Muroja'ah & Tasmi'", jamMulai: "18:45", jamSelesai: "20:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Min"], hari: ["Sen", "Sel", "Rab", "Kam", "Min"], status: "Aktif Digunakan" }
         ];
     }
 
@@ -1637,10 +1693,14 @@ function renderTahfidzSesiCards() {
     if (badgeCount) badgeCount.innerText = `${activeCount} Sesi Aktif (${sesiList.length} Total)`;
 
     container.innerHTML = sesiList.map((s, idx) => {
+        const id = s.sesiId || s.id || `SESI-0${idx + 1}`;
+        const nama = s.namaSesi || s.nama || 'Sesi';
+        const jenis = s.jenisSesi || s.jenis || 'Ziyadah';
         const isAktif = (s.status || '').includes('Aktif');
-        const hariList = Array.isArray(s.hari) ? s.hari : String(s.hari || '').split(',').map(h => h.trim()).filter(Boolean);
+        const rawHari = s.hariList || s.hari || [];
+        const hariList = Array.isArray(rawHari) ? rawHari : String(rawHari).split(',').map(h => h.trim()).filter(Boolean);
         const hariStr = hariList.join(', ');
-        const iconSesi = s.jenis?.includes('Ziyadah') ? 'fa-book-open text-emerald-600' : (s.jenis?.includes('Muroja') ? 'fa-clock-rotate-left text-amber-600' : 'fa-certificate text-purple-600');
+        const iconSesi = jenis.includes('Ziyadah') ? 'fa-book-open text-emerald-600' : (jenis.includes('Muroja') ? 'fa-clock-rotate-left text-amber-600' : 'fa-certificate text-purple-600');
 
         return `
         <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-2 relative group">
@@ -1649,16 +1709,16 @@ function renderTahfidzSesiCards() {
                     <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#283a4e]">
                         SESI 0${idx + 1}
                     </span>
-                    <h5 class="font-black text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(s.nama)}</h5>
+                    <h5 class="font-black text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(nama)}</h5>
                 </div>
                 <div class="flex items-center space-x-1.5">
                     <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold ${isAktif ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-200 text-slate-600'}">
                         ${isAktif ? 'Aktif' : 'Nonaktif'}
                     </span>
-                    <button type="button" onclick="editTahfidzSesi('${s.id}')" class="w-6 h-6 rounded-lg bg-white dark:bg-[#15202d] hover:bg-slate-100 text-slate-500 hover:text-emerald-600 flex items-center justify-center text-[10px] shadow-sm transition" title="Edit Sesi">
+                    <button type="button" onclick="editTahfidzSesi('${escapeHtml(id)}')" class="w-6 h-6 rounded-lg bg-white dark:bg-[#15202d] hover:bg-slate-100 text-slate-500 hover:text-emerald-600 flex items-center justify-center text-[10px] shadow-sm transition" title="Edit Sesi">
                         <i class="fa-solid fa-pencil"></i>
                     </button>
-                    <button type="button" onclick="deleteTahfidzSesiConfirm('${s.id}', '${escapeHtml(s.nama)}')" class="w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center text-[10px] transition" title="Hapus Sesi">
+                    <button type="button" onclick="deleteTahfidzSesiConfirm('${escapeHtml(id)}', '${escapeHtml(nama)}')" class="w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center text-[10px] transition" title="Hapus Sesi">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
@@ -1667,7 +1727,7 @@ function renderTahfidzSesiCards() {
                 <i class="fa-solid ${iconSesi}"></i>
                 <span class="font-bold">${escapeHtml(s.jamMulai || '05:00')} - ${escapeHtml(s.jamSelesai || '06:00')} WIB</span>
                 <span class="text-slate-400">•</span>
-                <span class="text-slate-500 dark:text-slate-400 font-semibold truncate">${escapeHtml(s.jenis || 'Ziyadah')}</span>
+                <span class="text-slate-500 dark:text-slate-400 font-semibold truncate">${escapeHtml(jenis)}</span>
             </div>
             <div class="pt-1.5 border-t border-slate-200/60 dark:border-[#283a4e] text-[10px] text-slate-400 flex items-center gap-1.5">
                 <span class="font-bold text-slate-600 dark:text-slate-300">Hari:</span>
@@ -1702,13 +1762,20 @@ async function submitTahfidzSesi(e) {
         selectedHari.push(chk.value);
     });
 
+    const isEdit = Boolean(idInput && idInput.value);
+    const existingId = idInput?.value || '';
+
     const payload = {
-        id: idInput ? idInput.value : '',
+        sesiId: existingId,
+        id: existingId,
+        namaSesi: nama,
         nama: nama,
+        jenisSesi: tipeInput ? tipeInput.value : 'Ziyadah (Setoran Hafalan Baru)',
         jenis: tipeInput ? tipeInput.value : 'Ziyadah (Setoran Hafalan Baru)',
         status: statusInput ? statusInput.value : 'Aktif Digunakan',
         jamMulai: jamMulaiInput ? jamMulaiInput.value : '05:15',
         jamSelesai: jamSelesaiInput ? jamSelesaiInput.value : '06:30',
+        hariList: selectedHari,
         hari: selectedHari
     };
 
@@ -1719,25 +1786,36 @@ async function submitTahfidzSesi(e) {
 
     try {
         const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
-        const res = await apiPost("saveTahfidzSesi", { token, sesi: payload });
+        const res = await apiPost("saveTahfidzSesi", { token, sesi: payload, data: payload, ...payload });
 
         if (res && (res.success || res.status === "success")) {
-            if (typeof showToast === 'function') showToast("✅ Jadwal sesi berhasil disimpan!");
-            // Reset form
-            if (idInput) idInput.value = '';
-            if (namaInput) namaInput.value = '';
-            if (btnText) btnText.innerText = "Simpan Sesi";
-            await loadAdminTahfidzData();
+            if (typeof showToast === 'function') showToast(isEdit ? "✅ Jadwal sesi berhasil diperbarui!" : "✅ Jadwal sesi baru berhasil disimpan!");
+            
+            // Optimistically update local state
+            if (!ASNTahfidz.data.sesiList) ASNTahfidz.data.sesiList = [];
+            const savedId = res.sesiId || payload.sesiId || ("SESI-" + Date.now());
+            payload.sesiId = savedId;
+            payload.id = savedId;
+
+            const idx = ASNTahfidz.data.sesiList.findIndex(s => (s.sesiId || s.id) === savedId);
+            if (idx >= 0) {
+                ASNTahfidz.data.sesiList[idx] = payload;
+            } else {
+                ASNTahfidz.data.sesiList.push(payload);
+            }
+
+            resetTahfidzSesiForm();
             renderTahfidzSesiCards();
+            loadAdminTahfidzData();
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal menyimpan sesi: " + ((res && res.message) || "Terjadi kesalahan"));
         }
     } catch (err) {
         console.error(err);
-        if (typeof showToast === 'function') showToast("❌ Terjadi kendala saat menyimpan jadwal sesi.");
+        if (typeof showToast === 'function') showToast("❌ Terjadi kendala saat menyimpan jadwal sesi: " + (err.message || err));
     } finally {
         if (btn) btn.disabled = false;
-        if (btnText) btnText.innerText = idInput?.value ? "Update Sesi" : "Simpan Sesi";
+        if (btnText && (!idInput || !idInput.value)) btnText.innerText = "Simpan Sesi";
     }
 }
 
@@ -1746,8 +1824,11 @@ async function submitTahfidzSesi(e) {
  */
 function editTahfidzSesi(sesiId) {
     const sesiList = ASNTahfidz.data.sesiList || [];
-    const sesi = sesiList.find(s => s.id === sesiId);
-    if (!sesi) return;
+    const sesi = sesiList.find(s => (s.sesiId || s.id) === sesiId);
+    if (!sesi) {
+        if (typeof showToast === 'function') showToast("⚠️ Data sesi tidak ditemukan.");
+        return;
+    }
 
     const idInput = document.getElementById('input-sesi-id');
     const namaInput = document.getElementById('input-sesi-nama');
@@ -1756,16 +1837,28 @@ function editTahfidzSesi(sesiId) {
     const jamMulaiInput = document.getElementById('input-sesi-jam-mulai');
     const jamSelesaiInput = document.getElementById('input-sesi-jam-selesai');
     const btnText = document.getElementById('btn-submit-sesi-text');
+    const btnIcon = document.getElementById('btn-submit-sesi-icon');
+    const btnCancel = document.getElementById('btn-cancel-sesi');
 
-    if (idInput) idInput.value = sesi.id;
-    if (namaInput) namaInput.value = sesi.nama;
-    if (tipeInput && sesi.jenis) tipeInput.value = sesi.jenis;
-    if (statusInput && sesi.status) statusInput.value = sesi.status;
-    if (jamMulaiInput && sesi.jamMulai) jamMulaiInput.value = sesi.jamMulai;
-    if (jamSelesaiInput && sesi.jamSelesai) jamSelesaiInput.value = sesi.jamSelesai;
+    const id = sesi.sesiId || sesi.id || '';
+    const nama = sesi.namaSesi || sesi.nama || '';
+    const jenis = sesi.jenisSesi || sesi.jenis || '';
+    const status = sesi.status || 'Aktif Digunakan';
+    const jamMulai = sesi.jamMulai || '05:15';
+    const jamSelesai = sesi.jamSelesai || '06:30';
+
+    if (idInput) idInput.value = id;
+    if (namaInput) namaInput.value = nama;
+    if (tipeInput && jenis) tipeInput.value = jenis;
+    if (statusInput && status) statusInput.value = status;
+    if (jamMulaiInput && jamMulai) jamMulaiInput.value = jamMulai;
+    if (jamSelesaiInput && jamSelesai) jamSelesaiInput.value = jamSelesai;
     if (btnText) btnText.innerText = "Update Sesi";
+    if (btnIcon) btnIcon.className = "fa-solid fa-pen-to-square text-[10px]";
+    if (btnCancel) btnCancel.classList.remove('hidden');
 
-    const hariList = Array.isArray(sesi.hari) ? sesi.hari : String(sesi.hari || '').split(',').map(h => h.trim());
+    const rawHari = sesi.hariList || sesi.hari || [];
+    const hariList = Array.isArray(rawHari) ? rawHari : String(rawHari).split(',').map(h => h.trim());
     document.querySelectorAll('input[name="sesi-hari"]').forEach(chk => {
         chk.checked = hariList.includes(chk.value);
     });
@@ -1782,12 +1875,16 @@ async function deleteTahfidzSesiConfirm(sesiId, namaSesi) {
 
     try {
         const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
-        const res = await apiPost("deleteTahfidzSesi", { token, sesiId });
+        const res = await apiPost("deleteTahfidzSesi", { token, sesiId, id: sesiId });
 
         if (res && (res.success || res.status === "success")) {
             if (typeof showToast === 'function') showToast("🗑️ Jadwal sesi berhasil dihapus.");
-            await loadAdminTahfidzData();
+            if (ASNTahfidz.data.sesiList) {
+                ASNTahfidz.data.sesiList = ASNTahfidz.data.sesiList.filter(s => (s.sesiId || s.id) !== sesiId);
+            }
+            resetTahfidzSesiForm();
             renderTahfidzSesiCards();
+            loadAdminTahfidzData();
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal menghapus sesi: " + ((res && res.message) || "Terjadi kesalahan"));
         }
@@ -2031,5 +2128,6 @@ window.addStudentToPlotting = addStudentToPlotting;
 window.removeStudentFromPlotting = removeStudentFromPlotting;
 window.filterTahfidzPlottingAvailableList = filterTahfidzPlottingAvailableList;
 window.submitTahfidzPlotting = submitTahfidzPlotting;
+window.resetTahfidzSesiForm = resetTahfidzSesiForm;
 
 
