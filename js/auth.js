@@ -50,7 +50,8 @@ const ASN_AUTH_ACTIONS = Object.freeze({
     PARENT_STUDENTS: 'auth.parent.students',
     PENGASUH_ME: 'auth.pengasuh.me',
     SSO_GOOGLE: 'auth.sso.google',
-    LOGOUT: 'auth.logout'
+    LOGOUT: 'auth.logout',
+    USER_UPLOAD_PHOTO: 'auth.user.uploadPhoto'
 });
 
 /**
@@ -364,6 +365,23 @@ const ASNAuthAPI = {
             console.warn('[ASNAuthAPI] getPengasuhProfile error:', err);
             return { success: false, unavailable: true, message: 'Gagal memuat profil pengasuh.' };
         }
+    },
+
+    async uploadUserPhoto(filePayload, role, identityId) {
+        const token = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || 
+                      localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || 
+                      sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
+                      localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || 
+                      sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || 
+                      localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || "";
+        return await authApiPost(ASN_AUTH_ACTIONS.USER_UPLOAD_PHOTO, {
+            token: token,
+            data: {
+                file: filePayload,
+                role: role,
+                identityId: identityId
+            }
+        });
     }
 };
 
@@ -734,6 +752,7 @@ const ASNIdentity = {
                 const emailEl = document.getElementById('pengasuh-display-email');
                 if (nameEl) nameEl.innerText = (this.currentUser && (this.currentUser.titleName || this.currentUser.name)) || 'Pengasuh Pesantren';
                 if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1.5 text-amber-400"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || '-')}`;
+                this.updateAvatarUI(ASN_ROLES.PENGASUH, (this.currentUser && (this.currentUser.photoUrl || this.currentUser.photo_url)) || '');
             }
         } else if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
             if (window.innerWidth >= 768) {
@@ -750,12 +769,14 @@ const ASNIdentity = {
             const emailEl = document.getElementById('admin-display-email');
             if (nameEl) nameEl.innerText = (this.currentUser && this.currentUser.name) || 'Administrator';
             if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || 'admin@asnawiyyah.sch.id')}`;
+            this.updateAvatarUI(ASN_ROLES.ADMIN, (this.currentUser && (this.currentUser.photoUrl || this.currentUser.photo_url)) || '');
         } else if (this.currentRole === ASN_ROLES.WALI_SANTRI) {
             waliStateEl.classList.remove('hidden');
             const nameEl = document.getElementById('parent-display-name');
             const emailEl = document.getElementById('parent-display-email') || document.getElementById('parent-display-phone');
             if (nameEl) nameEl.innerText = (this.currentUser && this.currentUser.name) || 'Wali Santri';
             if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1.5 text-emerald-600 dark:text-emerald-400"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || '-')}`;
+            this.updateAvatarUI(ASN_ROLES.WALI_SANTRI, (this.currentUser && (this.currentUser.photoUrl || this.currentUser.photo_url)) || '');
             
             // Render linked students
             this.renderLinkedStudents();
@@ -1111,6 +1132,189 @@ const ASNIdentity = {
             }
         }).catch(e => {
             console.warn("[KTS Hydration] Failed to fetch tahfidz details:", e);
+        });
+    },
+
+    /**
+     * Helper formatting CDN URL untuk foto profil
+     */
+    formatPhotoUrl(photoUrl) {
+        if (!photoUrl) return '';
+        const driveMatch = photoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || photoUrl.match(/id=([a-zA-Z0-9_-]+)/) || photoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+            return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+        }
+        return photoUrl;
+    },
+
+    /**
+     * Memperbarui elemen Avatar pada UI berdasarkan peran
+     */
+    updateAvatarUI(role, photoUrl) {
+        const normalizedRole = String(role || this.currentRole || '').toUpperCase();
+        let imgId = '';
+        let iconId = '';
+
+        if (normalizedRole === ASN_ROLES.PENGASUH) {
+            imgId = 'pengasuh-avatar-img';
+            iconId = 'pengasuh-avatar-icon';
+        } else if (normalizedRole === ASN_ROLES.ADMIN || normalizedRole === ASN_ROLES.EDITOR) {
+            imgId = 'admin-avatar-img';
+            iconId = 'admin-avatar-icon';
+        } else {
+            imgId = 'parent-avatar-img';
+            iconId = 'parent-avatar-icon';
+        }
+
+        const imgEl = document.getElementById(imgId);
+        const iconEl = document.getElementById(iconId);
+        if (!imgEl) return;
+
+        if (photoUrl) {
+            const formatted = this.formatPhotoUrl(photoUrl);
+            imgEl.src = formatted;
+            imgEl.classList.remove('hidden');
+            if (iconEl) iconEl.classList.add('hidden');
+            imgEl.onerror = () => {
+                imgEl.classList.add('hidden');
+                if (iconEl) iconEl.classList.remove('hidden');
+            };
+        } else {
+            imgEl.src = '';
+            imgEl.classList.add('hidden');
+            if (iconEl) iconEl.classList.remove('hidden');
+        }
+    },
+
+    /**
+     * Trigger file input picker untuk unggah foto profil
+     */
+    triggerAvatarUpload(role) {
+        this._targetAvatarRole = role || this.currentRole;
+        const fileInput = document.getElementById('user-avatar-file-input');
+        if (fileInput) {
+            fileInput.value = '';
+            fileInput.click();
+        }
+    },
+
+    /**
+     * Handler saat file foto dipilih
+     */
+    async handleAvatarFileSelected(input) {
+        const file = input && input.files && input.files[0];
+        if (!file) return;
+
+        const role = this._targetAvatarRole || this.currentRole;
+        const targetId = (this.currentUser && (this.currentUser.identityId || this.currentUser.email)) || '';
+
+        // Validasi tipe mime
+        if (!file.type.match(/^image\/(jpeg|png|webp|gif)/i)) {
+            if (typeof showToast === 'function') showToast('Format foto tidak didukung. Pilih foto JPG, PNG, atau WEBP.');
+            else alert('Format foto tidak didukung. Pilih foto JPG, PNG, atau WEBP.');
+            return;
+        }
+
+        if (typeof showToast === 'function') {
+            showToast('Mengompresi dan mengunggah foto profil...');
+        }
+
+        try {
+            const compressed = await this.compressImageFile(file, 400, 400, 0.85);
+            const result = await ASNAuthAPI.uploadUserPhoto(compressed, role, targetId);
+
+            if (result && (result.success || result.status === 'success')) {
+                const photoUrl = result.url || result.fileUrl;
+                if (photoUrl) {
+                    // Update state memori
+                    if (this.currentUser) {
+                        this.currentUser.photoUrl = photoUrl;
+                        this.currentUser.photo_url = photoUrl;
+                    }
+
+                    // Update storage lokal
+                    if (role === ASN_ROLES.PENGASUH) {
+                        sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(this.currentUser || {}));
+                        localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(this.currentUser || {}));
+                    } else if (role === ASN_ROLES.ADMIN || role === ASN_ROLES.EDITOR) {
+                        sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(this.currentUser || {}));
+                        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(this.currentUser || {}));
+                    } else if (role === ASN_ROLES.WALI_SANTRI) {
+                        sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(this.currentUser || {}));
+                        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(this.currentUser || {}));
+                    }
+
+                    this.updateAvatarUI(role, photoUrl);
+
+                    if (typeof showToast === 'function') {
+                        showToast('Foto profil berhasil diperbarui!');
+                    } else {
+                        alert('Foto profil berhasil diperbarui!');
+                    }
+                }
+            } else {
+                const msg = (result && result.message) || 'Gagal mengunggah foto profil.';
+                if (typeof showToast === 'function') showToast(msg);
+                else alert(msg);
+            }
+        } catch (err) {
+            console.error('[ASNIdentity] Error upload avatar:', err);
+            if (typeof showToast === 'function') {
+                showToast('Gagal mengunggah foto: ' + (err.message || err));
+            } else {
+                alert('Gagal mengunggah foto: ' + (err.message || err));
+            }
+        }
+    },
+
+    /**
+     * Kompresi gambar client-side dengan canvas ke rasio persegi
+     */
+    compressImageFile(file, maxWidth = 400, maxHeight = 400, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Format gambar tidak valid.'));
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // Square crop dari tengah
+                        const minDim = Math.min(img.width, img.height);
+                        const sx = (img.width - minDim) / 2;
+                        const sy = (img.height - minDim) / 2;
+
+                        const targetSize = Math.min(maxWidth, maxHeight, minDim);
+                        canvas.width = targetSize;
+                        canvas.height = targetSize;
+
+                        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        const base64 = dataUrl.split(',')[1];
+
+                        resolve({
+                            base64: base64,
+                            mimeType: 'image/jpeg',
+                            name: file.name,
+                            size: Math.round((base64.length * 3) / 4)
+                        });
+                    } catch (err) {
+                        // Fallback ke raw read jika canvas gagal
+                        const rawBase64 = e.target.result.split(',')[1];
+                        resolve({
+                            base64: rawBase64,
+                            mimeType: file.type || 'image/jpeg',
+                            name: file.name,
+                            size: file.size
+                        });
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         });
     }
 };

@@ -1464,6 +1464,9 @@
                     </div>
                 </div>
 
+                <!-- Hidden file input for user avatar upload -->
+                <input type="file" id="user-avatar-file-input" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="ASNIdentity.handleAvatarFileSelected(this)">
+
                 <!-- STATE D: AUTHENTICATED PENGASUH -->
                 <div id="account-state-pengasuh" class="hidden space-y-4">
                     <!-- Pengasuh Profile Card -->
@@ -1472,8 +1475,14 @@
 
                         <div class="flex items-center justify-between relative z-10">
                             <div class="flex items-center space-x-3.5 min-w-0">
-                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-2xl font-black shadow-md shrink-0 border border-amber-300/40">
-                                    <i class="fa-solid fa-kaaba"></i>
+                                <div class="relative shrink-0 group">
+                                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-2xl font-black shadow-md shrink-0 border border-amber-300/40 overflow-hidden relative">
+                                        <img id="pengasuh-avatar-img" class="hidden w-full h-full object-cover rounded-2xl" alt="Foto Pengasuh" src="" />
+                                        <i id="pengasuh-avatar-icon" class="fa-solid fa-kaaba"></i>
+                                    </div>
+                                    <button type="button" onclick="ASNIdentity.triggerAvatarUpload('PENGASUH')" title="Ganti Foto Profil" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center justify-center shadow-md border-2 border-emerald-950 transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                                        <i class="fa-solid fa-camera text-[10px]"></i>
+                                    </button>
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center space-x-2">
@@ -1522,11 +1531,14 @@
                     <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 dark:from-[#15202d] dark:via-[#15202d] dark:to-emerald-950/30 p-5 rounded-3xl shadow-sm border border-emerald-100 dark:border-[#253447] transition-colors">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3.5 min-w-0">
-                                <div class="relative shrink-0">
-                                    <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-sm">
-                                        <i class="fa-solid fa-people-roof"></i>
+                                <div class="relative shrink-0 group">
+                                    <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-sm overflow-hidden relative">
+                                        <img id="parent-avatar-img" class="hidden w-full h-full object-cover rounded-2xl" alt="Foto Wali Santri" src="" />
+                                        <i id="parent-avatar-icon" class="fa-solid fa-people-roof"></i>
                                     </div>
-                                    <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-[#15202d] rounded-full" title="Terverifikasi"></span>
+                                    <button type="button" onclick="ASNIdentity.triggerAvatarUpload('WALI_SANTRI')" title="Ganti Foto Profil" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-md border-2 border-white dark:border-[#15202d] transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                                        <i class="fa-solid fa-camera text-[10px]"></i>
+                                    </button>
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center space-x-1.5">
@@ -1580,8 +1592,14 @@
 
                         <div class="flex items-center justify-between relative z-10">
                             <div class="flex items-center space-x-3.5 min-w-0">
-                                <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur border border-white/20 text-white flex items-center justify-center text-xl font-bold shrink-0">
-                                    <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                                <div class="relative shrink-0 group">
+                                    <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur border border-white/20 text-white flex items-center justify-center text-xl font-bold shrink-0 overflow-hidden relative">
+                                        <img id="admin-avatar-img" class="hidden w-full h-full object-cover rounded-2xl" alt="Foto Admin" src="" />
+                                        <i id="admin-avatar-icon" class="fa-solid fa-shield-halved text-emerald-400"></i>
+                                    </div>
+                                    <button type="button" onclick="ASNIdentity.triggerAvatarUpload('ADMIN')" title="Ganti Foto Profil" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shadow-md border-2 border-brand-900 transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                                        <i class="fa-solid fa-camera text-[10px]"></i>
+                                    </button>
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center space-x-1.5">

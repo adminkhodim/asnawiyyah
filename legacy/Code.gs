@@ -4398,9 +4398,9 @@ const RELATIONSHIP_ENUM = Object.freeze({
 });
 
 const AUTH_SHEET_SCHEMAS = Object.freeze({
-  [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at"],
-  [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at"],
-  [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at"],
+  [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at", "photo_url"],
+  [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at", "photo_url"],
+  [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at", "photo_url"],
   [SHEET_STUDENTS]: ["student_id", "nis", "nik", "name", "gender", "birth_date", "photo_url", "program", "status", "created_at", "qr_code"],
   [SHEET_WALI_SANTRI_MAP]: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"],
   [SHEET_OTP_CHALLENGES]: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"],
@@ -4875,6 +4875,9 @@ function getAdminIdentityByEmail(email) {
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
   let createdAtIdx = header.indexOf("created_at");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (emailIdx === -1) emailIdx = 1;
@@ -4886,12 +4889,15 @@ function getAdminIdentityByEmail(email) {
   for (let i = 1; i < data.length; i++) {
     const rowEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
     if (rowEmail === normalized) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: String(data[i][emailIdx] || ""),
         name: String(data[i][nameIdx] || ""),
         role: String(data[i][roleIdx] || "ADMIN"),
         status: String(data[i][statusIdx] || "").trim().toUpperCase(),
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto,
         createdAt: String(data[i][createdAtIdx] || "")
       };
     }
@@ -4916,6 +4922,9 @@ function getAdminIdentityById(identityId) {
   let nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (emailIdx === -1) emailIdx = 1;
@@ -4925,12 +4934,15 @@ function getAdminIdentityById(identityId) {
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][idIdx] || "").trim() === targetId) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: String(data[i][emailIdx] || ""),
         name: String(data[i][nameIdx] || ""),
         role: String(data[i][roleIdx] || "ADMIN"),
-        status: String(data[i][statusIdx] || "").trim().toUpperCase()
+        status: String(data[i][statusIdx] || "").trim().toUpperCase(),
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto
       };
     }
   }
@@ -4958,6 +4970,9 @@ function getWaliIdentityByEmail(email) {
   let nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (emailIdx === -1) emailIdx = 1;
@@ -4969,13 +4984,16 @@ function getWaliIdentityByEmail(email) {
   for (let i = 1; i < data.length; i++) {
     const storedEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
     if (storedEmail === normalized) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: storedEmail,
         phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
         name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
         role: roleIdx !== -1 ? String(data[i][roleIdx] || "WALI_SANTRI") : "WALI_SANTRI",
-        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE"
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto
       };
     }
   }
@@ -5003,6 +5021,9 @@ function getWaliIdentityByPhone(phone) {
   let nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (phoneIdx === -1) phoneIdx = 1;
@@ -5013,13 +5034,16 @@ function getWaliIdentityByPhone(phone) {
   for (let i = 1; i < data.length; i++) {
     const storedPhone = String(data[i][phoneIdx] || "").replace(/[^0-9]/g, "");
     if (storedPhone === normalized) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
         phone: String(data[i][phoneIdx] || ""),
         name: String(data[i][nameIdx] || ""),
         role: String(data[i][roleIdx] || "WALI_SANTRI"),
-        status: String(data[i][statusIdx] || "").trim().toUpperCase()
+        status: String(data[i][statusIdx] || "").trim().toUpperCase(),
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto
       };
     }
   }
@@ -5044,6 +5068,9 @@ function getWaliIdentityById(identityId) {
   let nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (phoneIdx === -1) phoneIdx = 1;
@@ -5053,13 +5080,16 @@ function getWaliIdentityById(identityId) {
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][idIdx] || "").trim() === targetId) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
         phone: String(data[i][phoneIdx] || ""),
         name: String(data[i][nameIdx] || ""),
         role: String(data[i][roleIdx] || "WALI_SANTRI"),
-        status: String(data[i][statusIdx] || "").trim().toUpperCase()
+        status: String(data[i][statusIdx] || "").trim().toUpperCase(),
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto
       };
     }
   }
@@ -5088,6 +5118,9 @@ function getPengasuhIdentityByEmail(email) {
   if (nameIdx === -1) nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (emailIdx === -1) emailIdx = 1;
@@ -5099,6 +5132,7 @@ function getPengasuhIdentityByEmail(email) {
   for (let i = 1; i < data.length; i++) {
     const storedEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
     if (storedEmail === normalized) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: storedEmail,
@@ -5106,7 +5140,9 @@ function getPengasuhIdentityByEmail(email) {
         name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
         titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
         role: roleIdx !== -1 ? String(data[i][roleIdx] || "PENGASUH") : "PENGASUH",
-        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE"
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto
       };
     }
   }
@@ -5135,6 +5171,9 @@ function getPengasuhIdentityById(identityId) {
   if (nameIdx === -1) nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
 
   if (idIdx === -1) idIdx = 0;
   if (emailIdx === -1) emailIdx = 1;
@@ -5145,6 +5184,7 @@ function getPengasuhIdentityById(identityId) {
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][idIdx] || "").trim() === targetId) {
+      const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
         email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
@@ -5152,7 +5192,9 @@ function getPengasuhIdentityById(identityId) {
         name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
         titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
         role: roleIdx !== -1 ? String(data[i][roleIdx] || "PENGASUH") : "PENGASUH",
-        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE"
+        status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+        photoUrl: rawPhoto,
+        photo_url: rawPhoto
       };
     }
   }
@@ -5330,6 +5372,170 @@ function updateStudentPhotoInSheet(studentId, nis, photoUrl) {
       return true;
     }
   }
+  return false;
+}
+
+/**
+ * Unggah foto profil pengguna (Wali Santri, Pengasuh, Admin/Pengelola) ke Google Drive
+ */
+function uploadUserProfilePhoto(filePayload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+      } catch (e) {
+        const legacy = verifySessionToken(token);
+        if (legacy && legacy.role) {
+          actor = { role: legacy.role, identityId: legacy.userId, email: legacy.email };
+        }
+      }
+    }
+
+    if (!actor) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 401,
+        message: "Sesi autentikasi tidak valid atau telah kedaluwarsa."
+      };
+    }
+
+    const fileData = (filePayload && filePayload.file) || filePayload;
+    if (!fileData || !fileData.base64) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Data file foto profil (base64) wajib dikirimkan."
+      };
+    }
+
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const rawMime = String(fileData.mimeType || fileData.type || "image/jpeg").trim().toLowerCase();
+    if (!allowedMimes.includes(rawMime)) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Format foto tidak didukung. Hanya gambar (JPG, PNG, WEBP) yang diperbolehkan."
+      };
+    }
+
+    const decodedData = Utilities.base64Decode(fileData.base64);
+    if (!decodedData || decodedData.length === 0) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Data file foto kosong atau rusak."
+      };
+    }
+
+    // Maksimal 5 MB
+    if (decodedData.length > 5 * 1024 * 1024) {
+      return {
+        success: false,
+        status: "error",
+        statusCode: 400,
+        message: "Ukuran foto melebihi batas maksimal 5 MB."
+      };
+    }
+
+    const role = String(filePayload.role || actor.role || "").toUpperCase();
+    const identifier = String(filePayload.identityId || filePayload.identifier || filePayload.email || actor.identityId || actor.email || "").trim();
+
+    const folder = DriveApp.getFolderById(FOLDER_ID_STUDENT_PHOTOS);
+    const cleanId = identifier.replace(/[^a-zA-Z0-9_-]/g, "");
+    const fileName = "AVATAR_" + role + "_" + (cleanId || "USER") + "_" + new Date().getTime() + ".jpg";
+    const blob = Utilities.newBlob(decodedData, rawMime, fileName);
+    const newFile = folder.createFile(blob);
+    newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    const fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    const driveViewUrl = "https://drive.google.com/file/d/" + newFile.getId() + "/view?usp=sharing";
+
+    // Update foto ke spreadsheet identitas yang sesuai
+    const updated = updateUserPhotoInSheet(role, identifier, fileUrl);
+
+    return {
+      success: true,
+      status: "success",
+      statusCode: 200,
+      url: fileUrl,
+      fileUrl: fileUrl,
+      driveViewUrl: driveViewUrl,
+      fileId: newFile.getId(),
+      role: role,
+      updatedInSheet: updated,
+      message: "Foto profil berhasil diunggah dan diperbarui!"
+    };
+  } catch (err) {
+    console.error("[UPLOAD USER PHOTO ERROR]", err);
+    return {
+      success: false,
+      status: "error",
+      message: "Gagal mengunggah foto profil: " + err.message
+    };
+  }
+}
+
+/**
+ * Update kolom photo_url di spreadsheet sesuai role pengguna
+ */
+function updateUserPhotoInSheet(role, identifier, photoUrl) {
+  if (!photoUrl || !identifier) return false;
+  const ss = getDatabaseSpreadsheet();
+  if (!ss) return false;
+
+  const normalizedRole = String(role || "").trim().toUpperCase();
+  let targetSheetName = "";
+  if (normalizedRole === "PENGASUH") {
+    targetSheetName = SHEET_PENGASUH_IDENTITIES;
+  } else if (normalizedRole === "WALI_SANTRI" || normalizedRole === "PARENT") {
+    targetSheetName = SHEET_WALI_IDENTITIES;
+  } else {
+    targetSheetName = SHEET_ADMIN_IDENTITIES;
+  }
+
+  const sheet = getAuthSheet(ss, targetSheetName);
+  if (!sheet) return false;
+
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return false;
+
+  const header = data[0].map(h => String(h || "").trim().toLowerCase());
+  let idIdx = header.indexOf("identity_id");
+  let emailIdx = header.indexOf("email");
+  let phoneIdx = header.indexOf("phone");
+  let photoIdx = header.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+  // Jika kolom photo_url belum ada, buat di kolom terakhir
+  if (photoIdx === -1) {
+    photoIdx = header.length;
+    sheet.getRange(1, photoIdx + 1).setValue("photo_url").setFontWeight("bold").setBackground("#dcfce7");
+  }
+
+  const cleanTarget = String(identifier).trim().toLowerCase();
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim().toLowerCase() : "";
+    const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+    const rowPhone = phoneIdx !== -1 ? String(data[i][phoneIdx] || "").replace(/[^0-9]/g, "") : "";
+    const cleanTargetPhone = cleanTarget.replace(/[^0-9]/g, "");
+
+    if (
+      (rowId && rowId === cleanTarget) ||
+      (rowEmail && rowEmail === cleanTarget) ||
+      (cleanTargetPhone && rowPhone && rowPhone === cleanTargetPhone)
+    ) {
+      sheet.getRange(i + 1, photoIdx + 1).setValue(photoUrl);
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -7043,6 +7249,14 @@ function handleAuthApiAction(action, payload, e) {
     if (action === "auth.student.uploadPhoto" || action === "student.uploadPhoto") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       return createJsonResponse(uploadStudentPhotoToDrive(payload.data || payload, token));
+    }
+
+    // ----------------------------------------------------
+    // 13b. USER PROFILE PHOTO UPLOAD (auth.user.uploadPhoto)
+    // ----------------------------------------------------
+    if (action === "auth.user.uploadPhoto" || action === "user.uploadPhoto") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(uploadUserProfilePhoto(payload.data || payload, token));
     }
 
     // ----------------------------------------------------
