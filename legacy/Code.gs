@@ -139,6 +139,46 @@ function doPost(e) {
       );
     }
 
+    // ========================================================
+    // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
+    // ========================================================
+    if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getTahfidzDashboard(token));
+    }
+
+    if (action === "saveTahfidzLog" || action === "tahfidz.saveLog") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveTahfidzLog(payload.data || payload, token));
+    }
+
+    if (action === "deleteTahfidzLog" || action === "tahfidz.deleteLog") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const logId = payload.logId || payload.log_id || (payload.data && (payload.data.logId || payload.data.log_id));
+      return createJsonResponse(deleteTahfidzLog(logId, token));
+    }
+
+    if (action === "getTahfidzStudentDetail" || action === "tahfidz.studentDetail") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const studentId = payload.studentId || payload.student_id || (payload.data && (payload.data.studentId || payload.data.student_id));
+      return createJsonResponse(getTahfidzStudentDetail(studentId, token));
+    }
+
+    if (action === "saveTahfidzTarget" || action === "tahfidz.saveTarget") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveTahfidzTarget(payload.data || payload, token));
+    }
+
+    if (action === "getTahfidzHalaqahList" || action === "tahfidz.getHalaqah") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getTahfidzHalaqahList(token));
+    }
+
+    if (action === "saveTahfidzHalaqah" || action === "tahfidz.saveHalaqah") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
+    }
+
     if (action === "deleteBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -1004,6 +1044,21 @@ function doGet(e) {
       const token = e.parameter.token || null;
       return createJsonResponse(
         getAllStudentsData(token)
+      );
+    }
+
+    if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(
+        getTahfidzDashboard(token)
+      );
+    }
+
+    if (action === "getTahfidzStudentDetail" || action === "tahfidz.studentDetail") {
+      const token = e.parameter.token || null;
+      const studentId = e.parameter.studentId || e.parameter.student_id || null;
+      return createJsonResponse(
+        getTahfidzStudentDetail(studentId, token)
       );
     }
 
@@ -6668,6 +6723,46 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse(deleteStudentData(studentId, token));
     }
 
+    // ----------------------------------------------------
+    // 15. TAHFIDZ AL-QUR'AN MANAGEMENT
+    // ----------------------------------------------------
+    if (action === "auth.tahfidz.dashboard" || action === "tahfidz.dashboard" || action === "getTahfidzDashboard") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(getTahfidzDashboard(token));
+    }
+
+    if (action === "auth.tahfidz.saveLog" || action === "tahfidz.saveLog" || action === "saveTahfidzLog") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveTahfidzLog(payload.data || payload, token));
+    }
+
+    if (action === "auth.tahfidz.deleteLog" || action === "tahfidz.deleteLog" || action === "deleteTahfidzLog") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const logId = payload.logId || payload.log_id || (payload.data && (payload.data.logId || payload.data.log_id));
+      return createJsonResponse(deleteTahfidzLog(logId, token));
+    }
+
+    if (action === "auth.tahfidz.studentDetail" || action === "tahfidz.studentDetail" || action === "getTahfidzStudentDetail") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      const studentId = payload.studentId || payload.student_id || (payload.data && (payload.data.studentId || payload.data.student_id));
+      return createJsonResponse(getTahfidzStudentDetail(studentId, token));
+    }
+
+    if (action === "auth.tahfidz.saveTarget" || action === "tahfidz.saveTarget" || action === "saveTahfidzTarget") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveTahfidzTarget(payload.data || payload, token));
+    }
+
+    if (action === "auth.tahfidz.getHalaqah" || action === "tahfidz.getHalaqah" || action === "getTahfidzHalaqahList") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(getTahfidzHalaqahList(token));
+    }
+
+    if (action === "auth.tahfidz.saveHalaqah" || action === "tahfidz.saveHalaqah" || action === "saveTahfidzHalaqah") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
+    }
+
     return createJsonResponse({
       success: false,
       message: `Action '${action}' tidak dikenali pada modul autentikasi Phase 2B.`,
@@ -6682,6 +6777,868 @@ function handleAuthApiAction(action, payload, e) {
       message: err.message || "Terjadi kesalahan internal pada layanan autentikasi.",
       requestId: requestId
     });
+  }
+}
+
+// ====================================================================
+// MODUL BACKEND: TAHFIDZ AL-QUR'AN (MUTABA'AH, HALAQAH, TARGET)
+// Terinspirasi dari standar Khodim.com (Mushaf Pojok 20 Hlm/Juz)
+// ====================================================================
+
+const SHEET_TAHFIDZ_LOGS = "Tahfidz_Logs";
+const SHEET_TAHFIDZ_TARGET = "Tahfidz_Target";
+const SHEET_TAHFIDZ_HALAQAH = "Tahfidz_Halaqah";
+
+/**
+ * Helper untuk mendapatkan atau membuat sheet tahfidz secara otomatis
+ */
+function getOrCreateTahfidzSheet(ss, sheetName, defaultHeaders) {
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    if (defaultHeaders && defaultHeaders.length > 0) {
+      sheet.appendRow(defaultHeaders);
+    }
+  }
+  return sheet;
+}
+
+/**
+ * 1. Ambil Data Dashboard Tahfidz (Admin, Pengasuh, Wali Santri)
+ * Mengembalikan:
+ * - 4 Ringkasan Makro (Khatam 30 Juz, Rata-rata Hafalan, Total Akumulasi Juz, Aktivitas Pekan Ini)
+ * - Daftar Santri Lengkap dengan Target Capaian, Setoran Terakhir, Nilai & Progres 0-30 Juz
+ * - Filter Master (Kategori, Halaqah, Muhafiz)
+ */
+function getTahfidzDashboard(token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+      } catch (authErr) {
+        const leg = verifySessionToken(token);
+        if (leg && leg.role) {
+          actor = { role: leg.role, identityId: leg.userId };
+        }
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+
+    // 1. Inisialisasi Sheet jika belum ada
+    const logsSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_LOGS, [
+      "log_id", "student_id", "nis", "student_name", "gender",
+      "tanggal", "sesi", "tipe", "juz", "surah",
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "created_at"
+    ]);
+
+    const targetSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_TARGET, [
+      "student_id", "target_ziyadah_sesi", "target_ziyadah_pekan", "target_murajaah_sesi", "target_murajaah_pekan", "updated_at"
+    ]);
+
+    const halaqahSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_HALAQAH, [
+      "halaqah_id", "nama_halaqah", "kategori", "muhafiz", "target_kurikulum", "student_ids", "created_at"
+    ]);
+
+    // 2. Ambil data master Santri
+    const studentsRes = getAllStudentsData(token);
+    const allStudents = (studentsRes && studentsRes.data) || [];
+
+    // Filter khusus Wali Santri
+    let filteredStudents = allStudents;
+    if (actor && actor.role === "WALI_SANTRI") {
+      const linked = getLinkedStudentsForWali(actor.identityId) || [];
+      const allowedIds = linked.map(s => String(s.studentId || s.student_id || s.id || s.nis || "").trim().toLowerCase());
+      filteredStudents = allStudents.filter(st => {
+        const sId = String(st.studentId || st.student_id || "").trim().toLowerCase();
+        const sNis = String(st.nis || "").trim().toLowerCase();
+        return allowedIds.includes(sId) || allowedIds.includes(sNis);
+      });
+    }
+
+    // 3. Baca Data Logs
+    const logsData = logsSheet.getDataRange().getValues();
+    const logRows = [];
+    if (logsData && logsData.length > 1) {
+      const hLogs = logsData[0].map(h => String(h || "").trim().toLowerCase());
+      for (let i = 1; i < logsData.length; i++) {
+        const r = logsData[i];
+        const logId = String(r[hLogs.indexOf("log_id")] || "").trim();
+        if (!logId) continue;
+        logRows.push({
+          logId: logId,
+          studentId: String(r[hLogs.indexOf("student_id")] || "").trim(),
+          nis: String(r[hLogs.indexOf("nis")] || "").trim(),
+          studentName: String(r[hLogs.indexOf("student_name")] || "").trim(),
+          gender: String(r[hLogs.indexOf("gender")] || "L").toUpperCase(),
+          tanggal: normalizeDateString(r[hLogs.indexOf("tanggal")]),
+          sesi: String(r[hLogs.indexOf("sesi")] || "Pagi (Ba'da Subuh)").trim(),
+          tipe: String(r[hLogs.indexOf("tipe")] || "ZIYADAH").trim().toUpperCase(),
+          juz: Number(r[hLogs.indexOf("juz")] || 1),
+          surah: String(r[hLogs.indexOf("surah")] || "").trim(),
+          halamanList: String(r[hLogs.indexOf("halaman_list")] || "1").trim(),
+          totalHalaman: Number(r[hLogs.indexOf("total_halaman")] || 1),
+          nilai: String(r[hLogs.indexOf("nilai")] || "MUMTAZ").trim().toUpperCase(),
+          muhafiz: String(r[hLogs.indexOf("muhafiz")] || "").trim(),
+          catatan: String(r[hLogs.indexOf("catatan")] || "").trim(),
+          createdAt: String(r[hLogs.indexOf("created_at")] || "")
+        });
+      }
+    }
+
+    // 4. Baca Data Target Santri
+    const targetData = targetSheet.getDataRange().getValues();
+    const targetMap = {};
+    if (targetData && targetData.length > 1) {
+      const hTarget = targetData[0].map(h => String(h || "").trim().toLowerCase());
+      for (let i = 1; i < targetData.length; i++) {
+        const sId = String(targetData[i][hTarget.indexOf("student_id")] || "").trim();
+        if (!sId) continue;
+        targetMap[sId] = {
+          targetZiyadahSesi: Number(targetData[i][hTarget.indexOf("target_ziyadah_sesi")] || 1),
+          targetZiyadahPekan: Number(targetData[i][hTarget.indexOf("target_ziyadah_pekan")] || 10),
+          targetMurajaahSesi: Number(targetData[i][hTarget.indexOf("target_murajaah_sesi")] || 2),
+          targetMurajaahPekan: Number(targetData[i][hTarget.indexOf("target_murajaah_pekan")] || 10)
+        };
+      }
+    }
+
+    // 5. Baca Data Halaqah
+    const halaqahData = halaqahSheet.getDataRange().getValues();
+    const halaqahList = [];
+    const studentHalaqahMap = {};
+    if (halaqahData && halaqahData.length > 1) {
+      const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase());
+      for (let i = 1; i < halaqahData.length; i++) {
+        const hid = String(halaqahData[i][hHal.indexOf("halaqah_id")] || "").trim();
+        const hname = String(halaqahData[i][hHal.indexOf("nama_halaqah")] || "").trim();
+        const hkat = String(halaqahData[i][hHal.indexOf("kategori")] || "Tahfidz Dewasa").trim();
+        const hmuh = String(halaqahData[i][hHal.indexOf("muhafiz")] || "").trim();
+        const hkur = String(halaqahData[i][hHal.indexOf("target_kurikulum")] || "").trim();
+        const stIds = String(halaqahData[i][hHal.indexOf("student_ids")] || "").split(",").map(x => x.trim()).filter(Boolean);
+
+        if (hid) {
+          halaqahList.push({
+            halaqahId: hid,
+            namaHalaqah: hname,
+            kategori: hkat,
+            muhafiz: hmuh,
+            targetKurikulum: hkur,
+            studentCount: stIds.length
+          });
+
+          stIds.forEach(id => {
+            studentHalaqahMap[id] = {
+              halaqahId: hid,
+              namaHalaqah: hname,
+              kategori: hkat,
+              muhafiz: hmuh
+            };
+          });
+        }
+      }
+    }
+
+    // Jika belum ada halaqah sama sekali, buatkan 2 halaqah awal default
+    if (halaqahList.length === 0) {
+      halaqahList.push({
+        halaqahId: "HLQ-01",
+        namaHalaqah: "Halaqah Abu Ubaidah",
+        kategori: "Tahfidz Anak",
+        muhafiz: "Ustadzah Laila Luthfiana, Al-Hafidzah",
+        targetKurikulum: "Juz 30 Mutqin & Tahsin Huruf / 1 Halaman Per Hari",
+        studentCount: 0
+      });
+      halaqahList.push({
+        halaqahId: "HLQ-02",
+        namaHalaqah: "Halaqah Utsman bin Affan",
+        kategori: "Tahfidz Dewasa",
+        muhafiz: "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah",
+        targetKurikulum: "Ziyadah 1 Halaman / Hari & Deresan 1/2 Juz / Hari",
+        studentCount: 0
+      });
+    }
+
+    // 6. Kelompokkan Logs per Santri
+    const logsByStudent = {};
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    let weeklyZiyadahCount = 0;
+    let weeklyMurajaahCount = 0;
+
+    logRows.forEach(l => {
+      const sKey = l.studentId || l.nis;
+      if (!logsByStudent[sKey]) logsByStudent[sKey] = [];
+      logsByStudent[sKey].push(l);
+
+      // Hitung aktivitas pekan ini
+      const logDate = new Date(l.tanggal || l.createdAt);
+      if (logDate >= oneWeekAgo) {
+        if (l.tipe === "ZIYADAH") weeklyZiyadahCount++;
+        else if (l.tipe === "MURAJAAH" || l.tipe === "TASMI") weeklyMurajaahCount++;
+      }
+    });
+
+    // 7. Kalkulasi Data Santri Terintegrasi
+    let totalJuzAllStudents = 0;
+    let khatam30Count = 0;
+    const enrichedStudents = filteredStudents.map(st => {
+      const sId = String(st.studentId || st.student_id || "").trim();
+      const sNis = String(st.nis || "").trim();
+      const sLogs = logsByStudent[sId] || logsByStudent[sNis] || [];
+
+      // Urutkan logs santri dari yang terbaru
+      sLogs.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
+      const latestLog = sLogs.length > 0 ? sLogs[0] : null;
+
+      // Hitung capaian Juz tertinggi
+      let currentJuz = 0;
+      sLogs.forEach(lg => {
+        if (lg.juz && lg.juz > currentJuz) {
+          currentJuz = lg.juz;
+        }
+      });
+      if (currentJuz === 0 && st.program && st.program.toLowerCase().includes("tahfidz")) {
+        currentJuz = 1;
+      }
+      if (currentJuz >= 30) khatam30Count++;
+      totalJuzAllStudents += currentJuz;
+
+      // Hitung setoran pekan ini
+      let setoranPekanIni = 0;
+      sLogs.forEach(lg => {
+        const d = new Date(lg.tanggal || lg.createdAt);
+        if (d >= oneWeekAgo) setoranPekanIni++;
+      });
+
+      // Status On-Track
+      const onTrack = setoranPekanIni >= 2 ? `On-Track (${setoranPekanIni}x Pekan Ini)` : (setoranPekanIni === 1 ? `1x Setor Pekan Ini` : `Belum Setor`);
+
+      // Target
+      const target = targetMap[sId] || targetMap[sNis] || {
+        targetZiyadahSesi: 1,
+        targetZiyadahPekan: 10,
+        targetMurajaahSesi: 2,
+        targetMurajaahPekan: 10
+      };
+
+      // Halaqah
+      const halaqah = studentHalaqahMap[sId] || studentHalaqahMap[sNis] || {
+        halaqahId: "",
+        namaHalaqah: st.program || "Tahfidz Dewasa",
+        kategori: st.program || "Tahfidz Dewasa",
+        muhafiz: "Pembina Tahfidz"
+      };
+
+      return {
+        studentId: sId,
+        nis: sNis,
+        name: st.name || st.nama || "Santri",
+        gender: st.gender || "L",
+        photoUrl: st.photoUrl || st.photo_url || "",
+        program: st.program || "Tahfidz",
+        status: st.status || "ACTIVE",
+        halaqah: halaqah,
+        target: {
+          ziyadahSesi: target.targetZiyadahSesi,
+          ziyadahPekan: target.targetZiyadahPekan,
+          ziyadahBulan: target.targetZiyadahPekan * 4,
+          murajaahSesi: target.targetMurajaahSesi,
+          murajaahPekan: target.targetMurajaahPekan,
+          murajaahBulan: target.targetMurajaahPekan * 4
+        },
+        setoranTerakhir: latestLog ? {
+          juz: latestLog.juz,
+          surah: latestLog.surah || `Juz ${latestLog.juz}`,
+          halaman: latestLog.halamanList ? `Halaman ${latestLog.halamanList}` : "Halaman 1",
+          totalHalaman: latestLog.totalHalaman || 1,
+          tanggal: latestLog.tanggal,
+          sesi: latestLog.sesi,
+          tipe: latestLog.tipe,
+          nilai: latestLog.nilai,
+          muhafiz: latestLog.muhafiz || halaqah.muhafiz || "Ustadz Pembina"
+        } : null,
+        progress: {
+          currentJuz: currentJuz,
+          totalJuz: 30,
+          percent: Math.min(100, Math.round((currentJuz / 30) * 100)),
+          onTrackStatus: onTrack
+        },
+        totalSetoran: sLogs.length
+      };
+    });
+
+    // 8. Hitung Summary Makro
+    const activeStudentCount = filteredStudents.length || 1;
+    const avgJuz = (totalJuzAllStudents / activeStudentCount).toFixed(1);
+    const totalWeeklyActivity = weeklyZiyadahCount + weeklyMurajaahCount;
+    const ziyadahPercent = totalWeeklyActivity > 0 ? Math.round((weeklyZiyadahCount / totalWeeklyActivity) * 100) : 100;
+    const murajaahPercent = 100 - ziyadahPercent;
+
+    return {
+      status: "success",
+      success: true,
+      summary: {
+        khatam30Juz: khatam30Count,
+        rataRataHafalan: `${avgJuz} Juz / Santri`,
+        totalHafalanJuz: totalJuzAllStudents,
+        aktivitasPekanIni: {
+          ziyadahPercent: ziyadahPercent,
+          murajaahPercent: murajaahPercent,
+          totalSetoranPekanIni: totalWeeklyActivity
+        }
+      },
+      students: enrichedStudents,
+      totalStudents: enrichedStudents.length,
+      categories: ["Semua Kategori", "Tahfidz Anak", "Tahfidz Dewasa", "Kitab Kuning", "Reguler"],
+      halaqahs: halaqahList,
+      muhafizList: [
+        "Semua Muhafiz",
+        "Ustadzah Laila Luthfiana, Al-Hafidzah",
+        "Nyai Hj. Nasikhatul Fuadah, Al-Hafidzah",
+        "Ustadz Pengampu Tahfidz Putra",
+        "Ustadzah Pengampu Tahfidz Putri"
+      ]
+    };
+
+  } catch (err) {
+    console.error("[GET TAHFIDZ DASHBOARD ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memuat dashboard tahfidz: " + err.message
+    };
+  }
+}
+
+/**
+ * 2. Simpan Catatan Setoran Baru (Mutaba'ah Ziyadah, Muraja'ah, Tasmi')
+ */
+function saveTahfidzLog(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_LOGS, [
+      "log_id", "student_id", "nis", "student_name", "gender",
+      "tanggal", "sesi", "tipe", "juz", "surah",
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "created_at"
+    ]);
+
+    const studentId = String(payload.studentId || payload.student_id || "").trim();
+    const nis = String(payload.nis || "").trim();
+    const studentName = String(payload.studentName || payload.student_name || payload.name || "").trim();
+
+    if (!studentId && !studentName) {
+      throw new Error("Santri wajib dipilih.");
+    }
+
+    const logId = payload.logId || payload.log_id || ("TFZ-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd-HHmmss") + "-" + Math.floor(1000 + Math.random() * 9000));
+    const tanggal = payload.tanggal ? normalizeDateString(payload.tanggal) : Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
+    const sesi = String(payload.sesi || "Pagi (Ba'da Subuh)").trim();
+    const tipe = String(payload.tipe || "ZIYADAH").trim().toUpperCase();
+    const juz = Number(payload.juz || 1);
+    const surah = String(payload.surah || `Juz ${juz}`).trim();
+    const halamanList = String(payload.halamanList || payload.halaman_list || payload.halaman || "1").trim();
+    const totalHalaman = Number(payload.totalHalaman || payload.total_halaman || 1);
+    const nilai = String(payload.nilai || "MUMTAZ").trim().toUpperCase();
+    const muhafiz = String(payload.muhafiz || "").trim();
+    const catatan = String(payload.catatan || "").trim();
+    const gender = String(payload.gender || "L").toUpperCase();
+    const createdAt = new Date().toISOString();
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    let idIdx = headers.indexOf("log_id");
+    let foundRow = -1;
+
+    if (idIdx !== -1) {
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idIdx] || "").trim() === logId) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+    }
+
+    const rowValues = [
+      logId, studentId, nis, studentName, gender,
+      tanggal, sesi, tipe, juz, surah,
+      halamanList, totalHalaman, nilai, muhafiz, catatan, createdAt
+    ];
+
+    if (foundRow > 0) {
+      sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+      return {
+        status: "success",
+        success: true,
+        logId: logId,
+        message: `Catatan mutaba'ah untuk ${studentName} berhasil diperbarui.`
+      };
+    } else {
+      sheet.appendRow(rowValues);
+      return {
+        status: "success",
+        success: true,
+        logId: logId,
+        message: `Setoran ${tipe.toLowerCase()} untuk santri ${studentName} (${totalHalaman} halaman) berhasil disimpan!`
+      };
+    }
+
+  } catch (err) {
+    console.error("[SAVE TAHFIDZ LOG ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan setoran: " + err.message
+    };
+  }
+}
+
+/**
+ * 3. Hapus Catatan Setoran Tahfidz
+ */
+function deleteTahfidzLog(logId, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const cleanLogId = String(logId || "").trim();
+    if (!cleanLogId) throw new Error("ID Setoran tidak valid.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
+    if (!sheet) throw new Error("Sheet Tahfidz Logs belum tersedia.");
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("log_id");
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === cleanLogId) {
+        sheet.deleteRow(i + 1);
+        return {
+          status: "success",
+          success: true,
+          message: `Riwayat setoran ${cleanLogId} berhasil dihapus.`
+        };
+      }
+    }
+
+    return {
+      status: "error",
+      success: false,
+      message: "Data setoran tidak ditemukan."
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menghapus setoran: " + err.message
+    };
+  }
+}
+
+/**
+ * 4. Detail Mutaba'ah & Rekap Realita vs Target Santri (Screenshot 4)
+ * Menghasilkan:
+ * - Capaian saat ini, target capaian, total setoran, rata-rata nilai
+ * - Progress bar 0 - 30 Juz
+ * - 3 Indikator (Harian, Pekanan, Bulanan) Target vs Realita
+ * - Riwayat kronologis setoran
+ */
+function getTahfidzStudentDetail(studentId, token) {
+  try {
+    const cleanId = String(studentId || "").trim();
+    if (!cleanId) throw new Error("ID Santri wajib disertakan.");
+
+    const ss = getDatabaseSpreadsheet();
+
+    // 1. Ambil Data Santri
+    const studentsRes = getAllStudentsData(token);
+    const students = (studentsRes && studentsRes.data) || [];
+    const student = students.find(s => {
+      const sId = String(s.studentId || s.student_id || "").trim();
+      const sNis = String(s.nis || "").trim();
+      return sId === cleanId || sNis === cleanId;
+    });
+
+    if (!student) {
+      return {
+        status: "error",
+        success: false,
+        message: `Data santri ID '${cleanId}' tidak ditemukan.`
+      };
+    }
+
+    // 2. Ambil Target Santri
+    const targetSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_TARGET, [
+      "student_id", "target_ziyadah_sesi", "target_ziyadah_pekan", "target_murajaah_sesi", "target_murajaah_pekan", "updated_at"
+    ]);
+    const targetData = targetSheet.getDataRange().getValues();
+    let target = {
+      ziyadahSesi: 1,
+      ziyadahPekan: 10,
+      murajaahSesi: 2,
+      murajaahPekan: 10
+    };
+
+    if (targetData && targetData.length > 1) {
+      const hTarget = targetData[0].map(h => String(h || "").trim().toLowerCase());
+      for (let i = 1; i < targetData.length; i++) {
+        const sId = String(targetData[i][hTarget.indexOf("student_id")] || "").trim();
+        if (sId === cleanId || sId === student.nis) {
+          target = {
+            ziyadahSesi: Number(targetData[i][hTarget.indexOf("target_ziyadah_sesi")] || 1),
+            ziyadahPekan: Number(targetData[i][hTarget.indexOf("target_ziyadah_pekan")] || 10),
+            murajaahSesi: Number(targetData[i][hTarget.indexOf("target_murajaah_sesi")] || 2),
+            murajaahPekan: Number(targetData[i][hTarget.indexOf("target_murajaah_pekan")] || 10)
+          };
+          break;
+        }
+      }
+    }
+
+    // 3. Ambil Riwayat Logs Santri
+    const logsSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_LOGS, [
+      "log_id", "student_id", "nis", "student_name", "gender",
+      "tanggal", "sesi", "tipe", "juz", "surah",
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "created_at"
+    ]);
+    const logsData = logsSheet.getDataRange().getValues();
+    const riwayat = [];
+
+    if (logsData && logsData.length > 1) {
+      const hLogs = logsData[0].map(h => String(h || "").trim().toLowerCase());
+      for (let i = 1; i < logsData.length; i++) {
+        const r = logsData[i];
+        const sId = String(r[hLogs.indexOf("student_id")] || "").trim();
+        const sNis = String(r[hLogs.indexOf("nis")] || "").trim();
+
+        if (sId === cleanId || sNis === student.nis || sId === student.studentId) {
+          riwayat.push({
+            logId: String(r[hLogs.indexOf("log_id")] || "").trim(),
+            tanggal: normalizeDateString(r[hLogs.indexOf("tanggal")]),
+            sesi: String(r[hLogs.indexOf("sesi")] || "Pagi").trim(),
+            tipe: String(r[hLogs.indexOf("tipe")] || "ZIYADAH").trim().toUpperCase(),
+            juz: Number(r[hLogs.indexOf("juz")] || 1),
+            surah: String(r[hLogs.indexOf("surah")] || "").trim(),
+            halamanList: String(r[hLogs.indexOf("halaman_list")] || "1").trim(),
+            totalHalaman: Number(r[hLogs.indexOf("total_halaman")] || 1),
+            nilai: String(r[hLogs.indexOf("nilai")] || "MUMTAZ").trim().toUpperCase(),
+            muhafiz: String(r[hLogs.indexOf("muhafiz")] || "").trim(),
+            catatan: String(r[hLogs.indexOf("catatan")] || "").trim(),
+            createdAt: String(r[hLogs.indexOf("created_at")] || "")
+          });
+        }
+      }
+    }
+
+    // Urutkan riwayat dari yang terbaru
+    riwayat.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
+
+    // 4. Hitung Capaian Saat Ini & Rata-rata Nilai
+    let currentJuz = 0;
+    let totalScorePoints = 0;
+    riwayat.forEach(r => {
+      if (r.juz && r.juz > currentJuz) currentJuz = r.juz;
+      if (r.nilai === "MUMTAZ") totalScorePoints += 4;
+      else if (r.nilai === "JAYYID_JIDDAN") totalScorePoints += 3;
+      else if (r.nilai === "JAYYID") totalScorePoints += 2;
+      else totalScorePoints += 1;
+    });
+
+    if (currentJuz === 0) currentJuz = 1;
+    const percent = Math.min(100, Math.round((currentJuz / 30) * 100));
+
+    let avgNilaiText = "-";
+    if (riwayat.length > 0) {
+      const avgScore = totalScorePoints / riwayat.length;
+      if (avgScore >= 3.5) avgNilaiText = "Mumtaz (A)";
+      else if (avgScore >= 2.8) avgNilaiText = "Jayyid Jiddan (B+)";
+      else if (avgScore >= 2.0) avgNilaiText = "Jayyid (B)";
+      else avgNilaiText = "Dha'if (C)";
+    }
+
+    // 5. Kalkulasi 3 Indikator (Harian, Pekan, Bulan)
+    const todayStr = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
+    const todayDate = new Date();
+    const startOfWeek = new Date();
+    startOfWeek.setDate(todayDate.getDate() - 6);
+    const startOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+
+    let harianZReal = 0, harianMReal = 0, harianCount = 0;
+    let pekanZReal = 0, pekanMReal = 0, pekanCount = 0;
+    let bulanZReal = 0, bulanMReal = 0, bulanCount = 0;
+
+    riwayat.forEach(r => {
+      const d = new Date(r.tanggal || r.createdAt);
+      const hal = r.totalHalaman || 1;
+
+      // Harian
+      if (r.tanggal === todayStr) {
+        harianCount++;
+        if (r.tipe === "ZIYADAH") harianZReal += hal;
+        else harianMReal += hal;
+      }
+
+      // Pekanan
+      if (d >= startOfWeek) {
+        pekanCount++;
+        if (r.tipe === "ZIYADAH") pekanZReal += hal;
+        else pekanMReal += hal;
+      }
+
+      // Bulanan
+      if (d >= startOfMonth) {
+        bulanCount++;
+        if (r.tipe === "ZIYADAH") bulanZReal += hal;
+        else bulanMReal += hal;
+      }
+    });
+
+    const targetPekanTotal = target.ziyadahPekan + target.murajaahPekan;
+    const realPekanTotal = pekanZReal + pekanMReal;
+    const pekanPercent = targetPekanTotal > 0 ? Math.min(100, Math.round((realPekanTotal / targetPekanTotal) * 100)) : 0;
+
+    const targetBulanTotal = (target.ziyadahPekan * 4) + (target.murajaahPekan * 4);
+    const realBulanTotal = bulanZReal + bulanMReal;
+    const bulanPercent = targetBulanTotal > 0 ? Math.min(100, Math.round((realBulanTotal / targetBulanTotal) * 100)) : 0;
+
+    return {
+      status: "success",
+      success: true,
+      student: {
+        studentId: student.studentId || cleanId,
+        nis: student.nis || "-",
+        name: student.name || "Santri",
+        gender: student.gender || "L",
+        photoUrl: student.photoUrl || "",
+        program: student.program || "Tahfidz",
+        status: student.status || "ACTIVE"
+      },
+      stats: {
+        capaianSaatIni: `Juz ${currentJuz} (${percent}%)`,
+        targetCapaian: "30 Juz Mutqin",
+        totalSetoran: `${riwayat.length} Kali`,
+        rataRataNilai: avgNilaiText,
+        progressJuz: currentJuz,
+        progressMax: 30,
+        progressPercent: percent
+      },
+      target: target,
+      indikator: {
+        harian: {
+          targetText: `${target.ziyadahSesi} Halaman (Z) • ${target.murajaahSesi} Halaman (M)`,
+          realitaText: `${harianZReal + harianMReal} Halaman (${harianCount}x Setor)`,
+          ziyadahReal: harianZReal,
+          murajaahReal: harianMReal,
+          status: harianCount > 0 ? "Ada Setoran Hari Ini" : "Belum Ada Setoran"
+        },
+        pekanan: {
+          targetText: `${target.ziyadahPekan} Halaman (Z) + ${target.murajaahPekan} Halaman (M)`,
+          realitaText: `${realPekanTotal} Halaman (${pekanCount}x Setor)`,
+          percent: pekanPercent,
+          status: pekanPercent >= 100 ? "Target Pekan Tercapai" : (pekanPercent > 0 ? `${pekanPercent}% Capaian` : "0% Capaian")
+        },
+        bulanan: {
+          targetText: `${target.ziyadahPekan * 4} Halaman (Z) + ${target.murajaahPekan * 4} Halaman (M)`,
+          realitaText: `${realBulanTotal} Halaman (${bulanCount}x Setor)`,
+          percent: bulanPercent,
+          status: bulanPercent >= 100 ? "Target Bulan Tercapai" : (bulanPercent > 0 ? `${bulanPercent}% Capaian` : "0% Capaian")
+        }
+      },
+      riwayat: riwayat
+    };
+
+  } catch (err) {
+    console.error("[GET TAHFIDZ STUDENT DETAIL ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memuat detail mutaba'ah santri: " + err.message
+    };
+  }
+}
+
+/**
+ * 5. Simpan / Perbarui Target Santri (Screenshot 3)
+ */
+function saveTahfidzTarget(payload, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const studentId = String(payload.studentId || payload.student_id || "").trim();
+    if (!studentId) throw new Error("ID Santri wajib disertakan.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_TARGET, [
+      "student_id", "target_ziyadah_sesi", "target_ziyadah_pekan", "target_murajaah_sesi", "target_murajaah_pekan", "updated_at"
+    ]);
+
+    const zSesi = Number(payload.targetZiyadahSesi || payload.target_ziyadah_sesi || 1);
+    const zPekan = Number(payload.targetZiyadahPekan || payload.target_ziyadah_pekan || (zSesi * 10));
+    const mSesi = Number(payload.targetMurajaahSesi || payload.target_murajaah_sesi || 2);
+    const mPekan = Number(payload.targetMurajaahPekan || payload.target_murajaah_pekan || (mSesi * 5));
+    const updatedAt = new Date().toISOString();
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("student_id");
+    let foundRow = -1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === studentId) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    const rowValues = [studentId, zSesi, zPekan, mSesi, mPekan, updatedAt];
+
+    if (foundRow > 0) {
+      sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+    } else {
+      sheet.appendRow(rowValues);
+    }
+
+    return {
+      status: "success",
+      success: true,
+      message: "Target mutaba'ah santri berhasil diperbarui."
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan target: " + err.message
+    };
+  }
+}
+
+/**
+ * 6. Ambil Daftar Halaqah Aktif (Screenshot 2)
+ */
+function getTahfidzHalaqahList(token) {
+  try {
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_HALAQAH, [
+      "halaqah_id", "nama_halaqah", "kategori", "muhafiz", "target_kurikulum", "student_ids", "created_at"
+    ]);
+
+    const data = sheet.getDataRange().getValues();
+    const list = [];
+    if (data && data.length > 1) {
+      const h = data[0].map(x => String(x || "").trim().toLowerCase());
+      for (let i = 1; i < data.length; i++) {
+        const id = String(data[i][h.indexOf("halaqah_id")] || "").trim();
+        if (!id) continue;
+        const stIds = String(data[i][h.indexOf("student_ids")] || "").split(",").map(s => s.trim()).filter(Boolean);
+        list.push({
+          halaqahId: id,
+          namaHalaqah: String(data[i][h.indexOf("nama_halaqah")] || ""),
+          kategori: String(data[i][h.indexOf("kategori")] || "Tahfidz Dewasa"),
+          muhafiz: String(data[i][h.indexOf("muhafiz")] || ""),
+          targetKurikulum: String(data[i][h.indexOf("target_kurikulum")] || ""),
+          studentIds: stIds,
+          studentCount: stIds.length
+        });
+      }
+    }
+
+    return {
+      status: "success",
+      success: true,
+      data: list
+    };
+  } catch (err) {
+    return { status: "error", success: false, message: err.message };
+  }
+}
+
+/**
+ * 7. Simpan / Buat Kelompok Halaqah Baru
+ */
+function saveTahfidzHalaqah(payload, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const nama = String(payload.namaHalaqah || payload.nama_halaqah || "").trim();
+    if (!nama) throw new Error("Nama halaqah wajib diisi.");
+
+    const ss = getDatabaseSpreadsheet();
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_HALAQAH, [
+      "halaqah_id", "nama_halaqah", "kategori", "muhafiz", "target_kurikulum", "student_ids", "created_at"
+    ]);
+
+    const halaqahId = payload.halaqahId || payload.halaqah_id || ("HLQ-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd-HHmm"));
+    const kategori = String(payload.kategori || "Tahfidz Dewasa").trim();
+    const muhafiz = String(payload.muhafiz || "").trim();
+    const targetKurikulum = String(payload.targetKurikulum || payload.target_kurikulum || "").trim();
+    const studentIds = Array.isArray(payload.studentIds) ? payload.studentIds.join(",") : String(payload.studentIds || "");
+    const createdAt = new Date().toISOString();
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("halaqah_id");
+    let foundRow = -1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === halaqahId) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    const rowValues = [halaqahId, nama, kategori, muhafiz, targetKurikulum, studentIds, createdAt];
+
+    if (foundRow > 0) {
+      sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+    } else {
+      sheet.appendRow(rowValues);
+    }
+
+    return {
+      status: "success",
+      success: true,
+      halaqahId: halaqahId,
+      message: `Halaqah ${nama} berhasil disimpan.`
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan halaqah: " + err.message
+    };
   }
 }
 

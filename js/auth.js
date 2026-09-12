@@ -807,10 +807,15 @@ const ASNIdentity = {
                         </div>
                         <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">NIS: ${escapeHtml(studentNis)} • ${escapeHtml(s.program || 'Reguler')}</p>
                     </div>
+                <div class="flex items-center space-x-1.5 shrink-0">
+                    <button type="button" onclick="openTahfidzStudentDetail('${escapeHtml(s.studentId || s.student_id || s.id || s.nis)}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold transition flex items-center gap-1 shadow-sm active:scale-95" title="Pantau Hafalan & Mutaba'ah">
+                        <i class="fa-solid fa-book-quran text-[9px]"></i>
+                        <span>Tahfidz</span>
+                    </button>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                        ${escapeHtml(s.status || 'Aktif')}
+                    </span>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
-                    ${escapeHtml(s.status || 'Aktif')}
-                </span>
             </div>
             `;
         }).join('');

@@ -83,6 +83,7 @@
             const beritaView = document.getElementById('admin-view-berita');
             const bannerView = document.getElementById('admin-view-banner');
             const santriView = document.getElementById('admin-view-santri');
+            const tahfidzView = document.getElementById('admin-view-tahfidz');
             const ppdbView = document.getElementById('admin-view-ppdb');
             const programView = document.getElementById('admin-view-program');
             const galeriView = document.getElementById('admin-view-galeri');
@@ -97,6 +98,7 @@
             beritaView.classList.add('hidden');
             bannerView.classList.add('hidden');
             if (santriView) santriView.classList.add('hidden');
+            if (tahfidzView) tahfidzView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
             if (programView) programView.classList.add('hidden');
             if (galeriView) galeriView.classList.add('hidden');
@@ -114,6 +116,11 @@
             } else if (viewName === 'santri') {
                 if (santriView) santriView.classList.remove('hidden');
                 loadAdminStudentsData();
+            } else if (viewName === 'tahfidz') {
+                if (tahfidzView) tahfidzView.classList.remove('hidden');
+                if (typeof loadAdminTahfidzData === 'function') {
+                    loadAdminTahfidzData();
+                }
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');
                 loadAdminNotifikasi();
