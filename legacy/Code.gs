@@ -5880,6 +5880,143 @@ function getLinkedStudentsForWali(waliId) {
     }
   }
 
+  // Enrich with real Tahfidz Summary data from database sheets
+  try {
+    const logsSheet = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
+    const targetSheet = ss.getSheetByName(SHEET_TAHFIDZ_TARGET);
+    const halaqahSheet = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+
+    const logsData = logsSheet ? logsSheet.getDataRange().getValues() : null;
+    const targetData = targetSheet ? targetSheet.getDataRange().getValues() : null;
+    const halaqahData = halaqahSheet ? halaqahSheet.getDataRange().getValues() : null;
+
+    results.forEach(student => {
+      const cleanId = String(student.studentId || "").trim();
+      const cleanNis = String(student.nis || "").trim();
+
+      // 1. Target Tahfidz
+      let ziyadahPekan = 10;
+      let murajaahPekan = 10;
+      if (targetData && targetData.length > 1) {
+        const hTarget = targetData[0].map(h => String(h || "").trim().toLowerCase());
+        const sIdIdx = hTarget.indexOf("student_id");
+        const zPekanIdx = hTarget.indexOf("target_ziyadah_pekan");
+        const mPekanIdx = hTarget.indexOf("target_murajaah_pekan");
+        for (let t = 1; t < targetData.length; t++) {
+          const tId = sIdIdx !== -1 ? String(targetData[t][sIdIdx] || "").trim() : "";
+          if (tId && (tId === cleanId || tId === cleanNis)) {
+            if (zPekanIdx !== -1) ziyadahPekan = Number(targetData[t][zPekanIdx]) || 10;
+            if (mPekanIdx !== -1) murajaahPekan = Number(targetData[t][mPekanIdx]) || 10;
+            break;
+          }
+        }
+      }
+
+      // 2. Halaqah & Muhafiz
+      let namaHalaqah = "Halaqah Utama";
+      let muhafiz = "Ustadz Pembimbing";
+      if (halaqahData && halaqahData.length > 1) {
+        const hHal = halaqahData[0].map(h => String(h || "").trim().toLowerCase());
+        const halNameIdx = hHal.indexOf("nama_halaqah");
+        const muhIdx = hHal.indexOf("muhafiz");
+        const stIdsIdx = hHal.indexOf("student_ids");
+        for (let h = 1; h < halaqahData.length; h++) {
+          const members = stIdsIdx !== -1 ? String(halaqahData[h][stIdsIdx] || "").split(",").map(m => m.trim()) : [];
+          if (members.includes(cleanId) || members.includes(cleanNis)) {
+            if (halNameIdx !== -1) namaHalaqah = String(halaqahData[h][halNameIdx] || "Halaqah Utama").trim();
+            if (muhIdx !== -1) muhafiz = String(halaqahData[h][muhIdx] || "Ustadz Pembimbing").trim();
+            break;
+          }
+        }
+      }
+
+      // 3. Riwayat Logs & Capaian
+      let maxJuz = 0;
+      let totalLogs = 0;
+      let scorePoints = 0;
+      let lastLog = null;
+
+      if (logsData && logsData.length > 1) {
+        const hLogs = logsData[0].map(h => String(h || "").trim().toLowerCase());
+        const sIdIdx = hLogs.indexOf("student_id");
+        const nisIdx = hLogs.indexOf("nis");
+        const juzIdx = hLogs.indexOf("juz");
+        const surahIdx = hLogs.indexOf("surah");
+        const halIdx = hLogs.indexOf("total_halaman");
+        const tglIdx = hLogs.indexOf("tanggal");
+        const nilaiIdx = hLogs.indexOf("nilai");
+        const muhIdx = hLogs.indexOf("muhafiz");
+        const createdIdx = hLogs.indexOf("created_at");
+
+        for (let l = 1; l < logsData.length; l++) {
+          const rowSId = sIdIdx !== -1 ? String(logsData[l][sIdIdx] || "").trim() : "";
+          const rowNis = nisIdx !== -1 ? String(logsData[l][nisIdx] || "").trim() : "";
+          if ((rowSId && rowSId === cleanId) || (rowNis && rowNis === cleanNis)) {
+            totalLogs++;
+            const jVal = Number(logsData[l][juzIdx] || 1);
+            if (jVal > maxJuz) maxJuz = jVal;
+
+            const nVal = String(logsData[l][nilaiIdx] || "MUMTAZ").trim().toUpperCase();
+            if (nVal === "MUMTAZ") scorePoints += 4;
+            else if (nVal === "JAYYID_JIDDAN") scorePoints += 3;
+            else if (nVal === "JAYYID") scorePoints += 2;
+            else scorePoints += 1;
+
+            if (muhIdx !== -1 && logsData[l][muhIdx] && muhafiz === "Ustadz Pembimbing") {
+              muhafiz = String(logsData[l][muhIdx]).trim();
+            }
+
+            const logDate = logsData[l][tglIdx] ? normalizeDateString(logsData[l][tglIdx]) : "";
+            if (!lastLog || new Date(logDate || logsData[l][createdIdx]) > new Date(lastLog.tanggal || lastLog.createdAt)) {
+              lastLog = {
+                tanggal: logDate,
+                surah: surahIdx !== -1 ? String(logsData[l][surahIdx] || "").trim() : "",
+                juz: jVal,
+                totalHalaman: halIdx !== -1 ? Number(logsData[l][halIdx] || 1) : 1,
+                nilai: nVal,
+                muhafiz: muhIdx !== -1 ? String(logsData[l][muhIdx] || "").trim() : "",
+                createdAt: createdIdx !== -1 ? String(logsData[l][createdIdx] || "") : ""
+              };
+            }
+          }
+        }
+      }
+
+      if (maxJuz === 0) maxJuz = 1;
+      const percent = Math.min(100, Math.round((maxJuz / 30) * 100));
+
+      let avgNilaiText = "-";
+      if (totalLogs > 0) {
+        const avg = scorePoints / totalLogs;
+        if (avg >= 3.5) avgNilaiText = "Mumtaz (A)";
+        else if (avg >= 2.8) avgNilaiText = "Jayyid Jiddan (B+)";
+        else if (avg >= 2.0) avgNilaiText = "Jayyid (B)";
+        else avgNilaiText = "Dha'if (C)";
+      }
+
+      student.tahfidzSummary = {
+        currentJuz: maxJuz,
+        percent: percent,
+        totalSetoran: totalLogs,
+        targetPekan: ziyadahPekan + murajaahPekan,
+        ziyadahPekan: ziyadahPekan,
+        murajaahPekan: murajaahPekan,
+        avgNilai: avgNilaiText,
+        halaqah: namaHalaqah,
+        muhafiz: (lastLog && lastLog.muhafiz) || muhafiz,
+        lastSetoran: lastLog ? {
+          tanggal: lastLog.tanggal,
+          surah: lastLog.surah,
+          juz: lastLog.juz,
+          totalHalaman: lastLog.totalHalaman,
+          nilai: lastLog.nilai
+        } : null
+      };
+    });
+  } catch (err) {
+    console.warn("[getLinkedStudentsForWali] Gagal enrich tahfidz summary:", err);
+  }
+
   return results;
 }
 

@@ -841,36 +841,223 @@ const ASNIdentity = {
             return;
         }
 
-        // Server-authorized data rendered directly without client-side ID filtering
-        listContainer.innerHTML = students.map(s => {
+        // Render Kartu Digital Santri (KTS Digital) with Real Tahfidz Indicators
+        listContainer.innerHTML = students.map((s, idx) => {
             const studentPhoto = s.photoUrl || s.photo_url || '';
             const studentGender = (s.gender || s.jenis || '').toUpperCase();
             const studentNis = s.nis || s.nisn || '-';
+            const studentName = s.name || s.nama || 'Santri';
+            const studentProgram = s.program || 'Tahfidz Al-Qur\'an';
+            const studentId = s.studentId || s.student_id || s.id || s.nis;
+            const cleanId = String(studentId || idx).replace(/[^a-zA-Z0-9_-]/g, '_');
+            const tahfidz = s.tahfidzSummary || {};
+            const studentHalaqah = tahfidz.halaqah || 'Halaqah Utama';
+            const studentMuhafiz = tahfidz.muhafiz || 'Ustadz Pembimbing';
+            const currentJuz = tahfidz.currentJuz || 1;
+            const percent = tahfidz.percent || Math.round((currentJuz / 30) * 100);
+            const targetPekan = tahfidz.targetPekan || 10;
+            const avgNilai = tahfidz.avgNilai || (tahfidz.lastSetoran && tahfidz.lastSetoran.nilai) || 'Mumtaz';
+            const lastSurah = (tahfidz.lastSetoran && tahfidz.lastSetoran.surah) ? tahfidz.lastSetoran.surah : 'Aktif Bimbingan';
+
+            // Monogram Initials Fallback
+            const initials = studentName.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'ST';
+
+            // Trigger client-side real-data enrichment if tahfidzSummary is not yet present
+            if (!s.tahfidzSummary) {
+                setTimeout(() => {
+                    ASNIdentity.enrichTahfidzDataForStudent(studentId, cleanId);
+                }, 100 * (idx + 1));
+            }
+
             return `
-            <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-center justify-between">
-                <div class="flex items-center space-x-3 min-w-0">
-                    <div class="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden border border-emerald-200/60 dark:border-emerald-800/40">
-                        ${studentPhoto ? `<img src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(s.name || 'Santri')}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fa-solid fa-graduation-cap\\'></i>';">` : `<i class="fa-solid fa-graduation-cap"></i>`}
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center space-x-1.5">
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(s.name || s.nama || 'Santri')}</h4>
-                            ${studentGender ? `<span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded ${studentGender === 'L' ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300' : 'bg-pink-100 dark:bg-pink-950/80 text-pink-700 dark:text-pink-300'}">${escapeHtml(studentGender)}</span>` : ''}
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-[#064e3b] to-[#042f2e] text-white p-5 border border-emerald-500/40 shadow-xl space-y-4 transition-all duration-300">
+                <!-- Background Ambient Ornaments -->
+                <div class="absolute -right-6 -bottom-6 text-emerald-400/5 text-9xl pointer-events-none select-none">
+                    <i class="fa-solid fa-kaaba"></i>
+                </div>
+                <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- 1. Header Kartu Digital Santri -->
+                <div class="flex items-center justify-between border-b border-emerald-500/30 pb-3 relative z-10">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-300 text-sm shadow-inner">
+                            <i class="fa-solid fa-mosque"></i>
                         </div>
-                        <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">NIS: ${escapeHtml(studentNis)} • ${escapeHtml(s.program || 'Reguler')}</p>
+                        <div>
+                            <h5 class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-200">PPTQ ASNAWIYYAH</h5>
+                            <p class="text-[9px] text-emerald-300/80 font-medium">KTS Digital & Mutaba'ah</p>
+                        </div>
                     </div>
-                <div class="flex items-center space-x-2 shrink-0">
-                    <button type="button" onclick="openTahfidzStudentDetail('${escapeHtml(s.studentId || s.student_id || s.id || s.nis)}', 'parent')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 shrink-0" title="Buka Buku Mutaba'ah & Capaian Santri">
-                        <i class="fa-solid fa-book-quran text-xs text-amber-300"></i>
-                        <span>Buku Mutaba'ah</span>
-                    </button>
-                    <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                        ${escapeHtml(s.status || 'Aktif')}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 backdrop-blur-md shadow-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                        <span>${escapeHtml(s.status || 'Santri Aktif')}</span>
                     </span>
+                </div>
+
+                <!-- 2. Profil & Identitas Santri -->
+                <div class="flex items-center space-x-3.5 relative z-10">
+                    <!-- Frame Foto Santri -->
+                    <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-md bg-emerald-950 flex items-center justify-center shrink-0 relative">
+                        ${studentPhoto ? `
+                            <img src="${escapeHtml(studentPhoto)}" alt="${escapeHtml(studentName)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950\\'><i class=\\'fa-solid fa-user-graduate text-2xl\\'></i><span class=\\'text-[9px] mt-1 font-bold text-amber-200\\'>${escapeHtml(initials)}</span></div>';">
+                        ` : `
+                            <div class="w-full h-full flex flex-col items-center justify-center text-amber-300/80 bg-emerald-950">
+                                <i class="fa-solid fa-user-graduate text-2xl"></i>
+                                <span class="text-[9px] mt-1 font-bold text-amber-200">${escapeHtml(initials)}</span>
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Identitas Detail -->
+                    <div class="min-w-0 flex-1 space-y-1">
+                        <h4 class="text-sm sm:text-base font-extrabold text-white tracking-wide leading-tight line-clamp-2">
+                            ${escapeHtml(studentName)}
+                        </h4>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="px-2 py-0.5 rounded-md bg-white/10 text-amber-200 text-[10px] font-mono font-bold tracking-wider border border-white/10">
+                                NIS: ${escapeHtml(studentNis)}
+                            </span>
+                            ${studentGender ? `
+                                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${studentGender === 'L' ? 'bg-blue-500/25 text-blue-200 border border-blue-400/30' : 'bg-pink-500/25 text-pink-200 border border-pink-400/30'}">
+                                    ${studentGender === 'L' ? 'Santri Putra' : 'Santri Putri'}
+                                </span>
+                            ` : ''}
+                        </div>
+                        <p class="text-[11px] text-emerald-100/90 font-medium flex items-center gap-1.5 truncate pt-0.5">
+                            <i class="fa-solid fa-book-bookmark text-amber-300 text-[10px]"></i>
+                            <span>${escapeHtml(studentProgram)}</span>
+                        </p>
+                        <p class="text-[10px] text-slate-300/90 flex items-center gap-1.5 truncate">
+                            <i class="fa-solid fa-chalkboard-user text-emerald-400 text-[10px]"></i>
+                            <span>Halaqah: ${escapeHtml(studentHalaqah)}</span>
+                        </p>
+                        <p class="text-[10px] text-slate-300/80 flex items-center gap-1.5 truncate">
+                            <i class="fa-solid fa-user-tie text-emerald-300 text-[10px]"></i>
+                            <span>Muhafiz: ${escapeHtml(studentMuhafiz)}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 3. Strip Indikator Tahfidz (Mini Dashboard) -->
+                <div class="rounded-2xl bg-black/30 backdrop-blur-md border border-emerald-500/25 p-3 space-y-2.5 relative z-10">
+                    <div class="flex items-center justify-between text-[10px] text-emerald-200 font-bold uppercase tracking-wider">
+                        <span class="flex items-center gap-1.5 text-amber-300">
+                            <i class="fa-solid fa-star text-[10px]"></i> Indikator Tahfidz
+                        </span>
+                        <span class="text-emerald-300 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                            Standar 30 Juz
+                        </span>
+                    </div>
+
+                    <!-- 3 Metrik Box -->
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <!-- 1. Capaian Juz -->
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-center">
+                            <span class="text-[9px] text-slate-300 font-medium">Capaian</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-amber-300 mt-0.5" id="kts-juz-${cleanId}">Juz ${currentJuz}</span>
+                            <span class="text-[8px] text-emerald-300 mt-0.5 font-bold" id="kts-percent-${cleanId}">${percent}% Juz</span>
+                        </div>
+
+                        <!-- 2. Target Pekanan -->
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-center">
+                            <span class="text-[9px] text-slate-300 font-medium">Target Pekan</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-white mt-0.5" id="kts-target-${cleanId}">${targetPekan} Hlm</span>
+                            <span class="text-[8px] text-slate-300 mt-0.5">Ziyadah/Muraja'ah</span>
+                        </div>
+
+                        <!-- 3. Nilai / Setoran Terakhir -->
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-center">
+                            <span class="text-[9px] text-slate-300 font-medium">Nilai Terakhir</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-emerald-300 mt-0.5 truncate" id="kts-nilai-${cleanId}">${escapeHtml(avgNilai)}</span>
+                            <span class="text-[8px] text-slate-300 mt-0.5 truncate" id="kts-surah-${cleanId}">${escapeHtml(lastSurah)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar 30 Juz -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[9px] text-emerald-200/90 font-medium">
+                            <span>Progres Khatam Hafalan</span>
+                            <span id="kts-bar-label-${cleanId}">Juz ${currentJuz} dari 30 Juz (${percent}%)</span>
+                        </div>
+                        <div class="w-full h-2 rounded-full bg-black/40 overflow-hidden p-0.5 border border-emerald-500/20">
+                            <div id="kts-bar-${cleanId}" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-700" style="width: ${Math.max(4, percent)}%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Tombol Aksi Mutaba'ah Lengkap -->
+                <div class="relative z-10 pt-1">
+                    <button type="button" data-student-id="${escapeHtml(studentId)}" onclick="openTahfidzStudentDetail(this.getAttribute('data-student-id'), 'parent')" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-amber-900/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2" title="Buka Buku Mutaba'ah & Capaian Santri">
+                        <i class="fa-solid fa-book-quran text-sm text-slate-950"></i>
+                        <span>Buka Buku Mutaba'ah Lengkap</span>
+                    </button>
                 </div>
             </div>
             `;
         }).join('');
+    },
+
+    /**
+     * Client-side real data hydrator: Mengambil detail mutaba'ah tahfidz santri dari backend
+     * jika sesi lokal belum memiliki tahfidzSummary, lalu memperbarui tampilan secara live.
+     */
+    enrichTahfidzDataForStudent(studentId, cleanId) {
+        if (!studentId) return;
+        const token = (typeof ASNIdentity !== 'undefined' ? (
+            sessionStorage.getItem('asnawiyyah_parent_token') ||
+            localStorage.getItem('asnawiyyah_parent_token') ||
+            sessionStorage.getItem('asnawiyyah_admin_token')
+        ) : '') || "";
+
+        if (typeof apiPost !== 'function') return;
+
+        apiPost("getTahfidzStudentDetail", { token, studentId }).then(res => {
+            if (res && (res.success || res.status === "success")) {
+                const stats = res.stats || {};
+                const target = res.target || {};
+                const currentJuz = stats.progressJuz || 1;
+                const percent = stats.progressPercent || Math.round((currentJuz / 30) * 100);
+                const targetPekan = (target.ziyadahPekan || 10) + (target.murajaahPekan || 10);
+                const avgNilai = stats.rataRataNilai || "Mumtaz (A)";
+                const lastLog = (res.riwayat && res.riwayat.length > 0) ? res.riwayat[0] : null;
+
+                const elJuz = document.getElementById(`kts-juz-${cleanId}`);
+                if (elJuz) elJuz.innerText = `Juz ${currentJuz}`;
+                const elPercent = document.getElementById(`kts-percent-${cleanId}`);
+                if (elPercent) elPercent.innerText = `${percent}% Juz`;
+                const elTarget = document.getElementById(`kts-target-${cleanId}`);
+                if (elTarget) elTarget.innerText = `${targetPekan} Hlm`;
+                const elNilai = document.getElementById(`kts-nilai-${cleanId}`);
+                if (elNilai) elNilai.innerText = avgNilai;
+                const elSurah = document.getElementById(`kts-surah-${cleanId}`);
+                if (elSurah) elSurah.innerText = lastLog ? (lastLog.surah || `Juz ${lastLog.juz}`) : "Aktif";
+                const elBarLabel = document.getElementById(`kts-bar-label-${cleanId}`);
+                if (elBarLabel) elBarLabel.innerText = `Juz ${currentJuz} dari 30 Juz (${percent}%)`;
+                const elBar = document.getElementById(`kts-bar-${cleanId}`);
+                if (elBar) elBar.style.width = `${Math.max(4, percent)}%`;
+
+                // Update session storage cache
+                try {
+                    const raw = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
+                    if (raw) {
+                        const cached = JSON.parse(raw);
+                        const targetSt = cached.find(c => String(c.studentId || c.id || c.nis).trim() === String(studentId).trim());
+                        if (targetSt) {
+                            targetSt.tahfidzSummary = {
+                                currentJuz,
+                                percent,
+                                targetPekan,
+                                avgNilai,
+                                lastSetoran: lastLog ? { surah: lastLog.surah, nilai: lastLog.nilai } : null
+                            };
+                            sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(cached));
+                        }
+                    }
+                } catch (e) {}
+            }
+        }).catch(e => {
+            console.warn("[KTS Hydration] Failed to fetch tahfidz details:", e);
+        });
     }
 };
 
