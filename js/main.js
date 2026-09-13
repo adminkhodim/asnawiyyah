@@ -157,6 +157,11 @@
             } else if (path === '/layanan/portal-ibadah/tahlil-dan-yasin') {
                 if (typeof openTahlilYasinPage === 'function') openTahlilYasinPage();
                 else switchTab('tahlil-yasin', false);
+            } else if (path === '/layanan/portal-ibadah/quran/pojok') {
+                if (typeof openQuranPojokIndexTab === 'function') openQuranPojokIndexTab();
+                else switchTab('quran-index', false);
+            } else if (path === '/layanan/portal-ibadah/quran/halaman') {
+                switchTab('quran-page', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -222,6 +227,11 @@
             } else if (path === '/layanan/portal-ibadah/tahlil-dan-yasin') {
                 if (typeof openTahlilYasinPage === 'function') openTahlilYasinPage();
                 else switchTab('tahlil-yasin', false);
+            } else if (path === '/layanan/portal-ibadah/quran/pojok') {
+                if (typeof openQuranPojokIndexTab === 'function') openQuranPojokIndexTab();
+                else switchTab('quran-index', false);
+            } else if (path === '/layanan/portal-ibadah/quran/halaman') {
+                switchTab('quran-page', false);
             } else if (path === '/administrator') {
                 const isMobile = window.innerWidth < 768;
                 if (isMobile) {
@@ -313,6 +323,7 @@
                 else if (tabId === 'maulid-detail') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/baca/';
                 else if (tabId === 'burdah-index') targetUrl = '/layanan/portal-ibadah/burdah/';
                 else if (tabId === 'tahlil-yasin') targetUrl = '/layanan/portal-ibadah/tahlil-dan-yasin/';
+                else if (tabId === 'quran-page') targetUrl = '/layanan/portal-ibadah/quran/halaman/';
 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
@@ -320,7 +331,7 @@
                     tabId === 'sd-islam' || tabId === 'tahfidz-anak' || tabId === 'dewasa-putra' || tabId === 'dewasa-putri' ||
                     tabId === 'jadwal-kegiatan' || tabId === 'unit-kegiatan' || tabId === 'poskestren' || tabId === 'admin' || tabId === 'pengaturan' || tabId === 'notifikasi' || tabId === 'alumni' || tabId === 'form-alumni' ||
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
-                    tabId === 'quran-index' || tabId === 'quran-detail' ||
+                    tabId === 'quran-index' || tabId === 'quran-detail' || tabId === 'quran-page' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
                     tabId === 'burdah-index' || tabId === 'tahlil-yasin' ||
                     tabId === 'beranda')) {

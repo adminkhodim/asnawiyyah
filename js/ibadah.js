@@ -94,6 +94,28 @@
         let quranData = [];
         let currentAudio = null;
         let isLatinVisible = false;
+        let isTranslationVisible = true;
+        let currentQuranPage = 1;
+        let currentQuranJuz = 1;
+        let quranPageCache = {};
+        let quranPojokInitialized = false;
+        let pageAudioPlaying = false;
+        let currentQuranSubTab = 'surah';
+
+        const quranSurahNames = [
+            "Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus",
+            "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Ta-Ha",
+            "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qashash", "Al-'Ankabut", "Ar-Rum",
+            "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fathir", "Ya-Sin", "Ash-Shaffat", "Shad", "Az-Zumar", "Ghafir",
+            "Fushshilat", "Asy-Syura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jatsiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf",
+            "Adz-Dzariyat", "Ath-Thur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hasyr", "Al-Mumtahanah",
+            "Ash-Shaff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "Ath-Thalaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij",
+            "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddatstsir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "'Abasa",
+            "At-Takwir", "Al-Infithar", "Al-Muthaffifin", "Al-Insyiqaq", "Al-Buruj", "Ath-Thariq", "Al-A'la", "Al-Ghasyiyah", "Al-Fajr", "Al-Balad",
+            "Asy-Syams", "Al-Lail", "Adh-Dhuha", "Asy-Syarh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat",
+            "Al-Qari'ah", "At-Takatsur", "Al-'Ashr", "Al-Humazah", "Al-Fil", "Quraisy", "Al-Ma'un", "Al-Kautsar", "Al-Kafirun", "An-Nashr",
+            "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"
+        ];
 
         async function fetchQuranList() {
             const container = document.getElementById('quran-list-container');
@@ -114,6 +136,7 @@
 
         function renderQuranList(list) {
             const container = document.getElementById('quran-list-container');
+            if (!container) return;
             container.innerHTML = '';
 
             if (list.length === 0) {
@@ -203,10 +226,12 @@
 
                     // Render Ayah
                     container.innerHTML = '';
+                    const latinDisplayClass = isLatinVisible ? "" : "hidden";
+                    const transDisplayClass = isTranslationVisible ? "" : "hidden";
+
                     surah.ayat.forEach(ayat => {
                         const div = document.createElement('div');
                         div.className = "bg-white dark:bg-[#15202d] p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 hover:border-emerald-200 dark:hover:border-emerald-500/40 transition";
-                        const latinDisplayClass = isLatinVisible ? "" : "hidden";
                         div.innerHTML = `
                             <div class="flex items-start justify-between gap-4">
                                 <div class="w-8 h-8 shrink-0 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center justify-center font-bold text-xs border border-emerald-100 dark:border-emerald-800/40">
@@ -218,7 +243,7 @@
                             </div>
                             <div class="pt-3 border-t border-slate-50 dark:border-slate-800 space-y-2">
                                 <p class="latin-text text-emerald-700 dark:text-emerald-400 text-xs md:text-sm italic font-medium leading-relaxed ${latinDisplayClass}">${ayat.teksLatin}</p>
-                                <p class="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed">${ayat.teksIndonesia}</p>
+                                <p class="quran-translation text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed ${transDisplayClass}">${ayat.teksIndonesia}</p>
                             </div>
                         `;
                         container.appendChild(div);
@@ -246,6 +271,32 @@
             if (textToggleLatin) {
                 textToggleLatin.innerText = isLatinVisible ? "Sembunyikan Latin" : "Tampilkan Latin";
             }
+            const textTogglePageLatin = document.getElementById('text-toggle-page-latin');
+            if (textTogglePageLatin) {
+                textTogglePageLatin.innerText = isLatinVisible ? "Sembunyikan Latin" : "Tampilkan Latin";
+            }
+        }
+
+        function toggleTranslation() {
+            isTranslationVisible = !isTranslationVisible;
+
+            const translationTexts = document.querySelectorAll('.quran-translation');
+            translationTexts.forEach(el => {
+                if (isTranslationVisible) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            const textSurahBtn = document.getElementById('text-toggle-translation');
+            if (textSurahBtn) {
+                textSurahBtn.innerText = isTranslationVisible ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
+            }
+            const textPageBtn = document.getElementById('text-toggle-page-trans');
+            if (textPageBtn) {
+                textPageBtn.innerText = isTranslationVisible ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
+            }
         }
 
         function toggleQuranAudio() {
@@ -269,11 +320,394 @@
             const player = document.getElementById('quran-audio-player');
             if (player) {
                 player.addEventListener('ended', function () {
-                    document.getElementById('icon-play-audio').className = "fa-solid fa-play";
-                    document.getElementById('text-play-audio').innerText = "Putar Murottal";
+                    const iconPlay = document.getElementById('icon-play-audio');
+                    const textPlay = document.getElementById('text-play-audio');
+                    if (iconPlay) iconPlay.className = "fa-solid fa-play";
+                    if (textPlay) textPlay.innerText = "Putar Murottal";
                 });
             }
         });
+
+        // ==================== QUR'AN POJOK (PER HALAMAN 1 JUZ = 20 HALAMAN) ====================
+        function getJuzPageRange(juzNo) {
+            const j = parseInt(juzNo, 10);
+            if (j === 1) return { start: 1, end: 21, totalPages: 21 };
+            if (j === 30) return { start: 582, end: 604, totalPages: 23 };
+            const start = (j - 1) * 20 + 2;
+            const end = j * 20 + 1;
+            return { start, end, totalPages: 20 };
+        }
+
+        function getJuzFromPage(pageNo) {
+            const p = parseInt(pageNo, 10);
+            if (p <= 21) return 1;
+            if (p >= 582) return 30;
+            return Math.floor((p - 2) / 20) + 1;
+        }
+
+        function switchQuranIndexSubTab(tabName) {
+            currentQuranSubTab = tabName;
+            const btnSurah = document.getElementById('tab-btn-quran-surah');
+            const btnPojok = document.getElementById('tab-btn-quran-pojok');
+            const wrapperSurah = document.getElementById('quran-surah-view-wrapper');
+            const wrapperPojok = document.getElementById('quran-pojok-view-wrapper');
+            const titleHeader = document.getElementById('quran-index-header-title');
+
+            if (tabName === 'surah') {
+                if (btnSurah) btnSurah.className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm";
+                if (btnPojok) btnPojok.className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100";
+                if (wrapperSurah) wrapperSurah.classList.remove('hidden');
+                if (wrapperPojok) wrapperPojok.classList.add('hidden');
+                if (titleHeader) titleHeader.innerText = "Daftar Surah (1-114)";
+            } else {
+                if (btnPojok) btnPojok.className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm";
+                if (btnSurah) btnSurah.className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100";
+                if (wrapperSurah) wrapperSurah.classList.add('hidden');
+                if (wrapperPojok) wrapperPojok.classList.remove('hidden');
+                if (titleHeader) titleHeader.innerText = "Qur'an Pojok (Per Halaman & Juz)";
+                initQuranPojok();
+            }
+        }
+
+        function openQuranPojokIndexTab() {
+            switchTab('quran-index');
+            switchQuranIndexSubTab('pojok');
+        }
+
+        function initQuranPojok() {
+            if (quranPojokInitialized) return;
+            quranPojokInitialized = true;
+
+            // Render 30 Juz Chips
+            const chipsContainer = document.getElementById('quran-juz-chips-container');
+            if (chipsContainer) {
+                chipsContainer.innerHTML = '';
+                for (let j = 1; j <= 30; j++) {
+                    const btn = document.createElement('button');
+                    btn.type = "button";
+                    btn.id = `chip-juz-${j}`;
+                    const range = getJuzPageRange(j);
+                    btn.className = `px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition active:scale-95 ${j === currentQuranJuz ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]'}`;
+                    btn.innerText = `Juz ${j}`;
+                    btn.title = `Halaman ${range.start} s/d ${range.end}`;
+                    btn.onclick = () => selectQuranPojokJuz(j);
+                    chipsContainer.appendChild(btn);
+                }
+            }
+
+            // Populate Jump Page Select (1 to 604)
+            const selectJump = document.getElementById('select-jump-page');
+            if (selectJump && selectJump.options.length <= 1) {
+                selectJump.innerHTML = '';
+                for (let p = 1; p <= 604; p++) {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.innerText = `Hal ${p}`;
+                    selectJump.appendChild(opt);
+                }
+            }
+
+            selectQuranPojokJuz(currentQuranJuz || 1);
+        }
+
+        function selectQuranPojokJuz(juzNo) {
+            currentQuranJuz = parseInt(juzNo, 10);
+            const range = getJuzPageRange(currentQuranJuz);
+
+            // Update chip styles
+            for (let j = 1; j <= 30; j++) {
+                const btn = document.getElementById(`chip-juz-${j}`);
+                if (btn) {
+                    if (j === currentQuranJuz) {
+                        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition active:scale-95 bg-emerald-600 text-white shadow-sm";
+                    } else {
+                        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition active:scale-95 bg-slate-100 dark:bg-[#1c2836] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]";
+                    }
+                }
+            }
+
+            const labelInfo = document.getElementById('label-selected-juz-info');
+            if (labelInfo) {
+                labelInfo.innerText = `Juz ${currentQuranJuz} (Hal ${range.start} - ${range.end})`;
+            }
+            const gridTitle = document.getElementById('juz-page-grid-title');
+            if (gridTitle) {
+                gridTitle.innerText = `Juz ${currentQuranJuz}`;
+            }
+
+            // Render 20 pages in grid
+            renderQuranPojokPageGrid(currentQuranJuz);
+        }
+
+        function renderQuranPojokPageGrid(juzNo) {
+            const container = document.getElementById('quran-pages-grid-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const range = getJuzPageRange(juzNo);
+            for (let p = range.start; p <= range.end; p++) {
+                const card = document.createElement('div');
+                card.className = "p-3 bg-slate-50 dark:bg-[#1c2836] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-100 dark:border-[#253447] hover:border-emerald-500 rounded-xl cursor-pointer transition flex flex-col justify-between space-y-2 group shadow-sm active:scale-95";
+                const pageInJuz = p - range.start + 1;
+                card.onclick = () => openQuranPage(p);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px] shadow-sm">
+                            ${pageInJuz}
+                        </span>
+                        <span class="text-[9px] font-bold text-slate-400 group-hover:text-emerald-600">Ayat Pojok</span>
+                    </div>
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
+                            Halaman ${p}
+                        </h5>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Lembar ke-${Math.ceil(pageInJuz / 2)}
+                        </p>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function jumpToQuranPageFromInput() {
+            const input = document.getElementById('input-quick-jump-page');
+            if (!input || !input.value) return;
+            const p = parseInt(input.value, 10);
+            if (p >= 1 && p <= 604) {
+                openQuranPage(p);
+            } else {
+                alert("Masukkan nomor halaman antara 1 s/d 604.");
+            }
+        }
+
+        function jumpToQuranPage(pageNo) {
+            const p = parseInt(pageNo, 10);
+            if (p >= 1 && p <= 604) {
+                openQuranPage(p);
+            }
+        }
+
+        async function openQuranPage(pageNo) {
+            let p = parseInt(pageNo, 10);
+            if (isNaN(p) || p < 1) p = 1;
+            if (p > 604) p = 604;
+            currentQuranPage = p;
+            currentQuranJuz = getJuzFromPage(p);
+
+            switchTab('quran-page');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Update UI elements
+            const titleEl = document.getElementById('quran-page-title');
+            if (titleEl) titleEl.innerText = `Halaman ${p} dari 604`;
+
+            const juzInfoEl = document.getElementById('quran-page-juz-info');
+            if (juzInfoEl) juzInfoEl.innerText = `Juz ${currentQuranJuz}`;
+
+            const footerNumEl = document.getElementById('footer-current-page-num');
+            if (footerNumEl) footerNumEl.innerText = `Hal. ${p}`;
+
+            const selectJump = document.getElementById('select-jump-page');
+            if (selectJump) selectJump.value = p;
+
+            const btnPrev = document.getElementById('btn-page-prev');
+            const btnNext = document.getElementById('btn-page-next');
+            if (btnPrev) btnPrev.disabled = (p <= 1);
+            if (btnNext) btnNext.disabled = (p >= 604);
+
+            // Reset page audio button
+            resetQuranPageAudio();
+
+            const container = document.getElementById('quran-page-ayah-container');
+            if (!container) return;
+
+            // Check cache
+            if (quranPageCache[p]) {
+                renderQuranPageAyahs(quranPageCache[p]);
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="bg-white dark:bg-[#15202d] p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] text-center space-y-2">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-500 mb-2"></i>
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">Memuat Halaman ${p}...</p>
+                    <p class="text-xs text-slate-400">Mushaf Pojok Rasm Utsmani</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`https://api.quran.com/api/v4/verses/by_page/${p}?words=false&translations=33&fields=text_uthmani,chapter_id,verse_number`);
+                const data = await response.json();
+                if (data && data.verses) {
+                    quranPageCache[p] = data.verses;
+                    renderQuranPageAyahs(data.verses);
+                } else {
+                    container.innerHTML = `<div class="p-8 text-center text-red-500">Gagal memuat data ayat halaman ${p}.</div>`;
+                }
+            } catch (err) {
+                console.error("Gagal memuat halaman Qur'an Pojok:", err);
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-[#15202d] p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] text-center space-y-3">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl"></i>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Gagal memuat ayat halaman ${p}. Periksa koneksi internet Anda.</p>
+                        <button type="button" onclick="openQuranPage(${p})" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Coba Lagi</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderQuranPageAyahs(verses) {
+            const container = document.getElementById('quran-page-ayah-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Detect chapters in this page
+            const chaptersInPage = [...new Set(verses.map(v => v.chapter_id))];
+            const surahNamesList = chaptersInPage.map(cId => {
+                return (quranSurahNames[cId - 1]) ? `Surat ${quranSurahNames[cId - 1]}` : `Surat ke-${cId}`;
+            }).join(', ');
+
+            const surahInfoEl = document.getElementById('quran-page-surah-info');
+            if (surahInfoEl) {
+                surahInfoEl.innerText = surahNamesList;
+            }
+
+            let currentSurahOnPage = null;
+
+            verses.forEach(v => {
+                // If this is the first verse of a surah on this page, or beginning of surah
+                if (v.verse_number === 1 || v.chapter_id !== currentSurahOnPage) {
+                    currentSurahOnPage = v.chapter_id;
+                    const surahName = quranSurahNames[currentSurahOnPage - 1] || `Surat ke-${currentSurahOnPage}`;
+
+                    // Surah header banner
+                    const surahHeader = document.createElement('div');
+                    surahHeader.className = "p-3.5 bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent dark:from-emerald-950/40 dark:to-transparent bg-white dark:bg-[#15202d] rounded-2xl border border-emerald-500/30 text-center my-2 shadow-sm";
+                    surahHeader.innerHTML = `
+                        <span class="text-[9px] font-extrabold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Surat ke-${currentSurahOnPage}</span>
+                        <h3 class="font-extrabold text-sm md:text-base text-slate-900 dark:text-slate-100">${surahName}</h3>
+                    `;
+                    container.appendChild(surahHeader);
+
+                    // Bismillah (kecuali Al-Fatihah dan At-Taubah)
+                    if (v.chapter_id !== 1 && v.chapter_id !== 9 && v.verse_number === 1) {
+                        const bismillah = document.createElement('div');
+                        bismillah.className = "p-3 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-500/20 rounded-2xl text-center my-2";
+                        bismillah.innerHTML = `
+                            <p class="font-arabic text-xl md:text-2xl text-emerald-950 dark:text-emerald-200" dir="rtl">
+                                بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
+                            </p>
+                        `;
+                        container.appendChild(bismillah);
+                    }
+                }
+
+                // Render Card Ayat
+                const div = document.createElement('div');
+                div.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-emerald-500/40 transition";
+
+                const transText = (v.translations && v.translations[0]) ? v.translations[0].text : '';
+                const transClass = isTranslationVisible ? '' : 'hidden';
+
+                div.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 flex items-center justify-center font-extrabold text-[11px] shrink-0">
+                            ${v.verse_number}
+                        </span>
+                        <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-slate-900 dark:text-slate-100 text-right leading-loose flex-1" style="line-height: 2.3;" dir="rtl">
+                            ${v.text_uthmani} <span class="text-emerald-600 dark:text-emerald-400 text-lg">۝${toArabicNumerals(v.verse_number)}</span>
+                        </p>
+                    </div>
+                    ${transText ? `
+                    <div class="quran-translation pt-2 border-t border-slate-100 dark:border-[#253447] ${transClass}">
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                            ${transText}
+                        </p>
+                    </div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toArabicNumerals(num) {
+            const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return num.toString().split('').map(d => arabicDigits[d] || d).join('');
+        }
+
+        function navigateQuranPage(direction) {
+            const next = currentQuranPage + direction;
+            if (next >= 1 && next <= 604) {
+                openQuranPage(next);
+            }
+        }
+
+        async function toggleQuranPageAudio() {
+            const audioPlayer = document.getElementById('quran-page-audio-player');
+            const iconElem = document.getElementById('icon-play-page-audio');
+            const textElem = document.getElementById('text-play-page-audio');
+            if (!audioPlayer) return;
+
+            if (pageAudioPlaying && !audioPlayer.paused) {
+                audioPlayer.pause();
+                resetQuranPageAudio();
+                return;
+            }
+
+            try {
+                if (iconElem) iconElem.className = "fa-solid fa-spinner fa-spin text-xs";
+                if (textElem) textElem.innerText = "Memuat...";
+
+                // Fetch page recitations from quran.com
+                const resp = await fetch(`https://api.quran.com/api/v4/recitations/7/by_page/${currentQuranPage}`);
+                const data = await resp.json();
+                if (data && data.audio_files && data.audio_files.length > 0) {
+                    let audioIdx = 0;
+                    const audioFiles = data.audio_files;
+
+                    const playNextAyah = () => {
+                        if (audioIdx >= audioFiles.length) {
+                            resetQuranPageAudio();
+                            return;
+                        }
+                        const file = audioFiles[audioIdx];
+                        audioPlayer.src = `https://verses.quran.com/${file.url}`;
+                        audioPlayer.play().then(() => {
+                            pageAudioPlaying = true;
+                            if (iconElem) iconElem.className = "fa-solid fa-pause text-xs";
+                            if (textElem) textElem.innerText = `Ayat ${audioIdx + 1}/${audioFiles.length}`;
+                        }).catch(e => {
+                            console.warn("Audio play error:", e);
+                            resetQuranPageAudio();
+                        });
+                        audioPlayer.onended = () => {
+                            audioIdx++;
+                            playNextAyah();
+                        };
+                    };
+
+                    playNextAyah();
+                } else {
+                    resetQuranPageAudio();
+                }
+            } catch (e) {
+                console.error("Audio error:", e);
+                resetQuranPageAudio();
+            }
+        }
+
+        function resetQuranPageAudio() {
+            pageAudioPlaying = false;
+            const audioPlayer = document.getElementById('quran-page-audio-player');
+            if (audioPlayer && !audioPlayer.paused) {
+                audioPlayer.pause();
+            }
+            const iconElem = document.getElementById('icon-play-page-audio');
+            const textElem = document.getElementById('text-play-page-audio');
+            if (iconElem) iconElem.className = "fa-solid fa-play text-xs";
+            if (textElem) textElem.innerText = "Putar Murottal";
+        }
 
         // ==================== MAULID FEATURE ====================
         function renderMaulidIndex() {
