@@ -401,6 +401,10 @@
                 loadNotifikasi();
             } else if (tabId === 'beranda') {
                 checkHomePosterPopup();
+            } else if (tabId === 'jadwal-sholat') {
+                if (typeof ASNJadwalSholat !== 'undefined') {
+                    ASNJadwalSholat.init();
+                }
             }
 
             // Nav Mobile
@@ -939,23 +943,43 @@
 
         function initHomePrayerWidget() {
             const now = new Date();
+
+            let activeTimes = prayerTimes;
+            let tzLabel = "WIB";
+
+            if (typeof ASNJadwalSholat !== 'undefined' && typeof ASNJadwalSholat.calculateDay === 'function') {
+                const curCity = ASNJadwalSholat.getCurrentCity();
+                const calc = ASNJadwalSholat.calculateDay(now, curCity);
+                if (calc && calc.times) {
+                    activeTimes = [
+                        { name: "Subuh", time: calc.times.subuh },
+                        { name: "Dhuha", time: calc.times.dhuha },
+                        { name: "Zuhur", time: calc.times.zuhur },
+                        { name: "Ashar", time: calc.times.ashar },
+                        { name: "Maghrib", time: calc.times.maghrib },
+                        { name: "Isya", time: calc.times.isya }
+                    ];
+                    tzLabel = calc.tzName || "WIB";
+                }
+            }
+
             const nowInSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
 
-            let nextPrayer = prayerTimes[0];
+            let nextPrayer = activeTimes[0];
             let targetSeconds = 0;
 
-            for (let i = 0; i < prayerTimes.length; i++) {
-                const [h, m] = prayerTimes[i].time.split(':').map(Number);
+            for (let i = 0; i < activeTimes.length; i++) {
+                const [h, m] = activeTimes[i].time.split(':').map(Number);
                 const pSeconds = (h * 3600) + (m * 60);
                 if (pSeconds > nowInSeconds) {
-                    nextPrayer = prayerTimes[i];
+                    nextPrayer = activeTimes[i];
                     targetSeconds = pSeconds;
                     break;
                 }
             }
 
             if (targetSeconds === 0) {
-                const [h, m] = prayerTimes[0].time.split(':').map(Number);
+                const [h, m] = activeTimes[0].time.split(':').map(Number);
                 targetSeconds = (24 * 3600) + (h * 3600) + (m * 60);
             }
 
@@ -965,7 +989,7 @@
             const secsLeft = diffSeconds % 60;
             const formattedCountdown = `${String(hoursLeft).padStart(2, '0')}:${String(minsLeft).padStart(2, '0')}:${String(secsLeft).padStart(2, '0')}`;
 
-            const prayerHtml = `${nextPrayer.name} <span class="text-amber-300 font-normal ml-1">${nextPrayer.time} WIB</span>`;
+            const prayerHtml = `${nextPrayer.name} <span class="text-amber-300 font-normal ml-1">${nextPrayer.time} ${tzLabel}</span>`;
 
             ['home-next-prayer-name', 'home-next-prayer-name-desktop'].forEach(id => {
                 const el = document.getElementById(id);

@@ -3138,9 +3138,9 @@
                 </div>
             </section>
 
-            <!-- FITUR UTAMA IBADAH (3 KOLOM HORIZONTAL SEIMBANG) -->
+            <!-- FITUR UTAMA IBADAH (4 KOLOM HORIZONTAL SEIMBANG) -->
             <section class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
-                <div class="grid grid-cols-3 gap-2 md:gap-4">
+                <div class="grid grid-cols-4 gap-2 md:gap-3">
 
                     <!-- 1. Al-Qur'an Digital -->
                     <button type="button" onclick="switchTab('quran-index')"
@@ -3172,8 +3172,18 @@
                             <i class="fa-solid fa-hands-holding"></i>
                         </div>
                         <span
-                            class="text-[10px] md:text-xs mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-blue-600">Tahlil
-                            & Yasin</span>
+                            class="text-[10px] md:text-xs mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-blue-600">Tahlil & Yasin</span>
+                    </button>
+
+                    <!-- 4. Jadwal Sholat & Imsakiyah (BARU) -->
+                    <button type="button" onclick="openJadwalSholatPage()"
+                        class="flex flex-col items-center group transition focus:outline-none">
+                        <div
+                            class="w-12 h-12 md:w-14 md:h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <span
+                            class="text-[10px] md:text-xs mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-amber-600">Jadwal Sholat</span>
                     </button>
 
                 </div>
@@ -3191,10 +3201,216 @@
                 </div>
                 <div id="ibadah-body" class="text-xs md:text-sm text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed min-h-[100px]">
                     <p class="text-slate-400 italic text-center py-6">
-                        Klik salah satu menu ikon di atas untuk memilih dan membaca teks.
+                        Klik salah satu menu ikon di atas untuk memilih amaliah dan jadwal.
                     </p>
                 </div>
             </div>
+
+        </div>
+
+        <!-- ==================== TAB: JADWAL SHOLAT & IMSAKIYAH (STANDAR FALAKIYAH NU) ==================== -->
+        <div id="page-jadwal-sholat" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            
+            <!-- BARIS NAVIGASI KEMBALI & HEADER -->
+            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <div class="flex items-center space-x-2.5">
+                    <button type="button" onclick="switchTab('ibadah')" aria-label="Kembali ke Portal Ibadah"
+                        title="Kembali ke Portal Ibadah"
+                        class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
+                    <div>
+                        <span class="text-[10px] font-bold text-brand-700 dark:text-emerald-400 uppercase tracking-widest block">Portal Ibadah</span>
+                        <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Jadwal Sholat & Imsakiyah</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="hidden sm:inline-block text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-full uppercase">
+                        Falakiyah NU
+                    </span>
+                    <button type="button" onclick="ASNJadwalSholat.copyTodaySchedule()"
+                        title="Salin Jadwal Hari Ini ke Clipboard"
+                        class="px-2.5 py-1.5 bg-emerald-50 dark:bg-[#1c2836] hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-copy"></i>
+                        <span class="hidden sm:inline">Salin</span>
+                    </button>
+                    <button type="button" onclick="ASNJadwalSholat.printMonthlySchedule()"
+                        title="Cetak Jadwal Bulanan"
+                        class="px-2.5 py-1.5 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-print"></i>
+                        <span class="hidden sm:inline">Cetak</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PILIHAN KOTA & STATUS WILAYAH -->
+            <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-location-dot text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pilih Wilayah / Daerah:</span>
+                        <span id="sholat-header-location" class="text-xs font-bold text-slate-800 dark:text-slate-200">📍 Kab. Demak (PPTQ Asnawiyyah)</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <select id="sholat-city-select" onchange="ASNJadwalSholat.changeCity(this.value)"
+                        class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500/40 cursor-pointer">
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- HERO CARD: SHOLAT BERIKUTNYA & COUNTDOWN REALTIME -->
+            <section class="relative bg-gradient-to-r from-brand-900 via-brand-800 to-emerald-800 text-white p-5 md:p-6 rounded-3xl overflow-hidden shadow-lg space-y-4">
+                <div class="absolute -right-8 -bottom-8 text-white/5 text-9xl pointer-events-none">
+                    <i class="fa-solid fa-kaaba"></i>
+                </div>
+
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <!-- Sisi Kiri: Status Sholat Berikutnya -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-amber-400 text-brand-dark text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                Waktu Sholat Terdekat
+                            </span>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">
+                                <span id="sholat-next-name">Zuhur</span>
+                            </h2>
+                            <span id="sholat-next-time" class="text-lg md:text-xl font-bold text-amber-300">
+                                11:36 WIB
+                            </span>
+                        </div>
+                        <p class="text-xs text-emerald-100/90 flex items-center gap-1.5">
+                            <i class="fa-solid fa-hourglass-half text-amber-300 text-[10px]"></i>
+                            <span>Menuju waktu sholat berikutnya:</span>
+                        </p>
+                    </div>
+
+                    <!-- Sisi Kanan: Countdown Box & Navigasi Tanggal -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div class="bg-black/30 backdrop-blur-sm px-4 py-2.5 rounded-2xl border border-white/10 text-center">
+                            <span class="text-[9px] text-emerald-200 font-semibold uppercase tracking-wider block">Hitung Mundur</span>
+                            <div id="sholat-next-countdown" class="font-mono text-xl md:text-2xl font-black text-amber-300 tracking-wider">
+                                00:00:00
+                            </div>
+                        </div>
+
+                        <!-- Tanggal Masehi & Hijriyah Navigasi -->
+                        <div class="bg-white/10 backdrop-blur-sm px-3.5 py-2 rounded-2xl border border-white/10 flex items-center space-x-2">
+                            <button type="button" onclick="ASNJadwalSholat.shiftDate(-1)" title="Hari Sebelumnya"
+                                class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition active:scale-95 text-xs">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <div class="text-center px-1">
+                                <div id="sholat-date-masehi" class="text-xs font-bold text-white whitespace-nowrap">
+                                    Ahad, 13 September 2026
+                                </div>
+                                <div id="sholat-date-hijri" class="text-[10px] text-amber-300 font-medium whitespace-nowrap">
+                                    1 Rabi'ul Akhir 1448 H
+                                </div>
+                            </div>
+                            <button type="button" onclick="ASNJadwalSholat.shiftDate(1)" title="Hari Berikutnya"
+                                class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition active:scale-95 text-xs">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <button type="button" onclick="ASNJadwalSholat.resetToToday()" title="Kembali ke Hari Ini"
+                                class="text-[9px] font-bold bg-amber-400 hover:bg-amber-300 text-brand-dark px-2 py-1 rounded-md transition ml-1">
+                                Hari Ini
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GRID 8 WAKTU SHOLAT HARI INI -->
+            <section class="space-y-2">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-day text-emerald-600"></i>
+                        <span>8 Waktu Sholat & Imsakiyah Hari Ini</span>
+                    </h3>
+                    <span class="text-[10px] text-slate-400 italic">Standar Falakiyah NU (+2 m Ihtiyat)</span>
+                </div>
+                <div id="sholat-cards-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 md:gap-3">
+                    <!-- Rendered by JS -->
+                </div>
+            </section>
+
+            <!-- TABEL KALENDER BULANAN (1 BULAN PENUH) -->
+            <section class="bg-white dark:bg-[#15202d] rounded-3xl border border-slate-100 dark:border-[#253447] shadow-sm overflow-hidden space-y-3">
+                <!-- Header Tabel & Navigasi Bulan -->
+                <div class="p-4 md:p-5 border-b border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="space-y-0.5">
+                        <h3 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-brand-700 dark:text-emerald-400"></i>
+                            <span>Jadwal Sholat 1 Bulan Penuh - <span id="sholat-monthly-title">September 2026</span></span>
+                        </h3>
+                        <p class="text-[11px] text-slate-400">
+                            Kalender Hijriyah: <span id="sholat-monthly-hijri-span" class="text-emerald-700 dark:text-emerald-400 font-bold">Rabi'ul Awwal – Rabi'ul Akhir 1448 H</span>
+                        </p>
+                    </div>
+
+                    <!-- Tombol Navigasi Ganti Bulan -->
+                    <div class="flex items-center space-x-1.5 self-start md:self-auto">
+                        <button type="button" onclick="ASNJadwalSholat.shiftMonth(-1)"
+                            class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                            <span>Bulan Lalu</span>
+                        </button>
+                        <button type="button" onclick="ASNJadwalSholat.resetToToday()"
+                            class="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition">
+                            Bulan Ini
+                        </button>
+                        <button type="button" onclick="ASNJadwalSholat.shiftMonth(1)"
+                            class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1">
+                            <span>Bulan Depan</span>
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kontainer Tabel Responsif -->
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="bg-brand-900 text-white text-[11px] md:text-xs font-bold uppercase tracking-wider">
+                                <th class="py-3 px-3">Hari & Pasaran</th>
+                                <th class="py-3 px-2.5 text-center">Hijriyah</th>
+                                <th class="py-3 px-2.5 text-center">Masehi</th>
+                                <th class="py-3 px-2.5 text-center">Imsak</th>
+                                <th class="py-3 px-2.5 text-center bg-emerald-950">Subuh</th>
+                                <th class="py-3 px-2.5 text-center">Terbit</th>
+                                <th class="py-3 px-2.5 text-center">Dhuha</th>
+                                <th class="py-3 px-2.5 text-center bg-emerald-950">Zuhur</th>
+                                <th class="py-3 px-2.5 text-center bg-emerald-950">Ashar</th>
+                                <th class="py-3 px-2.5 text-center bg-emerald-950">Maghrib</th>
+                                <th class="py-3 px-2.5 text-center bg-emerald-950">Isya'</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sholat-monthly-tbody" class="divide-y divide-slate-100 dark:divide-[#253447]">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Catatan Fiqih Hisab -->
+                <div class="p-4 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+                    <p class="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-info text-emerald-600"></i>
+                        <span>Kaidah Hisab & Ihtiyat (Pengaman Waktu):</span>
+                    </p>
+                    <ul class="list-disc list-inside space-y-0.5 text-[10px] pl-1">
+                        <li>Mengadopsi formula <strong>Lembaga Falakiyah NU (LF PBNU)</strong> & standar Kementerian Agama RI.</li>
+                        <li>Subuh dihitung saat posisi matahari <strong>20°</strong> di bawah ufuk timur, Isya saat matahari <strong>18°</strong> di bawah ufuk barat.</li>
+                        <li>Waktu Imsak ditetapkan <strong>10 menit</strong> sebelum waktu Subuh sebagai batas kehati-hatian berpuasa.</li>
+                        <li>Seluruh waktu sholat fardhu (Subuh, Zuhur, Ashar, Maghrib, Isya) telah ditambah <strong>+2 menit Ihtiyat</strong> (koreksi pengaman).</li>
+                    </ul>
+                </div>
+            </section>
 
         </div>
 
@@ -8751,6 +8967,7 @@
     <script src="js/programs.js"></script>
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js"></script>
+    <script src="js/jadwal-sholat.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/alumni.js"></script>
     <script src="js/auth.js"></script>
