@@ -2,21 +2,27 @@
   "name": "PPTQ Asnawiyyah",
   "short_name": "Asnawiyyah",
   "description": "Aplikasi Resmi Pondok Pesantren Tahfidzul Qur'an Asnawiyyah Pilangwetan",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#059669",
   "orientation": "portrait-primary",
+  "categories": ["education", "lifestyle"],
   "icons": [
     {
       "src": "/assets/img/logo-asnawiyyah.jpg",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     },
     {
       "src": "/assets/img/logo-asnawiyyah.jpg",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
+

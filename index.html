@@ -6,11 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPTQ Asnawiyyah Pilangwetan | Official Website</title>
     
-    <!-- PWA Setup -->
+    <!-- PWA & Mobile Web App Setup -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#059669">
-    <link rel="apple-touch-icon" href="assets/img/logo-asnawiyyah.jpg">
     <link rel="icon" type="image/jpeg" href="assets/img/logo-asnawiyyah.jpg">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/img/logo-asnawiyyah.jpg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Asnawiyyah">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="PPTQ Asnawiyyah">
 
     <!-- Google Fonts: Plus Jakarta Sans & Amiri untuk aksen Islami -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -234,6 +239,14 @@
 
                 <!-- Tombol Aksi Kanan (Rata Kanan Presisi dengan Kartu Beranda) -->
                 <div id="desk-action-menu" class="flex items-center space-x-2.5">
+                    <!-- Tombol Install PWA Desktop (Otomatis tampil jika belum diinstal) -->
+                    <button id="desk-btn-install-app" onclick="triggerInstallApp()"
+                        class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm border border-emerald-400/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 items-center space-x-1.5"
+                        title="Pasang Aplikasi PPTQ Asnawiyyah">
+                        <i class="fa-solid fa-cloud-arrow-down text-emerald-200"></i>
+                        <span>Pasang App</span>
+                    </button>
+
                     <!-- Tombol Notifikasi Desktop -->
                     <button onclick="switchTab('notifikasi')"
                         class="relative w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 flex items-center justify-center text-sm border border-white/10 shadow-sm transition active:scale-95"
@@ -262,8 +275,16 @@
                 class="h-9 w-auto object-contain">
         </div>
 
-        <!-- Tombol Aksi Kanan: Notifikasi -->
+        <!-- Tombol Aksi Kanan: Install & Notifikasi -->
         <div class="flex items-center space-x-2">
+            <!-- Tombol Install PWA Mobile (Otomatis tampil jika belum diinstal) -->
+            <button id="mobile-btn-install-app" onclick="triggerInstallApp()"
+                class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-xl font-bold text-[11px] shadow-sm border border-emerald-400/30 items-center space-x-1 transition active:scale-95"
+                title="Pasang Aplikasi Asnawiyyah">
+                <i class="fa-solid fa-cloud-arrow-down text-emerald-200"></i>
+                <span>Pasang</span>
+            </button>
+
             <!-- Tombol Notifikasi Mobile -->
             <button onclick="switchTab('notifikasi')"
                 class="relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-400 flex items-center justify-center text-sm border border-white/10 shadow-sm transition active:scale-95"
@@ -8146,6 +8167,125 @@
         </div>
     </div>
 
+    <!-- ==================== SMART FLOATING INSTALL BANNER ==================== -->
+    <div id="pwa-smart-install-banner"
+        class="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-sm z-[9990] bg-white/95 dark:bg-[#15202d]/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-emerald-500/20 dark:border-emerald-500/30 flex items-center justify-between gap-3 transform translate-y-full opacity-0 transition-all duration-300 hidden">
+        <div class="flex items-center space-x-3 min-w-0">
+            <img src="assets/img/logo-asnawiyyah.jpg" alt="Asnawiyyah App"
+                class="w-10 h-10 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 shrink-0 object-cover">
+            <div class="min-w-0">
+                <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">
+                    Pasang Aplikasi Asnawiyyah
+                </h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Akses instan & hemat kuota di HP Anda
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 shrink-0">
+            <button onclick="triggerInstallApp()"
+                class="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs rounded-xl shadow-md transition active:scale-95 flex items-center space-x-1.5">
+                <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+                <span>Pasang</span>
+            </button>
+            <button onclick="dismissPwaBanner(true)"
+                class="w-7 h-7 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg flex items-center justify-center transition"
+                title="Tutup Banner">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL PANDUAN INSTALASI IPHONE (IOS SAFARI) ==================== -->
+    <div id="modal-ios-install-guide"
+        class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] flex flex-col transform transition-all duration-300 scale-95 opacity-0 relative"
+            id="modal-ios-install-content">
+            <!-- Header Modal -->
+            <div class="px-5 py-4 bg-gradient-to-r from-slate-900 via-brand-900 to-emerald-950 text-white border-b border-emerald-800/40 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <i class="fa-brands fa-apple text-xl text-emerald-400"></i>
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-emerald-200 leading-none">Panduan Instalasi iPhone</h3>
+                        <p class="text-[10px] text-slate-300 mt-0.5">Pasang ke Layar Utama iOS</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeIosInstallGuideModal()"
+                    class="w-8 h-8 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl flex items-center justify-center transition active:scale-95"
+                    title="Tutup">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body: Step by Step -->
+            <div class="p-5 space-y-4 text-slate-700 dark:text-slate-200">
+                <p class="text-xs text-slate-600 dark:text-slate-300 text-center leading-relaxed">
+                    Browser Safari di iPhone mendukung pemasangan aplikasi langsung ke Layar Utama dalam 3 langkah mudah:
+                </p>
+
+                <div class="space-y-2.5">
+                    <!-- Step 1 -->
+                    <div class="flex items-start space-x-3 p-3 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447]">
+                        <div class="w-6 h-6 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow mt-0.5">
+                            1
+                        </div>
+                        <div class="text-xs space-y-0.5">
+                            <p class="font-bold text-slate-800 dark:text-slate-100">
+                                Ketuk tombol Bagikan (Share)
+                            </p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                                Ikon kotak dengan panah ke atas <i class="fa-solid fa-arrow-up-from-bracket text-emerald-600 dark:text-emerald-400 mx-0.5"></i> di bilah navigasi bawah Safari iPhone.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex items-start space-x-3 p-3 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447]">
+                        <div class="w-6 h-6 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow mt-0.5">
+                            2
+                        </div>
+                        <div class="text-xs space-y-0.5">
+                            <p class="font-bold text-slate-800 dark:text-slate-100">
+                                Pilih "Tambahkan ke Layar Utama"
+                            </p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                                Gulir menu ke bawah lalu pilih <span class="font-semibold text-slate-700 dark:text-slate-200">"Add to Home Screen"</span> <i class="fa-regular fa-square-plus text-emerald-600 dark:text-emerald-400 mx-0.5"></i>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex items-start space-x-3 p-3 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447]">
+                        <div class="w-6 h-6 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow mt-0.5">
+                            3
+                        </div>
+                        <div class="text-xs space-y-0.5">
+                            <p class="font-bold text-slate-800 dark:text-slate-100">
+                                Ketuk "Tambah" (Add)
+                            </p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                                Tekan tombol <span class="font-bold text-emerald-600 dark:text-emerald-400">Tambah</span> di pojok kanan atas layar iPhone Anda.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-[11px] text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center space-x-2">
+                    <i class="fa-solid fa-sparkles text-emerald-600 text-xs shrink-0"></i>
+                    <span>Aplikasi Asnawiyyah akan langsung aktif di Layar Utama iPhone Anda layaknya aplikasi native!</span>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447]">
+                <button type="button" onclick="closeIosInstallGuideModal()"
+                    class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition active:scale-95">
+                    Saya Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== APPLICATION SCRIPTS & MODULES ==================== -->
     <!-- Service Worker PWA -->
     <script>
@@ -8159,6 +8299,9 @@
             });
         }
     </script>
+
+    <!-- PWA Smart Install Controller -->
+    <script src="js/pwa.js"></script>
 
     <!-- Data & API Core -->
     <script src="data-maulid-dibai.js"></script>
@@ -8179,4 +8322,4 @@
     <script src="js/main.js"></script>
 </body>
 
-</html>
+</html>

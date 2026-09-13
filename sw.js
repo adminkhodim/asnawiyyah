@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v6';
+const CACHE_NAME = 'asnawiyyah-cache-v7';
 
 const PRECACHE_URLS = [
   '/',
@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   '/assets/img/kartu-santri.png',
   '/assets/img/abi-cholil.jpg',
   '/data-maulid-dibai.js',
+  '/js/pwa.js',
   '/js/api.js',
   '/js/data-programs.js',
   '/js/programs.js',
