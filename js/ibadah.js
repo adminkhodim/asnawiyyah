@@ -587,9 +587,11 @@
             `;
             container.appendChild(introDiv);
 
+            let hasShownDoaHeader = false;
             dataTahlil.forEach((item, index) => {
-                // Header pemisah khusus sebelum masuk Doa Tahlil (item no 36 / index 24)
-                if (item.no === 36) {
+                // Header pemisah khusus sebelum masuk Doa Tahlil
+                if (item.isDoa && !hasShownDoaHeader) {
+                    hasShownDoaHeader = true;
                     const doaHeader = document.createElement('div');
                     doaHeader.className = "pt-4 pb-2";
                     doaHeader.innerHTML = `
@@ -612,8 +614,10 @@
                 card.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-emerald-500/40 transition";
 
                 let badgeText = `Bacaan ke-${index + 1}`;
-                if (item.no >= 36) {
-                    badgeText = `Doa Tahlil • Bagian ${item.no - 35}`;
+                if (index === 0) {
+                    badgeText = "Hadhrah Fatihah Masyayikh";
+                } else if (item.isDoa) {
+                    badgeText = `Doa Tahlil • Bagian ${item.no - 21}`;
                 }
 
                 card.innerHTML = `
@@ -751,7 +755,7 @@
             `;
             container.appendChild(banner);
 
-            const doaItems = dataTahlil.filter(item => item.no >= 36);
+            const doaItems = dataTahlil.filter(item => item.isDoa);
             doaItems.forEach((item, idx) => {
                 const card = document.createElement('div');
                 card.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-amber-500/40 transition";
