@@ -151,6 +151,12 @@
                 switchTab('maulid-index', false);
             } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai/baca') {
                 switchTab('maulid-detail', false);
+            } else if (path === '/layanan/portal-ibadah/burdah') {
+                if (typeof openBurdahIndex === 'function') openBurdahIndex();
+                else switchTab('burdah-index', false);
+            } else if (path === '/layanan/portal-ibadah/tahlil-dan-yasin') {
+                if (typeof openTahlilYasinPage === 'function') openTahlilYasinPage();
+                else switchTab('tahlil-yasin', false);
             } else if (path.startsWith('/berita/')) {
                 const slug = path.split('/berita/')[1];
                 if (slug) {
@@ -210,6 +216,12 @@
                 switchTab('maulid-hub', false);
             } else if (path === '/layanan/portal-ibadah/maulid/ad-dibai') {
                 switchTab('maulid-index', false);
+            } else if (path === '/layanan/portal-ibadah/burdah') {
+                if (typeof openBurdahIndex === 'function') openBurdahIndex();
+                else switchTab('burdah-index', false);
+            } else if (path === '/layanan/portal-ibadah/tahlil-dan-yasin') {
+                if (typeof openTahlilYasinPage === 'function') openTahlilYasinPage();
+                else switchTab('tahlil-yasin', false);
             } else if (path === '/administrator') {
                 const isMobile = window.innerWidth < 768;
                 if (isMobile) {
@@ -299,6 +311,8 @@
                 else if (tabId === 'maulid-hub') targetUrl = '/layanan/portal-ibadah/maulid/';
                 else if (tabId === 'maulid-index') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/';
                 else if (tabId === 'maulid-detail') targetUrl = '/layanan/portal-ibadah/maulid/ad-dibai/baca/';
+                else if (tabId === 'burdah-index') targetUrl = '/layanan/portal-ibadah/burdah/';
+                else if (tabId === 'tahlil-yasin') targetUrl = '/layanan/portal-ibadah/tahlil-dan-yasin/';
 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
@@ -308,6 +322,7 @@
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
                     tabId === 'quran-index' || tabId === 'quran-detail' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
+                    tabId === 'burdah-index' || tabId === 'tahlil-yasin' ||
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }

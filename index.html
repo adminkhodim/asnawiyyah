@@ -3165,7 +3165,7 @@
                     </button>
 
                     <!-- 3. Sholawat Burdah -->
-                    <button type="button" onclick="openIbadahModal('burdah')"
+                    <button type="button" onclick="openBurdahIndex()"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
                             class="w-12 h-12 md:w-14 md:h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-all duration-300">
@@ -3176,7 +3176,7 @@
                     </button>
 
                     <!-- 4. Tahlil & Yasin -->
-                    <button type="button" onclick="openIbadahModal('tahlil')"
+                    <button type="button" onclick="openTahlilYasinPage()"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
                             class="w-12 h-12 md:w-14 md:h-14 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
@@ -3186,6 +3186,7 @@
                             class="text-[10px] md:text-xs mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-blue-600">Tahlil
                             & Yasin</span>
                     </button>
+
 
                 </div>
             </section>
@@ -3579,6 +3580,88 @@
                 </button>
             </div>
         </div>
+
+        <!-- ==================== TAHLIL & SURAT YASIN FEATURE ==================== -->
+        <div id="page-tahlil-yasin" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            <!-- Header Navigasi -->
+            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <button type="button" onclick="switchTab('ibadah')"
+                    class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition active:scale-95">
+                    <div class="w-8 h-8 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 rounded-lg flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </div>
+                    <span>Kembali ke Ibadah</span>
+                </button>
+                <div class="text-right">
+                    <span id="tahlil-yasin-badge" class="text-[10px] font-extrabold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Amaliah NU
+                    </span>
+                    <h2 id="tahlil-yasin-page-title" class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-1">
+                        Tahlil & Surat Yasin
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Segmented Pill Tab Switcher (Gaya Quran NU Online) -->
+            <div class="bg-slate-100 dark:bg-[#1c2836] p-1.5 rounded-2xl flex items-center gap-1.5 shadow-inner">
+                <button type="button" id="tab-btn-tahlil" onclick="switchTahlilYasinSubTab('tahlil')"
+                    class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm">
+                    <i class="fa-solid fa-hands-holding text-xs"></i>
+                    <span>Susunan Tahlil</span>
+                </button>
+                <button type="button" id="tab-btn-yasin" onclick="switchTahlilYasinSubTab('yasin')"
+                    class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i class="fa-solid fa-book-open text-xs"></i>
+                    <span>Surat Yasin</span>
+                </button>
+                <button type="button" id="tab-btn-doa" onclick="switchTahlilYasinSubTab('doa')"
+                    class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i class="fa-solid fa-hands-praying text-xs"></i>
+                    <span>Doa Arwah</span>
+                </button>
+            </div>
+
+            <!-- Bilah Kontrol Pembaca (Toggle Latin, Terjemah & Audio Murottal) -->
+            <div class="flex flex-wrap items-center justify-between gap-2.5 bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="btn-toggle-tahlil-latin" onclick="toggleTahlilLatin()"
+                        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 transition active:scale-95">
+                        <i class="fa-solid fa-language text-xs"></i>
+                        <span id="text-toggle-tahlil-latin">Sembunyikan Latin</span>
+                    </button>
+                    <button type="button" id="btn-toggle-tahlil-trans" onclick="toggleTahlilTranslation()"
+                        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 transition active:scale-95">
+                        <i class="fa-solid fa-align-left text-xs"></i>
+                        <span id="text-toggle-tahlil-trans">Sembunyikan Terjemah</span>
+                    </button>
+                </div>
+
+                <!-- Kontrol Murottal Yasin (Hanya aktif di tab Yasin) -->
+                <div id="yasin-audio-control-wrapper" class="hidden items-center space-x-2">
+                    <audio id="tahlil-yasin-audio-player" class="hidden"></audio>
+                    <button type="button" id="btn-play-yasin-audio" onclick="toggleYasinAudio()"
+                        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition active:scale-95">
+                        <i class="fa-solid fa-play text-xs" id="icon-play-yasin-audio"></i>
+                        <span id="text-play-yasin-audio">Putar Murottal</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kontainer Konten Dinamis -->
+            <div id="tahlil-yasin-content-container" class="space-y-4">
+                <!-- Data loaded via JS -->
+            </div>
+
+            <!-- Footer Tombol Kembali ke Atas -->
+            <div class="text-center pt-4">
+                <button type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+                    class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 text-xs font-bold transition active:scale-95">
+                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                    <span>Kembali ke Atas</span>
+                </button>
+            </div>
+        </div>
+
 
 
         <!-- ==================== TABS KHUSUS: DETAIL BACA BERITA (FULL PAGE) ==================== -->
@@ -8497,6 +8580,7 @@
     <!-- Data & API Core -->
     <script src="data-maulid-dibai.js"></script>
     <script src="data-qasidah-burdah.js"></script>
+    <script src="data-tahlil-yasin.js"></script>
     <script src="js/api.js"></script>
     <script src="js/data-programs.js"></script>
 

@@ -481,3 +481,384 @@
                 openBurdahDetail(nextBabId);
             }
         }
+
+        // ==================== FITUR TAHLIL & SURAT YASIN (QURAN NU ONLINE) ====================
+        let currentTahlilYasinSubTab = 'tahlil';
+        let tahlilShowLatin = true;
+        let tahlilShowTranslation = true;
+        let yasinAudioPlaying = false;
+
+        function openTahlilYasinPage(subTab = 'tahlil') {
+            switchTab('tahlil-yasin');
+            switchTahlilYasinSubTab(subTab);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchTahlilYasinSubTab(tabName) {
+            currentTahlilYasinSubTab = tabName;
+
+            // Pause audio jika beralih dari Yasin
+            const audioPlayer = document.getElementById('tahlil-yasin-audio-player');
+            const audioWrapper = document.getElementById('yasin-audio-control-wrapper');
+            if (tabName !== 'yasin') {
+                if (audioPlayer && !audioPlayer.paused) {
+                    audioPlayer.pause();
+                }
+                resetYasinAudioButton();
+                if (audioWrapper) {
+                    audioWrapper.classList.add('hidden');
+                    audioWrapper.classList.remove('flex');
+                }
+            } else {
+                if (audioWrapper) {
+                    audioWrapper.classList.remove('hidden');
+                    audioWrapper.classList.add('flex');
+                }
+            }
+
+            // Update Segmented Pill Tabs UI
+            const tabs = ['tahlil', 'yasin', 'doa'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm";
+                    } else {
+                        btn.className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs transition-all duration-200 text-center flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100";
+                    }
+                }
+            });
+
+            // Update Header Title & Badge
+            const titleElem = document.getElementById('tahlil-yasin-page-title');
+            const badgeElem = document.getElementById('tahlil-yasin-badge');
+
+            if (tabName === 'tahlil') {
+                if (titleElem) titleElem.innerText = "Susunan Tahlil Lengkap";
+                if (badgeElem) {
+                    badgeElem.innerText = "Amaliah NU";
+                    badgeElem.className = "text-[10px] font-extrabold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider";
+                }
+                renderTahlilContent();
+            } else if (tabName === 'yasin') {
+                if (titleElem) titleElem.innerText = "Surat Yasin (83 Ayat)";
+                if (badgeElem) {
+                    badgeElem.innerText = "Makkiyah • 83 Ayat";
+                    badgeElem.className = "text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider";
+                }
+                renderYasinContent();
+            } else if (tabName === 'doa') {
+                if (titleElem) titleElem.innerText = "Doa Tahlil & Arwah";
+                if (badgeElem) {
+                    badgeElem.innerText = "Doa & Munajat";
+                    badgeElem.className = "text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider";
+                }
+                renderDoaTahlilContent();
+            }
+        }
+
+        function renderTahlilContent() {
+            const container = document.getElementById('tahlil-yasin-content-container');
+            if (!container) return;
+            if (typeof dataTahlil === 'undefined') {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400">Data Tahlil sedang dimuat...</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            // Banner Pengantar Tahlil
+            const introDiv = document.createElement('div');
+            introDiv.className = "p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-950/40 dark:to-transparent bg-white dark:bg-[#15202d] border border-blue-500/20 dark:border-blue-500/30 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3";
+            introDiv.innerHTML = `
+                <div class="space-y-1">
+                    <h3 class="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-hands-holding text-blue-600"></i> Susunan Bacaan Tahlil Nahdlatul Ulama
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Dimulai dari hadhrah fatihah, surat-surat pendek, tahlil inti, istighfar, shalawat, hingga doa arwah.
+                    </p>
+                </div>
+                <button type="button" onclick="switchTahlilYasinSubTab('yasin')"
+                    class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition active:scale-95 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>Baca Surat Yasin Dulu</span>
+                </button>
+            `;
+            container.appendChild(introDiv);
+
+            dataTahlil.forEach((item, index) => {
+                // Header pemisah khusus sebelum masuk Doa Tahlil (item no 36 / index 24)
+                if (item.no === 36) {
+                    const doaHeader = document.createElement('div');
+                    doaHeader.className = "pt-4 pb-2";
+                    doaHeader.innerHTML = `
+                        <div class="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-500/30 rounded-2xl flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                                    <i class="fa-solid fa-hands-praying"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-xs sm:text-sm text-amber-900 dark:text-amber-200">DOA TAHLIL / DOA ARWAH</h4>
+                                    <p class="text-[11px] text-amber-700 dark:text-amber-400">Rangkaian doa penutup pengiriman pahala untuk almarhum / almarhumah</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(doaHeader);
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-emerald-500/40 transition";
+
+                let badgeText = `Bacaan ke-${index + 1}`;
+                if (item.no >= 36) {
+                    badgeText = `Doa Tahlil • Bagian ${item.no - 35}`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2 text-xs">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-extrabold text-[11px]">
+                            ${index + 1}
+                        </span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">${badgeText}</span>
+                    </div>
+                    <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-slate-900 dark:text-slate-100 text-right leading-loose w-full" style="line-height: 2.2;" dir="rtl">
+                        ${item.arabic}
+                    </p>
+                    <p class="tahlil-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 leading-relaxed ${tahlilShowLatin ? '' : 'hidden'}">
+                        ${item.latin}
+                    </p>
+                    <p class="tahlil-translation text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed ${tahlilShowTranslation ? '' : 'hidden'}">
+                        ${item.translation}
+                    </p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderYasinContent() {
+            const container = document.getElementById('tahlil-yasin-content-container');
+            if (!container) return;
+            if (typeof dataYasin === 'undefined' || !dataYasin.ayahs) {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400">Data Surat Yasin sedang dimuat...</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            // Banner Info Surah Yasin
+            const banner = document.createElement('div');
+            banner.className = "p-5 rounded-2xl bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent dark:from-emerald-950/50 dark:to-transparent bg-white dark:bg-[#15202d] border border-emerald-500/20 dark:border-emerald-500/40 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
+            banner.innerHTML = `
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[10px] uppercase tracking-wider">
+                            Surat ke-36
+                        </span>
+                        <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                            ${dataYasin.type} • ${dataYasin.totalAyah} Ayat
+                        </span>
+                    </div>
+                    <h3 class="font-extrabold text-base md:text-lg text-slate-900 dark:text-slate-100">
+                        Surat Yasin (سورة يٰس)
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Jantung Al-Qur'an (Qalbul Qur'an), dibaca saat amaliah malam Jumat, ziarah kubur, tahlilan, dan hajat.
+                    </p>
+                </div>
+                <div class="font-arabic text-3xl md:text-4xl text-emerald-800 dark:text-emerald-200 font-bold" dir="rtl">
+                    يس
+                </div>
+            `;
+            container.appendChild(banner);
+
+            // Banner Basmalah Pembuka
+            const basmalahCard = document.createElement('div');
+            basmalahCard.className = "p-4 sm:p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500/30 dark:border-emerald-500/40 text-center space-y-2 shadow-sm";
+            basmalahCard.innerHTML = `
+                <p class="font-arabic text-2xl sm:text-3xl text-emerald-950 dark:text-emerald-100 leading-loose" dir="rtl">
+                    بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
+                </p>
+                <p class="tahlil-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 ${tahlilShowLatin ? '' : 'hidden'}">
+                    Bismillâhir-raḫmânir-raḫîm
+                </p>
+                <p class="tahlil-translation text-xs text-slate-600 dark:text-slate-300 max-w-md mx-auto italic ${tahlilShowTranslation ? '' : 'hidden'}">
+                    "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang."
+                </p>
+            `;
+            container.appendChild(basmalahCard);
+
+            // Loop 83 ayat Yasin
+            dataYasin.ayahs.forEach(ayah => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-emerald-500/40 transition";
+                card.id = `yasin-ayah-${ayah.no}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2 text-xs">
+                        <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-extrabold text-[11px]">
+                            ${ayah.no}
+                        </span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Ayat ${ayah.no}</span>
+                    </div>
+                    <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-slate-900 dark:text-slate-100 text-right leading-loose w-full" style="line-height: 2.2;" dir="rtl">
+                        ${ayah.arabic}
+                    </p>
+                    <p class="tahlil-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 leading-relaxed ${tahlilShowLatin ? '' : 'hidden'}">
+                        ${ayah.latin}
+                    </p>
+                    <p class="tahlil-translation text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed ${tahlilShowTranslation ? '' : 'hidden'}">
+                        ${ayah.translation}
+                    </p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderDoaTahlilContent() {
+            const container = document.getElementById('tahlil-yasin-content-container');
+            if (!container) return;
+            if (typeof dataTahlil === 'undefined') {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400">Data Doa Tahlil sedang dimuat...</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            // Banner Pengantar Doa Arwah
+            const banner = document.createElement('div');
+            banner.className = "p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent dark:from-amber-950/40 dark:to-transparent bg-white dark:bg-[#15202d] border border-amber-500/20 dark:border-amber-500/40 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
+            banner.innerHTML = `
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-amber-600 text-white font-extrabold text-[10px] uppercase tracking-wider">
+                            Doa Khusus Arwah
+                        </span>
+                        <span class="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                            Tradisi Pesantren Nahdlatul Ulama
+                        </span>
+                    </div>
+                    <h3 class="font-extrabold text-base md:text-lg text-slate-900 dark:text-slate-100">
+                        Doa Tahlil & Pengiriman Pahala Arwah
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Dipanjatkan untuk memohon ampunan, rahmat, dan kelapangan kubur bagi segenap almarhum/almarhumah, orang tua, dan para masyayikh.
+                    </p>
+                </div>
+                <div class="font-arabic text-2xl md:text-3xl text-amber-800 dark:text-amber-200 font-bold" dir="rtl">
+                    دعاء التّهليل
+                </div>
+            `;
+            container.appendChild(banner);
+
+            const doaItems = dataTahlil.filter(item => item.no >= 36);
+            doaItems.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-amber-500/40 transition";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2 text-xs">
+                        <span class="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 flex items-center justify-center font-extrabold text-[11px]">
+                            ${idx + 1}
+                        </span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Bagian ${idx + 1}</span>
+                    </div>
+                    <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-slate-900 dark:text-slate-100 text-right leading-loose w-full" style="line-height: 2.2;" dir="rtl">
+                        ${item.arabic}
+                    </p>
+                    <p class="tahlil-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 leading-relaxed ${tahlilShowLatin ? '' : 'hidden'}">
+                        ${item.latin}
+                    </p>
+                    <p class="tahlil-translation text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed ${tahlilShowTranslation ? '' : 'hidden'}">
+                        ${item.translation}
+                    </p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleTahlilLatin() {
+            tahlilShowLatin = !tahlilShowLatin;
+            const textElem = document.getElementById('text-toggle-tahlil-latin');
+            if (textElem) {
+                textElem.innerText = tahlilShowLatin ? "Sembunyikan Latin" : "Tampilkan Latin";
+            }
+            const latins = document.querySelectorAll('.tahlil-latin');
+            latins.forEach(el => {
+                if (tahlilShowLatin) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleTahlilTranslation() {
+            tahlilShowTranslation = !tahlilShowTranslation;
+            const textElem = document.getElementById('text-toggle-tahlil-trans');
+            if (textElem) {
+                textElem.innerText = tahlilShowTranslation ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
+            }
+            const translations = document.querySelectorAll('.tahlil-translation');
+            translations.forEach(el => {
+                if (tahlilShowTranslation) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleYasinAudio() {
+            const audioPlayer = document.getElementById('tahlil-yasin-audio-player');
+            const playBtn = document.getElementById('btn-play-yasin-audio');
+            const iconElem = document.getElementById('icon-play-yasin-audio');
+            const textElem = document.getElementById('text-play-yasin-audio');
+            if (!audioPlayer || typeof dataYasin === 'undefined') return;
+
+            if (!audioPlayer.src || audioPlayer.src === '' || !audioPlayer.src.includes('.mp3')) {
+                audioPlayer.src = dataYasin.audioUrl;
+            }
+
+            if (audioPlayer.paused) {
+                audioPlayer.play().then(() => {
+                    yasinAudioPlaying = true;
+                    if (iconElem) {
+                        iconElem.className = "fa-solid fa-pause text-xs";
+                    }
+                    if (textElem) {
+                        textElem.innerText = "Jeda Murottal";
+                    }
+                    if (playBtn) {
+                        playBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition active:scale-95 animate-pulse";
+                    }
+                }).catch(err => {
+                    console.warn("Audio play error:", err);
+                });
+            } else {
+                audioPlayer.pause();
+                resetYasinAudioButton();
+            }
+
+            audioPlayer.onended = () => {
+                resetYasinAudioButton();
+            };
+            audioPlayer.onerror = () => {
+                resetYasinAudioButton();
+            };
+        }
+
+        function resetYasinAudioButton() {
+            yasinAudioPlaying = false;
+            const playBtn = document.getElementById('btn-play-yasin-audio');
+            const iconElem = document.getElementById('icon-play-yasin-audio');
+            const textElem = document.getElementById('text-play-yasin-audio');
+            if (iconElem) {
+                iconElem.className = "fa-solid fa-play text-xs";
+            }
+            if (textElem) {
+                textElem.innerText = "Putar Murottal";
+            }
+            if (playBtn) {
+                playBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition active:scale-95";
+            }
+        }
