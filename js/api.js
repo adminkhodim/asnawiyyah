@@ -60,14 +60,18 @@
          * Mengonversi semua variasi URL YouTube (watch?v=, youtu.be/, shorts/, playlist)
          * menjadi URL embed resmi yang aman disematkan dalam <iframe> tanpa terblokir X-Frame-Options.
          */
+        /**
+         * Mengonversi semua variasi URL YouTube (watch?v=, youtu.be/, shorts/, playlist, m.youtube.com)
+         * menjadi URL embed resmi yang aman disematkan dalam <iframe> tanpa terblokir X-Frame-Options.
+         */
         function formatYoutubeEmbedUrl(rawUrl) {
-            if (!rawUrl || typeof rawUrl !== 'string') return '';
+            if (!rawUrl || typeof rawUrl !== 'string') return "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0";
             const trimmed = rawUrl.trim();
-            if (!trimmed) return '';
+            if (!trimmed) return "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0";
 
-            // Jika sudah berformat embed, kembalikan langsung
+            // Jika sudah berformat embed, kembalikan langsung dengan rel=0
             if (trimmed.includes('youtube.com/embed/') || trimmed.includes('youtube-nocookie.com/embed/')) {
-                return trimmed;
+                return trimmed.includes('?') ? trimmed : `${trimmed}?rel=0`;
             }
 
             // 1. Playlist: youtube.com/playlist?list=ID
@@ -82,7 +86,7 @@
                 return `https://www.youtube.com/embed/${shortMatch[1]}?rel=0`;
             }
 
-            // 3. Watch Link: youtube.com/watch?v=VIDEO_ID
+            // 3. Watch Link (desktop www atau mobile m.youtube.com): watch?v=VIDEO_ID
             const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
             if (watchMatch && watchMatch[1]) {
                 return `https://www.youtube.com/embed/${watchMatch[1]}?rel=0`;
@@ -94,7 +98,9 @@
                 return `https://www.youtube.com/embed/${shortsMatch[1]}?rel=0`;
             }
 
-            return trimmed;
+            // Sanitasi ketat: jika bukan link video yang valid, JANGAN kembalikan URL mentah (seperti m.youtube.com)
+            // agar iframe tidak memicu 'X-Frame-Options: sameorigin'. Gunakan fallback embed resmi pesantren.
+            return "https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0";
         }
 
         // ==================== STATE MANAGEMENT DATA ====================

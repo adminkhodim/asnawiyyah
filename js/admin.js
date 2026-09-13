@@ -565,7 +565,7 @@
                         const embedUrl = (typeof formatYoutubeEmbedUrl === 'function')
                             ? formatYoutubeEmbedUrl(config.video_highlight)
                             : config.video_highlight;
-                        if (embedUrl) {
+                        if (embedUrl && (embedUrl.includes('youtube.com/embed/') || embedUrl.includes('youtube-nocookie.com/embed/'))) {
                             iframeVideo.src = embedUrl;
                         }
                     }

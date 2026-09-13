@@ -1524,6 +1524,68 @@ function renderTahfidzHalaqahCards() {
 }
 
 /**
+ * Buka modal plotting santri untuk halaqah tertentu (kompatibilitas modal terpisah & Tab 2)
+ */
+function openPlottingSantri(halaqahId) {
+    const modal = document.getElementById('modal-tahfidz-plotting');
+    if (!modal) {
+        openPlottingFromHalaqahCard(halaqahId);
+        return;
+    }
+
+    const halaqahs = ASNTahfidz.data.halaqahs || [];
+    const halaqah = halaqahs.find(h => h.halaqahId === halaqahId);
+
+    if (!halaqah) {
+        if (typeof showToast === 'function') showToast("⚠️ Data halaqah tidak ditemukan.");
+        return;
+    }
+
+    ASNTahfidz.activePlottingHalaqah = halaqah;
+
+    // Ambil daftar studentIds yang sudah ada di halaqah ini
+    let currentIds = [];
+    if (Array.isArray(halaqah.studentIds) && halaqah.studentIds.length > 0) {
+        currentIds = [...halaqah.studentIds];
+    } else if (Array.isArray(ASNTahfidz.data.students)) {
+        currentIds = ASNTahfidz.data.students
+            .filter(st => st.halaqah && (st.halaqah.halaqahId === halaqahId || st.halaqah.namaHalaqah === halaqah.namaHalaqah))
+            .map(st => st.studentId || st.nis);
+    }
+    ASNTahfidz.activePlottingStudentIds = currentIds.map(id => String(id).trim()).filter(Boolean);
+
+    // Update Header & Info Halaqah
+    const badgeEl = document.getElementById('tahfidz-plotting-badge-halaqah');
+    const infoEl = document.getElementById('tahfidz-plotting-halaqah-info');
+    const muhEl = document.getElementById('tahfidz-plotting-muhafiz');
+    const targetEl = document.getElementById('tahfidz-plotting-target');
+
+    if (badgeEl) badgeEl.innerText = halaqah.namaHalaqah || halaqahId;
+    if (infoEl) infoEl.innerText = `Atur santri binaan untuk ${halaqah.namaHalaqah} (${halaqah.kategori || 'Tahfidz'})`;
+    if (muhEl) muhEl.innerText = halaqah.muhafiz || 'Belum Ditunjuk';
+    if (targetEl) targetEl.innerText = halaqah.targetKurikulum || 'Target Mushaf Pojok Standar';
+
+    // Reset search & filter
+    const searchInp = document.getElementById('tahfidz-plotting-search');
+    const filterGen = document.getElementById('tahfidz-plotting-filter-gender');
+    if (searchInp) searchInp.value = '';
+    if (filterGen) filterGen.value = 'ALL';
+
+    renderTahfidzPlottingLists();
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Tutup modal plotting santri
+ */
+function closeTahfidzPlottingModal() {
+    const modal = document.getElementById('modal-tahfidz-plotting');
+    if (modal) modal.classList.add('hidden');
+    ASNTahfidz.activePlottingHalaqah = null;
+    ASNTahfidz.activePlottingStudentIds = [];
+}
+
+/**
  * Tombol "+ Atur Santri" di kartu halaqah Tab 1 diklik:
  * Langsung switch ke Tab 2 dengan halaqah tersebut aktif dipilih
  */
