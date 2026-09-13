@@ -328,3 +328,156 @@
             switchTab('maulid-detail');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        // ==================== QASIDAH BURDAH CONTROLLER ====================
+        let currentBurdahBabId = 1;
+        let burdahShowLatin = true;
+        let burdahShowTranslation = true;
+
+        function openBurdahIndex() {
+            renderBurdahIndex();
+            switchTab('burdah-index');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderBurdahIndex() {
+            const container = document.getElementById('burdah-list-container');
+            if (!container || typeof qasidahBurdah === 'undefined') return;
+
+            container.innerHTML = '';
+            qasidahBurdah.forEach(bab => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-[#15202d] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all duration-200 group";
+                card.onclick = () => openBurdahDetail(bab.id);
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3.5 min-w-0">
+                        <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center font-extrabold text-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-200 shrink-0">
+                            <span>${bab.id}</span>
+                        </div>
+                        <div class="min-w-0 space-y-0.5">
+                            <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition truncate">
+                                ${bab.title}
+                            </h4>
+                            <p class="text-[11px] font-arabic text-slate-400 dark:text-slate-400 truncate" dir="rtl">
+                                ${bab.arabicTitle}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#1c2836] text-slate-400 dark:text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600 dark:group-hover:bg-emerald-950/40 dark:group-hover:text-emerald-400 flex items-center justify-center transition shrink-0 ml-2">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openBurdahDetail(id) {
+            if (typeof qasidahBurdah === 'undefined') return;
+            const bab = qasidahBurdah.find(b => b.id === id);
+            if (!bab) return;
+
+            currentBurdahBabId = bab.id;
+
+            // Set judul
+            const titleElem = document.getElementById('burdah-detail-title');
+            const subtitleElem = document.getElementById('burdah-detail-subtitle');
+            if (titleElem) titleElem.innerText = bab.title;
+            if (subtitleElem) subtitleElem.innerText = bab.arabicTitle;
+
+            // Set Refrain
+            const refrainBox = document.getElementById('burdah-refrain-container');
+            if (refrainBox && bab.refrain) {
+                refrainBox.innerHTML = `
+                    <span class="inline-block px-3 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                        Bait Pembuka (Reff)
+                    </span>
+                    <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-emerald-950 dark:text-emerald-100 leading-loose" dir="rtl">
+                        ${bab.refrain.arabic}
+                    </p>
+                    <p class="burdah-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 ${burdahShowLatin ? '' : 'hidden'}">
+                        ${bab.refrain.latin}
+                    </p>
+                    <p class="burdah-translation text-xs text-slate-600 dark:text-slate-300 max-w-xl mx-auto italic ${burdahShowTranslation ? '' : 'hidden'}">
+                        "${bab.refrain.translation}"
+                    </p>
+                `;
+            }
+
+            // Render bait-bait
+            const container = document.getElementById('burdah-verses-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            bab.verses.forEach(v => {
+                const div = document.createElement('div');
+                div.className = "bg-white dark:bg-[#15202d] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 hover:border-emerald-500/40 transition";
+                div.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2 text-xs">
+                        <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-extrabold text-[11px]">
+                            ${v.no}
+                        </span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Bait ke-${v.no}</span>
+                    </div>
+                    <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-slate-900 dark:text-slate-100 text-right leading-loose w-full" style="line-height: 2.2;" dir="rtl">
+                        ${v.arabic}
+                    </p>
+                    <p class="burdah-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400 leading-relaxed ${burdahShowLatin ? '' : 'hidden'}">
+                        ${v.latin}
+                    </p>
+                    <p class="burdah-translation text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed ${burdahShowTranslation ? '' : 'hidden'}">
+                        ${v.translation}
+                    </p>
+                `;
+                container.appendChild(div);
+            });
+
+            // Update tombol navigasi
+            const btnPrev = document.getElementById('btn-burdah-prev');
+            const btnNext = document.getElementById('btn-burdah-next');
+            if (btnPrev) btnPrev.disabled = (currentBurdahBabId <= 1);
+            if (btnNext) btnNext.disabled = (currentBurdahBabId >= qasidahBurdah.length);
+
+            switchTab('burdah-detail');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleBurdahLatin() {
+            burdahShowLatin = !burdahShowLatin;
+            const textElem = document.getElementById('text-toggle-burdah-latin');
+            if (textElem) {
+                textElem.innerText = burdahShowLatin ? "Sembunyikan Latin" : "Tampilkan Latin";
+            }
+            const latins = document.querySelectorAll('.burdah-latin');
+            latins.forEach(el => {
+                if (burdahShowLatin) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleBurdahTranslation() {
+            burdahShowTranslation = !burdahShowTranslation;
+            const textElem = document.getElementById('text-toggle-burdah-translation');
+            if (textElem) {
+                textElem.innerText = burdahShowTranslation ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
+            }
+            const translations = document.querySelectorAll('.burdah-translation');
+            translations.forEach(el => {
+                if (burdahShowTranslation) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function navigateBurdahBab(direction) {
+            if (typeof qasidahBurdah === 'undefined') return;
+            const nextBabId = currentBurdahBabId + direction;
+            if (nextBabId >= 1 && nextBabId <= qasidahBurdah.length) {
+                openBurdahDetail(nextBabId);
+            }
+        }

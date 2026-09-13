@@ -3228,27 +3228,92 @@
                 </div>
             </div>
 
-            <div class="space-y-2">
+            <div class="space-y-2.5">
+                <!-- Qasidah Burdah -->
+                <div onclick="openBurdahIndex()"
+                    class="p-4 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent dark:from-emerald-950/40 dark:to-transparent bg-white dark:bg-[#15202d] rounded-2xl border-2 border-emerald-500/30 dark:border-emerald-500/40 shadow-sm flex justify-between items-center cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all duration-200 group">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-book-quran text-base"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 class="font-extrabold text-sm text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                                    Qasidah Burdah (قصيدة البردة)
+                                </h3>
+                                <span class="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
+                                    10 Fasal
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                Karya Al-Imam Syarafuddin Al-Bushiri (Arab, Latin & Terjemah)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition shrink-0 ml-2">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Maulid Ad-Diba'i -->
                 <div onclick="switchTab('maulid-index')"
                     class="p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-500 hover:shadow-md transition group">
-                    <span class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-purple-700 transition">Maulid
-                        Ad-Diba'i (الإمام الديبعي)</span>
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition">
+                            <i class="fa-solid fa-kaaba text-sm"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-purple-700 dark:group-hover:text-purple-400 transition">
+                                Maulid Ad-Diba'i (الإمام الديبعي)
+                            </span>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                Disertai bacaan fatihah, qasidah, dan doa penutup
+                            </p>
+                        </div>
+                    </div>
                     <i class="fa-solid fa-chevron-right text-slate-400 dark:text-slate-500 group-hover:text-purple-500 transition"></i>
                 </div>
+
+                <!-- Maulid Simtuddurar -->
                 <div
                     class="p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-500 hover:shadow-md transition group">
-                    <span class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-purple-700 transition">Maulid
-                        Simtuddurar (سمط الدرر)</span>
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-scroll text-sm"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-purple-700 dark:group-hover:text-purple-400 transition">
+                                Maulid Simtuddurar (سمط الدرر)
+                            </span>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                Al-Habib Ali bin Muhammad Al-Habsyi
+                            </p>
+                        </div>
+                    </div>
                     <i class="fa-solid fa-chevron-right text-slate-400 dark:text-slate-500 group-hover:text-purple-500 transition"></i>
                 </div>
+
+                <!-- Maulid Al-Barzanji -->
                 <div
                     class="p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-500 hover:shadow-md transition group">
-                    <span class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-purple-700 transition">Maulid
-                        Al-Barzanji (البرزنجي)</span>
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-book-open text-sm"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-purple-700 dark:group-hover:text-purple-400 transition">
+                                Maulid Al-Barzanji (البرزنجي)
+                            </span>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                Sayyid Ja'far bin Hasan Al-Barzanji
+                            </p>
+                        </div>
+                    </div>
                     <i class="fa-solid fa-chevron-right text-slate-400 dark:text-slate-500 group-hover:text-purple-500 transition"></i>
                 </div>
             </div>
         </div>
+
 
         <!-- ==================== TABS: AL-QUR'AN INDEX ==================== -->
         <div id="page-quran-index" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
@@ -3389,6 +3454,132 @@
                 <!-- Data loaded via JS -->
             </div>
         </div>
+
+        <!-- ==================== QASIDAH BURDAH FEATURE ==================== -->
+        <!-- Tab: Daftar 10 Fasal Qasidah Burdah -->
+        <div id="page-burdah-index" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <button type="button" onclick="switchTab('maulid-hub')"
+                    class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition active:scale-95">
+                    <div class="w-8 h-8 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 rounded-lg flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </div>
+                    <span>Kembali ke Maulid</span>
+                </button>
+                <div class="text-right">
+                    <span class="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        10 Fasal Lengkap
+                    </span>
+                    <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-1">
+                        Qasidah Burdah (قصيدة البردة)
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Banner Pengantar Burdah -->
+            <div class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-5 rounded-2xl shadow-md border border-emerald-800/40 relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-white/5 text-9xl pointer-events-none">
+                    <i class="fa-solid fa-book-quran"></i>
+                </div>
+                <div class="relative z-10 space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider border border-emerald-400/20">
+                            Karya Sastra Shalawat
+                        </span>
+                        <span class="text-xs text-emerald-200">Al-Imam Syarafuddin Al-Bushiri</span>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold font-arabic leading-relaxed" dir="rtl">
+                        قَصيْدَةُ الْبُرْدة لِلْبُوْصِيْرِيِّ رَحِمَهُ اللهُ
+                    </h3>
+                    <p class="text-xs text-emerald-100/90 max-w-2xl leading-relaxed">
+                        Qasidah puji-pujian agung kepada Baginda Nabi Muhammad SAW yang sarat berkah dan mahabbah. Disusun lengkap 10 Fasal dengan teks Arab, Latin, dan Terjemahan Bahasa Indonesia.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Grid 10 Fasal Burdah -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="burdah-list-container">
+                <!-- Data loaded via JS renderBurdahIndex() -->
+            </div>
+        </div>
+
+        <!-- Tab: Detail Bacaan Bait Qasidah Burdah -->
+        <div id="page-burdah-detail" class="tab-content hidden space-y-4 px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto">
+            <!-- Header Navigasi -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-3">
+                <div class="flex items-center space-x-2.5">
+                    <button type="button" onclick="switchTab('burdah-index')"
+                        class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                        title="Kembali ke Daftar Fasal">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </button>
+                    <div>
+                        <span id="burdah-detail-subtitle" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block">
+                            Qasidah Burdah
+                        </span>
+                        <h2 id="burdah-detail-title" class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">
+                            Nama Bab
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- Kontrol Tampilan Latin & Terjemah -->
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <button type="button" id="btn-toggle-burdah-latin" onclick="toggleBurdahLatin()"
+                        class="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 transition active:scale-95">
+                        <i class="fa-solid fa-language text-xs"></i>
+                        <span id="text-toggle-burdah-latin">Sembunyikan Latin</span>
+                    </button>
+                    <button type="button" id="btn-toggle-burdah-translation" onclick="toggleBurdahTranslation()"
+                        class="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 transition active:scale-95">
+                        <i class="fa-solid fa-align-left text-xs"></i>
+                        <span id="text-toggle-burdah-translation">Sembunyikan Terjemah</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kotak Refrain Pembuka (Reff Burdah) -->
+            <div id="burdah-refrain-container" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500/30 dark:border-emerald-500/40 text-center space-y-2.5 shadow-sm">
+                <span class="inline-block px-3 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                    Bait Pembuka (Reff)
+                </span>
+                <p class="font-arabic text-xl sm:text-2xl md:text-3xl text-emerald-950 dark:text-emerald-100 leading-loose" dir="rtl">
+                    مَوْلَايَ صَلِّ وَسَلِّمْ دَآئِــمًا أَبَـدًا ۞ عَلَى حَبِيْبِـكَ خَيْــرِ الْخَلْقِ كُلِّهِمِ
+                </p>
+                <p class="burdah-latin text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                    Maulâya shalli wa sallim dâ'iman abadan ۞ ‘alâ ḫabîbika khairil-khalqi kullihimi
+                </p>
+                <p class="burdah-translation text-xs text-slate-600 dark:text-slate-300 max-w-xl mx-auto italic">
+                    "Wahai Tuhanku, limpahkanlah selalu shalawat dan salam selamanya, atas kekasih-Mu yang terbaik di antara seluruh ciptaan."
+                </p>
+            </div>
+
+            <!-- Kontainer Bait-Bait Burdah -->
+            <div id="burdah-verses-container" class="space-y-4">
+                <!-- Data loaded via JS openBurdahDetail() -->
+            </div>
+
+            <!-- Footer Navigasi Antar Bab -->
+            <div class="flex items-center justify-between p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm mt-6">
+                <button type="button" id="btn-burdah-prev" onclick="navigateBurdahBab(-1)"
+                    class="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none">
+                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                    <span>Fasal Sebelumnya</span>
+                </button>
+                <button type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+                    class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 flex items-center justify-center transition"
+                    title="Kembali ke Atas">
+                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                </button>
+                <button type="button" id="btn-burdah-next" onclick="navigateBurdahBab(1)"
+                    class="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none">
+                    <span>Fasal Selanjutnya</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+
 
         <!-- ==================== TABS KHUSUS: DETAIL BACA BERITA (FULL PAGE) ==================== -->
         <div id="page-detail-berita" class="tab-content hidden space-y-4">
@@ -8305,6 +8496,7 @@
 
     <!-- Data & API Core -->
     <script src="data-maulid-dibai.js"></script>
+    <script src="data-qasidah-burdah.js"></script>
     <script src="js/api.js"></script>
     <script src="js/data-programs.js"></script>
 

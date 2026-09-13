@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v7';
+const CACHE_NAME = 'asnawiyyah-cache-v8';
 
 const PRECACHE_URLS = [
   '/',
@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   '/assets/img/kartu-santri.png',
   '/assets/img/abi-cholil.jpg',
   '/data-maulid-dibai.js',
+  '/data-qasidah-burdah.js',
   '/js/pwa.js',
   '/js/api.js',
   '/js/data-programs.js',
@@ -21,6 +22,7 @@ const PRECACHE_URLS = [
   '/js/auth.js',
   '/js/main.js'
 ];
+
 
 self.addEventListener('install', event => {
   self.skipWaiting();
