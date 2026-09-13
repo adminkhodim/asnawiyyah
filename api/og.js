@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
 
     try {
         // Fetch data from Google Apps Script
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbz074VHNTe4YpDAAn7dD-uTkTGGJKxxd6vYX6DHU0oI7j0FBVzIMfyje4E5tYuY9sEKqg/exec?action=getKabar";
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec?action=getKabar";
         const response = await fetch(scriptUrl);
         const data = await response.json();
 

@@ -1870,7 +1870,7 @@ function toggleLegacyAuthPanel() {
 // LEGACY AUTHENTICATION COMPATIBILITY LAYER
 // (Dipertahankan untuk kompatibilitas backward selama migrasi)
 // =====================================================================
-const AUTH_API_URL = "https://script.google.com/macros/s/AKfycbz074VHNTe4YpDAAn7dD-uTkTGGJKxxd6vYX6DHU0oI7j0FBVzIMfyje4E5tYuY9sEKqg/exec"; 
+const AUTH_API_URL = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec"; 
 const GOOGLE_CLIENT_ID = "967127815898-6padn433letamnjfuacb5eg8pnv728p4.apps.googleusercontent.com"; 
 
 document.addEventListener('DOMContentLoaded', () => {

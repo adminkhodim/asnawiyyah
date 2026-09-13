@@ -1,6 +1,6 @@
         // ==================== API ADAPTER LAYER ====================
         // STEP 4: seluruh komunikasi backend melewati adapter ini.
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz074VHNTe4YpDAAn7dD-uTkTGGJKxxd6vYX6DHU0oI7j0FBVzIMfyje4E5tYuY9sEKqg/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec";
 
         async function apiGet(action, params = {}) {
             if (!WEB_APP_URL) throw new Error("WEB_APP_URL belum dikonfigurasi.");
@@ -100,20 +100,26 @@
         // ==================== STATE MANAGEMENT DATA ====================
         let mockNewsData = [
             {
+                news_id: "NEWS_1",
+                slug: "santri-pptq-asnawiyyah-sabet-juara-olimpiade-matematika",
                 tanggal: "5 Juli 2026",
                 kategori: "Prestasi",
                 judul: "Santri PPTQ Asnawiyyah Sabet Juara Olimpiade Matematika",
                 ringkasan: "Alhamdulillah, santri PPTQ Asnawiyyah kembali meraih prestasi membanggakan dengan meraih juara pertama olimpiade matematika...",
                 isi: "Alhamdulillah, santri PPTQ Asnawiyyah kembali meraih prestasi membanggakan dengan meraih juara pertama olimpiade matematika tingkat Provinsi Jawa Tengah.\n\nKeberhasilan ini membuktikan bahwa kurikulum terintegrasi yang menggabungkan khazanah salaf klasik dan sains teknologi mampu bersaing di kancah nasional. Semoga prestasi ini memacu santri lainnya.",
-                penulis: "Humas Pesantren"
+                penulis: "Humas Pesantren",
+                gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop"
             },
             {
+                news_id: "NEWS_2",
+                slug: "silahturahmi-tokoh-ulama-nasional-pengarahan-keilmuan",
                 tanggal: "2 Juli 2026",
                 kategori: "Kajian",
                 judul: "Silahturahmi Tokoh Ulama Nasional & Pengarahan Keilmuan",
                 ringkasan: "Pesantren menyambut hangat silaturahmi tokoh ulama nasional yang memberikan wejangan mendalam bagi para santri...",
                 isi: "Pesantren menyambut hangat silaturahmi tokoh ulama nasional di Aula Utama. Beliau memberikan pengarahan keilmuan kepada seluruh santri agar tetap bersemangat menuntut ilmu di tengah derasnya modernitas global.\n\nBeliau menekankan pentingnya penguasaan literatur klasik sebagai akar moderasi beragama.",
-                penulis: "Kesiswaan"
+                penulis: "Kesiswaan",
+                gambar: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop"
             }
         ];
 

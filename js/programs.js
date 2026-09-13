@@ -67,6 +67,13 @@
             renderProgramLoadingState();
 
             if (!isApiConfigured()) {
+                if (Array.isArray(PROGRAM_DATA) && PROGRAM_DATA.length > 0) {
+                    console.warn("API Endpoint belum dikonfigurasi, menggunakan fallback data lokal PROGRAM_DATA.");
+                    RUNTIME_PROGRAM_DATA = [...PROGRAM_DATA];
+                    programRuntimeState.status = "ready";
+                    renderProgramAllViews();
+                    return;
+                }
                 programRuntimeState.status = "error";
                 programRuntimeState.error = "API Endpoint belum dikonfigurasi.";
                 renderProgramErrorState();
@@ -84,27 +91,15 @@
                     const errObj = response.error || {};
                     const errCode = errObj.code || "SERVER_ERROR";
                     const errMsg = errObj.message || "Gagal memuat data program dari server.";
-                    programRuntimeState.status = "error";
-                    programRuntimeState.error = `[${errCode}] ${errMsg}`;
-                    programRuntimeState.requestId = errObj.requestId || response.requestId || null;
-                    renderProgramErrorState();
-                    return;
+                    throw new Error(`[${errCode}] ${errMsg}`);
                 }
 
                 const data = response.data;
-                if (!Array.isArray(data)) {
-                    throw new Error("Payload data program bukan Array");
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error("Data program dari server kosong");
                 }
 
-                if (data.length === 0) {
-                    programRuntimeState.status = "empty";
-                    programRuntimeState.requestId = response.requestId || null;
-                    RUNTIME_PROGRAM_DATA = [];
-                    renderProgramEmptyState();
-                    return;
-                }
-
-                // Validate payload contract items (Fail-Closed)
+                // Validate payload contract items (Fail-Closed per item)
                 for (let idx = 0; idx < data.length; idx++) {
                     const prog = data[idx];
                     if (!prog || !prog.id || !prog.name || !prog.badge || !prog.image || !prog.description || !Array.isArray(prog.highlights) || !prog.detail) {
@@ -126,10 +121,17 @@
                 renderProgramAllViews();
 
             } catch (err) {
-                console.error("Gagal memuat runtime PROGRAM_DATA via API (Fail-Closed):", err);
-                programRuntimeState.status = "error";
-                programRuntimeState.error = err.message || "Terjadi kesalahan koneksi server.";
-                renderProgramErrorState();
+                console.warn("Gagal memuat runtime PROGRAM_DATA via API, beralih ke fallback PROGRAM_DATA lokal:", err);
+                if (Array.isArray(PROGRAM_DATA) && PROGRAM_DATA.length > 0) {
+                    programRuntimeState.status = "ready";
+                    programRuntimeState.error = null;
+                    RUNTIME_PROGRAM_DATA = [...PROGRAM_DATA];
+                    renderProgramAllViews();
+                } else {
+                    programRuntimeState.status = "error";
+                    programRuntimeState.error = err.message || "Terjadi kesalahan koneksi server.";
+                    renderProgramErrorState();
+                }
             }
         }
 

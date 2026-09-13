@@ -472,11 +472,11 @@
             newsArray.forEach((news, idx) => {
                 const card = document.createElement('article');
                 card.className = "bg-slate-50 dark:bg-[#15202d] hover:bg-emerald-50/50 dark:hover:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] hover:border-brand-100 dark:hover:border-emerald-500/40 flex flex-col gap-3 cursor-pointer group transition duration-200";
-                card.onclick = () => bacaBerita(news.news_id);
+                card.onclick = () => bacaBerita(news.news_id || news.slug);
 
-                const imgHtml = news.gambar
-                    ? `<img src="${news.gambar}" alt="${news.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
-                    : `<i class="fa-solid fa-newspaper text-white/20 text-5xl group-hover:scale-110 transition duration-300"></i>`;
+                const defaultNewsImage = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop";
+                const imgSource = (news.gambar && String(news.gambar).trim()) ? news.gambar : defaultNewsImage;
+                const imgHtml = `<img src="${imgSource}" alt="${escapeHtml(news.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null;this.src='${defaultNewsImage}';">`;
 
                 card.innerHTML = `
                     <div class="w-full h-40 bg-brand-800 rounded-xl relative flex items-center justify-center overflow-hidden">
