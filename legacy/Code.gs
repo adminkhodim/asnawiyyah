@@ -58,7 +58,8 @@ function doPost(e) {
     if (action === "saveBerita") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -70,7 +71,8 @@ function doPost(e) {
     if (action === "updateBerita") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -82,7 +84,8 @@ function doPost(e) {
     if (action === "deleteBerita") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -94,7 +97,8 @@ function doPost(e) {
     if (action === "saveBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -105,6 +109,12 @@ function doPost(e) {
 
     if (action === "uploadMedia") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(
         uploadMediaToDrive(payload.data || payload, token)
       );
@@ -112,6 +122,12 @@ function doPost(e) {
 
     if (action === "uploadStudentPhoto" || action === "student.uploadPhoto") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(
         uploadStudentPhotoToDrive(payload.data || payload, token)
       );
@@ -126,6 +142,12 @@ function doPost(e) {
 
     if (action === "saveStudent" || action === "student.save") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(
         saveStudentData(payload.data || payload, token)
       );
@@ -133,6 +155,12 @@ function doPost(e) {
 
     if (action === "deleteStudent" || action === "student.delete") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const studentId = payload.studentId || payload.student_id || payload.id || (payload.data && (payload.data.studentId || payload.data.student_id || payload.data.id));
       return createJsonResponse(
         deleteStudentData(studentId, token)
@@ -149,11 +177,23 @@ function doPost(e) {
 
     if (action === "saveTahfidzLog" || action === "tahfidz.saveLog") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(saveTahfidzLog(payload.data || payload, token));
     }
 
     if (action === "deleteTahfidzLog" || action === "tahfidz.deleteLog") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const logId = payload.logId || payload.log_id || (payload.data && (payload.data.logId || payload.data.log_id));
       return createJsonResponse(deleteTahfidzLog(logId, token));
     }
@@ -166,6 +206,12 @@ function doPost(e) {
 
     if (action === "saveTahfidzTarget" || action === "tahfidz.saveTarget") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(saveTahfidzTarget(payload.data || payload, token));
     }
 
@@ -176,22 +222,46 @@ function doPost(e) {
 
     if (action === "saveTahfidzHalaqah" || action === "tahfidz.saveHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
     if (action === "saveTahfidzPlotting" || action === "tahfidz.savePlotting") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(saveTahfidzPlotting(payload.data || payload, token));
     }
 
     if (action === "deleteTahfidzHalaqah" || action === "tahfidz.deleteHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const hId = payload.halaqahId || (payload.data && payload.data.halaqahId) || "";
       return createJsonResponse(deleteTahfidzHalaqah(hId, token));
     }
 
     if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(initTahfidzSheets(token));
     }
 
@@ -202,11 +272,23 @@ function doPost(e) {
 
     if (action === "saveTahfidzSesi" || action === "tahfidz.saveSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(saveTahfidzSesi(payload.data || payload.sesi || payload, token));
     }
 
     if (action === "deleteTahfidzSesi" || action === "tahfidz.deleteSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const sId = payload.sesiId || payload.id || (payload.data && (payload.data.sesiId || payload.data.id)) || "";
       return createJsonResponse(deleteTahfidzSesi(sId, token));
     }
@@ -221,11 +303,23 @@ function doPost(e) {
 
     if (action === "saveEmployee" || action === "employee.save") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       return createJsonResponse(saveEmployeeData(payload.data || payload, token));
     }
 
     if (action === "deleteEmployee" || action === "employee.delete") {
       const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
       const employeeId = payload.employeeId || payload.employee_id || payload.id || (payload.data && (payload.data.employeeId || payload.data.employee_id || payload.data.id));
       return createJsonResponse(deleteEmployeeData(employeeId, token));
     }
@@ -233,7 +327,8 @@ function doPost(e) {
     if (action === "deleteBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -264,7 +359,8 @@ function doPost(e) {
     if (action === "saveNotifikasi" || action === "admin.saveNotifikasi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -276,7 +372,8 @@ function doPost(e) {
     if (action === "deleteNotifikasi" || action === "admin.deleteNotifikasi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -288,7 +385,8 @@ function doPost(e) {
     if (action === "toggleBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -322,7 +420,8 @@ function doPost(e) {
     if (action === "saveGaleri") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -332,7 +431,8 @@ function doPost(e) {
     if (action === "savePengaturan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -342,7 +442,8 @@ function doPost(e) {
     if (action === "deleteGaleri") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -356,7 +457,8 @@ function doPost(e) {
     if (action === "toggleGaleri") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -374,7 +476,8 @@ function doPost(e) {
     if (action === "saveUnitKegiatan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -384,7 +487,8 @@ function doPost(e) {
     if (action === "deleteUnitKegiatan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -398,7 +502,8 @@ function doPost(e) {
     if (action === "toggleUnitKegiatan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -421,7 +526,8 @@ function doPost(e) {
     if (action === "auditSecurityStatus") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
-        verifySessionToken(token);
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -1123,13 +1229,6 @@ function doGet(e) {
       return createJsonResponse(getTahfidzHalaqahList(token));
     }
 
-    if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
-      const token = e.parameter.token || null;
-      return createJsonResponse(
-        initTahfidzSheets(token)
-      );
-    }
-
     if (action === "getEmployees" || action === "employee.list") {
       const token = e.parameter.token || null;
       return createJsonResponse(
@@ -1142,13 +1241,6 @@ function doGet(e) {
     // ========================================================
     if (action.startsWith("program.")) {
       return handleProgramApiAction(action, null, e);
-    }
-
-    // ========================================================
-    // AUTH SCHEMA SETUP & AUTO-MIGRATION (GET)
-    // ========================================================
-    if (action === "setupAuth" || action === "auth.system.setup") {
-      return createJsonResponse(setupAuthSystemSheets());
     }
 
     return createJsonResponse({
@@ -2792,17 +2884,32 @@ function setupPhase2BScriptProperties(forceRegenerate = false) {
  * Generates Server-Signed Session Token (HMAC SHA-256)
  * Menggunakan AUTH_TOKEN_SIGNING_SECRET secara eksplisit.
  */
-// Durasi sesi tanpa batas / permanen (10 tahun = 87600 jam), hanya berakhir jika logout eksplisit
-const PERMANENT_SESSION_TTL_HOURS = 87600;
+// ==================== SESSION TTL CONFIGURATION (P1-1) ====================
+// Role-specific bounded session lifetimes (Owner-approved policy)
+const SESSION_TTL_ADMIN_HOURS = 8;
+const SESSION_TTL_EDITOR_HOURS = 8;
+const SESSION_TTL_PENGASUH_HOURS = 8;
+const SESSION_TTL_WALI_HOURS = 24;
+const SESSION_TTL_DEFAULT_HOURS = 8;
 
-function generateSessionToken(userId, role, ttlHours = PERMANENT_SESSION_TTL_HOURS, sessionId = null, identityId = null) {
+function getSessionTtlHoursForRole(role) {
+  const r = String(role || "").trim().toUpperCase();
+  if (r === "ADMIN") return SESSION_TTL_ADMIN_HOURS;
+  if (r === "EDITOR") return SESSION_TTL_EDITOR_HOURS;
+  if (r === "PENGASUH") return SESSION_TTL_PENGASUH_HOURS;
+  if (r === "WALI_SANTRI") return SESSION_TTL_WALI_HOURS;
+  return SESSION_TTL_DEFAULT_HOURS;
+}
+
+function generateSessionToken(userId, role, ttlHours = null, sessionId = null, identityId = null) {
   const secret = getServerSecret("AUTH_TOKEN_SIGNING_SECRET", getServerSecret("TOKEN_SIGNING_SECRET", ""));
   if (!secret) {
     throw new AuthenticationError("Signing secret is not configured on server.");
   }
+  const effectiveTtlHours = (typeof ttlHours === "number" && ttlHours > 0) ? ttlHours : getSessionTtlHoursForRole(role);
   const tokenVersion = getServerSecret("TOKEN_VERSION", "1");
   const now = new Date().getTime();
-  const expiresAt = now + (ttlHours * 60 * 60 * 1000);
+  const expiresAt = now + (effectiveTtlHours * 60 * 60 * 1000);
 
   const payload = {
     userId: String(userId),
@@ -2898,18 +3005,11 @@ function verifySessionToken(tokenString, requireAuthSecret = false) {
     throw new AuthenticationError("Authentication token payload is incomplete.");
   }
 
-  // Model Revocation-Driven: Sesi aktif secara permanen di perangkat pengguna,
-  // dan HANYA kedaluwarsa jika dicabut (REVOKED) oleh server atau saat user melakukan logout manual.
+  // P1-1 STRICT TOKEN EXPIRATION: Token kedaluwarsa jika waktu sekarang melebihi claims.expiresAt.
+  // Bypass server-active dihapus agar sesi bounded TTL berlaku deterministik.
   const expTime = new Date(claims.expiresAt).getTime();
-  if (!isNaN(expTime) && Date.now() >= expTime) {
-    let isServerActive = false;
-    if (claims.sessionId && typeof getSessionById === "function") {
-      const sess = getSessionById(claims.sessionId);
-      if (sess && sess.status === "ACTIVE") isServerActive = true;
-    }
-    if (!isServerActive) {
-      throw new AuthenticationError("Authentication token has expired. Please log in again.");
-    }
+  if (isNaN(expTime) || Date.now() >= expTime) {
+    throw new AuthenticationError("Authentication token has expired. Please log in again.");
   }
 
   const activeTokenVersion = getServerSecret("TOKEN_VERSION", "1");
@@ -6741,17 +6841,18 @@ function getSessionById(sessionId) {
   return null;
 }
 
-function createAuthSessionRecord(identityId, role, ttlHours = PERMANENT_SESSION_TTL_HOURS) {
+function createAuthSessionRecord(identityId, role, ttlHours = null) {
   const ss = getDatabaseSpreadsheet();
   const sheet = getAuthSheet(ss, SHEET_AUTH_SESSIONS);
   if (!sheet) {
     throw new Error("Tabel sesi 'Auth_Sessions' belum diinisialisasi oleh administrator.");
   }
 
+  const effectiveTtlHours = (typeof ttlHours === "number" && ttlHours > 0) ? ttlHours : getSessionTtlHoursForRole(role);
   const sessionId = "SES_" + Utilities.getUuid().replace(/-/g, "");
   const now = new Date();
   const issuedAt = now.toISOString();
-  const expiresAt = new Date(now.getTime() + (ttlHours * 3600000)).toISOString();
+  const expiresAt = new Date(now.getTime() + (effectiveTtlHours * 3600000)).toISOString();
   const tokenVersion = String(getServerSecret("TOKEN_VERSION", "1"));
 
   sheet.appendRow([
@@ -7147,10 +7248,14 @@ function authenticateSession(tokenString) {
     throw new AuthenticationError("Token does not contain valid Phase 2B identity claims.");
   }
 
-  // P0-1: Verifikasi status sesi di registry server Auth_Sessions
+  // P0-1 & P1-1: Verifikasi status sesi dan TTL di registry server Auth_Sessions
   const session = getSessionById(claims.sessionId);
   if (!session || session.status !== "ACTIVE") {
     throw new AuthenticationError("Server session is not active or has been revoked.");
+  }
+  const sessionExpTime = new Date(session.expires_at).getTime();
+  if (!isNaN(sessionExpTime) && Date.now() >= sessionExpTime) {
+    throw new AuthenticationError("Server session has expired. Please log in again.");
   }
 
   // P0-1: Cek Status Identitas di Master (Sheet Users first, then fallback)
@@ -7209,18 +7314,6 @@ function handleAuthApiAction(action, payload, e) {
   const requestId = sanitizeRequestId(payload && payload.requestId);
 
   try {
-    // ----------------------------------------------------
-    // 0. AUTH SYSTEM SETUP & AUTO-MIGRATION
-    // ----------------------------------------------------
-    if (action === "auth.system.setup") {
-      const setupResult = setupAuthSystemSheets();
-      return createJsonResponse({
-        success: setupResult.status === "success",
-        ...setupResult,
-        requestId: requestId
-      });
-    }
-
     // ----------------------------------------------------
     // 1. ADMIN REQUEST OTP
     // ----------------------------------------------------
@@ -7362,9 +7455,10 @@ function handleAuthApiAction(action, payload, e) {
           return createJsonResponse({ success: false, message: "Identitas akun tidak aktif." });
         }
 
-        // Buat Sesi Server Permanen (sampai logout)
-        const session = createAuthSessionRecord(admin.identityId, admin.role, PERMANENT_SESSION_TTL_HOURS);
-        const tokenData = generateSessionToken(admin.email, admin.role, PERMANENT_SESSION_TTL_HOURS, session.sessionId, admin.identityId);
+        // Buat Sesi Server Bounded TTL (P1-1)
+        const ttlHours = getSessionTtlHoursForRole(admin.role);
+        const session = createAuthSessionRecord(admin.identityId, admin.role, ttlHours);
+        const tokenData = generateSessionToken(admin.email, admin.role, ttlHours, session.sessionId, admin.identityId);
 
         writeAuthAuditLog("OTP_VERIFY_SUCCESS", admin.identityId, session.sessionId, "EMAIL", true, requestId, {});
         writeAuthAuditLog("SESSION_CREATED", admin.identityId, session.sessionId, "EMAIL", true, requestId, { role: admin.role });
@@ -7528,8 +7622,9 @@ function handleAuthApiAction(action, payload, e) {
           return createJsonResponse({ success: false, message: "Identitas akun tidak aktif." });
         }
 
-        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
-        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.identityId);
+        const ttlHours = getSessionTtlHoursForRole("WALI_SANTRI");
+        const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", ttlHours);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", ttlHours, session.sessionId, wali.identityId);
         const students = getLinkedStudentsForWali(wali.identityId);
 
         writeAuthAuditLog("OTP_VERIFY_SUCCESS", wali.identityId, session.sessionId, "EMAIL", true, requestId, {});
@@ -7655,8 +7750,9 @@ function handleAuthApiAction(action, payload, e) {
           pengasuh = getPengasuhIdentityByEmail(email);
         }
         if (pengasuh && pengasuh.status === "ACTIVE") {
-          const session = createAuthSessionRecord(pengasuh.identityId, "PENGASUH", PERMANENT_SESSION_TTL_HOURS);
-          const tokenData = generateSessionToken(pengasuh.email, "PENGASUH", PERMANENT_SESSION_TTL_HOURS, session.sessionId, pengasuh.identityId);
+          const ttlHours = getSessionTtlHoursForRole("PENGASUH");
+          const session = createAuthSessionRecord(pengasuh.identityId, "PENGASUH", ttlHours);
+          const tokenData = generateSessionToken(pengasuh.email, "PENGASUH", ttlHours, session.sessionId, pengasuh.identityId);
 
           writeAuthAuditLog("SSO_LOGIN_SUCCESS", pengasuh.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: "PENGASUH" });
           return createJsonResponse({
@@ -7675,8 +7771,9 @@ function handleAuthApiAction(action, payload, e) {
           admin = getAdminIdentityByEmail(email);
         }
         if (admin && admin.status === "ACTIVE") {
-          const session = createAuthSessionRecord(admin.identityId, admin.role, PERMANENT_SESSION_TTL_HOURS);
-          const tokenData = generateSessionToken(admin.email, admin.role, PERMANENT_SESSION_TTL_HOURS, session.sessionId, admin.identityId);
+          const ttlHours = getSessionTtlHoursForRole(admin.role);
+          const session = createAuthSessionRecord(admin.identityId, admin.role, ttlHours);
+          const tokenData = generateSessionToken(admin.email, admin.role, ttlHours, session.sessionId, admin.identityId);
 
           writeAuthAuditLog("SSO_LOGIN_SUCCESS", admin.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: admin.role });
           return createJsonResponse({
@@ -7695,8 +7792,9 @@ function handleAuthApiAction(action, payload, e) {
           wali = getWaliIdentityByEmail(email);
         }
         if (wali && wali.status === "ACTIVE") {
-          const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
-          const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.identityId);
+          const ttlHours = getSessionTtlHoursForRole("WALI_SANTRI");
+          const session = createAuthSessionRecord(wali.identityId, "WALI_SANTRI", ttlHours);
+          const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", ttlHours, session.sessionId, wali.identityId);
           const students = getLinkedStudentsForWali(wali.identityId);
 
           writeAuthAuditLog("SSO_LOGIN_SUCCESS", wali.identityId, session.sessionId, "GOOGLE_SSO", true, requestId, { role: "WALI_SANTRI" });
@@ -7981,9 +8079,10 @@ function handleAuthApiAction(action, payload, e) {
           }
         }
 
-        // Buat Sesi Permanen (sampai logout manual)
-        const session = createAuthSessionRecord(wali.userId || wali.identityId, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS);
-        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", PERMANENT_SESSION_TTL_HOURS, session.sessionId, wali.userId || wali.identityId);
+        // Buat Sesi Bounded TTL (P1-1)
+        const ttlHours = getSessionTtlHoursForRole("WALI_SANTRI");
+        const session = createAuthSessionRecord(wali.userId || wali.identityId, "WALI_SANTRI", ttlHours);
+        const tokenData = generateSessionToken(wali.email, "WALI_SANTRI", ttlHours, session.sessionId, wali.userId || wali.identityId);
         const students = getLinkedStudentsForWali(wali.userId || wali.identityId);
 
         writeAuthAuditLog("WALI_ACTIVATION_SUCCESS", wali.userId || wali.identityId, session.sessionId, "EMAIL_ACTIVATION", true, requestId, {
@@ -8222,14 +8321,8 @@ function getOrCreateTahfidzSheet(ss, sheetName, defaultHeaders, headerBgColor) {
  */
 function initTahfidzSheets(token) {
   try {
-    if (token) {
-      try {
-        const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
-      } catch (authErr) {
-        verifySessionToken(token);
-      }
-    }
+    const actor = authenticateSession(token);
+    authorizeRole(actor, ["ADMIN"]);
 
     const ss = getDatabaseSpreadsheet();
     if (!ss) {
