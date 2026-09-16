@@ -443,10 +443,10 @@ const ASNJadwalSholat = (function () {
             const isNext = (c.key === nextInfo.nextPrayer.key);
             const isActive = (c.key === nextInfo.activePrayer.key);
 
-            let cardClasses = "relative p-3.5 md:p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden ";
+            let cardClasses = "relative p-2.5 sm:p-3.5 rounded-xl md:rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ";
             if (isNext) {
-                // Highlight waktu berikutnya (warna khas hijau emerald NU)
-                cardClasses += "bg-gradient-to-br from-emerald-600 to-brand-800 text-white shadow-lg shadow-emerald-700/20 border-emerald-500 scale-[1.02] ring-2 ring-emerald-400/40";
+                // Highlight waktu berikutnya (warna khas hijau emerald NU yang elegan tanpa scale over)
+                cardClasses += "bg-gradient-to-br from-emerald-600 to-brand-800 text-white shadow-md border-emerald-500 ring-2 ring-emerald-400/40";
             } else if (isActive) {
                 cardClasses += "bg-emerald-50/80 dark:bg-[#1c2836] border-emerald-300 dark:border-emerald-600/50 text-slate-800 dark:text-slate-100";
             } else {
@@ -454,19 +454,19 @@ const ASNJadwalSholat = (function () {
             }
 
             const timeColor = isNext ? "text-amber-300" : "text-brand-800 dark:text-emerald-400";
-            const badgeTag = isNext ? `<span class="text-[9px] bg-amber-400 text-brand-dark px-2 py-0.5 rounded-full font-extrabold uppercase">Berikutnya</span>` : "";
+            const badgeTag = isNext ? `<span class="text-[8px] md:text-[9px] bg-amber-400 text-brand-dark px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider">Aktif</span>` : "";
 
             return `
                 <div class="${cardClasses}">
                     <div class="flex justify-between items-start">
-                        <span class="text-xs md:text-sm font-bold ${isNext ? 'text-white' : 'text-slate-500 dark:text-slate-400'}">${c.name}</span>
+                        <span class="text-xs sm:text-sm font-bold ${isNext ? 'text-white' : 'text-slate-600 dark:text-slate-300'}">${c.name}</span>
                         ${badgeTag}
                     </div>
-                    <div class="mt-2 flex items-baseline justify-between">
-                        <span class="text-lg md:text-xl font-extrabold tracking-tight ${timeColor}">
-                            ${c.time} <span class="text-[10px] font-semibold opacity-70">${sched.tzName}</span>
+                    <div class="mt-1 sm:mt-2 flex items-baseline justify-between">
+                        <span class="text-base sm:text-lg md:text-xl font-black tracking-tight ${timeColor}">
+                            ${c.time} <span class="text-[9px] font-semibold opacity-70">${sched.tzName}</span>
                         </span>
-                        <i class="fa-solid ${c.icon} text-lg opacity-40"></i>
+                        <i class="fa-solid ${c.icon} text-sm sm:text-base opacity-40"></i>
                     </div>
                 </div>
             `;
