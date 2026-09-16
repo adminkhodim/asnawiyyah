@@ -3046,7 +3046,7 @@ function authorizeAction(actorContext, actionName) {
     throw new AuthenticationError("Authentication required for action: " + actionName);
   }
 
-  const role = actorContext.role;
+  const role = String(actorContext.role || "").trim().toLowerCase();
 
   const editorActions = [
     "program.list",
@@ -3063,14 +3063,14 @@ function authorizeAction(actorContext, actionName) {
 
   if (adminActions.includes(actionName)) {
     if (role !== AllowedRoles.ADMIN) {
-      throw new AuthorizationError(`Role '${role}' is forbidden from performing action '${actionName}'.`);
+      throw new AuthorizationError(`Role '${actorContext.role}' is forbidden from performing action '${actionName}'.`);
     }
     return true;
   }
 
   if (editorActions.includes(actionName)) {
     if (role !== AllowedRoles.ADMIN && role !== AllowedRoles.EDITOR) {
-      throw new AuthorizationError(`Role '${role}' is forbidden from performing action '${actionName}'.`);
+      throw new AuthorizationError(`Role '${actorContext.role}' is forbidden from performing action '${actionName}'.`);
     }
     return true;
   }
