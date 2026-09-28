@@ -8597,12 +8597,19 @@ function getTahfidzDashboard(token) {
       }
     }
 
-    // 6. Kelompokkan Logs per Santri
+    // 6. Kelompokkan Logs per Santri & Agregasi Halaman Pekanan
     const logsByStudent = {};
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     let weeklyZiyadahCount = 0;
     let weeklyMurajaahCount = 0;
+    let weeklyZiyadahPages = 0;
+    let weeklyMurajaahPages = 0;
+
+    const weeklyZiyadahPagesMap = {};
+    const weeklyMurajaahPagesMap = {};
+    const weeklySabqiPagesMap = {};
+    const weeklyManzilPagesMap = {};
 
     logRows.forEach(l => {
       const sKey = l.studentId || l.nis;
@@ -8612,14 +8619,33 @@ function getTahfidzDashboard(token) {
       // Hitung aktivitas pekan ini
       const logDate = new Date(l.tanggal || l.createdAt);
       if (logDate >= oneWeekAgo) {
-        if (l.tipe === "ZIYADAH") weeklyZiyadahCount++;
-        else if (l.tipe.indexOf("MURAJAAH") !== -1 || l.tipe === "TASMI") weeklyMurajaahCount++;
+        const totalHal = Number(l.totalHalaman) || 1;
+        if (l.tipe === "ZIYADAH") {
+          weeklyZiyadahCount++;
+          weeklyZiyadahPages += totalHal;
+          [l.studentId, l.nis].filter(Boolean).forEach(k => {
+            weeklyZiyadahPagesMap[k] = (weeklyZiyadahPagesMap[k] || 0) + totalHal;
+          });
+        } else if (l.tipe.indexOf("MURAJAAH") !== -1 || l.tipe === "TASMI") {
+          weeklyMurajaahCount++;
+          weeklyMurajaahPages += totalHal;
+          [l.studentId, l.nis].filter(Boolean).forEach(k => {
+            weeklyMurajaahPagesMap[k] = (weeklyMurajaahPagesMap[k] || 0) + totalHal;
+            if (l.tipe === "MURAJAAH_SABQI") {
+              weeklySabqiPagesMap[k] = (weeklySabqiPagesMap[k] || 0) + totalHal;
+            } else if (l.tipe === "MURAJAAH_MANZIL") {
+              weeklyManzilPagesMap[k] = (weeklyManzilPagesMap[k] || 0) + totalHal;
+            }
+          });
+        }
       }
     });
 
     // 7. Kalkulasi Data Santri Terintegrasi
     let totalJuzAllStudents = 0;
     let khatam30Count = 0;
+    let santriTuntasMurojaahCount = 0;
+
     const enrichedStudents = filteredStudents.map(st => {
       const sId = String(st.studentId || st.student_id || "").trim();
       const sNis = String(st.nis || "").trim();
@@ -8668,6 +8694,8 @@ function getTahfidzDashboard(token) {
         muhafiz: "Pembina Tahfidz"
       };
 
+      const isInHalaqah = !!(studentHalaqahMap[sId] || studentHalaqahMap[sNis]);
+
       return {
         studentId: sId,
         nis: sNis,
@@ -8677,6 +8705,7 @@ function getTahfidzDashboard(token) {
         program: st.program || "Tahfidz",
         status: st.status || "ACTIVE",
         halaqah: halaqah,
+        isInHalaqah: isInHalaqah,
         target: {
           ziyadahSesi: target.targetZiyadahSesi,
           ziyadahPekan: target.targetZiyadahPekan,
@@ -8685,6 +8714,33 @@ function getTahfidzDashboard(token) {
           murajaahPekan: target.targetMurajaahPekan,
           murajaahBulan: target.targetMurajaahPekan * 4
         },
+        rekapPekan: (function() {
+          const tZ = Number(target.targetZiyadahPekan) || 10;
+          const tM = Number(target.targetMurajaahPekan) || 10;
+          const rZ = weeklyZiyadahPagesMap[sId] || weeklyZiyadahPagesMap[sNis] || 0;
+          const rM = weeklyMurajaahPagesMap[sId] || weeklyMurajaahPagesMap[sNis] || 0;
+          const rSabqi = weeklySabqiPagesMap[sId] || weeklySabqiPagesMap[sNis] || 0;
+          const rManzil = weeklyManzilPagesMap[sId] || weeklyManzilPagesMap[sNis] || 0;
+          const isTuntasM = rM >= tM;
+          if (isTuntasM) santriTuntasMurojaahCount++;
+          return {
+            ziyadah: {
+              target: tZ,
+              realita: rZ,
+              isTuntas: rZ >= tZ
+            },
+            murojaah: {
+              target: tM,
+              realita: rM,
+              sabqi: rSabqi,
+              manzil: rManzil,
+              persen: tM > 0 ? Math.round((rM / tM) * 100) : 0,
+              isTuntas: isTuntasM,
+              sisaHalaman: Math.max(0, tM - rM),
+              statusText: isTuntasM ? "Tuntas Target Muroja'ah" : (rM > 0 ? ("Kurang " + (tM - rM) + " Hlm") : "Belum Muroja'ah")
+            }
+          };
+        })(),
         setoranTerakhir: latestLog ? {
           juz: latestLog.juz,
           surah: latestLog.surah || `Juz ${latestLog.juz}`,
@@ -8707,8 +8763,17 @@ function getTahfidzDashboard(token) {
     });
 
     // 8. Hitung Summary Makro
-    const activeStudentCount = filteredStudents.length || 1;
-    const avgJuz = (totalJuzAllStudents / activeStudentCount).toFixed(1);
+    const halaqahMembers = enrichedStudents.filter(st => st.isInHalaqah);
+    const activeStudentCount = halaqahMembers.length > 0 ? halaqahMembers.length : (enrichedStudents.length || 1);
+    let totalJuzHalaqahStudents = 0;
+    let khatam30HalaqahCount = 0;
+    halaqahMembers.forEach(st => {
+      const jz = (st.progress && st.progress.currentJuz) || 0;
+      totalJuzHalaqahStudents += jz;
+      if (jz >= 30) khatam30HalaqahCount++;
+    });
+
+    const avgJuz = (totalJuzHalaqahStudents / activeStudentCount).toFixed(1);
     const totalWeeklyActivity = weeklyZiyadahCount + weeklyMurajaahCount;
     const ziyadahPercent = totalWeeklyActivity > 0 ? Math.round((weeklyZiyadahCount / totalWeeklyActivity) * 100) : 100;
     const murajaahPercent = 100 - ziyadahPercent;
@@ -8717,13 +8782,21 @@ function getTahfidzDashboard(token) {
       status: "success",
       success: true,
       summary: {
-        khatam30Juz: khatam30Count,
+        khatam30Juz: khatam30HalaqahCount > 0 ? khatam30HalaqahCount : khatam30Count,
         rataRataHafalan: `${avgJuz} Juz / Santri`,
-        totalHafalanJuz: totalJuzAllStudents,
+        totalHafalanJuz: totalJuzHalaqahStudents > 0 ? totalJuzHalaqahStudents : totalJuzAllStudents,
+        totalSantriHalaqah: halaqahMembers.length,
         aktivitasPekanIni: {
           ziyadahPercent: ziyadahPercent,
           murajaahPercent: murajaahPercent,
-          totalSetoranPekanIni: totalWeeklyActivity
+          totalSetoranPekanIni: totalWeeklyActivity,
+          weeklyZiyadahPages: weeklyZiyadahPages,
+          weeklyMurajaahPages: weeklyMurajaahPages,
+          santriTuntasMurojaahCount: santriTuntasMurojaahCount,
+          totalSantriAktif: halaqahMembers.length || enrichedStudents.length,
+          persenTuntasMurojaah: (halaqahMembers.length || enrichedStudents.length) > 0 
+            ? Math.round((santriTuntasMurojaahCount / (halaqahMembers.length || enrichedStudents.length)) * 100) 
+            : 0
         }
       },
       students: enrichedStudents,

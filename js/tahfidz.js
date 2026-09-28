@@ -300,6 +300,15 @@ function renderTahfidzSummaryCards() {
     if (elZiyadahBar) elZiyadahBar.style.width = `${akt.ziyadahPercent || 100}%`;
     if (elZiyadahText) elZiyadahText.innerText = `Ziyadah ( ${akt.ziyadahPercent || 100}% )`;
     if (elMurajaahText) elMurajaahText.innerText = `Muraja'ah ( ${akt.murajaahPercent || 0}% )`;
+
+    const elMurajaahPages = document.getElementById('tahfidz-stat-murojaah-pages');
+    if (elMurajaahPages) {
+        elMurajaahPages.innerText = typeof akt.weeklyMurajaahPages === 'number' ? akt.weeklyMurajaahPages : (sum.weeklyMurajaahPages || 0);
+    }
+    const elTuntasSantri = document.getElementById('tahfidz-stat-murojaah-tuntas-santri');
+    if (elTuntasSantri) {
+        elTuntasSantri.innerText = `${typeof akt.persenTuntasMurojaah === 'number' ? akt.persenTuntasMurojaah : 0}%`;
+    }
 }
 
 /**
