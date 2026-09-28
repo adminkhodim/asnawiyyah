@@ -1,7 +1,14 @@
+const TAHFIDZ_STORAGE_KEYS = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.storage && APP_CONFIG.storage.keys)
+    ? APP_CONFIG.storage.keys
+    : {
+        adminToken: 'asnawiyyah_admin_token',
+        parentToken: 'asnawiyyah_parent_token',
+        pengasuhToken: 'asnawiyyah_pengasuh_token'
+    };
 /**
  * ====================================================================
  * MODUL FRONTEND: TAHFIDZ AL-QUR'AN (PPTQ ASNAWIYYAH)
- * Desain & Alur Mengacu Standar Pesantren Modern (Khodim.com)
+ * State Management, Mutaba'ah, Rekapitulasi, & Integrasi API Standar Pesantren Modern
  * ====================================================================
  * Fitur:
  * 1. Multi-role: Admin/Musyrif (Kelola), Wali Santri (Pantau Anak), Pengasuh (Makro)
@@ -27,6 +34,7 @@ const ASNTahfidz = {
     },
     filteredStudents: [],
     activeStudentDetail: null,
+    cache: null,
     catatState: {
         studentId: "",
         juz: 1,
@@ -42,10 +50,49 @@ const ASNTahfidz = {
         murajaahSesi: 2,
         murajaahPekan: 10
     },
+    selectedStudentIds: new Set(),
+    bulkTargetState: {
+        scope: 'ALL',
+        halaqahId: '',
+        kategori: '',
+        studentIds: []
+    },
     halaqahActiveTab: 1,
     detailActiveTab: 1,
     detailFilterTipe: "ALL"
 };
+
+const TAHFIDZ_CACHE_KEY = 'asnawiyyah_tahfidz_dashboard_cache';
+const TAHFIDZ_CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
+
+/**
+ * Helper untuk mengatur status loading visual (icon spinner berputar + teks) pada tombol simpan/aksi
+ */
+function setTahfidzButtonLoading(btnOrId, isLoading, loadingText = "Menyimpan...", defaultText = "") {
+    if (typeof window.setButtonLoading === 'function') {
+        return window.setButtonLoading(btnOrId, isLoading, loadingText, defaultText);
+    }
+    const btn = typeof btnOrId === 'string' ? document.getElementById(btnOrId) : btnOrId;
+    if (!btn) return;
+
+    if (isLoading) {
+        if (!btn.dataset.originalHtml) {
+            btn.dataset.originalHtml = btn.innerHTML;
+        }
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i><span>${escapeHtml(loadingText)}</span>`;
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        if (defaultText) {
+            btn.innerHTML = defaultText;
+        } else if (btn.dataset.originalHtml) {
+            btn.innerHTML = btn.dataset.originalHtml;
+            delete btn.dataset.originalHtml;
+        }
+    }
+}
 
 // Referensi Surah Awal per Juz untuk Standar Mushaf 30 Juz
 const SURAH_JUZ_REFERENCE = {
@@ -86,42 +133,136 @@ const SURAH_JUZ_REFERENCE = {
 // ====================================================================
 
 /**
- * Muat data lengkap dashboard Tahfidz dari Google Apps Script
+ * Muat data lengkap dashboard Tahfidz dengan pola SWR (Stale-While-Revalidate).
+ * Jika data sudah ada di cache browser, langsung render instan (0 detik!),
+ * lalu sinkronkan dengan server di latar belakang.
  */
-async function loadAdminTahfidzData() {
+async function loadAdminTahfidzData(forceRefresh = false) {
     const loader = document.getElementById('admin-tahfidz-loader');
     const tableBody = document.getElementById('admin-tahfidz-table-body');
     const emptyState = document.getElementById('admin-tahfidz-empty');
+    const refreshIcon = document.getElementById('btn-refresh-tahfidz-icon');
 
-    if (loader) loader.classList.remove('hidden');
-    if (emptyState) emptyState.classList.add('hidden');
+    if (refreshIcon && forceRefresh) {
+        refreshIcon.classList.add('fa-spin');
+    }
 
-    try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
-        const response = await apiPost("getTahfidzDashboard", { token });
+    // 1. Cek cache lokal (Memory, localStorage, atau sessionStorage)
+    // Strategi SWR: Jika ada data, LANGSUNG RENDER INSTAN (< 50ms) tanpa menunggu server!
+    let hasRenderedFromCache = false;
+    if (!forceRefresh) {
+        let cached = ASNTahfidz.cache;
+        if (!cached) {
+            try {
+                const stored = localStorage.getItem(TAHFIDZ_CACHE_KEY) || sessionStorage.getItem(TAHFIDZ_CACHE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed && (parsed.data || parsed.students)) {
+                        cached = parsed.data || parsed;
+                        ASNTahfidz.cache = cached;
+                    }
+                }
+            } catch (e) {
+                console.warn("Gagal membaca cache Tahfidz:", e);
+            }
+        }
 
-        if (response && (response.success || response.status === "success")) {
-            ASNTahfidz.data = response;
-            ASNTahfidz.filteredStudents = [...(response.students || [])];
+        if (cached && (cached.success || cached.status === "success") && Array.isArray(cached.students)) {
+            ASNTahfidz.data = cached;
+            if (typeof buildTahfidzHalaqahIndex === 'function') buildTahfidzHalaqahIndex();
 
             renderTahfidzSummaryCards();
             populateTahfidzFilters();
-            renderTahfidzStudentTable();
+            filterTahfidzList();
             updateHubTahfidzBadge();
-        } else {
-            console.warn("Gagal memuat tahfidz dashboard:", response);
-            if (typeof showToast === 'function') {
-                showToast("⚠️ " + ((response && response.message) || "Gagal memuat data Tahfidz."));
+            renderTahfidzHalaqahCards();
+            populatePlottingHalaqahSelector();
+            renderTahfidzMatriksBeban();
+            populateTahfidzCatatSesiDropdown();
+            hasRenderedFromCache = true;
+
+            if (emptyState && ASNTahfidz.filteredStudents.length > 0) {
+                emptyState.classList.add('hidden');
             }
+            if (loader) loader.classList.add('hidden');
         }
-    } catch (err) {
-        console.error("Error loadAdminTahfidzData:", err);
-        if (typeof showToast === 'function') {
-            showToast("❌ Terjadi kendala saat memuat data Tahfidz.");
-        }
-    } finally {
-        if (loader) loader.classList.add('hidden');
     }
+
+    // Hanya tampilkan full loader jika SAMA SEKALI belum ada data di cache lokal
+    if (!hasRenderedFromCache) {
+        if (loader) loader.classList.remove('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
+    }
+
+    // Hindari pemanggilan server duplikat jika request sedang berjalan
+    if (ASNTahfidz._fetchPromise) {
+        return ASNTahfidz._fetchPromise;
+    }
+
+    ASNTahfidz._fetchPromise = (async () => {
+        try {
+            const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : (sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken) || localStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken))) || "";
+            const response = await apiPost("getTahfidzDashboard", token ? { token } : {});
+
+            if (response && (response.success || response.status === "success")) {
+                // Gabungkan halaqah lokal jika ada halaqah baru yang belum terangkum
+                if (Array.isArray(response.halaqahs)) {
+                    const currentHalaqahs = ASNTahfidz.data?.halaqahs || [];
+                    const mergedHalaqahs = [...response.halaqahs];
+                    currentHalaqahs.forEach(loc => {
+                        if (loc && loc.halaqahId && !mergedHalaqahs.some(s => s.halaqahId === loc.halaqahId)) {
+                            mergedHalaqahs.push(loc);
+                        }
+                    });
+                    response.halaqahs = mergedHalaqahs;
+                }
+
+                ASNTahfidz.data = response;
+                ASNTahfidz.cache = response;
+                if (typeof buildTahfidzHalaqahIndex === 'function') buildTahfidzHalaqahIndex();
+
+                try {
+                    const cachePayload = JSON.stringify({
+                        data: response,
+                        timestamp: Date.now()
+                    });
+                    localStorage.setItem(TAHFIDZ_CACHE_KEY, cachePayload);
+                    sessionStorage.setItem(TAHFIDZ_CACHE_KEY, cachePayload);
+                } catch (e) {
+                    console.warn("Gagal menyimpan cache Tahfidz:", e);
+                }
+
+                renderTahfidzSummaryCards();
+                populateTahfidzFilters();
+                filterTahfidzList();
+                updateHubTahfidzBadge();
+                renderTahfidzHalaqahCards();
+                populatePlottingHalaqahSelector();
+                renderTahfidzMatriksBeban();
+                populateTahfidzCatatSesiDropdown();
+
+                if (forceRefresh && typeof showToast === 'function') {
+                    showToast("✅ Data Tahfidz berhasil diperbarui.");
+                }
+            } else {
+                console.warn("Gagal memuat tahfidz dashboard:", response);
+                if (!hasRenderedFromCache && typeof showToast === 'function') {
+                    showToast("⚠️ " + ((response && response.message) || "Gagal memuat data Tahfidz."));
+                }
+            }
+        } catch (err) {
+            console.error("Error loadAdminTahfidzData:", err);
+            if (!hasRenderedFromCache && typeof showToast === 'function') {
+                showToast("❌ Terjadi kendala saat memuat data: " + (err.message || "Gagal memuat data Tahfidz."));
+            }
+        } finally {
+            ASNTahfidz._fetchPromise = null;
+            if (loader) loader.classList.add('hidden');
+            if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+        }
+    })();
+
+    return ASNTahfidz._fetchPromise;
 }
 
 /**
@@ -137,7 +278,19 @@ function renderTahfidzSummaryCards() {
     if (elRata) elRata.innerText = sum.rataRataHafalan || "0.0 Juz / Santri";
 
     const elTotal = document.getElementById('tahfidz-stat-total');
-    if (elTotal) elTotal.innerText = `${sum.totalHafalanJuz || 0} Akumulasi Juz`;
+    if (elTotal) {
+        let count = 0;
+        if (Array.isArray(ASNTahfidz.data?.students) && ASNTahfidz.data.students.length > 0) {
+            count = ASNTahfidz.data.students.filter(st => {
+                const statusClean = String(st.status || "Aktif").trim().toLowerCase();
+                const isAktif = statusClean === "aktif" || statusClean === "active" || statusClean === "";
+                return isAktif && isStudentInHalaqah(st);
+            }).length;
+        } else if (typeof sum.totalSantriHalaqah === 'number') {
+            count = sum.totalSantriHalaqah;
+        }
+        elTotal.innerText = count;
+    }
 
     const elZiyadahBar = document.getElementById('tahfidz-stat-bar-ziyadah');
     const elZiyadahText = document.getElementById('tahfidz-stat-text-ziyadah');
@@ -178,6 +331,7 @@ function populateTahfidzFilters() {
                 optHtml += `<option value="${escapeHtml(h.namaHalaqah)}">${escapeHtml(h.namaHalaqah)}</option>`;
             }
         });
+        optHtml += `<option value="UNASSIGNED">Belum Masuk Halaqah</option>`;
         selHal.innerHTML = optHtml;
         if (currentVal && Array.from(selHal.options).some(o => o.value === currentVal)) {
             selHal.value = currentVal;
@@ -199,14 +353,82 @@ function populateTahfidzFilters() {
 }
 
 /**
- * Update badge Tahfidz di Hub Admin
+ * Update badge Tahfidz di Hub Admin (Hanya santri aktif di kelompok halaqah)
  */
 function updateHubTahfidzBadge() {
     const hubBadge = document.getElementById('admin-hub-tahfidz-count');
     if (hubBadge) {
-        const count = ASNTahfidz.data.students ? ASNTahfidz.data.students.length : 0;
+        const count = (ASNTahfidz.data.students || []).filter(st => isStudentInHalaqah(st)).length;
         hubBadge.innerText = `${count} Santri`;
     }
+}
+
+/**
+ * Membangun index Set O(1) untuk seluruh anggota halaqah (eliminasi nested loop O(N*M))
+ */
+function buildTahfidzHalaqahIndex() {
+    const memberSet = new Set();
+    const nameSet = new Set();
+    const idSet = new Set();
+    const halaqahs = ASNTahfidz.data?.halaqahs || [];
+
+    for (let i = 0; i < halaqahs.length; i++) {
+        const h = halaqahs[i];
+        if (!h) continue;
+        if (h.namaHalaqah) nameSet.add(h.namaHalaqah.trim().toLowerCase());
+        if (h.halaqahId) idSet.add(String(h.halaqahId).trim().toLowerCase());
+        if (Array.isArray(h.studentIds)) {
+            for (let j = 0; j < h.studentIds.length; j++) {
+                const clean = String(h.studentIds[j] || "").trim().toLowerCase();
+                if (clean) memberSet.add(clean);
+            }
+        }
+    }
+    ASNTahfidz._halaqahMemberSet = memberSet;
+    ASNTahfidz._halaqahNameSet = nameSet;
+    ASNTahfidz._halaqahIdSet = idSet;
+}
+
+/**
+ * Memeriksa apakah santri sudah ditambahkan ke dalam salah satu kelompok halaqah (Super Cepat O(1))
+ */
+function isStudentInHalaqah(st) {
+    if (!st) return false;
+    if (typeof st.isInHalaqah === 'boolean') {
+        if (st.isInHalaqah) return true;
+    }
+
+    // 1. Cek properti halaqahId pada santri
+    const hid = String(st.halaqahId || (st.halaqah && st.halaqah.halaqahId) || "").trim();
+    if (hid !== "" && hid !== "0" && hid !== "undefined") {
+        return true;
+    }
+
+    if (!ASNTahfidz._halaqahMemberSet) {
+        buildTahfidzHalaqahIndex();
+    }
+
+    // 2. Cek apakah nama halaqah valid
+    const hname = (st.halaqah?.namaHalaqah || st.halaqahName || "").trim().toLowerCase();
+    if (hname && hname !== "belum masuk halaqah") {
+        if (ASNTahfidz._halaqahNameSet.size === 0 || ASNTahfidz._halaqahNameSet.has(hname)) {
+            return true;
+        }
+        if (hid && ASNTahfidz._halaqahIdSet.has(hid.toLowerCase())) {
+            return true;
+        }
+    }
+
+    // 3. O(1) Set lookup instan (bebas freeze loop)
+    const sId = String(st.studentId || st.nis || st.id || "").trim().toLowerCase();
+    const sNis = String(st.nis || "").trim().toLowerCase();
+    const sName = String(st.name || "").trim().toLowerCase();
+
+    return Boolean(
+        (sId && ASNTahfidz._halaqahMemberSet.has(sId)) ||
+        (sNis && ASNTahfidz._halaqahMemberSet.has(sNis)) ||
+        (sName && ASNTahfidz._halaqahMemberSet.has(sName))
+    );
 }
 
 /**
@@ -233,21 +455,41 @@ function filterTahfidzList() {
             (st.program && st.program.toLowerCase() === kat.toLowerCase()) ||
             (st.halaqah && st.halaqah.kategori && st.halaqah.kategori.toLowerCase() === kat.toLowerCase());
 
-        // Halaqah
-        const matchHal = (hal === 'ALL') ||
-            (st.halaqah && st.halaqah.namaHalaqah === hal);
+        // Halaqah Filter:
+        // Filter "Semua Halaqah" (ALL) HANYA menampilkan santri yang sudah dimasukkan ke kelompok halaqah
+        const inHalaqah = isStudentInHalaqah(st);
+        let matchHal = false;
+
+        if (hal === 'ALL') {
+            matchHal = inHalaqah;
+        } else if (hal === 'UNASSIGNED') {
+            matchHal = !inHalaqah;
+        } else {
+            matchHal = inHalaqah && st.halaqah && (
+                st.halaqah.namaHalaqah === hal || 
+                st.halaqah.halaqahId === hal
+            );
+        }
 
         // Muhafiz
         const matchMuh = (muh === 'Semua Muhafiz' || muh === 'ALL') ||
             (st.halaqah && st.halaqah.muhafiz && st.halaqah.muhafiz.includes(muh)) ||
             (st.setoranTerakhir && st.setoranTerakhir.muhafiz && st.setoranTerakhir.muhafiz.includes(muh));
 
-        // Status On-Track
+        // Status On-Track / Mengulang / Target Muroja'ah Mingguan
         let matchStatus = true;
-        if (status === 'ON_TRACK') {
+        if (status === 'MUROJAAH_TUNTAS') {
+            matchStatus = Boolean(st.rekapPekan && st.rekapPekan.murojaah && st.rekapPekan.murojaah.isTuntas);
+        } else if (status === 'MUROJAAH_BELUM') {
+            matchStatus = Boolean(!st.rekapPekan || !st.rekapPekan.murojaah || !st.rekapPekan.murojaah.isTuntas);
+        } else if (status === 'ON_TRACK') {
             matchStatus = st.progress && st.progress.onTrackStatus && st.progress.onTrackStatus.startsWith('On-Track');
         } else if (status === 'BELUM_SETOR') {
             matchStatus = st.progress && st.progress.onTrackStatus && st.progress.onTrackStatus.includes('Belum Setor');
+        } else if (status === 'ULANG') {
+            const isRepeat = (st.setoranTerakhir && (st.setoranTerakhir.statusSetoran === 'ULANG' || st.setoranTerakhir.nilai === 'DHAIF')) ||
+                (st.progress && st.progress.onTrackStatus && st.progress.onTrackStatus.includes('Mengulang'));
+            matchStatus = Boolean(isRepeat);
         }
 
         return matchQ && matchKat && matchHal && matchMuh && matchStatus;
@@ -282,7 +524,8 @@ function renderTahfidzStudentTable() {
     if (tbody) {
         tbody.innerHTML = students.map(st => {
             const initials = (st.name || 'Santri').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'SN';
-            const halaqahName = st.halaqah?.namaHalaqah || st.program || 'Tahfidz Dewasa';
+            const inHal = isStudentInHalaqah(st);
+            const halaqahName = inHal ? (st.halaqah?.namaHalaqah || 'Halaqah Aktif') : 'Belum Masuk Halaqah';
             const targetZ = st.target?.ziyadahSesi || 1;
             const targetZPekan = st.target?.ziyadahPekan || 10;
             const targetZBulan = st.target?.ziyadahBulan || 40;
@@ -291,13 +534,28 @@ function renderTahfidzStudentTable() {
             const targetMBulan = st.target?.murajaahBulan || 40;
 
             const last = st.setoranTerakhir;
-            const currentJuz = st.progress?.currentJuz || 1;
-            const percent = st.progress?.percent || 3;
+            const isUlang = last && (last.statusSetoran === 'ULANG' || last.nilai === 'DHAIF');
+
+            const cap = st.capaian || {};
+            const mur = st.murojaah || {};
+
+            const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 1;
+            const percent = Number(cap.persentase) || Number(st.progress?.percent) || 3;
             const onTrackStatus = st.progress?.onTrackStatus || 'Belum Setor';
             const isOnTrack = onTrackStatus.includes('On-Track');
 
+            const sabqiHalaman = mur.sabqiHalaman || cap.sabqiHalaman || '';
+            const sabqiDisp = sabqiHalaman ? `Hlm ${sabqiHalaman}` : `Juz ${currentJuz}`;
+            const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
+            const manzilHalaman = Number(mur.manzilHalaman || cap.manzilHalaman) || 1;
+            const manzilPutaran = Number(mur.manzilPutaran || cap.manzilPutaran) || 1;
+            const rekapM = st.rekapPekan?.murojaah || { realita: 0, isTuntas: false, sisaHalaman: targetMPekan };
+
+            const isSelected = ASNTahfidz.selectedStudentIds && ASNTahfidz.selectedStudentIds.has(st.studentId);
+
             return `
-            <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836]/60 transition border-b border-slate-100 dark:border-[#253447]">
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836]/60 transition border-b border-slate-100 dark:border-[#253447] ${isSelected ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''}">
+
                 <!-- 1. SANTRI & HALAQAH -->
                 <td class="px-3.5 py-2.5">
                     <div class="flex items-center space-x-2.5">
@@ -307,8 +565,8 @@ function renderTahfidzStudentTable() {
                         <div class="min-w-0">
                             <h4 class="font-extrabold text-xs md:text-sm text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
                             <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • Bil Hifdhi</p>
-                            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 mt-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 mt-0.5 rounded text-[9px] font-bold ${inHal ? 'bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40'}">
+                                <span class="w-1.5 h-1.5 rounded-full ${inHal ? 'bg-emerald-500' : 'bg-amber-400'}"></span>
                                 ${escapeHtml(halaqahName)}
                             </span>
                         </div>
@@ -326,13 +584,21 @@ function renderTahfidzStudentTable() {
                             <span class="text-emerald-700/70 dark:text-emerald-400/70 font-semibold text-[9px]">(${targetZPekan}P / ${targetZBulan}B)</span>
                             <i class="fa-solid fa-pencil text-[8px] text-slate-400 group-hover:text-emerald-600 ml-1 opacity-0 group-hover:opacity-100 transition"></i>
                         </div>
-                        <!-- Muroja'ah Pill -->
-                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50/90 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40 text-[10px] transition hover:bg-amber-100/90">
-                            <i class="fa-solid fa-rotate text-[8px] text-amber-600 shrink-0"></i>
-                            <span class="font-bold">Muroja'ah:</span>
-                            <span>${targetM} Hlm/Setor</span>
-                            <span class="text-amber-700/70 dark:text-amber-400/70 font-semibold text-[9px]">(${targetMPekan}P / ${targetMBulan}B)</span>
-                            <i class="fa-solid fa-pencil text-[8px] text-slate-400 group-hover:text-amber-600 ml-1 opacity-0 group-hover:opacity-100 transition"></i>
+                        <!-- Muroja'ah Pill with Weekly Reality -->
+                        <div class="flex flex-col gap-0.5">
+                            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50/90 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40 text-[10px] transition hover:bg-amber-100/90">
+                                <i class="fa-solid fa-rotate text-[8px] text-amber-600 shrink-0"></i>
+                                <span class="font-bold">Muroja'ah:</span>
+                                <span>${targetM} Hlm/Setor</span>
+                                <span class="text-amber-700/70 dark:text-amber-400/70 font-semibold text-[9px]">(${targetMPekan}P)</span>
+                                <i class="fa-solid fa-pencil text-[8px] text-slate-400 group-hover:text-amber-600 ml-1 opacity-0 group-hover:opacity-100 transition"></i>
+                            </div>
+                            <div class="flex items-center justify-between px-1 text-[8px] font-bold">
+                                <span class="text-slate-500 dark:text-slate-400">Pekan: <b>${rekapM.realita || 0}/${targetMPekan} Hlm</b></span>
+                                <span class="px-1 py-0.2 rounded text-[7px] ${rekapM.isTuntas ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : ((rekapM.realita || 0) > 0 ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-400')}">
+                                    ${rekapM.isTuntas ? '✅ Tuntas' : ((rekapM.realita || 0) > 0 ? `Kurang ${rekapM.sisaHalaman}` : 'Belum')}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </td>
@@ -362,18 +628,29 @@ function renderTahfidzStudentTable() {
                 <td class="px-3.5 py-2.5">
                     ${last ? `
                     <div class="space-y-1">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold ${last.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : (last.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300')}">
-                            ${escapeHtml(last.tipe)}
-                        </span>
+                        <div class="flex items-center gap-1 flex-wrap">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold ${last.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : (last.tipe === 'MURAJAAH_SABQI' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' : (last.tipe === 'MURAJAAH_MANZIL' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300' : (last.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300')))}">
+                                ${last.tipe === 'MURAJAAH_SABQI' ? 'Sabqi' : (last.tipe === 'MURAJAAH_MANZIL' ? 'Manzil' : (last.tipe === 'ZIYADAH' ? 'Ziyadah' : (last.tipe === 'TASMI' ? "Tasmi'" : escapeHtml(last.tipe))))}
+                            </span>
+                            ${isUlang ? `
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                                <i class="fa-solid fa-rotate-left text-[8px]"></i> Wajib Ulang
+                            </span>
+                            ` : `
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900/40">
+                                <i class="fa-solid fa-check text-[8px]"></i> Lulus
+                            </span>
+                            `}
+                        </div>
                         <div class="text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                            Nilai: <span class="text-emerald-600 font-extrabold">${last.nilai === 'MUMTAZ' ? 'A (Mumtaz)' : (last.nilai === 'JAYYID_JIDDAN' ? 'B+ (Jayyid)' : (last.nilai === 'JAYYID' ? 'B (Jayyid)' : 'C (Dha\'if)'))}</span>
+                            Nilai: <span class="${isUlang ? 'text-rose-600 font-extrabold' : 'text-emerald-600 font-extrabold'}">${last.nilai === 'MUMTAZ' ? 'A (Mumtaz)' : (last.nilai === 'JAYYID_JIDDAN' ? 'B+ (Jayyid)' : (last.nilai === 'JAYYID' ? 'B (Jayyid)' : 'C (Dha\'if)'))}</span>
                         </div>
                     </div>
                     ` : `<span class="text-[10px] text-slate-400">-</span>`}
                 </td>
 
-                <!-- 5. PROGRESS (0 - 30 JUZ) -->
-                <td class="px-3.5 py-2.5 w-44">
+                <!-- 5. PROGRESS (0 - 30 JUZ) & ROTASI MUROJA'AH -->
+                <td class="px-3.5 py-2.5 w-48">
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-xs">
                             <span class="font-black text-slate-800 dark:text-slate-100">Juz ${currentJuz} <span class="text-slate-400 font-normal text-[10px]">/ 30</span></span>
@@ -382,9 +659,22 @@ function renderTahfidzStudentTable() {
                         <div class="w-full bg-slate-100 dark:bg-[#1c2836] h-1.5 rounded-full overflow-hidden">
                             <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%;"></div>
                         </div>
-                        <span class="inline-block px-1.5 py-0.2 text-[8px] font-extrabold rounded ${isOnTrack ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-[#1c2836] dark:text-slate-400'}">
-                            ${escapeHtml(onTrackStatus)}
-                        </span>
+                        <div class="flex items-center justify-between gap-1">
+                            <span class="inline-block px-1.5 py-0.2 text-[8px] font-extrabold rounded ${isOnTrack ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-[#1c2836] dark:text-slate-400'}">
+                                ${escapeHtml(onTrackStatus)}
+                            </span>
+                        </div>
+                        <!-- Mini Badge Rotasi Muroja'ah (Sabqi & Manzil) -->
+                        <div class="flex items-center gap-1 pt-0.5">
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40" title="Muroja'ah Sabqi: Juz ${currentJuz} (${sabqiDisp})">
+                                <i class="fa-solid fa-rotate-left text-[7px] text-amber-600"></i>
+                                <span>Sabqi: ${sabqiDisp}</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-800 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/40" title="Muroja'ah Manzil: Juz ${manzilJuz} Hlm ${manzilHalaman} (Putaran Ke-${manzilPutaran})">
+                                <i class="fa-solid fa-repeat text-[7px] text-sky-600"></i>
+                                <span>Manzil: J${manzilJuz} (P${manzilPutaran})</span>
+                            </span>
+                        </div>
                     </div>
                 </td>
 
@@ -412,15 +702,29 @@ function renderTahfidzStudentTable() {
     if (mobileContainer) {
         mobileContainer.innerHTML = students.map(st => {
             const initials = (st.name || 'Santri').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'SN';
-            const halaqahName = st.halaqah?.namaHalaqah || st.program || 'Tahfidz Dewasa';
+            const inHal = isStudentInHalaqah(st);
+            const halaqahName = inHal ? (st.halaqah?.namaHalaqah || 'Halaqah Aktif') : 'Belum Masuk Halaqah';
             const last = st.setoranTerakhir;
-            const currentJuz = st.progress?.currentJuz || 1;
-            const percent = st.progress?.percent || 3;
+            const isUlang = last && (last.statusSetoran === 'ULANG' || last.nilai === 'DHAIF');
+            const cap = st.capaian || {};
+            const mur = st.murojaah || {};
+
+            const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 1;
+            const percent = Number(cap.persentase) || Number(st.progress?.percent) || 3;
             const targetZ = st.target?.ziyadahSesi || 1;
             const targetM = st.target?.murajaahSesi || 2;
+            const isSelected = ASNTahfidz.selectedStudentIds && ASNTahfidz.selectedStudentIds.has(st.studentId);
+
+            const sabqiHalaman = mur.sabqiHalaman || cap.sabqiHalaman || '';
+            const sabqiDisp = sabqiHalaman ? `Hlm ${sabqiHalaman}` : `Juz ${currentJuz}`;
+            const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
+            const manzilHalaman = Number(mur.manzilHalaman || cap.manzilHalaman) || 1;
+            const manzilPutaran = Number(mur.manzilPutaran || cap.manzilPutaran) || 1;
+            const targetMPekan = st.target?.murajaahPekan || (targetM * 5);
+            const rekapM = st.rekapPekan?.murojaah || { realita: 0, isTuntas: false, sisaHalaman: targetMPekan };
 
             return `
-            <div class="p-3 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-2.5">
+            <div class="p-3 bg-white dark:bg-[#15202d] rounded-2xl border ${isSelected ? 'border-amber-400 dark:border-amber-600 bg-amber-50/20' : 'border-slate-100 dark:border-[#253447]'} shadow-sm space-y-2.5">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-2.5 min-w-0">
                         <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0">
@@ -428,7 +732,7 @@ function renderTahfidzStudentTable() {
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
-                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • <span class="text-emerald-600 font-semibold">${escapeHtml(halaqahName)}</span></p>
+                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • <span class="${inHal ? 'text-emerald-600 font-semibold' : 'text-amber-600 dark:text-amber-400 font-semibold'}">${escapeHtml(halaqahName)}</span></p>
                         </div>
                     </div>
                     <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-2.5 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow-sm">
@@ -436,14 +740,22 @@ function renderTahfidzStudentTable() {
                     </button>
                 </div>
 
-                <!-- Mini Target Pills -->
-                <div class="flex items-center gap-1.5 text-[9px] font-bold">
-                    <span onclick="openTahfidzTargetModal('${st.studentId}')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer">
-                        Ziyadah: ${targetZ} Hlm/Setor
-                    </span>
-                    <span onclick="openTahfidzTargetModal('${st.studentId}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 cursor-pointer">
-                        Muroja'ah: ${targetM} Hlm/Setor
-                    </span>
+                <!-- Mini Target Pills with Weekly Reality -->
+                <div class="space-y-1">
+                    <div class="flex items-center gap-1.5 text-[9px] font-bold">
+                        <span onclick="openTahfidzTargetModal('${st.studentId}')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 cursor-pointer">
+                            Ziyadah: ${targetZ} Hlm/Setor
+                        </span>
+                        <span onclick="openTahfidzTargetModal('${st.studentId}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 cursor-pointer">
+                            Muroja'ah: ${targetM} Hlm/Setor
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-[9px] font-bold px-1 text-slate-500 dark:text-slate-400">
+                        <span>Muroja'ah Pekan Ini: <b>${rekapM.realita || 0}/${targetM * 5} Hlm</b></span>
+                        <span class="px-1.5 py-0.2 rounded ${rekapM.isTuntas ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300'}">
+                            ${rekapM.isTuntas ? '✅ Tuntas Target' : ((rekapM.realita || 0) > 0 ? `⚠️ Kurang ${rekapM.sisaHalaman} Hlm` : 'Belum')}
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Progress Bar -->
@@ -457,8 +769,20 @@ function renderTahfidzStudentTable() {
                     </div>
                 </div>
 
+                <!-- Info Rotasi Muroja'ah (Sabqi & Manzil) -->
+                <div class="flex items-center justify-between text-[10px] font-bold bg-slate-50 dark:bg-[#1c2836] px-2.5 py-1.5 rounded-xl border border-slate-200/70 dark:border-[#253447]">
+                    <span class="flex items-center gap-1 text-amber-700 dark:text-amber-300">
+                        <i class="fa-solid fa-rotate-left text-[9px] text-amber-500"></i>
+                        <span>Sabqi: <b>${sabqiDisp}</b></span>
+                    </span>
+                    <span class="flex items-center gap-1 text-sky-700 dark:text-sky-300">
+                        <i class="fa-solid fa-repeat text-[9px] text-sky-500"></i>
+                        <span>Manzil: <b>Juz ${manzilJuz} (P${manzilPutaran})</b></span>
+                    </span>
+                </div>
+
                 <div class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#253447] text-[10px] text-slate-400">
-                    <span>${last ? `Terakhir: Juz ${last.juz} (${last.tipe})` : 'Belum setor'}</span>
+                    <span>${last ? `Terakhir: Juz ${last.juz} (${last.tipe === 'MURAJAAH_SABQI' ? 'Sabqi' : (last.tipe === 'MURAJAAH_MANZIL' ? 'Manzil' : (last.tipe === 'ZIYADAH' ? 'Ziyadah' : last.tipe))}) ${isUlang ? '• <span class="text-rose-600 font-extrabold">Wajib Ulang</span>' : ''}` : 'Belum setor'}</span>
                     <button type="button" onclick="openTahfidzStudentDetail('${st.studentId}')" class="text-emerald-600 font-bold hover:underline">
                         Lihat Mutaba'ah &gt;
                     </button>
@@ -467,11 +791,238 @@ function renderTahfidzStudentTable() {
             `;
         }).join('');
     }
+
+    // Update Bulk Selection Action Bar
+    updateTahfidzBulkSelectionBar();
 }
 
 // ====================================================================
 // 2. MODAL: CATAT SETORAN TAHFIDZ (Screenshot 5)
 // ====================================================================
+
+/**
+ * Atur keputusan status setoran (LANJUT vs ULANG)
+ */
+function setTahfidzStatusDecision(decision) {
+    ASNTahfidz.catatState.statusSetoran = decision;
+
+    const radioLanjut = document.getElementById('radio-status-lanjut');
+    const radioUlang = document.getElementById('radio-status-ulang');
+    const labelLanjut = document.getElementById('label-status-lanjut');
+    const labelUlang = document.getElementById('label-status-ulang');
+    const badgePreview = document.getElementById('tahfidz-status-badge-preview');
+    const hint = document.getElementById('tahfidz-status-hint');
+
+    if (decision === 'ULANG') {
+        if (radioUlang) radioUlang.checked = true;
+        if (radioLanjut) radioLanjut.checked = false;
+        if (labelUlang) {
+            labelUlang.className = "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-rose-500 bg-rose-50/90 dark:bg-rose-950/50 text-rose-800 dark:text-rose-200 cursor-pointer font-bold text-xs transition";
+        }
+        if (labelLanjut) {
+            labelLanjut.className = "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-400 cursor-pointer font-bold text-xs transition hover:border-emerald-300";
+        }
+        if (badgePreview) {
+            badgePreview.innerText = "Wajib Ulang (I'adah)";
+            badgePreview.className = "text-[9px] font-black px-2 py-0.5 rounded-md uppercase bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300";
+        }
+        if (hint) {
+            hint.innerHTML = `<span class="text-rose-600 dark:text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Santri dinilai belum lancar. Posisi capaian hafalan belum bertambah, santri wajib mengulang halaman ini pada sesi berikutnya.</span>`;
+        }
+    } else {
+        if (radioLanjut) radioLanjut.checked = true;
+        if (radioUlang) radioUlang.checked = false;
+        if (labelLanjut) {
+            labelLanjut.className = "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 cursor-pointer font-bold text-xs transition";
+        }
+        if (labelUlang) {
+            labelUlang.className = "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-400 cursor-pointer font-bold text-xs transition hover:border-rose-300";
+        }
+        if (badgePreview) {
+            badgePreview.innerText = "Lulus & Lanjut";
+            badgePreview.className = "text-[9px] font-black px-2 py-0.5 rounded-md uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
+        }
+        if (hint) {
+            hint.innerText = "Santri dinyatakan tuntas dan berhak melanjutkan hafalan ke halaman berikutnya.";
+        }
+    }
+}
+
+/**
+ * Mengisi dropdown muhafiz di modal catat setoran
+ * Otomatis mendeteksi muhafiz halaqah santri sebagai default (selected)
+ * dan menampilkan daftar muhafiz lain untuk antisipasi jika berhalangan.
+ */
+function populateTahfidzMuhafizSelector(studentId) {
+    const selMuh = document.getElementById('tahfidz-catat-muhafiz');
+    const badge = document.getElementById('tahfidz-catat-muhafiz-badge');
+    const customContainer = document.getElementById('container-tahfidz-muhafiz-manual');
+    const customInput = document.getElementById('tahfidz-catat-muhafiz-manual');
+    if (!selMuh) return;
+
+    if (customContainer) customContainer.classList.add('hidden');
+    if (customInput) customInput.value = '';
+
+    // Ambil data santri
+    const st = studentId ? (ASNTahfidz.data.students || []).find(s => (s.studentId === studentId || s.nis === studentId)) : null;
+
+    // Cari halaqah santri dan nama muhafiz pengampu halaqahnya
+    let halaqahMuhafiz = "";
+    let halaqahName = "";
+    if (st) {
+        if (st.halaqah && st.halaqah.muhafiz) {
+            halaqahMuhafiz = st.halaqah.muhafiz;
+            halaqahName = st.halaqah.namaHalaqah || "";
+        }
+        if (!halaqahMuhafiz && st.halaqahId) {
+            const hObj = (ASNTahfidz.data.halaqahs || []).find(h => (h.halaqahId === st.halaqahId || h.id === st.halaqahId || h.namaHalaqah === st.namaHalaqah));
+            if (hObj && hObj.muhafiz) {
+                halaqahMuhafiz = hObj.muhafiz;
+                halaqahName = hObj.namaHalaqah || "";
+            }
+        }
+        if (!halaqahMuhafiz && st.setoranTerakhir?.muhafiz) {
+            halaqahMuhafiz = st.setoranTerakhir.muhafiz;
+        }
+    }
+
+    // Kumpulkan seluruh daftar nama muhafiz unik di sistem
+    const setMuhafiz = new Set();
+    if (halaqahMuhafiz) setMuhafiz.add(halaqahMuhafiz.trim());
+
+    (ASNTahfidz.data.muhafizList || []).forEach(m => {
+        if (m && m !== 'ALL' && m !== 'Semua Muhafiz') setMuhafiz.add(String(m).trim());
+    });
+
+    (ASNTahfidz.data.halaqahs || []).forEach(h => {
+        if (h && h.muhafiz) setMuhafiz.add(String(h.muhafiz).trim());
+    });
+
+    // Buat opsi HTML
+    let optHtml = '';
+    if (halaqahMuhafiz) {
+        optHtml += `<option value="${escapeHtml(halaqahMuhafiz)}" selected>⭐️ ${escapeHtml(halaqahMuhafiz)} (Muhafiz Halaqah${halaqahName ? ': ' + escapeHtml(halaqahName) : ''})</option>`;
+        if (badge) {
+            badge.innerText = `Halaqah: ${halaqahMuhafiz}`;
+            badge.className = "text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
+        }
+    } else {
+        optHtml += `<option value="">-- Pilih Muhafiz Penyimak --</option>`;
+        if (badge) {
+            badge.innerText = "Pilih Muhafiz";
+            badge.className = "text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300";
+        }
+    }
+
+    // Opsi muhafiz lainnya (pengganti / badal)
+    Array.from(setMuhafiz).sort().forEach(m => {
+        if (m !== halaqahMuhafiz) {
+            optHtml += `<option value="${escapeHtml(m)}">${escapeHtml(m)} (Asatidz / Badal)</option>`;
+        }
+    });
+
+    optHtml += `<option value="__CUSTOM__">✍️ + Tulis Nama Lain (Manual)...</option>`;
+    selMuh.innerHTML = optHtml;
+
+    // Listener jika memilih custom manual
+    selMuh.onchange = function() {
+        if (this.value === '__CUSTOM__') {
+            if (customContainer) customContainer.classList.remove('hidden');
+            if (customInput) customInput.focus();
+            if (badge) badge.innerText = "Ketik Manual";
+        } else {
+            if (customContainer) customContainer.classList.add('hidden');
+            if (badge) {
+                badge.innerText = (this.value === halaqahMuhafiz && halaqahMuhafiz) ? `Halaqah: ${halaqahMuhafiz}` : "Pengganti / Badal";
+            }
+        }
+    };
+}
+
+/**
+ * Cek apakah santri sedang dalam status wajib mengulang dari setoran terakhir
+ */
+function checkAndApplyStudentRepeatState(studentId) {
+    const banner = document.getElementById('tahfidz-catat-ulang-banner');
+    const bannerInfo = document.getElementById('tahfidz-catat-ulang-info');
+    const selJuz = document.getElementById('tahfidz-catat-juz');
+
+    if (!studentId) {
+        if (banner) banner.classList.add('hidden');
+        setTahfidzStatusDecision('LANJUT');
+        return;
+    }
+
+    const st = (ASNTahfidz.data.students || []).find(s => (s.studentId === studentId || s.nis === studentId));
+    const last = st?.setoranTerakhir;
+
+    if (last && (last.statusSetoran === 'ULANG' || last.nilai === 'DHAIF')) {
+        if (banner) banner.classList.remove('hidden');
+        if (bannerInfo) {
+            bannerInfo.innerHTML = `Setoran terakhir santri pada <b>${escapeHtml(last.tanggal || 'sebelumnya')}</b> (Nilai: <b>${escapeHtml(last.nilai)}</b>) belum tuntas. Wajib mengulang <b>Juz ${last.juz || 1} ${escapeHtml(last.halaman || '')}</b>.`;
+        }
+        if (selJuz && last.juz) {
+            selJuz.value = String(last.juz);
+        }
+        // Prefill halaman yang diulang
+        const parsedPage = parseInt(String(last.halaman || '').replace(/\D+/g, '')) || 1;
+        ASNTahfidz.catatState.selectedPages = [parsedPage];
+        renderTahfidzPageSelector();
+    } else {
+        if (banner) banner.classList.add('hidden');
+        // Pre-select juz & halaman rekomendasi berikutnya dari Tahfidz_Capaian
+        if (st?.capaian && st.capaian.juzAktif) {
+            if (selJuz) selJuz.value = String(st.capaian.juzAktif);
+            const targetPage = Math.min(20, Math.max(1, Number(st.capaian.halamanTerakhir) || 1));
+            ASNTahfidz.catatState.selectedPages = [targetPage];
+            renderTahfidzPageSelector();
+        }
+    }
+}
+
+/**
+ * Mengisi dropdown Sesi Waktu di modal Catat Setoran sesuai DAFTAR JADWAL SESI WAKTU AKTIF
+ */
+function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
+    const selSesi = document.getElementById('tahfidz-catat-sesi');
+    if (!selSesi) return;
+
+    let sesiList = ASNTahfidz.data.sesiList;
+    if (!sesiList || sesiList.length === 0) {
+        sesiList = [
+            { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jamMulai: "05:00", jamSelesai: "06:00", status: "Aktif Digunakan" },
+            { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jamMulai: "08:00", jamSelesai: "09:00", status: "Aktif Digunakan" },
+            { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jamMulai: "16:00", jamSelesai: "17:00", status: "Aktif Digunakan" }
+        ];
+    }
+
+    // Filter hanya sesi yang AKTIF (status mengandung 'Aktif' dan bukan 'Nonaktif')
+    const activeList = sesiList.filter(s => {
+        const st = String(s.status || 'Aktif Digunakan').toLowerCase();
+        return st.includes('aktif') && !st.includes('nonaktif');
+    });
+
+    const listToRender = activeList.length > 0 ? activeList : sesiList;
+    const currentVal = selectedSesi || selSesi.value || ASNTahfidz.catatState.sesi || "";
+
+    selSesi.innerHTML = listToRender.map((s, idx) => {
+        const nama = s.namaSesi || s.nama || `Sesi 0${idx + 1}`;
+        const jmMulai = typeof cleanSesiTime === 'function' ? cleanSesiTime(s.jamMulai, '05:00') : (s.jamMulai || '05:00');
+        const jmSelesai = typeof cleanSesiTime === 'function' ? cleanSesiTime(s.jamSelesai, '06:00') : (s.jamSelesai || '06:00');
+        const timeStr = `${jmMulai} - ${jmSelesai} WIB`;
+        const label = `${nama} ${timeStr}`;
+        const isSelected = (currentVal && (currentVal === nama || currentVal === label)) ? 'selected' : (idx === 0 && !currentVal ? 'selected' : '');
+        return `<option value="${escapeHtml(nama)}" ${isSelected}>${escapeHtml(label)}</option>`;
+    }).join('');
+
+    if (selSesi.value) {
+        ASNTahfidz.catatState.sesi = selSesi.value;
+    }
+
+    selSesi.onchange = function() {
+        ASNTahfidz.catatState.sesi = this.value;
+    };
+}
 
 /**
  * Buka modal catat setoran cepat
@@ -487,18 +1038,47 @@ function openTahfidzCatatModal(studentId = null) {
         tipe: "ZIYADAH",
         selectedPages: [1],
         sesi: "Pagi (Ba'da Subuh)",
-        nilai: "MUMTAZ"
+        nilai: "MUMTAZ",
+        statusSetoran: "LANJUT"
     };
+
+    // Reset Catatan Khusus Tajwid
+    const catatanInput = document.getElementById('tahfidz-catat-catatan');
+    if (catatanInput) catatanInput.value = "";
+
+    // Populate Sesi Dropdown dari Jadwal Sesi Aktif
+    populateTahfidzCatatSesiDropdown();
 
     // Populate Santri Select
     const selSantri = document.getElementById('tahfidz-catat-santri');
     if (selSantri && ASNTahfidz.data.students) {
         let optHtml = `<option value="">-- Pilih Santri --</option>`;
         ASNTahfidz.data.students.forEach(st => {
-            const selected = (studentId && st.studentId === studentId) ? 'selected' : '';
-            optHtml += `<option value="${st.studentId}" ${selected}>${escapeHtml(st.name)} (${escapeHtml(st.nis || '-')})</option>`;
+            const sId = st.studentId || st.student_id || st.id || "";
+            const sName = st.name || st.nama || "";
+            const sNis = st.nis || "";
+            const sGender = st.gender || "L";
+            const sHalaqahId = st.halaqah?.halaqahId || "";
+            const sHalaqahName = st.halaqah?.namaHalaqah || "";
+            const sMuhafiz = st.halaqah?.muhafiz || "";
+            const selected = (studentId && (sId === studentId || sNis === studentId)) ? 'selected' : '';
+            optHtml += `<option value="${escapeHtml(sId)}" 
+                data-name="${escapeHtml(sName)}" 
+                data-nis="${escapeHtml(sNis)}" 
+                data-gender="${escapeHtml(sGender)}" 
+                data-halaqah-id="${escapeHtml(sHalaqahId)}" 
+                data-halaqah-name="${escapeHtml(sHalaqahName)}" 
+                data-muhafiz="${escapeHtml(sMuhafiz)}" ${selected}>
+                ${escapeHtml(sName || sId)} (${escapeHtml(sNis || '-')})
+            </option>`;
         });
         selSantri.innerHTML = optHtml;
+
+        selSantri.onchange = function() {
+            checkAndApplyStudentRepeatState(this.value);
+            populateTahfidzMuhafizSelector(this.value);
+            applyTahfidzRecommendation(this.value, ASNTahfidz.catatState.tipe);
+        };
     }
 
     // Set Tanggal hari ini
@@ -522,8 +1102,36 @@ function openTahfidzCatatModal(studentId = null) {
         selJuz.value = "1";
     }
 
+    // Set Nilai Default & Listener
+    const nilaiSelect = document.getElementById('tahfidz-catat-nilai');
+    if (nilaiSelect) {
+        nilaiSelect.value = "MUMTAZ";
+        nilaiSelect.onchange = function() {
+            if (this.value === 'DHAIF') {
+                setTahfidzStatusDecision('ULANG');
+            } else {
+                setTahfidzStatusDecision('LANJUT');
+            }
+        };
+    }
+
+    // Set Keputusan Default: LANJUT
+    setTahfidzStatusDecision('LANJUT');
+
     // Render Grid Tombol Halaman 1-20 Mushaf Pojok
     renderTahfidzPageSelector();
+
+    // Populate dan deteksi otomatis Muhafiz sesuai santri terpilih
+    populateTahfidzMuhafizSelector(studentId);
+
+    // Jika studentId diberikan, cek apakah santri sedang mengulang & terapkan rekomendasi cerdas
+    if (studentId) {
+        checkAndApplyStudentRepeatState(studentId);
+        applyTahfidzRecommendation(studentId, ASNTahfidz.catatState.tipe);
+    } else {
+        const banner = document.getElementById('tahfidz-catat-ulang-banner');
+        if (banner) banner.classList.add('hidden');
+    }
 
     modal.classList.remove('hidden');
 }
@@ -537,33 +1145,135 @@ function closeTahfidzCatatModal() {
 }
 
 /**
- * Toggle Tipe Setoran (Ziyadah, Muraja'ah, Tasmi')
+ * Terapkan Rekomendasi Pintar Posisi Juz & Halaman berdasarkan Tipe Setoran (Ziyadah, Sabqi, Manzil, Tasmi')
+ */
+function applyTahfidzRecommendation(studentId, tipe) {
+    if (!studentId) {
+        studentId = document.getElementById('tahfidz-catat-santri')?.value || ASNTahfidz.catatState.studentId;
+    }
+    if (!tipe) {
+        tipe = ASNTahfidz.catatState.tipe || 'ZIYADAH';
+    }
+
+    const st = (ASNTahfidz.data.students || []).find(s => 
+        (s.studentId && s.studentId === studentId) ||
+        (s.student_id && s.student_id === studentId) ||
+        (s.id && s.id === studentId) ||
+        (s.nis && s.nis === studentId)
+    );
+
+    const selJuz = document.getElementById('tahfidz-catat-juz');
+    const badgeEl = document.getElementById('tahfidz-catat-tipe-badge');
+    const descEl = document.getElementById('tahfidz-catat-tipe-desc');
+    const posEl = document.getElementById('tahfidz-catat-tipe-pos');
+
+    if (!st) {
+        if (posEl) posEl.innerText = '-';
+        return;
+    }
+
+    const cap = st.capaian || {};
+    const mur = st.murojaah || {};
+
+    const ziyadahJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 1;
+    const ziyadahHalaman = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
+
+    const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
+    const manzilHalaman = Number(mur.manzilHalaman || cap.manzilHalaman) || 1;
+    const manzilPutaran = Number(mur.manzilPutaran || cap.manzilPutaran) || 1;
+
+    const sabqiHalaman = String(mur.sabqiHalaman || cap.sabqiHalaman || '');
+
+    if (tipe === 'ZIYADAH') {
+        if (badgeEl) {
+            badgeEl.innerText = 'Ziyadah (Hafalan Baru)';
+            badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        }
+        if (descEl) descEl.innerHTML = '<i class="fa-solid fa-circle-plus text-emerald-600"></i> <span>Hafalan baru (menentukan batas juz tertinggi)</span>';
+        if (posEl) posEl.innerText = `Juz ${ziyadahJuz} Hlm ${ziyadahHalaman}`;
+
+        if (selJuz) selJuz.value = String(ziyadahJuz);
+        ASNTahfidz.catatState.selectedPages = [Math.min(20, Math.max(1, ziyadahHalaman))];
+        renderTahfidzPageSelector();
+    } else if (tipe === 'MURAJAAH_SABQI') {
+        if (badgeEl) {
+            badgeEl.innerText = "Muroja'ah Sabqi (Dekat)";
+            badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        }
+        if (descEl) descEl.innerHTML = '<i class="fa-solid fa-rotate-left text-amber-600"></i> <span>Mengulang hafalan dekat di juz berjalan</span>';
+        
+        const sabqiDisp = sabqiHalaman ? `Hlm ${sabqiHalaman}` : `Hlm 1 - ${Math.max(1, ziyadahHalaman - 1)}`;
+        if (posEl) posEl.innerText = `Juz ${ziyadahJuz} • ${sabqiDisp}`;
+
+        if (selJuz) selJuz.value = String(ziyadahJuz);
+        // Default rentang halaman sabqi: halaman-halaman sebelum posisi ziyadah saat ini
+        const sabqiEnd = Math.max(1, ziyadahHalaman > 1 ? ziyadahHalaman - 1 : 1);
+        const sabqiStart = Math.max(1, sabqiEnd - 1);
+        const sabqiPages = [];
+        for (let p = sabqiStart; p <= sabqiEnd; p++) {
+            sabqiPages.push(p);
+        }
+        ASNTahfidz.catatState.selectedPages = sabqiPages.length > 0 ? sabqiPages : [1];
+        renderTahfidzPageSelector();
+    } else if (tipe === 'MURAJAAH_MANZIL') {
+        if (badgeEl) {
+            badgeEl.innerText = `Muroja'ah Manzil (Putaran ${manzilPutaran})`;
+            badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300';
+        }
+        if (descEl) descEl.innerHTML = `<i class="fa-solid fa-repeat text-sky-600"></i> <span>Perputaran seluruh juz lama (Siklus Ke-${manzilPutaran})</span>`;
+        if (posEl) posEl.innerText = `Juz ${manzilJuz} Hlm ${manzilHalaman} (Putaran ${manzilPutaran})`;
+
+        if (selJuz) selJuz.value = String(manzilJuz);
+        const targetPage = Math.min(20, Math.max(1, manzilHalaman));
+        ASNTahfidz.catatState.selectedPages = [targetPage];
+        renderTahfidzPageSelector();
+    } else if (tipe === 'TASMI') {
+        if (badgeEl) {
+            badgeEl.innerText = "Tasmi' Ujian Sekali Duduk";
+            badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
+        }
+        if (descEl) descEl.innerHTML = '<i class="fa-solid fa-award text-purple-600"></i> <span>Ujian tasmi\' bil ghoib 1 juz penuh</span>';
+        if (posEl) posEl.innerText = `Juz ${ziyadahJuz} (1 Juz Penuh)`;
+
+        if (selJuz) selJuz.value = String(ziyadahJuz);
+        const fullPages = [];
+        for (let p = 1; p <= 20; p++) fullPages.push(p);
+        ASNTahfidz.catatState.selectedPages = fullPages;
+        renderTahfidzPageSelector();
+    }
+}
+
+/**
+ * Toggle Tipe Setoran (Ziyadah, Muroja'ah Sabqi, Muroja'ah Manzil, Tasmi')
  */
 function setTahfidzCatatTipe(tipe) {
     ASNTahfidz.catatState.tipe = tipe;
 
     const btnZ = document.getElementById('btn-tipe-ziyadah');
-    const btnM = document.getElementById('btn-tipe-murajaah');
+    const btnSabqi = document.getElementById('btn-tipe-sabqi');
+    const btnManzil = document.getElementById('btn-tipe-manzil');
     const btnT = document.getElementById('btn-tipe-tasmi');
 
-    const activeClasses = ['bg-emerald-600', 'text-white', 'border-emerald-600', 'shadow-sm'];
-    const inactiveClasses = ['bg-slate-50', 'dark:bg-[#1c2836]', 'text-slate-700', 'dark:text-slate-300', 'border-slate-200', 'dark:border-[#283a4e]'];
+    const defaultBtnClass = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-slate-50 dark:bg-[#1c2836] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#283a4e]';
 
-    [btnZ, btnM, btnT].forEach(b => {
+    [btnZ, btnSabqi, btnManzil, btnT].forEach(b => {
         if (!b) return;
-        b.classList.remove(...activeClasses);
-        b.classList.add(...inactiveClasses);
+        b.className = defaultBtnClass;
     });
 
     if (tipe === 'ZIYADAH' && btnZ) {
-        btnZ.classList.add(...activeClasses);
-        btnZ.classList.remove(...inactiveClasses);
-    } else if (tipe === 'MURAJAAH' && btnM) {
-        btnM.classList.add(...activeClasses);
-        btnM.classList.remove(...inactiveClasses);
+        btnZ.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/20';
+    } else if (tipe === 'MURAJAAH_SABQI' && btnSabqi) {
+        btnSabqi.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-amber-600 text-white border-amber-600 shadow-sm ring-2 ring-amber-500/20';
+    } else if (tipe === 'MURAJAAH_MANZIL' && btnManzil) {
+        btnManzil.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-sky-600 text-white border-sky-600 shadow-sm ring-2 ring-sky-500/20';
     } else if (tipe === 'TASMI' && btnT) {
-        btnT.classList.add(...activeClasses);
-        btnT.classList.remove(...inactiveClasses);
+        btnT.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-purple-600 text-white border-purple-600 shadow-sm ring-2 ring-purple-500/20';
+    }
+
+    const currentStudentId = document.getElementById('tahfidz-catat-santri')?.value || ASNTahfidz.catatState.studentId;
+    if (currentStudentId) {
+        applyTahfidzRecommendation(currentStudentId, tipe);
     }
 }
 
@@ -658,34 +1368,62 @@ async function submitTahfidzCatat(e) {
         return;
     }
 
-    const student = (ASNTahfidz.data.students || []).find(s => s.studentId === studentId);
+    const selectedOption = (selSantri && selSantri.options) ? selSantri.options[selSantri.selectedIndex] : null;
+    const optName = selectedOption?.dataset?.name || "";
+    const optNis = selectedOption?.dataset?.nis || "";
+    const optGender = selectedOption?.dataset?.gender || "L";
+    const optHalaqahId = selectedOption?.dataset?.halaqahId || "";
+    const optHalaqahName = selectedOption?.dataset?.halaqahName || "";
+    const optMuhafiz = selectedOption?.dataset?.muhafiz || "";
+
+    const student = (ASNTahfidz.data.students || []).find(s => 
+        (s.studentId && s.studentId === studentId) ||
+        (s.student_id && s.student_id === studentId) ||
+        (s.id && s.id === studentId) ||
+        (s.nis && s.nis === studentId)
+    );
+
+    const studentName = (student?.name || student?.nama || optName || (selectedOption ? selectedOption.text.split('(')[0].trim() : "")).trim();
+    const nis = (student?.nis || optNis || "").trim();
+    const gender = (student?.gender || optGender || "L").toUpperCase();
+    const halaqahId = student?.halaqah?.halaqahId || optHalaqahId || "";
+    const namaHalaqah = student?.halaqah?.namaHalaqah || optHalaqahName || "";
+
     const tanggal = document.getElementById('tahfidz-catat-tanggal')?.value || "";
     const sesi = document.getElementById('tahfidz-catat-sesi')?.value || "Pagi (Ba'da Subuh)";
     const juz = Number(document.getElementById('tahfidz-catat-juz')?.value || 1);
-    const nilai = document.getElementById('tahfidz-catat-nilai')?.value || "MUMTAZ";
-    const muhafiz = document.getElementById('tahfidz-catat-muhafiz')?.value || "";
-    const catatan = document.getElementById('tahfidz-catat-catatan')?.value || "";
+    const selMuhafiz = document.getElementById('tahfidz-catat-muhafiz');
+    let muhafiz = selMuhafiz ? selMuhafiz.value : "";
+    if (muhafiz === '__CUSTOM__') {
+        muhafiz = (document.getElementById('tahfidz-catat-muhafiz-manual')?.value || '').trim();
+    }
+
+    const nilai = document.getElementById('tahfidz-catat-nilai')?.value || ASNTahfidz.catatState.nilai || "MUMTAZ";
+    const catatan = (document.getElementById('tahfidz-catat-catatan')?.value || "").trim();
 
     const selectedPages = ASNTahfidz.catatState.selectedPages || [1];
     const halamanList = selectedPages.join(",");
     const totalHalaman = selectedPages.length;
+    const statusSetoran = document.querySelector('input[name="tahfidz-status-setoran"]:checked')?.value || ASNTahfidz.catatState.statusSetoran || (nilai === 'DHAIF' ? 'ULANG' : 'LANJUT');
 
     const btn = document.getElementById('btn-submit-tahfidz-catat');
-    const origText = btn ? btn.innerHTML : '';
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyimpan...`;
-    }
+    setTahfidzButtonLoading(btn, true, "Menyimpan Setoran...");
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const payload = {
             token,
             studentId,
             student_id: studentId,
-            nis: student?.nis || "",
-            studentName: student?.name || "",
-            gender: student?.gender || "L",
+            nis: nis,
+            studentName: studentName,
+            student_name: studentName,
+            name: studentName,
+            gender: gender,
+            halaqahId: halaqahId,
+            halaqah_id: halaqahId,
+            namaHalaqah: namaHalaqah,
+            nama_halaqah: namaHalaqah,
             tanggal,
             sesi,
             tipe: ASNTahfidz.catatState.tipe,
@@ -696,7 +1434,9 @@ async function submitTahfidzCatat(e) {
             totalHalaman,
             total_halaman: totalHalaman,
             nilai,
-            muhafiz: muhafiz || (student?.halaqah?.muhafiz || "Ustadz Pembina"),
+            statusSetoran,
+            status_setoran: statusSetoran,
+            muhafiz: muhafiz || optMuhafiz || (student?.halaqah?.muhafiz || "Ustadz Pembina"),
             catatan
         };
 
@@ -704,10 +1444,89 @@ async function submitTahfidzCatat(e) {
 
         if (response && (response.success || response.status === "success")) {
             if (typeof showToast === 'function') {
-                showToast(response.message || "Setoran tahfidz santri berhasil disimpan!");
+                const toastMsg = statusSetoran === 'ULANG' 
+                    ? "⚠️ Setoran dicatat sebagai Wajib Mengulang (I'adah). Posisi capaian hafalan belum bertambah."
+                    : (response.message || "✅ Setoran tahfidz santri berhasil disimpan!");
+                showToast(toastMsg);
             }
+
+            // Optimistic update pada data santri di memori lokal
+            const updateStudentData = (st) => {
+                if (!st) return;
+                st.setoranTerakhir = {
+                    juz: juz,
+                    surah: SURAH_JUZ_REFERENCE[juz] || `Juz ${juz}`,
+                    halaman: `Halaman ${halamanList}`,
+                    totalHalaman: totalHalaman,
+                    tanggal: tanggal,
+                    sesi: sesi,
+                    tipe: ASNTahfidz.catatState.tipe,
+                    nilai: nilai,
+                    statusSetoran: statusSetoran,
+                    muhafiz: muhafiz || (st.halaqah?.muhafiz || "Ustadz Pembina")
+                };
+                if (!st.progress) st.progress = {};
+                if (!st.murojaah) st.murojaah = {};
+
+                const tipeAktif = ASNTahfidz.catatState.tipe || 'ZIYADAH';
+
+                if (tipeAktif === 'ZIYADAH') {
+                    if (statusSetoran === 'LANJUT') {
+                        if (juz >= (st.progress.currentJuz || 0)) {
+                            st.progress.currentJuz = juz;
+                            const maxP = Math.max(...(selectedPages || [1]));
+                            st.progress.currentHalaman = maxP >= 20 ? 1 : maxP + 1;
+                            st.progress.percent = Math.min(100, Math.round((juz / 30) * 100));
+                        }
+                        st.progress.onTrackStatus = "On-Track (Lulus Ziyadah)";
+                    } else {
+                        st.progress.onTrackStatus = `Wajib Ulang Ziyadah (Hlm ${halamanList})`;
+                    }
+                } else if (tipeAktif === 'MURAJAAH_SABQI') {
+                    if (statusSetoran === 'LANJUT') {
+                        st.murojaah.sabqiHalaman = halamanList;
+                        st.progress.onTrackStatus = "On-Track (Lulus Sabqi)";
+                    } else {
+                        st.progress.onTrackStatus = `Wajib Ulang Sabqi (Hlm ${halamanList})`;
+                    }
+                } else if (tipeAktif === 'MURAJAAH_MANZIL') {
+                    if (statusSetoran === 'LANJUT') {
+                        const lastP = Math.max(...(selectedPages || [1]));
+                        const limitJ = st.progress.currentJuz || 1;
+                        if (lastP >= 20) {
+                            if (juz >= limitJ) {
+                                st.murojaah.manzilJuz = 1;
+                                st.murojaah.manzilHalaman = 1;
+                                st.murojaah.manzilPutaran = (st.murojaah.manzilPutaran || 1) + 1;
+                            } else {
+                                st.murojaah.manzilJuz = Math.min(30, juz + 1);
+                                st.murojaah.manzilHalaman = 1;
+                            }
+                        } else {
+                            st.murojaah.manzilJuz = juz;
+                            st.murojaah.manzilHalaman = lastP + 1;
+                        }
+                        st.progress.onTrackStatus = "On-Track (Lulus Manzil)";
+                    } else {
+                        st.progress.onTrackStatus = `Wajib Ulang Manzil (Hlm ${halamanList})`;
+                    }
+                } else if (tipeAktif === 'TASMI') {
+                    st.progress.onTrackStatus = statusSetoran === 'LANJUT' ? "Lulus Tasmi'" : "Ulang Tasmi'";
+                }
+                st.totalSetoran = (st.totalSetoran || 0) + 1;
+            };
+
+            const targetStudent = (ASNTahfidz.data.students || []).find(s => (s.studentId === studentId || s.nis === studentId));
+            updateStudentData(targetStudent);
+            const targetFiltered = (ASNTahfidz.filteredStudents || []).find(s => (s.studentId === studentId || s.nis === studentId));
+            updateStudentData(targetFiltered);
+
+            // Re-render tabel instan tanpa menunggu reload dari server
+            renderTahfidzStudentTable();
             closeTahfidzCatatModal();
-            await loadAdminTahfidzData();
+
+            // Sinkronisasi data lengkap di latar belakang (tanpa menutup layar dengan spinner)
+            loadAdminTahfidzData(true);
         } else {
             const msg = (response && response.message) || "Gagal menyimpan setoran.";
             if (typeof showToast === 'function') showToast("❌ " + msg);
@@ -716,10 +1535,7 @@ async function submitTahfidzCatat(e) {
         console.error("Gagal submitTahfidzCatat:", err);
         if (typeof showToast === 'function') showToast("❌ Terjadi kendala: " + err.message);
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
+        setTahfidzButtonLoading(btn, false);
     }
 }
 
@@ -786,13 +1602,13 @@ async function openTahfidzStudentDetail(studentId, viewerRole = null) {
 
     try {
         const token = (typeof ASNIdentity !== 'undefined' ? (
-            sessionStorage.getItem('asnawiyyah_parent_token') ||
-            localStorage.getItem('asnawiyyah_parent_token') ||
-            sessionStorage.getItem('asnawiyyah_pengasuh_token') ||
-            localStorage.getItem('asnawiyyah_pengasuh_token') ||
-            sessionStorage.getItem('asnawiyyah_admin_token') ||
-            localStorage.getItem('asnawiyyah_admin_token')
-        ) : '') || (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+            sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.parentToken) ||
+            localStorage.getItem(TAHFIDZ_STORAGE_KEYS.parentToken) ||
+            sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.pengasuhToken) ||
+            localStorage.getItem(TAHFIDZ_STORAGE_KEYS.pengasuhToken) ||
+            sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken) ||
+            localStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)
+        ) : '') || (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
 
         const response = await apiPost("getTahfidzStudentDetail", { token, studentId });
 
@@ -829,66 +1645,226 @@ function closeTahfidzStudentDetail() {
 }
 
 /**
- * Ganti tab dalam modal detail santri (Tab 1: Rekap 3 Indikator, Tab 2: Riwayat)
+ * Ganti tab dalam modal detail santri (Tab 1: Rekap 3 Indikator, Tab 2: Riwayat, Tab 3: Estimasi Khatam)
  */
 function switchTahfidzDetailTab(tabIndex) {
     ASNTahfidz.detailActiveTab = tabIndex;
 
     const tab1Btn = document.getElementById('btn-detail-tab-1');
     const tab2Btn = document.getElementById('btn-detail-tab-2');
+    const tab3Btn = document.getElementById('btn-detail-tab-3');
     const panel1 = document.getElementById('panel-detail-tab-1');
     const panel2 = document.getElementById('panel-detail-tab-2');
+    const panel3 = document.getElementById('panel-detail-tab-3');
 
-    if (tabIndex === 1) {
-        if (tab1Btn) {
-            tab1Btn.className = "px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow-sm transition";
-        }
-        if (tab2Btn) {
-            tab2Btn.className = "px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition";
-        }
-        if (panel1) panel1.classList.remove('hidden');
-        if (panel2) panel2.classList.add('hidden');
-    } else {
-        if (tab1Btn) {
-            tab1Btn.className = "px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition";
-        }
-        if (tab2Btn) {
-            tab2Btn.className = "px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow-sm transition";
-        }
-        if (panel1) panel1.classList.add('hidden');
-        if (panel2) panel2.classList.remove('hidden');
+    const activeClasses = "px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-700 text-white shadow-sm transition flex items-center gap-1.5 shrink-0";
+    const inactiveClasses = "px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition flex items-center gap-1.5 shrink-0";
+
+    if (tab1Btn) tab1Btn.className = (tabIndex === 1) ? activeClasses : inactiveClasses;
+    if (tab2Btn) tab2Btn.className = (tabIndex === 2) ? activeClasses : inactiveClasses;
+    if (tab3Btn) tab3Btn.className = (tabIndex === 3) ? activeClasses : inactiveClasses;
+
+    if (panel1) panel1.classList.toggle('hidden', tabIndex !== 1);
+    if (panel2) panel2.classList.toggle('hidden', tabIndex !== 2);
+    if (panel3) panel3.classList.toggle('hidden', tabIndex !== 3);
+
+    if (tabIndex === 3) {
+        renderTahfidzEstimasiKhatam();
     }
+}
+
+/**
+ * Hitung dan Render Tab Estimasi Waktu Khatam 30 Juz
+ * Berdasarkan tren laju setoran riil santri
+ */
+function renderTahfidzEstimasiKhatam() {
+    const res = ASNTahfidz.activeStudentDetail;
+    if (!res) return;
+
+    const st = res.student || {};
+    const stats = res.stats || {};
+    const riwayat = res.riwayat || [];
+
+    // 1. Hitung total halaman yang sudah tuntas (Max 600 halaman Mushaf Pojok)
+    const progressJuz = Number(stats.progressJuz || 1);
+    const lastHalamanRaw = String(st.setoranTerakhir?.halaman || '1');
+    const lastHalamanNum = parseInt(lastHalamanRaw.replace(/\D+/g, '')) || 1;
+
+    let halamanTuntas = Math.max(0, (progressJuz - 1) * 20 + Math.min(20, lastHalamanNum));
+
+    // Validasi dengan riwayat setoran ziyadah unik jika ada
+    const ziyadahLogs = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH' && r.statusSetoran !== 'ULANG');
+    if (ziyadahLogs.length > 0) {
+        let maxJuzZiyadah = 1;
+        let maxHlmZiyadah = 1;
+        ziyadahLogs.forEach(log => {
+            const j = Number(log.juz || 1);
+            const h = parseInt(String(log.halamanList || '1').replace(/\D+/g, '')) || 1;
+            if (j > maxJuzZiyadah || (j === maxJuzZiyadah && h > maxHlmZiyadah)) {
+                maxJuzZiyadah = j;
+                maxHlmZiyadah = h;
+            }
+        });
+        const calcFromLogs = (maxJuzZiyadah - 1) * 20 + Math.min(20, maxHlmZiyadah);
+        if (calcFromLogs > halamanTuntas) {
+            halamanTuntas = calcFromLogs;
+        }
+    }
+
+    if (halamanTuntas > 600) halamanTuntas = 600;
+    const sisaHalaman = Math.max(0, 600 - halamanTuntas);
+    const persenMilestone = Math.min(100, Math.round((halamanTuntas / 600) * 100));
+
+    // 2. Hitung Tren Kecepatan Setoran Riil (Laju per Pekan & per Bulan)
+    let lajuPekanRiil = 0;
+    if (ziyadahLogs.length >= 2) {
+        const sortedLogs = [...ziyadahLogs].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+        const firstDate = new Date(sortedLogs[0].tanggal);
+        const lastDate = new Date(sortedLogs[sortedLogs.length - 1].tanggal);
+        const diffDays = Math.max(1, Math.round((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+        const totalHlm = sortedLogs.reduce((sum, item) => sum + (Number(item.totalHalaman) || 1), 0);
+
+        if (diffDays >= 7) {
+            lajuPekanRiil = (totalHlm / (diffDays / 7));
+        } else {
+            lajuPekanRiil = totalHlm;
+        }
+    } else if (ziyadahLogs.length === 1) {
+        lajuPekanRiil = Number(ziyadahLogs[0].totalHalaman) || 2;
+    }
+
+    // Jika tren riil belum cukup data (< 0.5 hal/pekan), gunakan target capaian santri atau standar pesantren
+    const targetSantriPekan = Number(st.target?.ziyadahPekan) || 4;
+    let lajuEfektif = (lajuPekanRiil >= 0.5) ? lajuPekanRiil : targetSantriPekan;
+    lajuEfektif = Math.max(0.5, lajuEfektif); // minimal 0.5 hal/pekan agar tidak division by zero
+
+    const lajuBulanRiil = lajuEfektif * 4.33;
+
+    // 3. Proyeksi Tanggal Khatam (Bulan & Tahun)
+    const namaBulanIndo = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    const getProjectionDate = (ratePerWeek) => {
+        if (sisaHalaman <= 0) return { text: "Alhamdulillah Khatam 30 Juz!", durasiText: "(Tuntas 600 Halaman)", durasiBulan: 0 };
+        const safeRate = Math.max(0.5, ratePerWeek);
+        const weeksNeeded = sisaHalaman / safeRate;
+        const projDate = new Date();
+        projDate.setDate(projDate.getDate() + Math.round(weeksNeeded * 7));
+        const bulanName = namaBulanIndo[projDate.getMonth()];
+        const tahun = projDate.getFullYear();
+        const durasiBulan = Math.max(1, Math.round(weeksNeeded / 4.33));
+        return {
+            text: `${bulanName} ${tahun}`,
+            durasiText: `(± ${durasiBulan} Bulan lagi)`,
+            durasiBulan: durasiBulan,
+            weeksNeeded: Math.round(weeksNeeded)
+        };
+    };
+
+    const projRiil = getProjectionDate(lajuEfektif);
+    const projTarget = getProjectionDate(targetSantriPekan);
+    const projAkselerasi = getProjectionDate(12); // 12 hal/pekan (1 lembar per hari, 6 hari)
+
+    // 4. Update DOM Elements
+    const elKhatamBulanTahun = document.getElementById('tahfidz-estimasi-khatam-bulan-tahun');
+    const elKhatamDurasi = document.getElementById('tahfidz-estimasi-khatam-durasi');
+    const elLajuText = document.getElementById('tahfidz-estimasi-laju-text');
+    const elLajuSub = document.getElementById('tahfidz-estimasi-laju-sub');
+    const elHalamanTuntas = document.getElementById('tahfidz-estimasi-halaman-tuntas');
+    const elSisaHalaman = document.getElementById('tahfidz-estimasi-sisa-halaman');
+    const elMeterBar = document.getElementById('tahfidz-estimasi-meter-bar');
+    const elBadgeStatus = document.getElementById('tahfidz-estimasi-badge-status');
+
+    if (sisaHalaman <= 0) {
+        if (elKhatamBulanTahun) elKhatamBulanTahun.innerText = "Khatam 30 Juz 🏆";
+        if (elKhatamDurasi) elKhatamDurasi.innerText = "(Tuntas 600 Halaman)";
+        if (elBadgeStatus) {
+            elBadgeStatus.innerText = "Khatam Mutqin";
+            elBadgeStatus.className = "px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 font-black text-[10px]";
+        }
+    } else {
+        if (elKhatamBulanTahun) elKhatamBulanTahun.innerText = projRiil.text;
+        if (elKhatamDurasi) elKhatamDurasi.innerText = projRiil.durasiText;
+        if (elBadgeStatus) {
+            elBadgeStatus.innerText = (lajuPekanRiil >= targetSantriPekan) ? "Laju Sangat Baik" : "Aktif Menghafal";
+            elBadgeStatus.className = (lajuPekanRiil >= targetSantriPekan)
+                ? "px-2 py-0.5 rounded-full bg-emerald-300 text-emerald-950 font-black text-[10px]"
+                : "px-2 py-0.5 rounded-full bg-emerald-400 text-emerald-950 font-black text-[10px]";
+        }
+    }
+
+    if (elLajuText) elLajuText.innerText = `${lajuEfektif.toFixed(1)} Hal / Pekan`;
+    if (elLajuSub) elLajuSub.innerText = `${Math.round(lajuBulanRiil)} Hal / Bulan`;
+    if (elHalamanTuntas) elHalamanTuntas.innerText = `${halamanTuntas}`;
+    if (elSisaHalaman) elSisaHalaman.innerText = `Sisa ${sisaHalaman} Halaman (${Math.ceil(sisaHalaman / 20)} Juz lagi)`;
+    if (elMeterBar) elMeterBar.style.width = `${Math.min(100, Math.max(1, persenMilestone))}%`;
+
+    // 3 Cards Metrik
+    const elCardTren = document.getElementById('tahfidz-estimasi-card-tren');
+    const elCardTarget = document.getElementById('tahfidz-estimasi-card-target');
+    const elCardKualitas = document.getElementById('tahfidz-estimasi-card-kualitas');
+
+    if (elCardTren) {
+        elCardTren.innerHTML = `${lajuPekanRiil > 0 ? lajuPekanRiil.toFixed(1) : targetSantriPekan} Hlm/Pekan <span class="text-xs font-normal text-slate-400">(${ziyadahLogs.length}x setoran ziyadah)</span>`;
+    }
+    if (elCardTarget) {
+        elCardTarget.innerHTML = `${targetSantriPekan} Hlm/Pekan <span class="text-xs font-normal text-slate-400">(${targetSantriPekan * 4} Hlm/Bulan)</span>`;
+    }
+    if (elCardKualitas) {
+        const totalLogs = riwayat.length;
+        const passLogs = riwayat.filter(r => r.statusSetoran !== 'ULANG').length;
+        const passPercent = totalLogs > 0 ? Math.round((passLogs / totalLogs) * 100) : 100;
+        elCardKualitas.innerHTML = `${passPercent}% Lulus <span class="text-xs font-normal text-slate-400">(${stats.rataRataNilai || 'Mumtaz'})</span>`;
+    }
+
+    // Skenario Dates
+    const elSkenarioRiil = document.getElementById('tahfidz-skenario-riil-date');
+    const elSkenarioTarget = document.getElementById('tahfidz-skenario-target-date');
+    const elSkenarioAkselerasi = document.getElementById('tahfidz-skenario-akselerasi-date');
+
+    if (elSkenarioRiil) elSkenarioRiil.innerText = `${projRiil.text} ${projRiil.durasiText || ''}`;
+    if (elSkenarioTarget) elSkenarioTarget.innerText = `${projTarget.text} ${projTarget.durasiText || ''}`;
+    if (elSkenarioAkselerasi) elSkenarioAkselerasi.innerText = `${projAkselerasi.text} ${projAkselerasi.durasiText || ''}`;
 }
 
 ASNTahfidz.detailFilterTipe = "ALL"; // ALL, ZIYADAH, MURAJAAH
 ASNTahfidz.detailSelectedDate = new Date().toISOString().split('T')[0];
 
 /**
- * Filter Tipe Setoran di Modal Detail Santri (Semua / Ziyadah / Muroja'ah)
+ * Filter Tipe Setoran di Modal Detail Santri (Semua / Ziyadah / Sabqi / Manzil / Tasmi')
  */
 function setTahfidzDetailTipeFilter(tipe) {
     ASNTahfidz.detailFilterTipe = tipe || "ALL";
 
-    const btnAll = document.getElementById('btn-filter-detail-all');
-    const chkZ = document.getElementById('chk-detail-ziyadah');
-    const chkM = document.getElementById('chk-detail-murajaah');
+    const filterBtns = {
+        'ALL': document.getElementById('btn-filter-detail-all'),
+        'ZIYADAH': document.getElementById('btn-filter-detail-ziyadah'),
+        'MURAJAAH_SABQI': document.getElementById('btn-filter-detail-sabqi'),
+        'MURAJAAH_MANZIL': document.getElementById('btn-filter-detail-manzil'),
+        'TASMI': document.getElementById('btn-filter-detail-tasmi')
+    };
 
-    if (btnAll) {
-        if (tipe === 'ALL') {
-            btnAll.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-700 text-white transition";
-            if (chkZ) chkZ.checked = true;
-            if (chkM) chkM.checked = true;
+    const activeClasses = {
+        'ALL': 'px-2.5 py-1 rounded-lg font-bold bg-emerald-700 text-white transition shrink-0',
+        'ZIYADAH': 'px-2.5 py-1 rounded-lg font-bold bg-emerald-600 text-white transition shrink-0 shadow-sm',
+        'MURAJAAH_SABQI': 'px-2.5 py-1 rounded-lg font-bold bg-amber-600 text-white transition shrink-0 shadow-sm',
+        'MURAJAAH_MANZIL': 'px-2.5 py-1 rounded-lg font-bold bg-sky-600 text-white transition shrink-0 shadow-sm',
+        'TASMI': 'px-2.5 py-1 rounded-lg font-bold bg-purple-600 text-white transition shrink-0 shadow-sm'
+    };
+
+    const inactiveClass = 'px-2.5 py-1 rounded-lg font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition shrink-0';
+
+    Object.keys(filterBtns).forEach(k => {
+        const btn = filterBtns[k];
+        if (!btn) return;
+        if (k === tipe) {
+            btn.className = activeClasses[k] || activeClasses['ALL'];
         } else {
-            btnAll.className = "px-2.5 py-0.5 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition";
-            if (tipe === 'ZIYADAH') {
-                if (chkZ) chkZ.checked = true;
-                if (chkM) chkM.checked = false;
-            } else if (tipe === 'MURAJAAH') {
-                if (chkZ) chkZ.checked = false;
-                if (chkM) chkM.checked = true;
-            }
+            btn.className = inactiveClass;
         }
-    }
+    });
 
     renderTahfidzStudentDetailView();
 }
@@ -950,8 +1926,12 @@ function renderTahfidzStudentDetailView() {
     // Filter riwayat berdasarkan tipe jika dipilih
     if (ASNTahfidz.detailFilterTipe === 'ZIYADAH') {
         riwayat = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH');
-    } else if (ASNTahfidz.detailFilterTipe === 'MURAJAAH') {
-        riwayat = riwayat.filter(r => (r.tipe || '').toUpperCase().includes('MURAJA'));
+    } else if (ASNTahfidz.detailFilterTipe === 'MURAJAAH_SABQI') {
+        riwayat = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'MURAJAAH_SABQI');
+    } else if (ASNTahfidz.detailFilterTipe === 'MURAJAAH_MANZIL') {
+        riwayat = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'MURAJAAH_MANZIL');
+    } else if (ASNTahfidz.detailFilterTipe === 'TASMI') {
+        riwayat = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'TASMI');
     }
 
     // Header Info (Screenshot 5: Inisial, Nama, Badge, NIS • Bil Hifdhi • Halaqah)
@@ -983,6 +1963,27 @@ function renderTahfidzStudentDetailView() {
     const elProgressBar = document.getElementById('tahfidz-detail-progress-bar');
     if (elProgressText) elProgressText.innerText = `${stats.progressJuz || 1} / 30 Juz`;
     if (elProgressBar) elProgressBar.style.width = `${Math.min(100, Math.max(2, stats.progressPercent || 3))}%`;
+
+    // Posisi Muroja'ah Sabqi & Manzil
+    const cap = res.capaian || st.capaian || {};
+    const mur = res.murojaah || st.murojaah || {};
+
+    const ziyadahJuz = Number(cap.juzAktif) || Number(stats.progressJuz) || 1;
+    const ziyadahHlm = Number(cap.halamanTerakhir) || 1;
+    const sabqiHalaman = mur.sabqiHalaman || cap.sabqiHalaman || '';
+    const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
+    const manzilHalaman = Number(mur.manzilHalaman || cap.manzilHalaman) || 1;
+    const manzilPutaran = Number(mur.manzilPutaran || cap.manzilPutaran) || 1;
+
+    const elSabqiPos = document.getElementById('tahfidz-detail-sabqi-pos');
+    const elManzilPos = document.getElementById('tahfidz-detail-manzil-pos');
+
+    if (elSabqiPos) {
+        elSabqiPos.innerHTML = `<span class="text-amber-700 dark:text-amber-300">Juz ${ziyadahJuz}</span> • <span>${sabqiHalaman ? `Halaman ${sabqiHalaman}` : `Halaman 1 - ${Math.max(1, ziyadahHlm - 1)}`}</span>`;
+    }
+    if (elManzilPos) {
+        elManzilPos.innerHTML = `<span class="text-sky-700 dark:text-sky-300">Juz ${manzilJuz} Hlm ${manzilHalaman}</span> <span class="text-slate-400 font-semibold text-[10px]">(Putaran Ke-${manzilPutaran})</span>`;
+    }
 
     // Sinkronisasi Date Inputs & Labels
     const dateHarian = document.getElementById('tahfidz-date-harian');
@@ -1021,8 +2022,30 @@ function renderTahfidzStudentDetailView() {
     const elPekanStatus = document.getElementById('tahfidz-ind-pekan-status');
 
     if (elPekanTarget) elPekanTarget.innerText = ind.pekanan?.targetText || "10 Halaman (Z) + 10 Halaman (M)";
-    if (elPekanRealita) elPekanRealita.innerText = ind.pekanan?.realitaText || "1 Hal (2x Setor)";
-    if (elPekanStatus) elPekanStatus.innerText = ind.pekanan?.status || "0% Capaian";
+    if (elPekanRealita) elPekanRealita.innerText = ind.pekanan?.realitaText || "0 Hal (0x Setor)";
+    if (elPekanStatus) {
+        const isTuntas = ind.pekanan?.isMurojaahTuntas;
+        elPekanStatus.innerText = ind.pekanan?.status || "0% Capaian";
+        elPekanStatus.className = isTuntas 
+            ? "text-[9px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+            : "text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300";
+    }
+
+    const elPekanZReal = document.getElementById('tahfidz-ind-pekan-ziyadah-real');
+    const elPekanMReal = document.getElementById('tahfidz-ind-pekan-murojaah-real');
+
+    if (elPekanZReal) {
+        const zR = ind.pekanan?.ziyadahReal || 0;
+        const zT = ind.pekanan?.ziyadahTarget || 10;
+        elPekanZReal.innerText = `${zR} / ${zT} Halaman ${zR >= zT ? '✅' : ''}`;
+    }
+    if (elPekanMReal) {
+        const mR = ind.pekanan?.murajaahReal || 0;
+        const mT = ind.pekanan?.murajaahTarget || 10;
+        const sR = ind.pekanan?.sabqiReal || 0;
+        const mManzil = ind.pekanan?.manzilReal || 0;
+        elPekanMReal.innerText = `${mR} / ${mT} Halaman (Sabqi: ${sR}, Manzil: ${mManzil}) ${mR >= mT ? '✅' : ''}`;
+    }
 
     const elBulanTarget = document.getElementById('tahfidz-ind-bulan-target');
     const elBulanRealita = document.getElementById('tahfidz-ind-bulan-realita');
@@ -1032,9 +2055,84 @@ function renderTahfidzStudentDetailView() {
     if (elBulanRealita) elBulanRealita.innerText = ind.bulanan?.realitaText || "1 Hal (2x Setor)";
     if (elBulanStatus) elBulanStatus.innerText = ind.bulanan?.status || "0% Capaian";
 
-    // Render Riwayat Setoran Table (Tab 2)
+    // Render Riwayat Setoran (Tab 2) - Dual View: Kartu Responsif (Default HP) & Tabel Lengkap
     const riwayatTbody = document.getElementById('tahfidz-detail-riwayat-tbody');
+    const riwayatCardList = document.getElementById('tahfidz-detail-riwayat-card-list');
+    const riwayatCountBadge = document.getElementById('tahfidz-detail-riwayat-count-badge');
     const isParentOrPengasuh = ASNTahfidz.viewerRole === 'parent' || ASNTahfidz.viewerRole === 'pengasuh';
+
+    if (riwayatCountBadge) {
+        riwayatCountBadge.innerText = `${riwayat.length} Setoran`;
+    }
+
+    // 1. Render Tampilan Kartu (Optimal untuk HP agar tampil 100% utuh tanpa scroll kanan)
+    if (riwayatCardList) {
+        if (riwayat.length === 0) {
+            riwayatCardList.innerHTML = `
+            <div class="py-8 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-dashed border-slate-200 dark:border-[#283a4e]">
+                <i class="fa-solid fa-clock-rotate-left text-2xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                Belum ada riwayat setoran hafalan untuk kriteria ini.
+            </div>`;
+        } else {
+            riwayatCardList.innerHTML = riwayat.map((r) => {
+                const isUlang = r.statusSetoran === 'ULANG';
+                const badgeColor = r.tipe === 'ZIYADAH' 
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
+                    : (r.tipe === 'MURAJAAH_SABQI' 
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' 
+                        : (r.tipe === 'MURAJAAH_MANZIL' 
+                            ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300' 
+                            : (r.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300')));
+
+                const tipeLabel = r.tipe === 'MURAJAAH_SABQI' ? "Muroja'ah Sabqi" : (r.tipe === 'MURAJAAH_MANZIL' ? "Muroja'ah Manzil" : (r.tipe === 'ZIYADAH' ? "Ziyadah" : (r.tipe === 'TASMI' ? "Tasmi'" : escapeHtml(r.tipe))));
+                
+                const statusBadge = isUlang
+                    ? '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60"><i class="fa-solid fa-rotate-left text-[8px]"></i> Ulang</span>'
+                    : '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60"><i class="fa-solid fa-check text-[8px]"></i> Lulus</span>';
+
+                const deleteBtn = isParentOrPengasuh ? '' : `
+                    <button type="button" onclick="deleteTahfidzLogEntry('${r.logId}')" class="w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center text-[10px] transition shrink-0 ml-1" title="Hapus Riwayat">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>`;
+
+                return `
+                <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e] space-y-2 transition hover:border-emerald-500/40">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0 ${badgeColor}">
+                                ${tipeLabel}
+                            </span>
+                            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar text-[10px] text-slate-400"></i>
+                                <span>${escapeHtml(r.tanggal)}</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <span class="font-extrabold text-xs ${isUlang ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                                ${escapeHtml(r.nilai)}
+                            </span>
+                            ${statusBadge}
+                            ${deleteBtn}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-200/60 dark:border-[#283a4e]/60 text-xs">
+                        <div class="min-w-0">
+                            <span class="font-black text-emerald-700 dark:text-emerald-400 text-xs">Juz ${r.juz}</span>
+                            <span class="text-slate-600 dark:text-slate-300 text-[11px] font-medium ml-1 truncate">
+                                (${escapeHtml(r.surah)})
+                            </span>
+                        </div>
+                        <div class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 bg-white dark:bg-[#15202d] px-2 py-0.5 rounded-lg border border-slate-200/60 dark:border-[#283a4e]">
+                            Hlm ${escapeHtml(r.halamanList || '1')} (${r.totalHalaman} Hlm)
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // 2. Render Tampilan Tabel Lengkap (Bisa dialihkan via tombol toggle)
     if (riwayatTbody) {
         if (riwayat.length === 0) {
             riwayatTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">Belum ada riwayat setoran hafalan untuk kriteria ini.</td></tr>`;
@@ -1043,8 +2141,8 @@ function renderTahfidzStudentDetailView() {
             <tr class="hover:bg-slate-50 dark:hover:bg-[#1c2836]/50 border-b border-slate-100 dark:border-[#253447] text-xs">
                 <td class="px-3 py-2.5 font-bold text-slate-700 dark:text-slate-200">${escapeHtml(r.tanggal)}</td>
                 <td class="px-3 py-2.5">
-                    <span class="px-2 py-0.5 rounded text-[9px] font-extrabold ${r.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800' : (r.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800')}">
-                        ${escapeHtml(r.tipe)}
+                    <span class="px-2 py-0.5 rounded text-[9px] font-extrabold ${r.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : (r.tipe === 'MURAJAAH_SABQI' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : (r.tipe === 'MURAJAAH_MANZIL' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300' : (r.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' : 'bg-amber-100 text-amber-800')))}">
+                        ${r.tipe === 'MURAJAAH_SABQI' ? 'Sabqi' : (r.tipe === 'MURAJAAH_MANZIL' ? 'Manzil' : (r.tipe === 'ZIYADAH' ? 'Ziyadah' : (r.tipe === 'TASMI' ? "Tasmi'" : escapeHtml(r.tipe))))}
                     </span>
                 </td>
                 <td class="px-3 py-2.5">
@@ -1052,7 +2150,15 @@ function renderTahfidzStudentDetailView() {
                     <span class="text-slate-400 text-[10px]">(${escapeHtml(r.surah)})</span>
                 </td>
                 <td class="px-3 py-2.5">Halaman ${escapeHtml(r.halamanList || '1')} (${r.totalHalaman} Hlm)</td>
-                <td class="px-3 py-2.5 font-bold text-emerald-600">${escapeHtml(r.nilai)}</td>
+                <td class="px-3 py-2.5">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="font-bold ${r.statusSetoran === 'ULANG' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${escapeHtml(r.nilai)}</span>
+                        ${r.statusSetoran === 'ULANG'
+                            ? '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60"><i class="fa-solid fa-rotate-left text-[8px]"></i> Wajib Ulang</span>'
+                            : '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60"><i class="fa-solid fa-check text-[8px]"></i> Lulus</span>'
+                        }
+                    </div>
+                </td>
                 <td class="px-3 py-2.5 text-right">
                     ${isParentOrPengasuh ? '<span class="text-[9px] font-semibold text-slate-400">Tercatat</span>' : `
                     <button type="button" onclick="deleteTahfidzLogEntry('${r.logId}')" class="text-slate-400 hover:text-rose-600 text-xs p-1 transition" title="Hapus Riwayat">
@@ -1063,6 +2169,12 @@ function renderTahfidzStudentDetailView() {
             `).join('');
         }
     }
+
+    // Set mode tampilan default
+    setTahfidzRiwayatView(tahfidzRiwayatViewMode);
+
+    // Hitung dan siapkan data Tab Estimasi Waktu Khatam
+    renderTahfidzEstimasiKhatam();
 }
 
 /**
@@ -1072,14 +2184,14 @@ async function deleteTahfidzLogEntry(logId) {
     if (!confirm("Apakah Anda yakin ingin menghapus catatan setoran ini?")) return;
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("deleteTahfidzLog", { token, logId });
         if (res && (res.success || res.status === "success")) {
             if (typeof showToast === 'function') showToast("Catatan setoran berhasil dihapus.");
             if (ASNTahfidz.activeStudentDetail?.student?.studentId) {
                 openTahfidzStudentDetail(ASNTahfidz.activeStudentDetail.student.studentId);
             }
-            loadAdminTahfidzData();
+            loadAdminTahfidzData(true);
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal menghapus catatan.");
         }
@@ -1087,6 +2199,32 @@ async function deleteTahfidzLogEntry(logId) {
         console.error(e);
     }
 }
+
+let tahfidzRiwayatViewMode = 'card';
+
+/**
+ * Ganti mode tampilan riwayat setoran: 'card' (optimal HP tanpa scroll) atau 'table' (tabel lengkap)
+ */
+function setTahfidzRiwayatView(mode) {
+    tahfidzRiwayatViewMode = mode || 'card';
+    const cardList = document.getElementById('tahfidz-detail-riwayat-card-list');
+    const tableWrapper = document.getElementById('tahfidz-detail-riwayat-table-wrapper');
+    const btnCard = document.getElementById('btn-riwayat-view-card');
+    const btnTable = document.getElementById('btn-riwayat-view-table');
+
+    if (tahfidzRiwayatViewMode === 'card') {
+        if (cardList) cardList.classList.remove('hidden');
+        if (tableWrapper) tableWrapper.classList.add('hidden');
+        if (btnCard) btnCard.className = "px-2.5 py-1 rounded-md text-[10px] font-bold transition bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm";
+        if (btnTable) btnTable.className = "px-2.5 py-1 rounded-md text-[10px] font-bold transition text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200";
+    } else {
+        if (cardList) cardList.classList.add('hidden');
+        if (tableWrapper) tableWrapper.classList.remove('hidden');
+        if (btnTable) btnTable.className = "px-2.5 py-1 rounded-md text-[10px] font-bold transition bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm";
+        if (btnCard) btnCard.className = "px-2.5 py-1 rounded-md text-[10px] font-bold transition text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200";
+    }
+}
+window.setTahfidzRiwayatView = setTahfidzRiwayatView;
 
 // ====================================================================
 // 4. MODAL: TARGET CAPAIAN SANTRI (Screenshot 3)
@@ -1336,10 +2474,10 @@ async function submitTahfidzTarget() {
     const { zPekanTotal, mPekanTotal } = recalculateTahfidzTargetWeekly();
 
     const btn = document.getElementById('btn-save-tahfidz-target');
-    if (btn) btn.disabled = true;
+    setTahfidzButtonLoading(btn, true, "Menyimpan Target...");
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const response = await apiPost("saveTahfidzTarget", {
             token,
             studentId,
@@ -1352,16 +2490,28 @@ async function submitTahfidzTarget() {
         if (response && (response.success || response.status === "success")) {
             if (typeof showToast === 'function') showToast("✅ Target santri berhasil diperbarui!");
             // Update local student target in memory
-            const st = (ASNTahfidz.data.students || []).find(s => s.studentId === studentId || s.nis === studentId);
-            if (st) {
+            const updateTargetInStudent = (st) => {
+                if (!st) return;
                 if (!st.target) st.target = {};
                 st.target.ziyadahSesi = zSesi;
                 st.target.ziyadahPekan = zPekanTotal;
+                st.target.ziyadahBulan = zPekanTotal * 4;
                 st.target.murajaahSesi = mSesi;
                 st.target.murajaahPekan = mPekanTotal;
-            }
+                st.target.murajaahBulan = mPekanTotal * 4;
+            };
+
+            const st = (ASNTahfidz.data.students || []).find(s => s.studentId === studentId || s.nis === studentId);
+            updateTargetInStudent(st);
+            const stFiltered = (ASNTahfidz.filteredStudents || []).find(s => s.studentId === studentId || s.nis === studentId);
+            updateTargetInStudent(stFiltered);
+
+            // Re-render tabel instan dengan target baru
+            renderTahfidzStudentTable();
             closeTahfidzTargetModal();
-            loadAdminTahfidzData();
+
+            // Sinkronisasi data di latar belakang
+            loadAdminTahfidzData(true);
         } else {
             if (typeof showToast === 'function') showToast("❌ " + ((response && response.message) || "Gagal menyimpan target."));
         }
@@ -1369,7 +2519,393 @@ async function submitTahfidzTarget() {
         console.error(err);
         if (typeof showToast === 'function') showToast("❌ Terjadi kesalahan saat menyimpan target: " + (err.message || err));
     } finally {
-        if (btn) btn.disabled = false;
+        setTahfidzButtonLoading(btn, false);
+    }
+}
+
+// ====================================================================
+// 4B. MANAJEMEN SELEKSI & TARGET MASSAL (BULK EDIT TARGET)
+// ====================================================================
+
+/**
+ * Update UI floating bulk selection action bar dan checkbox check-all
+ */
+function updateTahfidzBulkSelectionBar() {
+    const bar = document.getElementById('tahfidz-bulk-selection-bar');
+    const text = document.getElementById('tahfidz-selected-count-text');
+    const checkAll = document.getElementById('tahfidz-check-all');
+    const count = ASNTahfidz.selectedStudentIds ? ASNTahfidz.selectedStudentIds.size : 0;
+
+    if (bar) {
+        if (count > 0) {
+            bar.classList.remove('hidden');
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+    if (text) {
+        text.innerText = `${count} santri dipilih`;
+    }
+
+    const currentStudents = (ASNTahfidz.filteredStudents && ASNTahfidz.filteredStudents.length > 0)
+        ? ASNTahfidz.filteredStudents
+        : (ASNTahfidz.data.students || []);
+
+    if (checkAll && currentStudents.length > 0) {
+        const allChecked = count > 0 && currentStudents.every(st => ASNTahfidz.selectedStudentIds.has(st.studentId));
+        checkAll.checked = allChecked;
+        checkAll.indeterminate = count > 0 && !allChecked;
+    } else if (checkAll) {
+        checkAll.checked = false;
+        checkAll.indeterminate = false;
+    }
+}
+
+/**
+ * Toggle checklist seluruh santri pada tabel mutaba'ah
+ */
+function toggleSelectAllTahfidzStudents(checked) {
+    if (!ASNTahfidz.selectedStudentIds) {
+        ASNTahfidz.selectedStudentIds = new Set();
+    }
+    const currentStudents = (ASNTahfidz.filteredStudents && ASNTahfidz.filteredStudents.length > 0)
+        ? ASNTahfidz.filteredStudents
+        : (ASNTahfidz.data.students || []);
+
+    currentStudents.forEach(st => {
+        if (st && st.studentId) {
+            if (checked) {
+                ASNTahfidz.selectedStudentIds.add(st.studentId);
+            } else {
+                ASNTahfidz.selectedStudentIds.delete(st.studentId);
+            }
+        }
+    });
+
+    document.querySelectorAll('.tahfidz-row-checkbox').forEach(cb => {
+        cb.checked = checked;
+    });
+
+    updateTahfidzBulkSelectionBar();
+}
+
+/**
+ * Toggle checklist perorangan santri
+ */
+function toggleSelectTahfidzStudent(studentId, checked) {
+    if (!ASNTahfidz.selectedStudentIds) {
+        ASNTahfidz.selectedStudentIds = new Set();
+    }
+    if (checked) {
+        ASNTahfidz.selectedStudentIds.add(studentId);
+    } else {
+        ASNTahfidz.selectedStudentIds.delete(studentId);
+    }
+    updateTahfidzBulkSelectionBar();
+}
+
+/**
+ * Batalkan seluruh pilihan santri
+ */
+function clearTahfidzSelectedStudents() {
+    if (ASNTahfidz.selectedStudentIds) {
+        ASNTahfidz.selectedStudentIds.clear();
+    }
+    document.querySelectorAll('.tahfidz-row-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    const checkAll = document.getElementById('tahfidz-check-all');
+    if (checkAll) {
+        checkAll.checked = false;
+        checkAll.indeterminate = false;
+    }
+    updateTahfidzBulkSelectionBar();
+}
+
+/**
+ * Buka modal atur target massal
+ */
+function openTahfidzBulkTargetModal(initialScope = 'ALL') {
+    const modal = document.getElementById('modal-tahfidz-target-bulk');
+    if (!modal) return;
+
+    // Populate Halaqah Dropdown
+    const selHalaqah = document.getElementById('bulk-target-select-halaqah');
+    if (selHalaqah) {
+        const halaqahs = ASNTahfidz.data.halaqahs || [];
+        selHalaqah.innerHTML = halaqahs.length > 0
+            ? halaqahs.map(h => `<option value="${escapeHtml(h.id || h.halaqahId || h.namaHalaqah)}">${escapeHtml(h.namaHalaqah || h.nama)}</option>`).join('')
+            : '<option value="">(Belum ada halaqah)</option>';
+    }
+
+    // Update Session Badges
+    const counts = getTahfidzActiveWeeklySessionCounts();
+    const badgeZ = document.getElementById('bulk-target-badge-ziyadah');
+    const badgeM = document.getElementById('bulk-target-badge-murajaah');
+    if (badgeZ) badgeZ.innerText = `${counts.ziyadahWeeklySessions} Sesi Ziyadah/Pekan`;
+    if (badgeM) badgeM.innerText = `${counts.murajaahWeeklySessions} Sesi Muroja'ah/Pekan`;
+
+    // Tentukan scope awal: cukup Semua Santri (ALL) atau Per Halaqah (HALAQAH)
+    const scopeToUse = (initialScope === 'HALAQAH') ? 'HALAQAH' : 'ALL';
+    setBulkTargetScope(scopeToUse);
+
+    // Hitung target otomatis
+    recalculateBulkTargetWeekly();
+
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Tutup modal target massal
+ */
+function closeTahfidzBulkTargetModal() {
+    const modal = document.getElementById('modal-tahfidz-target-bulk');
+    if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Set target scope (ALL, HALAQAH, KATEGORI, SELECTED)
+ */
+function setBulkTargetScope(scope) {
+    if (scope !== 'HALAQAH') scope = 'ALL';
+    if (!ASNTahfidz.bulkTargetState) {
+        ASNTahfidz.bulkTargetState = { scope: 'ALL', halaqahId: '', kategori: '', studentIds: [] };
+    }
+    ASNTahfidz.bulkTargetState.scope = scope;
+
+    const scopes = ['ALL', 'HALAQAH'];
+    scopes.forEach(s => {
+        const btn = document.getElementById(`btn-scope-${s.toLowerCase()}`);
+        if (!btn) return;
+        if (s === scope) {
+            btn.className = 'px-3 py-2.5 rounded-xl font-bold text-xs border text-center transition flex flex-col items-center gap-1.5 bg-white dark:bg-[#15202d] border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-sm ring-2 ring-emerald-500/20 active:scale-95';
+        } else {
+            btn.className = 'px-3 py-2.5 rounded-xl font-bold text-xs border text-center transition flex flex-col items-center gap-1.5 bg-white dark:bg-[#15202d] border-slate-200 dark:border-[#283a4e] text-slate-600 dark:text-slate-300 hover:border-amber-400 active:scale-95';
+        }
+    });
+
+    const subContainer = document.getElementById('bulk-target-subselect-container');
+    const halaqahWrap = document.getElementById('bulk-target-halaqah-wrapper');
+    const kategoriWrap = document.getElementById('bulk-target-kategori-wrapper');
+
+    if (subContainer) {
+        if (scope === 'HALAQAH') {
+            subContainer.classList.remove('hidden');
+        } else {
+            subContainer.classList.add('hidden');
+        }
+    }
+
+    if (halaqahWrap) {
+        if (scope === 'HALAQAH') halaqahWrap.classList.remove('hidden');
+        else halaqahWrap.classList.add('hidden');
+    }
+
+    if (kategoriWrap) {
+        kategoriWrap.classList.add('hidden');
+    }
+
+    onBulkTargetScopeChange();
+}
+
+/**
+ * Filter santri sasaran berdasarkan scope aktif
+ */
+function onBulkTargetScopeChange() {
+    if (!ASNTahfidz.bulkTargetState) {
+        ASNTahfidz.bulkTargetState = { scope: 'ALL', halaqahId: '', kategori: '', studentIds: [] };
+    }
+    const scope = ASNTahfidz.bulkTargetState.scope || 'ALL';
+    const allStudents = ASNTahfidz.data.students || [];
+
+    let targetStudents = [];
+    let summaryText = "";
+
+    if (scope === 'HALAQAH') {
+        const selHalaqah = document.getElementById('bulk-target-select-halaqah');
+        const halaqahVal = selHalaqah ? selHalaqah.value : "";
+        const halaqahObj = (ASNTahfidz.data.halaqahs || []).find(h => (h.id || h.halaqahId || h.namaHalaqah) === halaqahVal);
+        const halaqahName = halaqahObj ? (halaqahObj.namaHalaqah || halaqahObj.nama) : halaqahVal;
+
+        targetStudents = allStudents.filter(st => {
+            const hid = st.halaqahId || (st.halaqah && (st.halaqah.halaqahId || st.halaqah.id || st.halaqah.namaHalaqah));
+            const hname = st.halaqah?.namaHalaqah || st.halaqahName || "";
+            return (hid && hid === halaqahVal) || (hname && hname === halaqahName);
+        });
+        summaryText = `Target diterapkan ke santri kelompok: ${halaqahName || 'Halaqah terpilih'} (${targetStudents.length} santri)`;
+    } else {
+        // Default ALL: semua santri aktif yang sudah masuk halaqah
+        targetStudents = allStudents.filter(st => isStudentInHalaqah(st));
+        summaryText = `Target akan diterapkan ke seluruh santri halaqah aktif (${targetStudents.length} santri)`;
+    }
+
+    const targetIds = targetStudents.map(st => st.studentId).filter(Boolean);
+    ASNTahfidz.bulkTargetState.studentIds = targetIds;
+
+    const badge = document.getElementById('bulk-target-recipient-badge');
+    const summaryEl = document.getElementById('bulk-target-summary-text');
+    const previewEl = document.getElementById('bulk-target-student-preview');
+
+    if (badge) {
+        badge.innerText = `${targetIds.length} Santri Sasaran`;
+        if (targetIds.length > 0) {
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        } else {
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300';
+        }
+    }
+    if (summaryEl) summaryEl.innerText = summaryText;
+
+    if (previewEl) {
+        if (targetStudents.length === 0) {
+            previewEl.innerText = 'Tidak ada santri yang cocok';
+        } else if (targetStudents.length <= 3) {
+            previewEl.innerText = targetStudents.map(s => s.name).join(', ');
+        } else {
+            const firstThree = targetStudents.slice(0, 3).map(s => s.name).join(', ');
+            previewEl.innerText = `${firstThree}, dan ${targetStudents.length - 3} lainnya`;
+        }
+    }
+}
+
+/**
+ * Hitung otomatis Target Mingguan & Bulanan pada form massal
+ */
+function recalculateBulkTargetWeekly() {
+    const counts = getTahfidzActiveWeeklySessionCounts();
+
+    const elZSesi = document.getElementById('input-bulk-target-ziyadah-sesi');
+    const elZPekan = document.getElementById('input-bulk-target-ziyadah-pekan');
+    const elZBulan = document.getElementById('input-bulk-target-ziyadah-bulan');
+
+    const elMSesi = document.getElementById('input-bulk-target-murajaah-sesi');
+    const elMPekan = document.getElementById('input-bulk-target-murajaah-pekan');
+    const elMBulan = document.getElementById('input-bulk-target-murajaah-bulan');
+
+    const zSesi = Math.max(0.5, parseFloat(elZSesi?.value) || 1);
+    const mSesi = Math.max(0.5, parseFloat(elMSesi?.value) || 2);
+
+    const zPekanTotal = Number((zSesi * counts.ziyadahWeeklySessions).toFixed(1));
+    const zBulanTotal = Number((zPekanTotal * 4).toFixed(1));
+
+    const mPekanTotal = Number((mSesi * counts.murajaahWeeklySessions).toFixed(1));
+    const mBulanTotal = Number((mPekanTotal * 4).toFixed(1));
+
+    const formatHal = (n) => (Number.isInteger(n) ? n.toString() : n.toFixed(1));
+
+    if (elZPekan) {
+        const lembar = formatHal(Number((zPekanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((zPekanTotal / 20).toFixed(1)));
+        elZPekan.value = `${formatHal(zPekanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan)`;
+    }
+
+    if (elZBulan) {
+        const lembar = formatHal(Number((zBulanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((zBulanTotal / 20).toFixed(1)));
+        elZBulan.value = `${formatHal(zBulanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Bulan)`;
+    }
+
+    if (elMPekan) {
+        const lembar = formatHal(Number((mPekanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((mPekanTotal / 20).toFixed(1)));
+        elMPekan.value = `${formatHal(mPekanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Pekan)`;
+    }
+
+    if (elMBulan) {
+        const lembar = formatHal(Number((mBulanTotal / 2).toFixed(1)));
+        const juz = formatHal(Number((mBulanTotal / 20).toFixed(1)));
+        elMBulan.value = `${formatHal(mBulanTotal)} Halaman (${lembar} Lembar / ~${juz} Juz / Bulan)`;
+    }
+
+    return { zSesi, zPekanTotal, zBulanTotal, mSesi, mPekanTotal, mBulanTotal };
+}
+
+/**
+ * Quick chip target massal
+ */
+function setTahfidzBulkTargetChip(type, val) {
+    if (type === 'ZIYADAH') {
+        const el = document.getElementById('input-bulk-target-ziyadah-sesi');
+        if (el) el.value = val;
+    } else {
+        const el = document.getElementById('input-bulk-target-murajaah-sesi');
+        if (el) el.value = val;
+    }
+    recalculateBulkTargetWeekly();
+}
+
+/**
+ * Simpan target massal santri
+ */
+async function submitTahfidzBulkTarget() {
+    const studentIds = ASNTahfidz.bulkTargetState?.studentIds || [];
+    if (!studentIds || studentIds.length === 0) {
+        if (typeof showToast === 'function') {
+            showToast("⚠️ Tidak ada santri sasaran yang dipilih.");
+        } else {
+            if (typeof showToast === "function") showToast("⚠️ Tidak ada santri sasaran yang dipilih."); else alert("Tidak ada santri sasaran yang dipilih.");
+        }
+        return;
+    }
+
+    const { zSesi, zPekanTotal, mSesi, mPekanTotal } = recalculateBulkTargetWeekly();
+
+    const btn = document.getElementById('btn-save-tahfidz-target-bulk');
+    setTahfidzButtonLoading(btn, true, "Menerapkan Massal...");
+
+    try {
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
+        const response = await apiPost("saveBulkTahfidzTarget", {
+            token,
+            studentIds,
+            targetZiyadahSesi: zSesi,
+            targetZiyadahPekan: zPekanTotal,
+            targetMurajaahSesi: mSesi,
+            targetMurajaahPekan: mPekanTotal
+        });
+
+        if (response && (response.success || response.status === "success")) {
+            if (typeof showToast === 'function') {
+                showToast(`✅ Berhasil menerapkan target untuk ${studentIds.length} santri!`);
+            }
+
+            // Update local memory
+            const idSet = new Set(studentIds);
+            const updateStudentTarget = (st) => {
+                if (!st || !idSet.has(st.studentId)) return;
+                if (!st.target) st.target = {};
+                st.target.ziyadahSesi = zSesi;
+                st.target.ziyadahPekan = zPekanTotal;
+                st.target.ziyadahBulan = zPekanTotal * 4;
+                st.target.murajaahSesi = mSesi;
+                st.target.murajaahPekan = mPekanTotal;
+                st.target.murajaahBulan = mPekanTotal * 4;
+            };
+
+            (ASNTahfidz.data.students || []).forEach(updateStudentTarget);
+            (ASNTahfidz.filteredStudents || []).forEach(updateStudentTarget);
+
+            // Re-render tabel instan
+            renderTahfidzStudentTable();
+
+            // Clear pilihan & tutup modal
+            clearTahfidzSelectedStudents();
+            closeTahfidzBulkTargetModal();
+
+            // Sinkronisasi data latar belakang
+            loadAdminTahfidzData(true);
+        } else {
+            if (typeof showToast === 'function') {
+                showToast("❌ " + ((response && response.message) || "Gagal menyimpan target massal."));
+            }
+        }
+    } catch (err) {
+        console.error("Error submitTahfidzBulkTarget:", err);
+        if (typeof showToast === 'function') {
+            showToast("❌ Terjadi kesalahan saat menyimpan target: " + (err.message || err));
+        }
+    } finally {
+        setTahfidzButtonLoading(btn, false);
     }
 }
 
@@ -1485,42 +3021,47 @@ function renderTahfidzHalaqahCards() {
         return;
     }
 
-    container.innerHTML = halaqahs.map((h, i) => `
-    <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3 relative group">
-        <div class="flex justify-between items-start">
-            <div>
-                <h4 class="font-black text-sm text-slate-800 dark:text-slate-100">${escapeHtml(h.namaHalaqah)}</h4>
-                <span class="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    ${escapeHtml(h.kategori || 'Tahfidz Anak')}
-                </span>
+    container.innerHTML = halaqahs.map((h, i) => {
+        const letter = String.fromCharCode(65 + (i % 26));
+        const muhafizName = h.muhafiz || 'Ustadz Pembina';
+        const targetKurikulum = h.targetKurikulum || 'Tahfidz 30 Juz';
+        const safeDeleteName = escapeHtml(muhafizName).replace(/'/g, "\\'");
+
+        return `
+        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-[#283a4e] space-y-3 relative group transition hover:border-emerald-500/50">
+            <div class="flex justify-between items-start">
+                <div class="pr-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm">
+                            ${letter}
+                        </span>
+                        <h4 class="font-black text-sm text-slate-800 dark:text-slate-100 leading-tight">
+                            ${escapeHtml(muhafizName)}
+                        </h4>
+                    </div>
+                    <span class="inline-block mt-2 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                        <i class="fa-solid fa-flag text-[9px] mr-1"></i>${escapeHtml(targetKurikulum)}
+                    </span>
+                </div>
+                <div class="flex items-center space-x-1.5 shrink-0">
+                    <button type="button" onclick="deleteTahfidzHalaqahConfirm('${h.halaqahId}', '${safeDeleteName}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center text-[10px] transition" title="Hapus Halaqah">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center space-x-1.5">
-                <button type="button" onclick="deleteTahfidzHalaqahConfirm('${h.halaqahId}', '${escapeHtml(h.namaHalaqah)}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center text-[10px] transition" title="Hapus Halaqah">
-                    <i class="fa-solid fa-trash-can"></i>
+            <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-[#283a4e] text-xs">
+                <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-emerald-600 text-xs"></i>
+                    <span>${h.studentCount || 0} Santri Binaan</span>
+                </span>
+                <button type="button" onclick="openPlottingFromHalaqahCard('${h.halaqahId}')" class="px-3 py-1 bg-white dark:bg-[#15202d] hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] transition flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-user-plus text-[9px] text-emerald-600"></i>
+                    <span>+ Atur Santri</span>
                 </button>
-                <span class="w-7 h-7 rounded-lg bg-white dark:bg-[#15202d] text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs font-bold shadow-sm">
-                    ${String.fromCharCode(65 + i)}
-                </span>
             </div>
         </div>
-        <div class="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-            <p class="flex items-center gap-1.5 truncate font-semibold">
-                <i class="fa-solid fa-user-tie text-emerald-600"></i>
-                <span>${escapeHtml(h.muhafiz || 'Ustadz Pembina')}</span>
-            </p>
-            <p class="text-[10px] text-slate-400 truncate">
-                <i class="fa-solid fa-flag mr-1"></i> ${escapeHtml(h.targetKurikulum || 'Target Mushaf Pojok Standar')}
-            </p>
-        </div>
-        <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-[#283a4e] text-xs">
-            <span class="font-bold text-slate-700 dark:text-slate-300">${h.studentCount || 0} Santri Binaan</span>
-            <button type="button" onclick="openPlottingFromHalaqahCard('${h.halaqahId}')" class="px-3 py-1 bg-white dark:bg-[#15202d] hover:bg-emerald-50 text-emerald-700 dark:text-emerald-300 font-bold rounded-lg border border-slate-200 dark:border-[#283a4e] text-[10px] transition flex items-center gap-1">
-                <i class="fa-solid fa-user-plus text-[9px]"></i>
-                <span>+ Atur Santri</span>
-            </button>
-        </div>
-    </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 /**
@@ -1560,10 +3101,10 @@ function openPlottingSantri(halaqahId) {
     const muhEl = document.getElementById('tahfidz-plotting-muhafiz');
     const targetEl = document.getElementById('tahfidz-plotting-target');
 
-    if (badgeEl) badgeEl.innerText = halaqah.namaHalaqah || halaqahId;
-    if (infoEl) infoEl.innerText = `Atur santri binaan untuk ${halaqah.namaHalaqah} (${halaqah.kategori || 'Tahfidz'})`;
+    if (badgeEl) badgeEl.innerText = halaqah.muhafiz || halaqah.namaHalaqah || halaqahId;
+    if (infoEl) infoEl.innerText = `Atur santri binaan untuk bimbingan ${halaqah.muhafiz || 'Ustadz Pembina'}`;
     if (muhEl) muhEl.innerText = halaqah.muhafiz || 'Belum Ditunjuk';
-    if (targetEl) targetEl.innerText = halaqah.targetKurikulum || 'Target Mushaf Pojok Standar';
+    if (targetEl) targetEl.innerText = halaqah.targetKurikulum || 'Tahfidz 30 Juz';
 
     // Reset search & filter
     const searchInp = document.getElementById('tahfidz-plotting-search');
@@ -1615,7 +3156,12 @@ function populatePlottingHalaqahSelector() {
     }
 
     const currentVal = sel.value;
-    sel.innerHTML = halaqahs.map(h => `<option value="${escapeHtml(h.halaqahId)}">${escapeHtml(h.namaHalaqah)} (${escapeHtml(h.kategori || 'Tahfidz')})</option>`).join('');
+    sel.innerHTML = halaqahs.map((h, i) => {
+        const letter = String.fromCharCode(65 + (i % 26));
+        const muh = h.muhafiz || h.namaHalaqah || 'Ustadz Pembina';
+        const tgt = h.targetKurikulum || 'Tahfidz 30 Juz';
+        return `<option value="${escapeHtml(h.halaqahId)}">${letter}. ${escapeHtml(muh)} (${escapeHtml(tgt)})</option>`;
+    }).join('');
 
     let targetId = currentVal;
     if (!targetId || !halaqahs.some(h => h.halaqahId === targetId)) {
@@ -1819,14 +3365,10 @@ async function submitTahfidzPlotting() {
     const studentIds = ASNTahfidz.activePlottingStudentIds || [];
 
     const btnSubmit = document.getElementById('tab2-btn-save-plotting') || document.getElementById('btn-save-tahfidz-plotting');
-    const origText = btnSubmit ? btnSubmit.innerHTML : '';
-    if (btnSubmit) {
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
-    }
+    setTahfidzButtonLoading(btnSubmit, true, "Menyimpan Plotting...");
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("saveTahfidzPlotting", {
             token,
             halaqahId: halaqahId,
@@ -1837,10 +3379,16 @@ async function submitTahfidzPlotting() {
             if (typeof showToast === 'function') {
                 showToast(`✅ Berhasil mengatur ${studentIds.length} santri binaan ke ${ASNTahfidz.activePlottingHalaqah.namaHalaqah}!`);
             }
-            await loadAdminTahfidzData();
+            // Update jumlah santri di halaqah lokal
+            if (ASNTahfidz.activePlottingHalaqah) {
+                ASNTahfidz.activePlottingHalaqah.studentCount = studentIds.length;
+            }
             renderTahfidzHalaqahCards();
             populatePlottingHalaqahSelector();
             renderTahfidzMatriksBeban();
+
+            // Sinkronisasi data di latar belakang
+            loadAdminTahfidzData(true);
         } else {
             if (typeof showToast === 'function') {
                 showToast("❌ Gagal menyimpan plotting: " + ((res && res.message) || "Terjadi kesalahan"));
@@ -1850,10 +3398,7 @@ async function submitTahfidzPlotting() {
         console.error(err);
         if (typeof showToast === 'function') showToast("❌ Terjadi kendala jaringan saat menyimpan plotting.");
     } finally {
-        if (btnSubmit) {
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = origText;
-        }
+        setTahfidzButtonLoading(btnSubmit, false);
     }
 }
 
@@ -1874,7 +3419,7 @@ function renderTahfidzMatriksBeban() {
         const students = ASNTahfidz.data.students || [];
 
         matrix = halaqahs.map(h => {
-            const enrolled = students.filter(st => st.halaqah && (st.halaqah.halaqahId === h.halaqahId || st.halaqah.namaHalaqah === h.namaHalaqah));
+            const enrolled = students.filter(st => st.halaqah && (st.halaqah.halaqahId === h.halaqahId || st.halaqah.namaHalaqah === h.namaHalaqah || st.halaqah.muhafiz === h.muhafiz));
             let totalJuz = 0;
             enrolled.forEach(st => {
                 totalJuz += Number(st.progress?.currentJuz || 0);
@@ -1882,8 +3427,7 @@ function renderTahfidzMatriksBeban() {
             const avg = enrolled.length > 0 ? (totalJuz / enrolled.length).toFixed(1) : "0.0";
             return {
                 muhafiz: h.muhafiz || 'Ustadz Pembina',
-                namaHalaqah: h.namaHalaqah,
-                kategori: h.kategori || 'Tahfidz Anak',
+                targetKurikulum: h.targetKurikulum || 'Tahfidz 30 Juz',
                 binaanCount: enrolled.length,
                 avgCapaian: avg
             };
@@ -1891,34 +3435,27 @@ function renderTahfidzMatriksBeban() {
     }
 
     if (matrix.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-xs text-slate-400">Belum ada data distribusi beban Ustadz Muhafiz.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-xs text-slate-400">Belum ada data distribusi beban Ustadz Muhafiz.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = matrix.map(m => {
-        const isAnak = (m.kategori || '').toLowerCase().includes('anak');
-        const badgeColor = isAnak
-            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-            : 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300';
-        return `
+    tbody.innerHTML = matrix.map(m => `
         <tr class="hover:bg-slate-50 dark:hover:bg-[#1c2836]/60 transition">
             <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-100/70 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs">
+                <div class="w-7 h-7 rounded-lg bg-emerald-100/70 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs shrink-0">
                     <i class="fa-solid fa-user-tie"></i>
                 </div>
-                <span class="truncate">${escapeHtml(m.muhafiz || 'Ustadz Pembina')}</span>
+                <span class="truncate font-bold">${escapeHtml(m.muhafiz || 'Ustadz Pembina')}</span>
             </td>
-            <td class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(m.namaHalaqah || '-')}</td>
             <td class="py-3 px-4">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badgeColor}">
-                    ${escapeHtml(m.kategori || 'Tahfidz')}
+                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                    <i class="fa-solid fa-flag text-[9px] mr-1"></i>${escapeHtml(m.targetKurikulum || 'Tahfidz 30 Juz')}
                 </span>
             </td>
             <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">${m.binaanCount || 0} Santri</td>
             <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Juz ${m.avgCapaian || '0.0'} / 30</td>
         </tr>
-        `;
-    }).join('');
+    `).join('');
 }
 
 /**
@@ -2067,12 +3604,10 @@ async function submitTahfidzSesi(e) {
     };
 
     const btn = document.getElementById('btn-submit-sesi');
-    const btnText = document.getElementById('btn-submit-sesi-text');
-    if (btn) btn.disabled = true;
-    if (btnText) btnText.innerText = "Menyimpan...";
+    setTahfidzButtonLoading(btn, true, isEdit ? "Memperbarui Sesi..." : "Menyimpan Sesi...");
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("saveTahfidzSesi", { token, sesi: payload, data: payload, ...payload });
 
         if (res && (res.success || res.status === "success")) {
@@ -2093,7 +3628,8 @@ async function submitTahfidzSesi(e) {
 
             resetTahfidzSesiForm();
             renderTahfidzSesiCards();
-            loadAdminTahfidzData();
+            populateTahfidzCatatSesiDropdown();
+            loadAdminTahfidzData(true);
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal menyimpan sesi: " + ((res && res.message) || "Terjadi kesalahan"));
         }
@@ -2101,8 +3637,7 @@ async function submitTahfidzSesi(e) {
         console.error(err);
         if (typeof showToast === 'function') showToast("❌ Terjadi kendala saat menyimpan jadwal sesi: " + (err.message || err));
     } finally {
-        if (btn) btn.disabled = false;
-        if (btnText && (!idInput || !idInput.value)) btnText.innerText = "Simpan Sesi";
+        setTahfidzButtonLoading(btn, false);
     }
 }
 
@@ -2161,7 +3696,7 @@ async function deleteTahfidzSesiConfirm(sesiId, namaSesi) {
     if (!confirm(`Hapus jadwal sesi "${namaSesi || sesiId}"?`)) return;
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("deleteTahfidzSesi", { token, sesiId, id: sesiId });
 
         if (res && (res.success || res.status === "success")) {
@@ -2171,7 +3706,8 @@ async function deleteTahfidzSesiConfirm(sesiId, namaSesi) {
             }
             resetTahfidzSesiForm();
             renderTahfidzSesiCards();
-            loadAdminTahfidzData();
+            populateTahfidzCatatSesiDropdown();
+            loadAdminTahfidzData(true);
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal menghapus sesi: " + ((res && res.message) || "Terjadi kesalahan"));
         }
@@ -2186,7 +3722,7 @@ async function deleteTahfidzSesiConfirm(sesiId, namaSesi) {
  */
 async function saveAllHalaqahChanges() {
     if (typeof showToast === 'function') showToast("⏳ Menyimpan seluruh perubahan & menyinkronkan data...");
-    await loadAdminTahfidzData();
+    await loadAdminTahfidzData(true);
     if (typeof showToast === 'function') showToast("✅ Data halaqah, plotting & sesi berhasil disinkronkan.");
     closeTahfidzHalaqahModal();
 }
@@ -2194,22 +3730,40 @@ async function saveAllHalaqahChanges() {
 /**
  * Konfirmasi & Hapus Kelompok Halaqah
  */
-async function deleteTahfidzHalaqahConfirm(halaqahId, namaHalaqah) {
+async function deleteTahfidzHalaqahConfirm(halaqahId, muhafizName) {
     if (!halaqahId) return;
-    if (!confirm(`Hapus kelompok halaqah "${namaHalaqah || halaqahId}"? Santri yang terplotting akan dilepas dari halaqah ini.`)) {
+    if (!confirm(`Hapus kelompok halaqah pembinaan "${muhafizName || halaqahId}"? Santri yang terplotting akan dilepas dari halaqah ini.`)) {
         return;
     }
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("deleteTahfidzHalaqah", { halaqahId, token });
 
         if (res && (res.success || res.status === "success")) {
             if (typeof showToast === 'function') showToast("🗑️ Halaqah berhasil dihapus!");
-            await loadAdminTahfidzData();
+            if (ASNTahfidz.data.halaqahs) {
+                ASNTahfidz.data.halaqahs = ASNTahfidz.data.halaqahs.filter(h => h.halaqahId !== halaqahId);
+            }
+            try {
+                sessionStorage.setItem(TAHFIDZ_CACHE_KEY, JSON.stringify({
+                    data: ASNTahfidz.data,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.warn("Gagal simpan cache:", e);
+            }
+
             renderTahfidzHalaqahCards();
             populatePlottingHalaqahSelector();
             renderTahfidzMatriksBeban();
+            populateTahfidzFilters();
+
+            await loadAdminTahfidzData(true);
+            renderTahfidzHalaqahCards();
+            populatePlottingHalaqahSelector();
+            renderTahfidzMatriksBeban();
+            populateTahfidzFilters();
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal menghapus halaqah: " + ((res && res.message) || "Terjadi kesalahan"));
         }
@@ -2225,40 +3779,88 @@ async function deleteTahfidzHalaqahConfirm(halaqahId, namaHalaqah) {
 async function submitNewHalaqah(e) {
     if (e) e.preventDefault();
 
-    const nama = document.getElementById('input-halaqah-nama')?.value || '';
-    const kat = document.getElementById('input-halaqah-kategori')?.value || 'Tahfidz Anak';
-    const muh = document.getElementById('input-halaqah-muhafiz')?.value || '';
-    const target = document.getElementById('input-halaqah-target')?.value || '';
+    const muh = (document.getElementById('input-halaqah-muhafiz')?.value || '').trim();
+    const target = (document.getElementById('input-halaqah-target')?.value || '').trim() || "Tahfidz 30 Juz";
 
-    if (!nama) {
-        if (typeof showToast === 'function') showToast("⚠️ Nama Halaqah wajib diisi.");
+    if (!muh) {
+        if (typeof showToast === 'function') showToast("⚠️ Silakan pilih Ustadz Muhafiz Pembina terlebih dahulu.");
         return;
     }
 
+    const btn = document.getElementById('btn-submit-tahfidz-halaqah');
+    setTahfidzButtonLoading(btn, true, "Menyimpan Halaqah...");
+
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("saveTahfidzHalaqah", {
             token,
-            namaHalaqah: nama,
-            kategori: kat,
             muhafiz: muh,
             targetKurikulum: target
         });
 
         if (res && (res.success || res.status === "success")) {
-            if (typeof showToast === 'function') showToast("✅ Halaqah baru berhasil dibuat!");
-            if (document.getElementById('input-halaqah-nama')) document.getElementById('input-halaqah-nama').value = '';
+            if (typeof showToast === 'function') showToast("✅ Kelompok halaqah berhasil dibuat!");
+            if (document.getElementById('input-halaqah-muhafiz')) document.getElementById('input-halaqah-muhafiz').value = '';
             if (document.getElementById('input-halaqah-target')) document.getElementById('input-halaqah-target').value = '';
-            await loadAdminTahfidzData();
+            
+            const newHalaqah = {
+                halaqahId: res.halaqahId || ("HLQ-" + Date.now()),
+                muhafiz: muh,
+                namaHalaqah: "Halaqah " + muh,
+                targetKurikulum: target,
+                studentCount: 0,
+                studentIds: []
+            };
+
+            // Tambahkan halaqah lokal ke state
+            if (!ASNTahfidz.data.halaqahs) ASNTahfidz.data.halaqahs = [];
+            const existingIdx = ASNTahfidz.data.halaqahs.findIndex(h => h.halaqahId === newHalaqah.halaqahId);
+            if (existingIdx !== -1) {
+                ASNTahfidz.data.halaqahs[existingIdx] = newHalaqah;
+            } else {
+                ASNTahfidz.data.halaqahs.push(newHalaqah);
+            }
+
+            // Segera sinkronkan cache browser agar state baru tidak hilang
+            try {
+                sessionStorage.setItem(TAHFIDZ_CACHE_KEY, JSON.stringify({
+                    data: ASNTahfidz.data,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.warn("Gagal simpan cache:", e);
+            }
+
+            // Segera render tampilan kartu, selector plotting, matriks dan dropdown filter dashboard
             renderTahfidzHalaqahCards();
             populatePlottingHalaqahSelector();
             renderTahfidzMatriksBeban();
+            populateTahfidzFilters();
+
+            // Sinkronisasi data di latar belakang
+            await loadAdminTahfidzData(true);
+
+            // Re-render sekali lagi untuk memastikan keselarasan data server
+            renderTahfidzHalaqahCards();
+            populatePlottingHalaqahSelector();
+            renderTahfidzMatriksBeban();
+            populateTahfidzFilters();
+
+            // Transisi cerdas: Otomatis alihkan ke Tab 2 (Plotting Santri) dengan halaqah baru aktif
+            if (typeof openPlottingFromHalaqahCard === 'function') {
+                openPlottingFromHalaqahCard(newHalaqah.halaqahId);
+            }
+            if (typeof showToast === 'function') {
+                showToast(`✅ Halaqah ${newHalaqah.namaHalaqah} berhasil dibuat! Mengalihkan ke plotting santri...`);
+            }
         } else {
             if (typeof showToast === 'function') showToast("❌ Gagal membuat halaqah: " + ((res && res.message) || "Terjadi kesalahan"));
         }
     } catch (err) {
         console.error(err);
         if (typeof showToast === 'function') showToast("❌ Gagal menghubungi server.");
+    } finally {
+        setTahfidzButtonLoading(btn, false);
     }
 }
 
@@ -2286,15 +3888,105 @@ function printTahfidzRekap() {
 /**
  * Ekspor Data Mutaba'ah ke CSV
  */
-function exportTahfidzDataCSV() {
-    const students = ASNTahfidz.filteredStudents || [];
+/**
+ * Ekspor Data Mutaba'ah ke Excel (.xlsx) menggunakan SheetJS
+ */
+function exportTahfidzDataXLSX() {
+    const students = ASNTahfidz.filteredStudents || (ASNTahfidz.data && ASNTahfidz.data.students) || [];
     if (students.length === 0) {
         if (typeof showToast === 'function') showToast("⚠️ Tidak ada data untuk diekspor.");
         return;
     }
 
+    const doExport = () => {
+        try {
+            // 1. Siapkan header dan baris data
+            const headers = [
+                "No", "NIS", "Nama Santri", "Gender", "Program / Kelas",
+                "Kelompok Halaqah", "Muhafiz Pembina", "Capaian (Juz)",
+                "Persentase Capaian", "Target Ziyadah / Sesi", "Target Ziyadah / Pekan",
+                "Target Muraja'ah / Sesi", "Target Muraja'ah / Pekan",
+                "Setoran Terakhir", "Nilai Terakhir", "Status Kelulusan", "Status On-Track"
+            ];
+
+            const rows = students.map((st, idx) => [
+                idx + 1,
+                st.nis || "-",
+                st.name || "-",
+                st.gender === "P" ? "Perempuan" : "Laki-laki",
+                st.program || "Tahfidz",
+                st.halaqah?.namaHalaqah || "-",
+                st.halaqah?.muhafiz || "-",
+                st.progress?.currentJuz || 1,
+                `${st.progress?.percent || 0}%`,
+                st.target?.ziyadahSesi || 1,
+                st.target?.ziyadahPekan || 10,
+                st.target?.murajaahSesi || 2,
+                st.target?.murajaahPekan || 10,
+                st.setoranTerakhir ? `${st.setoranTerakhir.surah || ''} (${st.setoranTerakhir.tanggal || ''})` : "Belum Setor",
+                st.setoranTerakhir?.nilai || "-",
+                st.setoranTerakhir?.statusSetoran === 'ULANG' ? "Wajib Mengulang (I'adah)" : (st.setoranTerakhir ? "Lulus / Lanjut" : "-"),
+                st.progress?.onTrackStatus || "-"
+            ]);
+
+            const wsData = [headers, ...rows];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            // 2. Tentukan lebar kolom ideal agar terbaca rapi di Microsoft Excel
+            ws['!cols'] = [
+                { wch: 5 },  // No
+                { wch: 14 }, // NIS
+                { wch: 28 }, // Nama Santri
+                { wch: 14 }, // Gender
+                { wch: 22 }, // Program
+                { wch: 24 }, // Halaqah
+                { wch: 24 }, // Muhafiz
+                { wch: 14 }, // Capaian Juz
+                { wch: 18 }, // Persentase
+                { wch: 20 }, // Target Ziyadah / Sesi
+                { wch: 20 }, // Target Ziyadah / Pekan
+                { wch: 22 }, // Target Murajaah / Sesi
+                { wch: 22 }, // Target Murajaah / Pekan
+                { wch: 28 }, // Setoran Terakhir
+                { wch: 14 }, // Nilai Terakhir
+                { wch: 26 }, // Status Kelulusan (I'adah)
+                { wch: 22 }  // Status On-Track
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rekap Capaian Tahfidz");
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Rekap_Tahfidz_PPTQ_Asnawiyyah_${dateStr}.xlsx`);
+            if (typeof showToast === 'function') showToast("📥 Rekap Tahfidz (.xlsx) berhasil diunduh!");
+        } catch (err) {
+            console.error("Gagal export XLSX:", err);
+            exportTahfidzDataCSVFallback();
+        }
+    };
+
+    if (typeof XLSX !== 'undefined') {
+        doExport();
+    } else {
+        // Load SheetJS secara on-demand jika belum terpasang
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+        script.onload = () => doExport();
+        script.onerror = () => {
+            console.warn("Gagal memuat SheetJS CDN, beralih ke format CSV...");
+            exportTahfidzDataCSVFallback();
+        };
+        document.head.appendChild(script);
+    }
+}
+
+/**
+ * Fallback Ekspor CSV jika library Excel offline
+ */
+function exportTahfidzDataCSVFallback() {
+    const students = ASNTahfidz.filteredStudents || (ASNTahfidz.data && ASNTahfidz.data.students) || [];
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "NIS,Nama Santri,Gender,Program,Halaqah,Capaian Juz,Persentase,Target Ziyadah Harian,Target Ziyadah Pekan,Status On-Track\n";
+    csvContent += "NIS,Nama Santri,Gender,Program,Halaqah,Capaian Juz,Persentase,Target Ziyadah Harian,Target Ziyadah Pekan,Status Mutabaah,Status On-Track\n";
 
     students.forEach(st => {
         const row = [
@@ -2307,6 +3999,7 @@ function exportTahfidzDataCSV() {
             `"${st.progress?.percent || 0}%"`,
             `"${st.target?.ziyadahSesi || 1}"`,
             `"${st.target?.ziyadahPekan || 10}"`,
+            `"${st.setoranTerakhir?.statusSetoran === 'ULANG' ? 'Wajib Mengulang' : 'Lanjut'}"`,
             `"${st.progress?.onTrackStatus || ''}"`
         ].join(",");
         csvContent += row + "\n";
@@ -2315,10 +4008,16 @@ function exportTahfidzDataCSV() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Rekap_Tahfidz_Asnawiyyah_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Rekap_Tahfidz_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    if (typeof showToast === 'function') showToast("📥 Rekap Tahfidz (.csv) berhasil diunduh.");
+}
+
+// Alias untuk kompatibilitas
+function exportTahfidzDataCSV() {
+    exportTahfidzDataXLSX();
 }
 
 // ====================================================================
@@ -2352,7 +4051,7 @@ function openTahfidzPengasuhView() {
  * Inisialisasi Tab Sheet Database Tahfidz di Google Spreadsheet
  */
 async function triggerInitTahfidzSheets() {
-    const ok = confirm("Inisialisasi Database Tahfidz di Google Spreadsheet?\n\nSistem akan membuat 3 tab sheet baru secara otomatis jika belum ada:\n1. Tahfidz_Logs (Riwayat Setoran)\n2. Tahfidz_Target (Target Individual)\n3. Tahfidz_Halaqah (Kelompok Halaqah)\n\nLanjutkan?");
+    const ok = confirm("Inisialisasi Database Tahfidz di Google Spreadsheet?\n\nSistem akan membuat 5 tab sheet resmi secara otomatis jika belum ada:\n1. Tahfidz_Logs (Riwayat Setoran)\n2. Tahfidz_Capaian (Snapshot Posisi Capaian Santri)\n3. Tahfidz_Target (Target Individual Santri)\n4. Tahfidz_Halaqah (Kelompok Halaqah)\n5. Tahfidz_Jadwal_Sesi (Jadwal Sesi Waktu Aktif)\n\nLanjutkan?");
     if (!ok) return;
 
     try {
@@ -2360,7 +4059,7 @@ async function triggerInitTahfidzSheets() {
             showToast("⏳ Menghubungi Spreadsheet untuk membuat tab sheet...");
         }
 
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
         const res = await apiPost("initTahfidzSheets", { token });
 
         if (res && (res.success || res.status === "success")) {
@@ -2368,14 +4067,14 @@ async function triggerInitTahfidzSheets() {
             if (typeof showToast === 'function') {
                 showToast("✅ " + msg);
             }
-            alert("SUKSES:\n" + msg);
+            if (typeof showToast === "function") showToast("✅ " + msg); else alert(msg);
             loadAdminTahfidzData();
         } else {
-            alert("Pemberitahuan:\n" + ((res && res.message) || "Gagal membuat tab sheet. Pastikan Anda sudah login sebagai Admin."));
+            if (typeof showToast === "function") showToast("⚠️ " + ((res && res.message) || "Gagal membuat tab sheet.")); else alert((res && res.message) || "Gagal membuat tab sheet.");
         }
     } catch (err) {
         console.error("Error triggerInitTahfidzSheets:", err);
-        alert("Terjadi kendala koneksi: " + err.message);
+        if (typeof showToast === "function") showToast("❌ Terjadi kendala koneksi: " + err.message); else alert("Terjadi kendala koneksi: " + err.message);
     }
 }
 
@@ -2386,7 +4085,9 @@ window.triggerInitTahfidzSheets = triggerInitTahfidzSheets;
 window.filterTahfidzList = filterTahfidzList;
 window.openTahfidzCatatModal = openTahfidzCatatModal;
 window.closeTahfidzCatatModal = closeTahfidzCatatModal;
+window.populateTahfidzCatatSesiDropdown = populateTahfidzCatatSesiDropdown;
 window.setTahfidzCatatTipe = setTahfidzCatatTipe;
+window.applyTahfidzRecommendation = applyTahfidzRecommendation;
 window.toggleTahfidzPage = toggleTahfidzPage;
 window.applyTahfidzQuickChip = applyTahfidzQuickChip;
 window.submitTahfidzCatat = submitTahfidzCatat;
@@ -2420,6 +4121,7 @@ window.submitNewHalaqah = submitNewHalaqah;
 window.printTahfidzStudentCard = printTahfidzStudentCard;
 window.printTahfidzRekap = printTahfidzRekap;
 window.exportTahfidzDataCSV = exportTahfidzDataCSV;
+window.exportTahfidzDataXLSX = exportTahfidzDataXLSX;
 window.openTahfidzPengasuhView = openTahfidzPengasuhView;
 window.deleteTahfidzHalaqahConfirm = deleteTahfidzHalaqahConfirm;
 window.openPlottingSantri = openPlottingSantri;
@@ -2433,4 +4135,18 @@ window.recalculateTahfidzTargetWeekly = recalculateTahfidzTargetWeekly;
 window.renderTahfidzTargetModalSessions = renderTahfidzTargetModalSessions;
 window.getTahfidzActiveWeeklySessionCounts = getTahfidzActiveWeeklySessionCounts;
 
-
+// Bulk Target & Selection Functions
+window.updateTahfidzBulkSelectionBar = updateTahfidzBulkSelectionBar;
+window.toggleSelectAllTahfidzStudents = toggleSelectAllTahfidzStudents;
+window.toggleSelectTahfidzStudent = toggleSelectTahfidzStudent;
+window.clearTahfidzSelectedStudents = clearTahfidzSelectedStudents;
+window.openTahfidzBulkTargetModal = openTahfidzBulkTargetModal;
+window.closeTahfidzBulkTargetModal = closeTahfidzBulkTargetModal;
+window.setBulkTargetScope = setBulkTargetScope;
+window.onBulkTargetScopeChange = onBulkTargetScopeChange;
+window.recalculateBulkTargetWeekly = recalculateBulkTargetWeekly;
+window.setTahfidzBulkTargetChip = setTahfidzBulkTargetChip;
+window.submitTahfidzBulkTarget = submitTahfidzBulkTarget;
+window.isStudentInHalaqah = isStudentInHalaqah;
+window.populateTahfidzMuhafizSelector = populateTahfidzMuhafizSelector;
+window.renderTahfidzEstimasiKhatam = renderTahfidzEstimasiKhatam;
