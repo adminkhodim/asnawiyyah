@@ -8477,8 +8477,263 @@ function ensureTahfidzLogsAndCapaianSchema_(ss) {
       capaianSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_CAPAIAN, headersCapaian, "#059669");
       console.log("[SCHEMA SUCCESS] Sheet Tahfidz_Capaian berhasil dibuat.");
     }
+
+    // 3. Sinkronisasikan seluruh data capaian santri binaan halaqah & logs
+    syncTahfidzCapaianSheet_(ss);
   } catch (err) {
     console.error("[ENSURE TAHFIDZ SCHEMA ERROR]", err);
+  }
+}
+
+/**
+ * Sinkronisasi Komprehensif Seluruh Data Capaian Santri ke Sheet Tahfidz_Capaian
+ * - Mengambil seluruh plotting halaqah dari Tahfidz_Halaqah (kolom halaqah_id, nama_halaqah, muhafiz)
+ * - Mengambil setoran terakhir santri dari Tahfidz_Logs (Ziyadah, Sabqi, Manzil, Muroja'ah)
+ * - Mengambil nama santri dari master Students jika belum ada di logs
+ * - Mengisi seluruh 15 kolom secara konsisten dan lengkap
+ */
+function syncTahfidzCapaianSheet_(ss) {
+  try {
+    if (!ss) return;
+
+    const headersCapaian = [
+      "student_id", "student_name", "juz_aktif", "halaman_terakhir", "total_halaman_tuntas",
+      "status_terakhir", "halaqah_id", "nama_halaqah", "muhafiz_pembina", "updated_at",
+      "sabqi_halaman", "manzil_juz", "manzil_halaman", "manzil_putaran", "total_halaman_murojaah"
+    ];
+
+    const capaianSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_CAPAIAN, headersCapaian, "#059669");
+    if (!capaianSheet) return;
+
+    // 1. Ambil data halaqah & buat peta santri -> halaqah
+    migrateTahfidzHalaqahSheet_(ss);
+    const halaqahSheet = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+    const studentHalaqahMap = {};
+    if (halaqahSheet && halaqahSheet.getLastRow() > 1) {
+      const hData = halaqahSheet.getDataRange().getValues();
+      const colMap = getHalaqahColumnIndexes(hData[0]);
+      for (let i = 1; i < hData.length; i++) {
+        const r = hData[i];
+        const hId = colMap.id !== -1 ? String(r[colMap.id] || "").trim() : "";
+        const hMuh = colMap.muhafiz !== -1 ? String(r[colMap.muhafiz] || "").trim() : "";
+        if (!hId && !hMuh) continue;
+        const finalHId = hId || ("HLQ-" + (i < 10 ? "0" + i : i));
+        const finalHName = (colMap.nama !== -1 && r[colMap.nama]) ? String(r[colMap.nama]).trim() : (hMuh ? ("Halaqah " + hMuh) : ("Halaqah " + finalHId));
+        const stIds = colMap.studentIds !== -1 ? String(r[colMap.studentIds] || "").split(",").map(x => x.trim()).filter(Boolean) : [];
+        stIds.forEach(stId => {
+          const info = {
+            halaqahId: finalHId,
+            namaHalaqah: finalHName,
+            muhafiz: hMuh || "Ustadz Pembina"
+          };
+          studentHalaqahMap[stId] = info;
+          studentHalaqahMap[stId.toLowerCase()] = info;
+        });
+      }
+    }
+
+    // 2. Ambil master nama santri (dari sheet Students atau entities)
+    const studentNameMap = {};
+    try {
+      const studentSheet = getAuthSheet(ss, SHEET_STUDENTS);
+      if (studentSheet && studentSheet.getLastRow() > 1) {
+        const sData = studentSheet.getDataRange().getValues();
+        const sHeaders = sData[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
+        const sIdIdx = sHeaders.indexOf("student_id");
+        const sNisIdx = sHeaders.indexOf("nis") !== -1 ? sHeaders.indexOf("nis") : sHeaders.indexOf("nisn");
+        const sNameIdx = sHeaders.indexOf("name") !== -1 ? sHeaders.indexOf("name") : sHeaders.indexOf("nama");
+        for (let i = 1; i < sData.length; i++) {
+          const sid = sIdIdx !== -1 ? String(sData[i][sIdIdx] || "").trim() : "";
+          const snis = sNisIdx !== -1 ? String(sData[i][sNisIdx] || "").trim() : "";
+          const sname = sNameIdx !== -1 ? String(sData[i][sNameIdx] || "").trim() : "";
+          if (sid && sname) {
+            studentNameMap[sid] = sname;
+            studentNameMap[sid.toLowerCase()] = sname;
+          }
+          if (snis && sname) {
+            studentNameMap[snis] = sname;
+            studentNameMap[snis.toLowerCase()] = sname;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[SYNC CAPAIAN MASTER STUDENTS WARN]", e);
+    }
+
+    // 3. Ambil seluruh log dari Tahfidz_Logs & kelompokkan per santri
+    const logsSheet = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
+    const studentLogsMap = {};
+    if (logsSheet && logsSheet.getLastRow() > 1) {
+      const lData = logsSheet.getDataRange().getValues();
+      const lHeaders = lData[0].map(h => String(h || "").trim().toLowerCase());
+      const sIdIdx = lHeaders.indexOf("student_id");
+      const nisIdx = lHeaders.indexOf("nis");
+      const nameIdx = lHeaders.indexOf("student_name");
+      const tglIdx = lHeaders.indexOf("tanggal");
+      const tipeIdx = lHeaders.indexOf("tipe");
+      const juzIdx = lHeaders.indexOf("juz");
+      const halIdx = lHeaders.indexOf("halaman_list");
+      const totHalIdx = lHeaders.indexOf("total_halaman");
+      const nilaiIdx = lHeaders.indexOf("nilai");
+      const muhIdx = lHeaders.indexOf("muhafiz");
+      const stIdx = lHeaders.indexOf("status_setoran");
+      const crtIdx = lHeaders.indexOf("created_at");
+
+      for (let i = 1; i < lData.length; i++) {
+        const r = lData[i];
+        const sid = sIdIdx !== -1 ? String(r[sIdIdx] || "").trim() : "";
+        const snis = nisIdx !== -1 ? String(r[nisIdx] || "").trim() : "";
+        const sname = nameIdx !== -1 ? String(r[nameIdx] || "").trim() : "";
+        const key = sid || snis;
+        if (!key) continue;
+
+        if (sname) {
+          if (sid && !studentNameMap[sid]) studentNameMap[sid] = sname;
+          if (snis && !studentNameMap[snis]) studentNameMap[snis] = sname;
+        }
+
+        if (!studentLogsMap[key]) studentLogsMap[key] = [];
+        studentLogsMap[key].push({
+          tanggal: tglIdx !== -1 ? r[tglIdx] : "",
+          createdAt: crtIdx !== -1 ? r[crtIdx] : "",
+          tipe: tipeIdx !== -1 ? String(r[tipeIdx] || "ZIYADAH").trim().toUpperCase() : "ZIYADAH",
+          juz: juzIdx !== -1 ? Number(r[juzIdx] || 1) : 1,
+          halamanList: halIdx !== -1 ? String(r[halIdx] || "1").trim() : "1",
+          totalHalaman: totHalIdx !== -1 ? Number(r[totHalIdx] || 1) : 1,
+          nilai: nilaiIdx !== -1 ? String(r[nilaiIdx] || "").trim().toUpperCase() : "",
+          muhafiz: muhIdx !== -1 ? String(r[muhIdx] || "").trim() : "",
+          statusSetoran: stIdx !== -1 ? String(r[stIdx] || "LANJUT").trim().toUpperCase() : "LANJUT"
+        });
+      }
+    }
+
+    // 4. Kumpulkan seluruh ID santri yang unik (dari Halaqah + Logs)
+    const allStudentIds = new Set();
+    Object.keys(studentHalaqahMap).forEach(id => {
+      if (id === id.toUpperCase() || id.startsWith("STD-") || id.startsWith("std-")) {
+        allStudentIds.add(id);
+      }
+    });
+    Object.keys(studentLogsMap).forEach(id => allStudentIds.add(id));
+
+    // Baca data eksisting di Tahfidz_Capaian untuk merge
+    const capaianData = capaianSheet.getDataRange().getValues();
+    const existingCapaianMap = {};
+    if (capaianData && capaianData.length > 1) {
+      const cHeaders = capaianData[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+      const cIdIdx = cHeaders.findIndex(h => h === "studentid" || h === "id");
+      for (let i = 1; i < capaianData.length; i++) {
+        const sid = cIdIdx !== -1 ? String(capaianData[i][cIdIdx] || "").trim() : "";
+        if (sid) {
+          existingCapaianMap[sid] = capaianData[i];
+          existingCapaianMap[sid.toLowerCase()] = capaianData[i];
+          allStudentIds.add(sid);
+        }
+      }
+    }
+
+    const rowsToSet = [];
+    const nowIso = new Date().toISOString();
+
+    allStudentIds.forEach(sId => {
+      if (!sId) return;
+      const sIdClean = String(sId).trim();
+      const sName = studentNameMap[sIdClean] || studentNameMap[sIdClean.toLowerCase()] || sIdClean;
+      const hlqInfo = studentHalaqahMap[sIdClean] || studentHalaqahMap[sIdClean.toLowerCase()] || null;
+
+      const logs = studentLogsMap[sIdClean] || studentLogsMap[sIdClean.toLowerCase()] || [];
+      // Urutkan logs dari yang paling baru
+      logs.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
+
+      let juzAktif = 1;
+      let halTerakhir = 1;
+      let totalTuntas = 0;
+      let statusTerakhir = "LANJUT";
+      let muhafizPembina = hlqInfo ? hlqInfo.muhafiz : "";
+      let sabqiHal = "";
+      let manzilJuz = "";
+      let manzilHal = "";
+      let manzilPutaran = 1;
+      let totalMurojaah = 0;
+
+      // Cari Ziyadah terakhir
+      const lastZiyadah = logs.find(l => l.tipe === "ZIYADAH");
+      if (lastZiyadah) {
+        juzAktif = lastZiyadah.juz || 1;
+        const halNum = Number(String(lastZiyadah.halamanList).replace(/\D/g, "")) || 1;
+        halTerakhir = halNum;
+        totalTuntas = (juzAktif - 1) * 20 + halTerakhir;
+        statusTerakhir = lastZiyadah.statusSetoran || (lastZiyadah.nilai === "DHAIF" ? "ULANG" : "LANJUT");
+        if (!muhafizPembina && lastZiyadah.muhafiz) muhafizPembina = lastZiyadah.muhafiz;
+      }
+
+      // Cari Sabqi terakhir
+      const lastSabqi = logs.find(l => l.tipe === "MURAJAAH_SABQI");
+      if (lastSabqi) {
+        sabqiHal = lastSabqi.halamanList;
+        if (!muhafizPembina && lastSabqi.muhafiz) muhafizPembina = lastSabqi.muhafiz;
+      }
+
+      // Cari Manzil terakhir
+      const lastManzil = logs.find(l => l.tipe === "MURAJAAH_MANZIL");
+      if (lastManzil) {
+        manzilJuz = lastManzil.juz || 1;
+        manzilHal = Number(String(lastManzil.halamanList).replace(/\D/g, "")) || 1;
+        if (!muhafizPembina && lastManzil.muhafiz) muhafizPembina = lastManzil.muhafiz;
+      }
+
+      // Akumulasi total halaman murojaah
+      logs.forEach(l => {
+        if (l.tipe.indexOf("MURAJAAH") !== -1 || l.tipe === "TASMI") {
+          totalMurojaah += Number(l.totalHalaman || 1);
+        }
+      });
+
+      // Merge dengan data eksisting jika ada data yang lebih update
+      const existingRow = existingCapaianMap[sIdClean] || existingCapaianMap[sIdClean.toLowerCase()];
+      if (existingRow && logs.length === 0) {
+        juzAktif = Number(existingRow[2]) || 1;
+        halTerakhir = Number(existingRow[3]) || 1;
+        totalTuntas = Number(existingRow[4]) || 0;
+        statusTerakhir = existingRow[5] || "LANJUT";
+        sabqiHal = existingRow[10] || "";
+        manzilJuz = existingRow[11] || "";
+        manzilHal = existingRow[12] || "";
+        manzilPutaran = Number(existingRow[13]) || 1;
+        totalMurojaah = Number(existingRow[14]) || 0;
+        if (!muhafizPembina) muhafizPembina = existingRow[8] || "";
+      }
+
+      rowsToSet.push([
+        sIdClean,                                           // 0: student_id
+        sName,                                              // 1: student_name
+        juzAktif,                                           // 2: juz_aktif
+        halTerakhir,                                        // 3: halaman_terakhir
+        totalTuntas,                                        // 4: total_halaman_tuntas
+        statusTerakhir,                                     // 5: status_terakhir
+        hlqInfo ? hlqInfo.halaqahId : "",                   // 6: halaqah_id
+        hlqInfo ? hlqInfo.namaHalaqah : "",                 // 7: nama_halaqah
+        muhafizPembina,                                     // 8: muhafiz_pembina
+        nowIso,                                             // 9: updated_at
+        sabqiHal,                                           // 10: sabqi_halaman
+        manzilJuz,                                          // 11: manzil_juz
+        manzilHal,                                          // 12: manzil_halaman
+        manzilPutaran || 1,                                 // 13: manzil_putaran
+        totalMurojaah                                       // 14: total_halaman_murojaah
+      ]);
+    });
+
+    if (rowsToSet.length > 0) {
+      rowsToSet.sort((a, b) => (a[6] || "").localeCompare(b[6] || "") || (a[1] || "").localeCompare(b[1] || ""));
+      const lastRow = capaianSheet.getLastRow();
+      if (lastRow > 1) {
+        capaianSheet.getRange(2, 1, lastRow - 1, headersCapaian.length).clearContent();
+      }
+      capaianSheet.getRange(2, 1, rowsToSet.length, headersCapaian.length).setValues(rowsToSet);
+      console.log(`[SYNC TAHFIDZ CAPAIAN SUCCESS] Berhasil menyelaraskan ${rowsToSet.length} data capaian santri.`);
+    }
+  } catch (err) {
+    console.error("[SYNC TAHFIDZ CAPAIAN ERROR]", err);
   }
 }
 
@@ -8535,13 +8790,14 @@ function runTahfidzSchemaMigration() {
   if (!ss) {
     throw new Error("Spreadsheet database tidak ditemukan. Pastikan SPREADSHEET_ID sudah diatur di Script Properties atau script terhubung ke Spreadsheet.");
   }
-  console.log("[SCHEMA MIGRATION] Memulai migrasi skema Tahfidz...");
+  console.log("[SCHEMA MIGRATION] Memulai migrasi skema & sinkronisasi Tahfidz...");
   migrateTahfidzHalaqahSheet_(ss);
   ensureTahfidzLogsAndCapaianSchema_(ss);
-  console.log("[SCHEMA MIGRATION SUCCESS] Migrasi skema Tahfidz selesai.");
+  syncTahfidzCapaianSheet_(ss);
+  console.log("[SCHEMA MIGRATION SUCCESS] Migrasi skema & sinkronisasi Tahfidz selesai.");
   return {
     status: "success",
-    message: "Migrasi skema Tahfidz (Halaqah 5 kolom, Kolom Q status_setoran pada Tahfidz_Logs, dan Sheet Tahfidz_Capaian) berhasil."
+    message: "Migrasi skema Tahfidz (Halaqah 5 kolom, Kolom Q status_setoran pada Tahfidz_Logs, dan Sinkronisasi Sheet Tahfidz_Capaian) berhasil."
   };
 }
 
@@ -9297,10 +9553,37 @@ function saveTahfidzLog(payload, token) {
       const halNum = Number(String(halamanList).replace(/\D/g, "")) || 1;
       const totalTuntas = (juz - 1) * 20 + halNum;
 
+      // Cari relasi halaqah santri jika ada
+      let studentHalaqahId = "";
+      let studentHalaqahName = "";
+      let halaqahMuhafiz = muhafiz;
+      try {
+        const halaqahSheet = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+        if (halaqahSheet && halaqahSheet.getLastRow() > 1) {
+          const hData = halaqahSheet.getDataRange().getValues();
+          const colMap = getHalaqahColumnIndexes(hData[0]);
+          for (let hi = 1; hi < hData.length; hi++) {
+            const hr = hData[hi];
+            const stIds = colMap.studentIds !== -1 ? String(hr[colMap.studentIds] || "").split(",").map(x => x.trim().toLowerCase()) : [];
+            if (stIds.includes(studentId.toLowerCase()) || (nis && stIds.includes(nis.toLowerCase()))) {
+              studentHalaqahId = colMap.id !== -1 ? String(hr[colMap.id] || "").trim() : "";
+              const hMuh = colMap.muhafiz !== -1 ? String(hr[colMap.muhafiz] || "").trim() : "";
+              studentHalaqahName = (colMap.nama !== -1 && hr[colMap.nama]) ? String(hr[colMap.nama]).trim() : (hMuh ? ("Halaqah " + hMuh) : ("Halaqah " + studentHalaqahId));
+              if (!halaqahMuhafiz && hMuh) halaqahMuhafiz = hMuh;
+              break;
+            }
+          }
+        }
+      } catch (hlqErr) {
+        console.warn("[HALAQAH LOOKUP WARN]", hlqErr);
+      }
+
       if (capaianRowIdx !== -1) {
         if (nameIdx !== -1) capaianSheet.getRange(capaianRowIdx, nameIdx + 1).setValue(studentName);
         if (stIdx !== -1) capaianSheet.getRange(capaianRowIdx, stIdx + 1).setValue(statusSetoran);
-        if (muhIdx !== -1 && muhafiz) capaianSheet.getRange(capaianRowIdx, muhIdx + 1).setValue(muhafiz);
+        if (muhIdx !== -1 && (halaqahMuhafiz || muhafiz)) capaianSheet.getRange(capaianRowIdx, muhIdx + 1).setValue(halaqahMuhafiz || muhafiz);
+        if (hlqIdIdx !== -1 && studentHalaqahId) capaianSheet.getRange(capaianRowIdx, hlqIdIdx + 1).setValue(studentHalaqahId);
+        if (hlqNmIdx !== -1 && studentHalaqahName) capaianSheet.getRange(capaianRowIdx, hlqNmIdx + 1).setValue(studentHalaqahName);
         if (updIdx !== -1) capaianSheet.getRange(capaianRowIdx, updIdx + 1).setValue(new Date().toISOString());
 
         if (tipe === "ZIYADAH" && statusSetoran !== "ULANG") {
@@ -9313,6 +9596,11 @@ function saveTahfidzLog(payload, token) {
           if (manzilJuzIdx !== -1) capaianSheet.getRange(capaianRowIdx, manzilJuzIdx + 1).setValue(juz);
           if (manzilHalIdx !== -1) capaianSheet.getRange(capaianRowIdx, manzilHalIdx + 1).setValue(halNum);
         }
+
+        if (totMurojaahIdx !== -1 && (tipe.indexOf("MURAJAAH") !== -1 || tipe === "TASMI")) {
+          const currentMur = Number(cData[capaianRowIdx - 1][totMurojaahIdx]) || 0;
+          capaianSheet.getRange(capaianRowIdx, totMurojaahIdx + 1).setValue(currentMur + totalHalaman);
+        }
       } else {
         const newRow = new Array(headersCapaian.length).fill("");
         if (sIdIdx !== -1) newRow[sIdIdx] = studentId;
@@ -9321,8 +9609,18 @@ function saveTahfidzLog(payload, token) {
         if (halIdx !== -1) newRow[halIdx] = halNum;
         if (totIdx !== -1) newRow[totIdx] = totalTuntas;
         if (stIdx !== -1) newRow[stIdx] = statusSetoran;
-        if (muhIdx !== -1) newRow[muhIdx] = muhafiz;
+        if (hlqIdIdx !== -1) newRow[hlqIdIdx] = studentHalaqahId;
+        if (hlqNmIdx !== -1) newRow[hlqNmIdx] = studentHalaqahName;
+        if (muhIdx !== -1) newRow[muhIdx] = halaqahMuhafiz || muhafiz;
         if (updIdx !== -1) newRow[updIdx] = new Date().toISOString();
+        if (tipe === "MURAJAAH_SABQI" && sabqiIdx !== -1) newRow[sabqiIdx] = halamanList;
+        if (tipe === "MURAJAAH_MANZIL") {
+          if (manzilJuzIdx !== -1) newRow[manzilJuzIdx] = juz;
+          if (manzilHalIdx !== -1) newRow[manzilHalIdx] = halNum;
+        }
+        if (totMurojaahIdx !== -1) {
+          newRow[totMurojaahIdx] = (tipe.indexOf("MURAJAAH") !== -1 || tipe === "TASMI") ? totalHalaman : 0;
+        }
         capaianSheet.appendRow(newRow);
       }
     } catch (capErr) {
@@ -9949,6 +10247,9 @@ function saveTahfidzHalaqah(payload, token) {
       sheet.appendRow(rowValues);
     }
 
+    // Sinkronisasi otomatis ke Sheet Tahfidz_Capaian
+    syncTahfidzCapaianSheet_(ss);
+
     return {
       status: "success",
       success: true,
@@ -10013,6 +10314,9 @@ function saveTahfidzPlotting(payload, token) {
 
     sheet.getRange(foundRow, colMap.studentIds + 1).setValue(cleanStudentIds.join(","));
 
+    // Sinkronisasi otomatis ke Sheet Tahfidz_Capaian
+    syncTahfidzCapaianSheet_(ss);
+
     return {
       status: "success",
       success: true,
@@ -10069,6 +10373,8 @@ function deleteTahfidzHalaqah(halaqahId, token) {
 
     if (foundRow > 0) {
       sheet.deleteRow(foundRow);
+      // Sinkronisasi otomatis ke Sheet Tahfidz_Capaian
+      syncTahfidzCapaianSheet_(ss);
       return {
         status: "success",
         success: true,
