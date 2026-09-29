@@ -201,6 +201,7 @@
             items: [
                 { key: 'berita.manage', label: 'Manajemen Berita & Pengumuman', desc: 'Izin menerbitkan artikel, agenda pondok, dan warta santri' },
                 { key: 'banner.manage', label: 'Manajemen Banner Slider', desc: 'Izin mengubah banner promosi & kegiatan beranda' },
+                { key: 'program.manage', label: 'Manajemen Program Pesantren (CMS)', desc: 'Izin mengelola, mengedit, dan mempublikasikan Program Pesantren' },
                 { key: 'galeri.manage', label: 'Manajemen Galeri Foto', desc: 'Izin mengunggah album dokumentasi kegiatan santri' },
                 { key: 'notifikasi.broadcast', label: 'Broadcast Pesan & Notifikasi', desc: 'Izin mengirim notifikasi pengumuman ke akun santri/wali' }
             ]
@@ -228,7 +229,7 @@
         'sorogan': ['sorogan.view', 'sorogan.entry'],
         'presensi': ['presensi.view', 'presensi.entry'],
         'ppdb': ['ppdb.manage'],
-        'program': ['unit.manage', 'profil.manage'],
+        'program': ['program.manage', 'unit.manage', 'profil.manage'],
         'unit-kegiatan': ['unit.manage'],
         'users': ['users.manage'],
         'roles': ['roles.manage'],
@@ -249,7 +250,7 @@
             'santri.view', 'santri.create', 'santri.edit', 'santri.export', 'unit.manage',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tpq.view', 'tpq.entry', 'sorogan.view', 'sorogan.entry', 'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
-            'berita.manage', 'banner.manage', 'galeri.manage', 'notifikasi.broadcast',
+            'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config'
         ],
         'ASATIDZ': [
@@ -261,10 +262,10 @@
             'santri.view', 'ppdb.manage', 'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'notifikasi.broadcast', 'pegawai.manage', 'profil.manage'
         ],
         'PENGURUS': [
-            'santri.view', 'presensi.view', 'presensi.entry', 'unit.manage', 'ppdb.manage', 'berita.manage', 'banner.manage', 'galeri.manage', 'notifikasi.broadcast', 'profil.manage'
+            'santri.view', 'presensi.view', 'presensi.entry', 'unit.manage', 'ppdb.manage', 'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast', 'profil.manage'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'unit.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
+            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'unit.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'keuangan.view', 'berita.manage', 'galeri.manage', 'profil.manage'

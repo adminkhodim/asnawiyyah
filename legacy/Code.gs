@@ -2413,41 +2413,44 @@ class GoogleSheetsProgramAdapter extends ProgramRepository {
   _getProgramsSheet() {
     let ss = null;
     try {
-      ss = SpreadsheetApp.getActiveSpreadsheet();
+      if (typeof getDatabaseSpreadsheet === "function") {
+        ss = getDatabaseSpreadsheet();
+      }
+      if (!ss) {
+        ss = SpreadsheetApp.getActiveSpreadsheet();
+      }
     } catch (e) {
       throw new PersistenceError("SpreadsheetApp active spreadsheet is unavailable: " + e.message);
     }
     if (!ss) {
-      throw new PersistenceError("Active spreadsheet object is null.");
+      throw new PersistenceError("Active spreadsheet object is null. Pastikan SPREADSHEET_ID terkonfigurasi di Script Properties.");
     }
 
-    const sheet = ss.getSheetByName(this.sheetName);
+    let sheet = ss.getSheetByName(this.sheetName);
     if (!sheet) {
-      throw new PersistenceError(`Sheet '${this.sheetName}' not found in spreadsheet.`);
+      // Auto-create sheet Programs jika belum ada di database
+      sheet = ss.insertSheet(this.sheetName);
+      sheet.getRange(1, 1, 1, this.expectedHeaders.length).setValues([this.expectedHeaders]);
+      sheet.getRange(1, 1, 1, this.expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+      return sheet;
     }
 
     const dataRange = sheet.getDataRange();
     const values = dataRange.getValues();
-    if (!values || values.length === 0) {
-      throw new PersistenceError(`Sheet '${this.sheetName}' is completely empty (missing header row).`);
+    if (!values || values.length === 0 || (values.length === 1 && !values[0][0])) {
+      sheet.getRange(1, 1, 1, this.expectedHeaders.length).setValues([this.expectedHeaders]);
+      sheet.getRange(1, 1, 1, this.expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+      return sheet;
     }
 
     const headerRow = values[0];
     if (headerRow.length < this.expectedHeaders.length) {
-      throw new PersistenceError(
-        `Sheet '${this.sheetName}' header schema mismatch: expected at least ${this.expectedHeaders.length} columns, found ${headerRow.length}.`
-      );
-    }
-
-    // Verify critical column header names (case-insensitive trim match)
-    for (let colIdx = 0; colIdx < this.expectedHeaders.length; colIdx++) {
-      const expectedCol = this.expectedHeaders[colIdx];
-      const actualCol = String(headerRow[colIdx] || "").trim().toLowerCase();
-      if (actualCol !== expectedCol) {
-        throw new PersistenceError(
-          `Sheet '${this.sheetName}' header schema mismatch at column ${colIdx + 1}: expected '${expectedCol}', found '${actualCol}'.`
-        );
-      }
+      sheet.getRange(1, 1, 1, this.expectedHeaders.length).setValues([this.expectedHeaders]);
+      sheet.getRange(1, 1, 1, this.expectedHeaders.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+      return sheet;
     }
 
     return sheet;
@@ -3058,8 +3061,11 @@ function verifySessionToken(tokenString, requireAuthSecret = false) {
  * Action Authorization Matrix
  */
 const AllowedRoles = Object.freeze({
+  SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
-  EDITOR: "editor"
+  PENGASUH: "pengasuh",
+  EDITOR: "editor",
+  PENGURUS: "pengurus"
 });
 
 function authorizeAction(actorContext, actionName) {
@@ -3087,15 +3093,18 @@ function authorizeAction(actorContext, actionName) {
     "program.archive"
   ];
 
+  const adminRoles = ["admin", "super_admin", "pengasuh", "administrator"];
+  const editorRoles = ["admin", "super_admin", "pengasuh", "administrator", "editor", "pengurus"];
+
   if (adminActions.includes(actionName)) {
-    if (role !== AllowedRoles.ADMIN) {
+    if (!adminRoles.includes(role)) {
       throw new AuthorizationError(`Role '${actorContext.role}' is forbidden from performing action '${actionName}'.`);
     }
     return true;
   }
 
   if (editorActions.includes(actionName)) {
-    if (role !== AllowedRoles.ADMIN && role !== AllowedRoles.EDITOR) {
+    if (!editorRoles.includes(role)) {
       throw new AuthorizationError(`Role '${actorContext.role}' is forbidden from performing action '${actionName}'.`);
     }
     return true;

@@ -1826,7 +1826,17 @@
         }
 
         function getAdminSessionRole() {
-            return sessionStorage.getItem("asnawiyyah_admin_role") || localStorage.getItem("asnawiyyah_admin_role") || "admin";
+            const r = sessionStorage.getItem("ASN_ADMIN_ROLE") || 
+                      sessionStorage.getItem("asnawiyyah_admin_role") || 
+                      localStorage.getItem("asnawiyyah_admin_role") || 
+                      (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                      "ADMIN";
+            return String(r).toUpperCase().trim();
+        }
+
+        function isUserAdminRole() {
+            const r = getAdminSessionRole();
+            return r === "ADMIN" || r === "SUPER_ADMIN" || r === "PENGASUH" || r === "ADMINISTRATOR";
         }
 
         async function loadAdminProgramList() {
@@ -1961,7 +1971,7 @@
             if (stateContainer) stateContainer.classList.add('hidden');
 
             const role = getAdminSessionRole();
-            const isAdmin = (role === "admin");
+            const isAdmin = isUserAdminRole();
 
             list.forEach((item, index) => {
                 const status = String(item.status || "draft").toLowerCase();
@@ -2422,7 +2432,7 @@
             const prosedurPlaceholder = document.getElementById('admin-prog-prosedur-preview-placeholder');
             const prosedurStatus = document.getElementById('admin-prog-prosedur-upload-status');
             const role = getAdminSessionRole();
-            const isAdmin = (role === "admin");
+            const isAdmin = isUserAdminRole();
 
             if (publishBtn) {
                 if (isAdmin) publishBtn.classList.remove('hidden');
