@@ -94,6 +94,12 @@ function doPost(e) {
       );
     }
 
+    if (action === "recordNewsView") {
+      return createJsonResponse(
+        recordNewsView(payload.data || payload)
+      );
+    }
+
     if (action === "saveBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -993,13 +999,18 @@ function simpanBerita(formData) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
-      sheet.appendRow(["news_id", "slug", "Tanggal", "Judul", "Kategori", "Penulis", "Gambar_URL", "Ringkasan", "Isi"]);
+      sheet.appendRow(["news_id", "slug", "Tanggal", "Judul", "Kategori", "Penulis", "Gambar_URL", "Ringkasan", "Isi", "Views"]);
     }
     
     // Check if the sheet header represents STATE A (Legacy)
     var header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     if (header[0] === "Tanggal") {
        throw new Error("Migrasi identitas belum dilakukan. Harap jalankan migrasi terlebih dahulu.");
+    }
+
+    // Pastikan kolom ke-10 adalah Views
+    if (header[0] === "news_id" && (!header[9] || String(header[9]).trim() === "")) {
+      sheet.getRange(1, 10).setValue("Views");
     }
     
     var identities = generateUniqueIdentities(sheet, formData.judul);
@@ -1013,7 +1024,8 @@ function simpanBerita(formData) {
       formData.penulis,
       fileUrl,
       formData.ringkasan,
-      formData.isi
+      formData.isi,
+      0 // Views awal
     ]);
 
     return { success: true, message: "Berita berhasil dipublikasikan!" };
@@ -1125,6 +1137,59 @@ function deleteBeritaData(payload) {
   }
 }
 
+function recordNewsView(payload) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (e) {
+    return { success: false, message: "Sistem sibuk (Lock timeout)" };
+  }
+
+  try {
+    var news_id = payload.news_id || payload.id;
+    var slug = payload.slug;
+    if (!news_id && !slug) {
+      return { success: false, message: "ID berita atau slug wajib disertakan." };
+    }
+
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      return { success: false, message: "Sheet Berita tidak ditemukan." };
+    }
+
+    // Pastikan header kolom Views (kolom 10) ada
+    var lastCol = Math.max(sheet.getLastColumn(), 10);
+    var header = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    if (header[0] === "news_id" && (!header[9] || String(header[9]).trim() === "")) {
+      sheet.getRange(1, 10).setValue("Views");
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var targetRow = -1;
+    for (var i = 1; i < data.length; i++) {
+      if ((news_id && String(data[i][0]).trim() === String(news_id).trim()) ||
+          (slug && String(data[i][1]).trim() === String(slug).trim())) {
+        targetRow = i + 1; // 1-indexed
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return { success: false, message: "Berita tidak ditemukan." };
+    }
+
+    var currentViews = Number(sheet.getRange(targetRow, 10).getValue()) || 0;
+    var newViews = currentViews + 1;
+    sheet.getRange(targetRow, 10).setValue(newViews);
+
+    return { success: true, views: newViews };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function mintaIzinDrive() {
   // Memicu izin tulis & buat file (Create File Scope) secara paksa
   var folder = DriveApp.getFolderById(FOLDER_ID);
@@ -1169,6 +1234,12 @@ function doGet(e) {
     if (action === "getKabar") {
       return createJsonResponse(
         getKabarData()
+      );
+    }
+
+    if (action === "recordNewsView") {
+      return createJsonResponse(
+        recordNewsView(e.parameter || {})
       );
     }
 
@@ -1328,10 +1399,11 @@ function getKabarData() {
             tanggal: data[i][2] ? formatDate(data[i][2]) : "",
             judul: judul,
             kategori: data[i][4] ? String(data[i][4]) : "Kabar",
-            penulis: "Admin",
+            penulis: data[i][5] ? String(data[i][5]) : "Admin",
             gambar: data[i][6] ? String(data[i][6]) : "",
             ringkasan: data[i][7] ? String(data[i][7]) : "",
-            isi: data[i][8] ? String(data[i][8]) : ""
+            isi: data[i][8] ? String(data[i][8]) : "",
+            views: Number(data[i][9]) || 0
           });
         }
       } else {

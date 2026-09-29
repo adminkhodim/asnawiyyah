@@ -4124,46 +4124,98 @@
             <article class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
 
                 <!-- Judul & Meta Data -->
-                <div class="space-y-2">
-                    <h1 id="detail-news-title" class="text-base md:text-xl font-extrabold text-slate-800 leading-snug">
+                <div class="space-y-2.5">
+                    <h1 id="detail-news-title" class="text-base md:text-2xl font-extrabold text-slate-800 dark:text-slate-100 leading-snug">
                         Judul Berita
                     </h1>
-                    <div class="flex items-center space-x-2 text-[11px] text-slate-400 border-b border-slate-100 pb-3">
-                        <span id="detail-news-date"><i class="fa-solid fa-calendar mr-1"></i> Tanggal</span>
+                    <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span id="detail-news-date" class="flex items-center"><i class="fa-solid fa-calendar mr-1 text-slate-400"></i> Tanggal</span>
                         <span>•</span>
-                        <span>Penulis: <strong id="detail-news-author"
-                                class="text-brand-700 font-semibold">Admin</strong></span>
+                        <span>Penulis: <strong id="detail-news-author" class="text-brand-700 dark:text-emerald-400 font-semibold">Admin</strong></span>
+                        <span>•</span>
+                        <span id="detail-news-views-badge" class="inline-flex items-center px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+                            <i class="fa-solid fa-eye mr-1 text-emerald-600 dark:text-emerald-400"></i>
+                            <span id="detail-news-views-count">0</span>x Dilihat
+                        </span>
+                    </div>
+
+                    <!-- Reader Control Bar: Font Resizer & Quick Share -->
+                    <div class="flex flex-wrap items-center justify-between gap-2.5 py-2 px-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447]">
+                        <!-- Font Size Resizer -->
+                        <div class="flex items-center space-x-1">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
+                                <i class="fa-solid fa-font mr-1"></i>Ukuran:
+                            </span>
+                            <div class="inline-flex items-center p-0.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+                                <button type="button" onclick="setNewsReaderFontSize('sm')" id="btn-font-sm" title="Ukuran Font Ringkas" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">A-</button>
+                                <button type="button" onclick="setNewsReaderFontSize('base')" id="btn-font-base" title="Ukuran Font Normal" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-brand-700 text-white shadow-xs">A</button>
+                                <button type="button" onclick="setNewsReaderFontSize('lg')" id="btn-font-lg" title="Ukuran Font Besar" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">A+</button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Social Share Buttons -->
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
+                                <i class="fa-solid fa-share-nodes mr-1"></i>Bagikan:
+                            </span>
+                            <button type="button" onclick="shareNewsViaWhatsApp()" title="Bagikan ke WhatsApp" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                                <span class="hidden md:inline">WhatsApp</span>
+                            </button>
+                            <button type="button" onclick="shareNewsViaFacebook()" title="Bagikan ke Facebook" class="px-2.5 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                                <i class="fa-brands fa-facebook-f text-xs"></i>
+                                <span class="hidden md:inline">Facebook</span>
+                            </button>
+                            <button type="button" onclick="copyShareLink()" title="Salin Tautan Berita" class="px-2.5 py-1.5 bg-white dark:bg-[#15202d] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1 active:scale-95">
+                                <i class="fa-solid fa-link text-xs"></i>
+                                <span class="hidden md:inline">Salin</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Foto Utama Berita (16:9) -->
                 <div id="detail-news-img-container"
-                    class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
+                    class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-xs">
                     <img id="detail-news-img" src="" alt="Foto Berita" class="w-full h-full object-cover">
                 </div>
 
                 <!-- Ringkasan Cuplikan (Lead Text) -->
                 <div id="detail-news-summary-box"
-                    class="p-3.5 bg-slate-50 border-l-4 border-brand-700 rounded-r-xl text-xs md:text-sm font-medium text-slate-700 italic leading-relaxed">
+                    class="p-4 bg-slate-50 dark:bg-[#1c2836] border-l-4 border-brand-700 dark:border-emerald-500 rounded-r-2xl font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed text-sm md:text-base">
                     <p id="detail-news-summary"></p>
                 </div>
 
-                <!-- Isi Berita Lengkap (Bisa Scroll Panjang Tanpa Batas) -->
+                <!-- Isi Berita Lengkap (Support Rich HTML, Bold, Italic, Justify, Inline Images) -->
                 <div id="detail-news-body"
-                    class="text-xs md:text-sm text-slate-700 leading-loose space-y-3 whitespace-pre-line">
+                    class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed md:leading-loose space-y-4 text-justify news-rich-content">
                     <!-- Isi Lengkap Artikel -->
                 </div>
 
                 <!-- Tombol Bagikan & Kembali di Bagian Bawah -->
-                <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
-                    <button onclick="copyShareLink()"
-                        class="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-brand-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
-                        <i class="fa-solid fa-share-nodes"></i>
-                        <span>Bagikan Berita</span>
-                    </button>
-                    <button onclick="kembaliDariBerita()"
-                        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition active:scale-95">
-                        Kembali ke Daftar
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-2.5 justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Bagikan Artikel:</span>
+                        <button type="button" onclick="shareNewsViaWhatsApp()"
+                            class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                            <span>WhatsApp</span>
+                        </button>
+                        <button type="button" onclick="shareNewsViaFacebook()"
+                            class="px-3.5 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-brands fa-facebook-f text-xs"></i>
+                            <span>Facebook</span>
+                        </button>
+                        <button type="button" onclick="copyShareLink()"
+                            class="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                            <i class="fa-solid fa-link text-xs"></i>
+                            <span class="hidden sm:inline">Salin Link</span>
+                        </button>
+                    </div>
+                    <button type="button" onclick="kembaliDariBerita()"
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition active:scale-95">
+                        <i class="fa-solid fa-arrow-left mr-1.5"></i>
+                        <span>Kembali ke Berita</span>
                     </button>
                 </div>
             </article>
@@ -4750,13 +4802,48 @@
                                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none bg-slate-50 focus:bg-white transition"
                                     placeholder="Contoh: Humas Pesantren">
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Upload Foto /
-                                    Gambar Dokumentasi</label>
-                                <input type="file" id="admin-news-file" accept="image/*"
-                                    class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-brand-700 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer bg-slate-50 p-1 focus:outline-none">
-                                <p class="text-[10px] text-slate-400 mt-1">*Format: JPG, PNG, WEBP (Maksimal 5MB)</p>
+                            <!-- Upload Foto Utama dengan Sistem Crop 16:9 & Kompresi <= 250KB -->
+                            <div class="md:col-span-2 space-y-2">
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase">
+                                    Foto Utama Berita (Rasio 16:9 • Maks 250 KB)
+                                </label>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                    <!-- Input File & Trigger -->
+                                    <div class="sm:col-span-2 space-y-2">
+                                        <input type="file" id="admin-news-file" accept="image/*" onchange="handleAdminNewsFileSelected(event)"
+                                            class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-brand-700 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer bg-slate-50 p-1 focus:outline-none">
+                                        
+                                        <div class="flex flex-wrap items-center gap-2 text-[10px]">
+                                            <span id="admin-news-size-badge" class="hidden px-2.5 py-1 rounded-lg font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                <i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i>
+                                                <span id="admin-news-size-text">Ukuran: 0 KB / Maks 250 KB</span>
+                                            </span>
+                                            <button type="button" id="admin-news-recrop-btn" onclick="openAdminNewsCropModal()" class="hidden px-2.5 py-1 rounded-lg font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition">
+                                                <i class="fa-solid fa-crop-simple mr-1"></i> Sesuaikan / Crop Ulang
+                                            </button>
+                                            <button type="button" id="admin-news-remove-img-btn" onclick="clearAdminNewsPhoto()" class="hidden px-2 py-1 rounded-lg font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition">
+                                                <i class="fa-solid fa-trash mr-1"></i> Hapus Foto
+                                            </button>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 leading-tight">
+                                            *Pilih gambar untuk membuka dialog <strong>Crop 16:9</strong> & kompresi otomatis ke format WebP (&le; 250 KB).
+                                        </p>
+                                    </div>
+
+                                    <!-- Thumbnail Pratinjau 16:9 -->
+                                    <div class="sm:col-span-1">
+                                        <div class="w-full aspect-video rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden relative flex items-center justify-center text-slate-400 shadow-inner group">
+                                            <img id="admin-news-preview-img" src="" alt="Pratinjau Foto" class="hidden w-full h-full object-cover">
+                                            <div id="admin-news-preview-placeholder" class="text-center p-2">
+                                                <i class="fa-regular fa-image text-2xl block mb-1 opacity-50"></i>
+                                                <span class="text-[9px] block">Pratinjau 16:9</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
                             <div class="md:col-span-2">
                                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Ringkasan
                                     Cuplikan (Headline & Card)</label>
@@ -4764,12 +4851,71 @@
                                     class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none bg-slate-50 focus:bg-white transition"
                                     placeholder="Tuliskan 1-2 kalimat rangkuman berita..."></textarea>
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Isi Berita
-                                    Lengkap</label>
-                                <textarea id="admin-news-isi" rows="5" required
-                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none bg-slate-50 focus:bg-white transition"
-                                    placeholder="Tuliskan isi lengkap artikel berita di sini..."></textarea>
+
+                            <!-- Rich Content Editor Artikel Berita -->
+                            <div class="md:col-span-2 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-[11px] font-bold text-slate-500 uppercase">
+                                        Isi Berita Lengkap & Pemformatan Tulisan
+                                    </label>
+                                    <span class="text-[10px] text-slate-400">Dukungan: Tebal, Miring, Rata Kanan-Kiri & Foto Tengah</span>
+                                </div>
+
+                                <!-- Toolbar Formatting -->
+                                <div class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-t-2xl border border-b-0 border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-1 text-slate-700 dark:text-slate-200">
+                                    <!-- Gaya Teks -->
+                                    <div class="flex items-center space-x-0.5 bg-white dark:bg-[#15202d] p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
+                                        <button type="button" onclick="formatNewsEditorText('bold')" title="Tebal (Ctrl+B)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition">
+                                            <i class="fa-solid fa-bold"></i>
+                                        </button>
+                                        <button type="button" onclick="formatNewsEditorText('italic')" title="Miring (Ctrl+I)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic transition">
+                                            <i class="fa-solid fa-italic"></i>
+                                        </button>
+                                        <button type="button" onclick="formatNewsEditorText('underline')" title="Garis Bawah (Ctrl+U)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs underline transition">
+                                            <i class="fa-solid fa-underline"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Perataan Paragraf -->
+                                    <div class="flex items-center space-x-0.5 bg-white dark:bg-[#15202d] p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
+                                        <button type="button" onclick="formatNewsEditorText('justifyLeft')" title="Rata Kiri" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs transition">
+                                            <i class="fa-solid fa-align-left"></i>
+                                        </button>
+                                        <button type="button" onclick="formatNewsEditorText('justifyCenter')" title="Rata Tengah" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs transition">
+                                            <i class="fa-solid fa-align-center"></i>
+                                        </button>
+                                        <button type="button" onclick="formatNewsEditorText('justifyRight')" title="Rata Kanan" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs transition">
+                                            <i class="fa-solid fa-align-right"></i>
+                                        </button>
+                                        <button type="button" onclick="formatNewsEditorText('justifyFull')" title="Rata Kanan-Kiri (Justify)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs text-brand-700 dark:text-emerald-400 font-bold transition">
+                                            <i class="fa-solid fa-align-justify"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Daftar Poin -->
+                                    <div class="flex items-center space-x-0.5 bg-white dark:bg-[#15202d] p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
+                                        <button type="button" onclick="formatNewsEditorText('insertUnorderedList')" title="Daftar Titik (Bullet)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs transition">
+                                            <i class="fa-solid fa-list-ul"></i>
+                                        </button>
+                                        <button type="button" onclick="formatNewsEditorText('insertOrderedList')" title="Daftar Angka (Numbering)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs transition">
+                                            <i class="fa-solid fa-list-ol"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Sisipkan Foto di Tengah Berita -->
+                                    <button type="button" onclick="openAdminNewsInlineImageModal()" title="Sisipkan Foto di Tengah Isi Berita" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-xs ml-auto">
+                                        <i class="fa-solid fa-image text-xs"></i>
+                                        <span>Sisipkan Foto Tengah</span>
+                                    </button>
+                                </div>
+
+                                <!-- Editable Visual Container -->
+                                <div id="admin-news-editor" contenteditable="true" oninput="syncAdminNewsEditorToTextarea()"
+                                    class="w-full min-h-[200px] max-h-[500px] overflow-y-auto px-4 py-3 rounded-b-2xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-slate-50 focus:bg-white dark:bg-[#1c2836] dark:focus:bg-[#15202d] text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-700 focus:outline-none leading-relaxed space-y-3 text-justify transition"
+                                    placeholder="Tuliskan isi lengkap artikel berita di sini..."></div>
+                                
+                                <!-- Hidden textarea untuk sinkronisasi form payload -->
+                                <textarea id="admin-news-isi" name="isi" class="hidden"></textarea>
                             </div>
                         </div>
                         <button type="submit" id="admin-submit-btn"
@@ -10057,6 +10203,148 @@
                 <button type="button" onclick="closeIosInstallGuideModal()"
                     class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition active:scale-95">
                     Saya Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL CROP GAMBAR UTAMA BERITA (16:9) ==================== -->
+    <div id="modal-admin-news-crop"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#15202d] rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] flex flex-col transform transition-all duration-300 scale-95 opacity-0 relative"
+            id="modal-admin-news-crop-content">
+            <!-- Header Modal -->
+            <div class="px-5 py-3.5 bg-gradient-to-r from-emerald-800 to-teal-900 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <i class="fa-solid fa-crop-simple text-emerald-300"></i>
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-100 leading-none">Potong Gambar Berita (Rasio 16:9)</h3>
+                        <p class="text-[10px] text-emerald-200/80 mt-0.5">Sesuaikan posisi & perbesaran foto</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminNewsCropModal()"
+                    class="text-white/70 hover:text-white transition w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Workspace Crop Canvas -->
+            <div class="p-4 flex flex-col items-center justify-center bg-slate-900 select-none overflow-hidden relative">
+                <div class="w-full max-w-[500px] aspect-video relative overflow-hidden rounded-xl border-2 border-dashed border-emerald-500/80 shadow-2xl bg-black cursor-grab active:cursor-grabbing flex items-center justify-center"
+                    id="admin-news-crop-viewport">
+                    <canvas id="admin-news-crop-canvas" class="max-w-none origin-center"></canvas>
+                    <div class="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-white/20">
+                        <div class="border-b border-r border-white/15"></div>
+                        <div class="border-b border-r border-white/15"></div>
+                        <div class="border-b border-white/15"></div>
+                        <div class="border-b border-r border-white/15"></div>
+                        <div class="border-b border-r border-white/15"></div>
+                        <div class="border-b border-white/15"></div>
+                        <div class="border-r border-white/15"></div>
+                        <div class="border-r border-white/15"></div>
+                        <div></div>
+                    </div>
+                    <span class="absolute top-2 left-2 bg-black/60 backdrop-blur text-[10px] font-bold text-white px-2 py-0.5 rounded-full border border-white/10 pointer-events-none">
+                        16:9 Landscape
+                    </span>
+                </div>
+
+                <!-- Controls: Zoom & Rotate/Reset -->
+                <div class="w-full max-w-[500px] mt-4 flex items-center gap-3 px-1 text-slate-300">
+                    <i class="fa-solid fa-magnifying-glass-minus text-xs text-slate-400"></i>
+                    <input type="range" id="admin-news-crop-zoom" min="1" max="3" step="0.05" value="1"
+                        class="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg">
+                    <i class="fa-solid fa-magnifying-glass-plus text-xs text-slate-400"></i>
+                    <button type="button" onclick="resetAdminNewsCropPosition()"
+                        class="ml-2 px-2.5 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Reset
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2 text-center">
+                    <i class="fa-solid fa-hand-pointer mr-1 text-emerald-400"></i> Geser/drag gambar untuk memposisikan subjek utama.
+                </p>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-5 py-3 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-between items-center">
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                    Otomatis dikompres &le; 250 KB
+                </span>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="closeAdminNewsCropModal()"
+                        class="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition">
+                        Batal
+                    </button>
+                    <button type="button" onclick="applyAdminNewsCrop()"
+                        class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-md transition active:scale-95 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Terapkan Potongan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL SISIPKAN GAMBAR DI TENGAH BERITA ==================== -->
+    <div id="modal-admin-news-inline-img"
+        class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#15202d] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] flex flex-col transform transition-all duration-300 scale-95 opacity-0 relative"
+            id="modal-admin-news-inline-content">
+            <!-- Header Modal -->
+            <div class="px-5 py-3.5 bg-gradient-to-r from-slate-800 to-emerald-950 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <i class="fa-solid fa-image text-emerald-400"></i>
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-100 leading-none">Sisipkan Foto Sisipan</h3>
+                        <p class="text-[10px] text-slate-300 mt-0.5">Tambahkan foto di antara paragraf berita</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminNewsInlineImageModal()"
+                    class="text-white/70 hover:text-white transition w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="p-5 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                        Pilih File Foto
+                    </label>
+                    <input type="file" id="admin-news-inline-input" accept="image/*"
+                        onchange="handleAdminNewsInlineFileSelect(this)"
+                        class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-950 dark:file:text-emerald-300">
+                </div>
+
+                <!-- Preview Area -->
+                <div id="admin-news-inline-preview-wrap" class="hidden">
+                    <p class="font-bold text-slate-700 dark:text-slate-200 mb-1">Pratinjau Foto Sisipan:</p>
+                    <div class="max-h-48 overflow-hidden rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-900 flex items-center justify-center">
+                        <img id="admin-news-inline-preview-img" src="" alt="Pratinjau" class="max-h-48 object-contain">
+                    </div>
+                    <span id="admin-news-inline-size-badge" class="inline-block mt-1 text-[10px] text-slate-400"></span>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                        Keterangan Foto / Caption (Opsional)
+                    </label>
+                    <input type="text" id="admin-news-inline-caption"
+                        placeholder="Contoh: Suasana pembukaan acara di aula utama"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-[#1a2634] border border-slate-200 dark:border-[#253447] rounded-xl text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-5 py-3 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-end items-center space-x-2">
+                <button type="button" onclick="closeAdminNewsInlineImageModal()"
+                    class="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition">
+                    Batal
+                </button>
+                <button type="button" onclick="confirmInsertInlineImageToEditor()"
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition active:scale-95 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Sisipkan ke Berita</span>
                 </button>
             </div>
         </div>

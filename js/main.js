@@ -610,9 +610,136 @@
 
         }
 
+        let currentActiveNews = null;
+
+        // ---------- FONT SIZE RESIZER UNTUK PEMBACA BERITA ----------
+        function setNewsReaderFontSize(sizeKey = 'base') {
+            const bodyEl = document.getElementById('detail-news-body');
+            const btnSm = document.getElementById('btn-font-sm');
+            const btnBase = document.getElementById('btn-font-base');
+            const btnLg = document.getElementById('btn-font-lg');
+
+            const activeBtnClass = "bg-brand-700 text-white shadow-xs";
+            const inactiveBtnClass = "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800";
+
+            [btnSm, btnBase, btnLg].forEach(b => {
+                if (!b) return;
+                b.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition " + inactiveBtnClass;
+            });
+
+            let fontSize = "15px";
+            let lineHeight = "1.85";
+
+            if (sizeKey === 'sm') {
+                fontSize = "13px";
+                lineHeight = "1.75";
+                if (btnSm) btnSm.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition " + activeBtnClass;
+            } else if (sizeKey === 'lg') {
+                fontSize = "18px";
+                lineHeight = "1.95";
+                if (btnLg) btnLg.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition " + activeBtnClass;
+            } else {
+                sizeKey = 'base';
+                fontSize = "15px";
+                lineHeight = "1.85";
+                if (btnBase) btnBase.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition " + activeBtnClass;
+            }
+
+            if (bodyEl) {
+                bodyEl.style.fontSize = fontSize;
+                bodyEl.style.lineHeight = lineHeight;
+            }
+
+            try {
+                localStorage.setItem('asnawiyyah_news_font_size', sizeKey);
+            } catch (e) {}
+        }
+
+        function initNewsReaderFontSize() {
+            try {
+                const saved = localStorage.getItem('asnawiyyah_news_font_size') || 'base';
+                setNewsReaderFontSize(saved);
+            } catch (e) {
+                setNewsReaderFontSize('base');
+            }
+        }
+
+        // ---------- TOMBOL SHARE BERITA (WHATSAPP, FACEBOOK, SALIN TAUTAN) ----------
+        function getNewsShareUrl() {
+            if (currentActiveNews && currentActiveNews.slug) {
+                return `${window.location.origin}/berita/${currentActiveNews.slug}`;
+            }
+            return window.location.href;
+        }
+
+        function shareNewsViaWhatsApp() {
+            const url = getNewsShareUrl();
+            const title = (currentActiveNews && currentActiveNews.judul) ? currentActiveNews.judul : document.title;
+            const text = `*${title}*\n\nBaca warta selengkapnya melalui portal resmi Pesantren Asnawiyyah:\n${url}`;
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, '_blank');
+        }
+
+        function shareNewsViaFacebook() {
+            const url = getNewsShareUrl();
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            window.open(fbUrl, '_blank', 'width=600,height=500');
+        }
+
+        async function copyShareLink() {
+            const url = getNewsShareUrl();
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                } else {
+                    const tempInput = document.createElement('input');
+                    tempInput.value = url;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                }
+                showToast("✅ Tautan berita berhasil disalin ke clipboard!");
+            } catch (err) {
+                showToast("⚠️ Gagal menyalin tautan: " + err.message);
+            }
+        }
+
+        // ---------- PENCATATAN VIEW BERITA ATOMIK (NON-BLOCKING) ----------
+        function recordNewsViewApi(news) {
+            if (!news || !news.news_id) return;
+            const storageKey = `asnawiyyah_viewed_news_${news.news_id}`;
+            try {
+                if (sessionStorage.getItem(storageKey)) {
+                    // Sudah dihitung dalam sesi browser ini, hindari duplikasi
+                    return;
+                }
+                sessionStorage.setItem(storageKey, '1');
+            } catch (e) {}
+
+            // Increment visual counter secara instan
+            news.views = (Number(news.views) || 0) + 1;
+            const viewsCountEl = document.getElementById('detail-news-views-count');
+            if (viewsCountEl) {
+                viewsCountEl.innerText = Number(news.views).toLocaleString('id-ID');
+            }
+
+            // Sync ke backend GAS secara asinkron tanpa memblokir pembaca
+            if (isApiConfigured()) {
+                apiPost("recordNewsView", {
+                    news_id: news.news_id,
+                    slug: news.slug
+                }).catch(err => {
+                    console.warn("recordNewsView background sync failed:", err);
+                });
+            }
+        }
+
         function bacaBerita(id, skipHistory = false) {
             const news = mockNewsData.find(n => n.news_id === id || n.slug === id);
             if (!news) return;
+
+            currentActiveNews = news;
 
             if (!skipHistory) {
                 const canonicalUrl = `/berita/${news.slug}`;
@@ -631,6 +758,16 @@
             document.getElementById('detail-news-date').innerHTML = `<i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal || '-'}`;
             document.getElementById('detail-news-author').innerText = news.penulis || 'Admin';
 
+            // Jumlah Views
+            const viewsCountEl = document.getElementById('detail-news-views-count');
+            if (viewsCountEl) {
+                const initialViews = Number(news.views) || 0;
+                viewsCountEl.innerText = initialViews.toLocaleString('id-ID');
+            }
+
+            // Panggil API pencatatan view
+            recordNewsViewApi(news);
+
             const summaryBox = document.getElementById('detail-news-summary-box');
             const summaryEl = document.getElementById('detail-news-summary');
             if (news.ringkasan && news.ringkasan.trim() !== '') {
@@ -640,7 +777,29 @@
                 summaryBox.classList.add('hidden');
             }
 
-            document.getElementById('detail-news-body').innerText = news.isi || '';
+            // Render isi berita (dukungan rich content HTML & backwards compatibility plain text)
+            const bodyEl = document.getElementById('detail-news-body');
+            if (bodyEl) {
+                let rawContent = news.isi || '';
+                if (/<[a-z][\s\S]*>/i.test(rawContent)) {
+                    // Sanitasi tag berbahaya seperti <script>
+                    const cleanHtml = rawContent
+                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                        .replace(/\bon\w+="[^"]*"/gi, '')
+                        .replace(/\bon\w+='[^']*'/gi, '');
+                    bodyEl.innerHTML = cleanHtml;
+                } else {
+                    // Konversi artikel teks lama
+                    const formattedParas = rawContent
+                        .split('\n\n')
+                        .map(para => `<p class="mb-3">${escapeHtml(para).replace(/\n/g, '<br>')}</p>`)
+                        .join('');
+                    bodyEl.innerHTML = formattedParas || '<p class="text-slate-400 italic">Belum ada rincian berita.</p>';
+                }
+            }
+
+            // Terapkan ukuran font tersimpan
+            initNewsReaderFontSize();
 
             const imgEl = document.getElementById('detail-news-img');
             const imgContainer = document.getElementById('detail-news-img-container');
