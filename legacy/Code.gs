@@ -100,6 +100,19 @@ function doPost(e) {
       );
     }
 
+    if (action === "migrateViewsColumn") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        migrasiKolomViewsBerita()
+      );
+    }
+
     if (action === "saveBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -969,6 +982,76 @@ function migrateBeritaIdentity() {
   }
 }
 
+// ============================================================================
+// MIGRASI PENAMBAHAN KOLOM VIEWS (KOLOM J) PADA SHEET BERITA
+// ============================================================================
+function migrasiKolomViewsBerita() {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+  } catch (e) {
+    Logger.log("ABORT: Gagal mendapatkan lock. Sistem sedang sibuk.");
+    return { status: "error", success: false, message: "Gagal mendapatkan lock sistem." };
+  }
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheetByName("Berita") || ss.getSheetByName("Kabar");
+    if (!sheet) {
+      throw new Error("Sheet Berita tidak ditemukan.");
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow === 0) {
+      throw new Error("Sheet Berita kosong.");
+    }
+
+    // 1. Pastikan Header Kolom 10 (J) adalah "Views"
+    const headerCell = sheet.getRange(1, 10);
+    const currentHeaderVal = String(headerCell.getValue() || "").trim();
+    if (currentHeaderVal !== "Views") {
+      headerCell.setValue("Views");
+      headerCell.setFontWeight("bold");
+      try {
+        const prevBg = sheet.getRange(1, 9).getBackground();
+        if (prevBg) headerCell.setBackground(prevBg);
+        const prevColor = sheet.getRange(1, 9).getFontColor();
+        if (prevColor) headerCell.setFontColor(prevColor);
+      } catch (styleErr) {}
+    }
+
+    // 2. Isi default 0 untuk semua baris berita yang kolom J-nya masih kosong
+    let updatedRows = 0;
+    if (lastRow >= 2) {
+      const rangeViews = sheet.getRange(2, 10, lastRow - 1, 1);
+      const values = rangeViews.getValues();
+      let hasChanges = false;
+
+      for (let i = 0; i < values.length; i++) {
+        const val = values[i][0];
+        if (val === "" || val === null || val === undefined || isNaN(Number(val))) {
+          values[i][0] = 0;
+          hasChanges = true;
+          updatedRows++;
+        }
+      }
+
+      if (hasChanges) {
+        rangeViews.setValues(values);
+      }
+    }
+
+    const resultMsg = `Berhasil! Kolom J (Views) telah aktif. ${updatedRows} baris berita diinisialisasi dengan 0 view.`;
+    Logger.log(resultMsg);
+    return { status: "success", success: true, message: resultMsg, updatedRows: updatedRows };
+  } catch (err) {
+    Logger.log("ERROR migrasiKolomViewsBerita: " + err.message);
+    return { status: "error", success: false, message: err.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function simpanBerita(formData) {
   var lock = LockService.getScriptLock();
   try {
@@ -1384,6 +1467,16 @@ function getKabarData() {
     let isMigrated = false;
     if (data.length > 0 && data[0][0] === "news_id" && data[0][1] === "slug") {
       isMigrated = true;
+    }
+
+    // Auto-ensure kolom J (Views) ada di sheet jika belum ada
+    if (isMigrated && (data[0].length < 10 || !data[0][9] || String(data[0][9]).trim() === "")) {
+      try {
+        beritaSheet.getRange(1, 10).setValue("Views");
+        beritaSheet.getRange(1, 10).setFontWeight("bold");
+      } catch (errCol) {
+        console.warn("Auto-set Views header warning:", errCol);
+      }
     }
 
     // Baris 1 adalah Header, ambil mulai baris 2 (index 1) dari yang paling baru
