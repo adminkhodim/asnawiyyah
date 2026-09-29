@@ -424,6 +424,10 @@
                 if (typeof ASNJadwalSholat !== 'undefined') {
                     ASNJadwalSholat.init();
                 }
+            } else if (tabId === 'kalender') {
+                if (typeof renderCalendar === 'function') {
+                    renderCalendar();
+                }
             }
 
             // Nav Mobile
