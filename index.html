@@ -4187,6 +4187,12 @@
                         </button>
                     </li>
                     <li>
+                        <button onclick="showAdminView('roles')" data-view="roles" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Peran">
+                            <i class="fa-solid fa-shield-halved w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Peran</span>
+                        </button>
+                    </li>
+                    <li>
                         <button onclick="showAdminView('santri')" data-view="santri" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Data Santri">
                             <i class="fa-solid fa-id-card-clip w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Santri</span>
@@ -4391,7 +4397,26 @@
                         </div>
                     </div>
 
-                    <!-- Tombol Icon Grid: Data Santri (Master Data) -->
+                    
+                    <!-- Tombol Icon Grid: Manajemen Peran (RBAC) -->
+                    <div onclick="showAdminView('roles')"
+                        class="bg-white hover:bg-purple-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-purple-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-purple-50 text-purple-700 group-hover:bg-purple-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <span id="admin-hub-roles-count"
+                                class="text-[9px] font-extrabold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md uppercase">7 Peran</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-purple-700 transition">
+                                Manajemen Peran (Role)</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Hierarki wewenang, matriks izin modul & kontrol akses RBAC.</p>
+                        </div>
+                    </div>
+<!-- Tombol Icon Grid: Data Santri (Master Data) -->
                     <div onclick="showAdminView('santri')"
                         class="bg-white hover:bg-cyan-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-cyan-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
                         <div class="flex justify-between items-start">
@@ -5275,6 +5300,200 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ================= VIEW: MODUL MANAJEMEN PERAN (RBAC) ================= -->
+                            <div id="admin-view-roles" class="hidden space-y-4">
+                                <!-- Header Sub-View -->
+                                <div
+                                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div class="flex items-center space-x-2.5">
+                                        <button type="button" onclick="backFromAdminModule()"
+                                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                                            title="Kembali">
+                                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                                        </button>
+                                        <div>
+                                            <div class="flex items-center space-x-2">
+                                                <span
+                                                    class="text-[10px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-widest block">Keamanan
+                                                    & Otoritas</span>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200/60">
+                                                    <i class="fa-solid fa-lock text-[8px] mr-1"></i>RBAC Active
+                                                </span>
+                                            </div>
+                                            <h2
+                                                class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">
+                                                Manajemen Peran & Hak Akses</h2>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2 self-end sm:self-auto">
+                                        <button type="button" onclick="openRoleGuideModal()"
+                                            class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                                            <i class="fa-solid fa-book-bookmark text-xs"></i>
+                                            <span class="hidden sm:inline">Panduan RBAC</span>
+                                        </button>
+                                        <button type="button" onclick="showAdminView('users')"
+                                            class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                                            <i class="fa-solid fa-users text-xs"></i>
+                                            <span class="hidden sm:inline">Kelola Akun</span>
+                                        </button>
+                                        <button type="button" onclick="loadAdminRolesData()"
+                                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95"
+                                            title="Refresh Matriks">
+                                            <i class="fa-solid fa-rotate text-xs"></i>
+                                            <span class="hidden sm:inline">Refresh</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Metric Summary Cards -->
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                                    <div
+                                        class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Total Peran
+                                            Sistem</span>
+                                        <div class="flex items-baseline space-x-1 mt-0.5">
+                                            <span
+                                                class="text-lg md:text-xl font-black text-purple-700 dark:text-purple-300"
+                                                id="role-kpi-total-roles">7</span>
+                                            <span class="text-[10px] text-slate-400">Role</span>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase block">Total
+                                            Akun Terdata</span>
+                                        <div class="flex items-baseline space-x-1 mt-0.5">
+                                            <span
+                                                class="text-lg md:text-xl font-black text-emerald-700 dark:text-emerald-300"
+                                                id="role-kpi-total-users">0</span>
+                                            <span class="text-[10px] text-slate-400">Pengguna</span>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                                        <span
+                                            class="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase block">Modul
+                                            Terproteksi</span>
+                                        <div class="flex items-baseline space-x-1 mt-0.5">
+                                            <span
+                                                class="text-lg md:text-xl font-black text-sky-700 dark:text-sky-300"
+                                                id="role-kpi-total-modules">14</span>
+                                            <span class="text-[10px] text-slate-400">Modul</span>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm">
+                                        <span
+                                            class="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase block">Peran
+                                            Anda Saat Ini</span>
+                                        <div class="flex items-baseline space-x-1 mt-0.5">
+                                            <span
+                                                class="text-base md:text-lg font-black text-brand-700 dark:text-brand-300 truncate"
+                                                id="role-kpi-current-role">Administrator</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Matriks Hak Akses Table (RBAC Matrix) -->
+                                <div
+                                    class="bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm overflow-hidden">
+                                    <div
+                                        class="p-4 border-b border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-[#1c2836]/40">
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">
+                                                Matriks Hak Akses per Modul Sistem (RBAC Table)</h3>
+                                            <p class="text-[10px] text-slate-400">Perbandingan wewenang CRUD dan kontrol
+                                                akses pada setiap peran</p>
+                                        </div>
+                                        <div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                                            <span class="inline-flex items-center"><i
+                                                    class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Penuh
+                                                (CRUD)</span>
+                                            <span class="inline-flex items-center"><i
+                                                    class="fa-solid fa-pen-nib text-amber-500 mr-1"></i>Entri &
+                                                Mutaba'ah</span>
+                                            <span class="inline-flex items-center"><i
+                                                    class="fa-solid fa-eye text-sky-500 mr-1"></i>Lihat Saja</span>
+                                            <span class="inline-flex items-center"><i
+                                                    class="fa-solid fa-minus text-slate-400 mr-1"></i>Tertutup</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="overflow-x-auto custom-scrollbar">
+                                        <table class="w-full text-left text-xs border-collapse">
+                                            <thead
+                                                class="bg-slate-50 dark:bg-[#1c2836] text-[11px] font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#253447]">
+                                                <tr>
+                                                    <th class="p-3.5">Modul & Fitur Aplikasi</th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-purple-700 dark:text-purple-300">
+                                                        <i class="fa-solid fa-crown text-[10px] mr-1"></i>Super Admin
+                                                    </th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-brand-700 dark:text-brand-300">
+                                                        <i class="fa-solid fa-shield-halved text-[10px] mr-1"></i>Admin
+                                                    </th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-amber-700 dark:text-amber-300">
+                                                        <i class="fa-solid fa-hands-praying text-[10px] mr-1"></i>Pengasuh
+                                                    </th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-indigo-700 dark:text-indigo-300">
+                                                        <i class="fa-solid fa-chalkboard-user text-[10px] mr-1"></i>Asatidz
+                                                    </th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-teal-700 dark:text-teal-300">
+                                                        <i class="fa-solid fa-clipboard-user text-[10px] mr-1"></i>Pengurus
+                                                    </th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-emerald-700 dark:text-emerald-300">
+                                                        <i class="fa-solid fa-wallet text-[10px] mr-1"></i>Bendahara
+                                                    </th>
+                                                    <th class="p-3 text-center whitespace-nowrap text-sky-700 dark:text-sky-300">
+                                                        <i class="fa-solid fa-user-group text-[10px] mr-1"></i>Wali Santri
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="admin-roles-matrix-body" class="divide-y divide-slate-100 dark:divide-[#253447]">
+                                                <!-- Dynamic generated by js/roles.js -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Filter Tab & Role Cards Inspector Grid -->
+                                <div class="space-y-3 pt-2">
+                                    <div
+                                        class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                                        <div class="flex items-center space-x-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                                            <button type="button" onclick="filterRolesCategory('ALL')" data-role-cat="ALL"
+                                                class="role-filter-tab active px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white transition shadow-sm shrink-0">Semua
+                                                Peran</button>
+                                            <button type="button" onclick="filterRolesCategory('EKSEKUTIF')" data-role-cat="EKSEKUTIF"
+                                                class="role-filter-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Eksekutif
+                                                (Admin)</button>
+                                            <button type="button" onclick="filterRolesCategory('FUNGSIONAL')" data-role-cat="FUNGSIONAL"
+                                                class="role-filter-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Fungsional
+                                                (Asatidz / Bendahara / Pengurus)</button>
+                                            <button type="button" onclick="filterRolesCategory('MASYAYIKH')" data-role-cat="MASYAYIKH"
+                                                class="role-filter-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Pengasuh</button>
+                                            <button type="button" onclick="filterRolesCategory('WALI')" data-role-cat="WALI"
+                                                class="role-filter-tab px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition shrink-0">Wali
+                                                Santri</button>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-medium shrink-0">
+                                            <i class="fa-solid fa-circle-info text-emerald-500 mr-1"></i>Klik "Lihat Akun" pada kartu untuk memeriksa daftar pengguna
+                                        </span>
+                                    </div>
+
+                                    <!-- Grid Kartu Peran -->
+                                    <div id="admin-roles-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                                        <!-- Dynamic generated by js/roles.js -->
+                                    </div>
+                                </div>
+
+                                <!-- Loading State -->
+                                <div id="admin-roles-loading" class="p-8 text-center space-y-2 hidden">
+                                    <i class="fa-solid fa-spinner fa-spin text-purple-600 text-xl"></i>
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Memuat matriks wewenang peran...</p>
+                                </div>
+                            </div>
 
             <!-- ================= VIEW: MODUL MASTER DATA SANTRI ================= -->
             <div id="admin-view-santri" class="hidden space-y-4">
@@ -7989,7 +8208,270 @@
                 </div>
             </div>
         </div>
+    </d
+
+<!-- ==================== MODAL INSPEKSI DETAIL PERAN (RBAC) ==================== -->
+    <div id="modal-admin-role-detail"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div
+            class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div
+                class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div id="role-detail-icon"
+                        class="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 id="role-detail-name" class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">
+                                Detail Peran</h3>
+                            <span id="role-detail-code"
+                                class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 dark:bg-[#253447] text-slate-600 dark:text-slate-300">
+                                ROLE_KEY
+                            </span>
+                        </div>
+                        <p id="role-detail-tier" class="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase tracking-wider">
+                            Tier Otoritas</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRoleDetailModal()"
+                    class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                <!-- Deskripsi Peran -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Deskripsi & Peran:</span>
+                    <p id="role-detail-desc" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
+                        Deskripsi
+                    </p>
+                </div>
+
+                <!-- Cakupan & Batasan -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Cakupan & Batasan Akses:</span>
+                    <div class="bg-amber-50 dark:bg-amber-950/40 p-3 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 flex items-start space-x-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600 dark:text-amber-400 mt-0.5 shrink-0 text-xs"></i>
+                        <p id="role-detail-scope-note" class="text-[11px] text-amber-800 dark:text-amber-300 leading-tight">
+                            Catatan batasan akses
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Wewenang Resmi -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Wewenang Resmi:</span>
+                    <ul id="role-detail-capabilities" class="space-y-1.5 bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
+                        <!-- Dynamic list -->
+                    </ul>
+                </div>
+
+                <!-- Pengguna Terkait -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Akun Pengguna dengan Peran Ini:</span>
+                    </div>
+                    <div id="role-detail-users-list">
+                        <!-- Dynamic users list -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                class="p-4 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-end items-center gap-2.5 shrink-0">
+                <button type="button" onclick="closeRoleDetailModal()"
+                    class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] font-semibold text-xs transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
     </div>
+
+    <!-- ==================== MODAL KONFIGURASI IZIN PERAN (RBAC KHODIM-STYLE) ==================== -->
+    <div id="modal-admin-role-permissions"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div
+            class="bg-white dark:bg-[#15202d] w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div
+                class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div id="role-perm-icon-wrapper"
+                        class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-lg font-bold shadow-xs">
+                        <i id="role-perm-icon" class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 id="role-perm-title" class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">
+                                Konfigurasi Izin: Super Admin</h3>
+                        </div>
+                        <p id="role-perm-subtitle" class="text-[10px] text-slate-500 dark:text-slate-400">
+                            Role ID: SUPER_ADMIN • Kendali penuh atas sistem, database, dan pengaturan global Asnawiyyah.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRolePermissionsModal()"
+                    class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95"
+                    title="Tutup">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs flex-1">
+                <!-- Banner Super Admin (Akses Penuh) -->
+                <div id="role-perm-superadmin-banner" class="hidden p-3.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/70 dark:border-purple-800/40 flex items-start space-x-3">
+                    <i class="fa-solid fa-crown text-purple-600 dark:text-purple-400 text-sm mt-0.5 shrink-0"></i>
+                    <div>
+                        <h5 class="text-xs font-bold text-purple-900 dark:text-purple-200">Role Super Admin memiliki Akses Penuh (*)</h5>
+                        <p class="text-[11px] text-purple-700 dark:text-purple-300 mt-0.5 leading-relaxed">
+                            Role ini selalu memiliki izin bypass ke semua modul untuk menjamin kontrol sistem dan pemulihan data pesantren.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Search Input & Quick Controls -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 pb-2 border-b border-slate-100 dark:border-[#253447]">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                        <input type="text" id="role-perm-search-input" oninput="filterRolePermissionsSearch(this.value)"
+                            placeholder="Cari izin fitur..."
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 pl-8 pr-3 py-1.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                    </div>
+                    <div class="flex items-center space-x-2 text-[11px] self-end sm:self-auto">
+                        <button type="button" onclick="selectAllRolePermissions(true)"
+                            class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 font-bold hover:bg-emerald-100 transition">
+                            Pilih Semua
+                        </button>
+                        <button type="button" onclick="selectAllRolePermissions(false)"
+                            class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 font-bold hover:bg-slate-200 transition">
+                            Kosongkan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Checklist Categories Container -->
+                <div id="role-permissions-categories-container" class="space-y-6">
+                    <!-- Injected by js/roles.js -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                class="p-4 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-between items-center gap-2.5 shrink-0">
+                <div class="flex items-center space-x-2 text-xs">
+                    <span class="text-slate-400">Status Izin:</span>
+                    <span id="role-perm-counter-badge" class="px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60">
+                        0 Izin Aktif
+                    </span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="closeRolePermissionsModal()"
+                        class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] font-semibold text-xs transition">
+                        Batal
+                    </button>
+                    <button type="button" id="btn-save-role-permissions" onclick="saveRolePermissionsFromModal()"
+                        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Perubahan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL PANDUAN RBAC & KEAMANAN ==================== -->
+    <div id="modal-admin-role-guide"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div
+            class="bg-white dark:bg-[#15202d] w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div
+                class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div
+                        class="w-9 h-9 bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 rounded-xl flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">
+                            Panduan Hak Akses & Matriks Keamanan (RBAC)</h3>
+                        <p class="text-[10px] text-slate-400">Prinsip Least Privilege & Hierarki Otoritas Pesantren</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRoleGuideModal()"
+                    class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                <div class="bg-purple-50 dark:bg-purple-950/40 p-3.5 rounded-2xl border border-purple-200/60 dark:border-purple-800/40">
+                    <h4 class="font-bold text-purple-800 dark:text-purple-300 text-xs flex items-center">
+                        <i class="fa-solid fa-shield-halved text-purple-600 mr-1.5"></i>
+                        Apa itu RBAC (Role-Based Access Control)?
+                    </h4>
+                    <p class="text-[11px] text-purple-900/80 dark:text-purple-200/80 mt-1 leading-relaxed">
+                        RBAC adalah sistem keamanan di mana hak akses dan izin operasi pengguna didasarkan pada peran resmi masing-masing di pesantren. Setiap peran memiliki batasan wewenang ketat untuk menjaga integritas data dan privasi santri.
+                    </p>
+                </div>
+
+                <!-- 3 Tingkatan Otoritas -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">3 Tingkatan Otoritas Sistem:</span>
+                    
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447] space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            <h5 class="font-bold text-slate-800 dark:text-slate-100 text-xs">Tier 1: Eksekutif & Administrator</h5>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-normal pl-4">
+                            <b>Super Admin & Admin:</b> Mengelola seluruh sistem, data santri, konfigurasi, dan penugasan akun. Super Admin memiliki perlindungan ekstra agar perannya tidak dapat dimodifikasi oleh Admin biasa.
+                        </p>
+                    </div>
+
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447] space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <h5 class="font-bold text-slate-800 dark:text-slate-100 text-xs">Tier 2: Fungsional & Pengawasan (Asatidz, Pengurus, Bendahara, Pengasuh)</h5>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-normal pl-4">
+                            <b>Asatidz:</b> Fokus entri setoran Tahfidz, TPQ Yanbu'a, Sorogan, dan Presensi halaqah.<br>
+                            <b>Pengurus:</b> Mengawal kedisiplinan, absensi QR Code, UKS, dan PPDB.<br>
+                            <b>Bendahara:</b> Mengelola iuran SPP, infaq, dan pencatatan transaksi kas.<br>
+                            <b>Pengasuh:</b> Mode supervisi aman (Read-Only) untuk pengawasan menyeluruh tanpa risiko penghapusan tak disengaja.
+                        </p>
+                    </div>
+
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447] space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <h5 class="font-bold text-slate-800 dark:text-slate-100 text-xs">Tier 3: Eksternal (Wali Santri)</h5>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-normal pl-4">
+                            <b>Wali Santri:</b> Mengakses portal terisolasi khusus yang hanya menampilkan data perkembangan, mutaba'ah, presensi, dan tagihan anak kandungnya sendiri berdasarkan verifikasi NIS.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                class="p-4 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-end items-center gap-2.5 shrink-0">
+                <button type="button" onclick="closeRoleGuideModal()"
+                    class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-md transition active:scale-95">
+                    Saya Mengerti
+                </button>
+            </div>
+        </div>
+    </div>iv>
 
     <!-- ==================== MODAL 3: TARGET CAPAIAN SANTRI (MATCH KHODIM.COM) ==================== -->
     <div id="modal-tahfidz-target" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
@@ -9457,6 +9939,7 @@
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js"></script>
     <script src="js/jadwal-sholat.js"></script>
+    <script src="js/roles.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/alumni.js"></script>
     <script src="js/auth.js"></script>

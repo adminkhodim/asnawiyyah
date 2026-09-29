@@ -93,6 +93,7 @@
             const notifikasiView = document.getElementById('admin-view-notifikasi');
             const pegawaiView = document.getElementById('admin-view-pegawai');
             const usersView = document.getElementById('admin-view-users');
+            const rolesView = document.getElementById('admin-view-roles');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -110,6 +111,7 @@
             if (notifikasiView) notifikasiView.classList.add('hidden');
             if (pegawaiView) pegawaiView.classList.add('hidden');
             if (usersView) usersView.classList.add('hidden');
+            if (rolesView) rolesView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -120,6 +122,11 @@
             } else if (viewName === 'users') {
                 if (usersView) usersView.classList.remove('hidden');
                 loadAdminUsersData();
+            } else if (viewName === 'roles') {
+                if (rolesView) rolesView.classList.remove('hidden');
+                if (typeof loadAdminRolesData === 'function') {
+                    loadAdminRolesData();
+                }
             } else if (viewName === 'santri') {
                 if (santriView) santriView.classList.remove('hidden');
                 loadAdminStudentsData();
