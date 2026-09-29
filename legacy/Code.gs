@@ -4649,6 +4649,9 @@ function setupAuthSystemSheets() {
   // 2. Migrasikan akun-akun lama ke sheet Users jika belum ada
   migrateIdentitiesToUsersSheet(ss);
 
+  // 3. Sinkronisasikan dua arah: dari sheet Users ke tabel identitas spesifik
+  syncUsersToLegacyIdentitiesSheets(ss);
+
   return { status: "success", message: "Tabel autentikasi Phase 2B & Pengasuh terverifikasi dan siap digunakan." };
 }
 
@@ -4659,8 +4662,9 @@ function triggerStandardizeUsersSheet() {
   const ss = getDatabaseSpreadsheet();
   standardizeUsersSheet(ss);
   migrateIdentitiesToUsersSheet(ss);
-  Logger.log("Sheet Users berhasil dirapikan ke struktur 9 kolom standar!");
-  return "Sheet Users berhasil dirapikan ke struktur 9 kolom standar!";
+  syncUsersToLegacyIdentitiesSheets(ss);
+  Logger.log("Sheet Users berhasil dirapikan dan disinkronkan ke tabel identitas!");
+  return "Sheet Users berhasil dirapikan dan disinkronkan ke tabel identitas!";
 }
 
 /**
@@ -4853,6 +4857,232 @@ function migrateIdentitiesToUsersSheet(ss) {
   } catch (err) {
     console.error("[MIGRATION TO USERS ERROR]", err);
   }
+}
+
+/**
+ * Sinkronisasi dua arah dari Sheet Users ke sheet identitas terpisah (Admin_Identities, Pengasuh_Identities, Wali_Identities)
+ */
+function syncUsersToLegacyIdentitiesSheets(ss) {
+  try {
+    if (!ss) ss = getDatabaseSpreadsheet();
+    if (!ss) return;
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return;
+
+    const data = usersSheet.getDataRange().getValues();
+    if (!data || data.length < 2) return;
+
+    const header = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+    const emailIdx = header.indexOf("email");
+    const phoneIdx = header.indexOf("phone") !== -1 ? header.indexOf("phone") : (header.indexOf("telepon") !== -1 ? header.indexOf("telepon") : header.indexOf("no_hp"));
+    const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+    const roleIdx = header.indexOf("role");
+    const photoIdx = header.indexOf("photo_url") !== -1 ? header.indexOf("photo_url") : (header.indexOf("foto_profil") !== -1 ? header.indexOf("foto_profil") : header.indexOf("foto"));
+    const statusIdx = header.indexOf("status");
+    const createdIdx = header.indexOf("created_at") !== -1 ? header.indexOf("created_at") : header.indexOf("dibuat_pada");
+
+    const adminRoles = ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "BENDAHARA", "PENGURUS"];
+
+    for (let i = 1; i < data.length; i++) {
+      const email = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+      const id = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+      if (!email && !id) continue;
+
+      const name = nameIdx !== -1 ? String(data[i][nameIdx] || "") : "";
+      const phone = phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "";
+      const role = roleIdx !== -1 && data[i][roleIdx] ? String(data[i][roleIdx]).trim().toUpperCase() : "ADMIN";
+      const status = statusIdx !== -1 && data[i][statusIdx] ? String(data[i][statusIdx]).trim().toUpperCase() : "ACTIVE";
+      const photoUrl = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+      const createdAt = createdIdx !== -1 && data[i][createdIdx] ? String(data[i][createdIdx]) : new Date().toISOString();
+
+      if (adminRoles.includes(role)) {
+        syncUserToAdminIdentitiesSheet(ss, id, email, name, role, status, photoUrl, createdAt);
+      } else if (role === "PENGASUH") {
+        syncUserToPengasuhIdentitiesSheet(ss, id, email, name, phone, role, status, photoUrl, createdAt);
+      } else if (role === "WALI_SANTRI") {
+        syncUserToWaliIdentitiesSheet(ss, id, email, name, phone, role, status, photoUrl, createdAt);
+      }
+    }
+  } catch (err) {
+    console.error("[SYNC USERS TO IDENTITIES ERROR]", err);
+  }
+}
+
+function syncUserToAdminIdentitiesSheet(ss, identityId, email, name, role, status, photoUrl, nowIso) {
+  if (!ss) ss = getDatabaseSpreadsheet();
+  if (!ss) return;
+  const sheet = getAuthSheet(ss, SHEET_ADMIN_IDENTITIES);
+  if (!sheet) return;
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+  const idIdx = headers.indexOf("identity_id") !== -1 ? headers.indexOf("identity_id") : 0;
+  const emailIdx = headers.indexOf("email") !== -1 ? headers.indexOf("email") : 1;
+  const nameIdx = headers.indexOf("name") !== -1 ? headers.indexOf("name") : 2;
+  const roleIdx = headers.indexOf("role") !== -1 ? headers.indexOf("role") : 3;
+  const statusIdx = headers.indexOf("status") !== -1 ? headers.indexOf("status") : 4;
+  let photoIdx = headers.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+
+  const normalized = String(email || "").trim().toLowerCase();
+  let foundRow = -1;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = String(data[i][idIdx] || "").trim();
+    const rowEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
+    if ((identityId && rowId === identityId) || (normalized && rowEmail === normalized)) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  if (foundRow !== -1) {
+    if (nameIdx !== -1) sheet.getRange(foundRow, nameIdx + 1).setValue(name);
+    if (emailIdx !== -1) sheet.getRange(foundRow, emailIdx + 1).setValue(normalized);
+    if (roleIdx !== -1) sheet.getRange(foundRow, roleIdx + 1).setValue(role);
+    if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(status);
+    if (photoIdx !== -1 && photoUrl) sheet.getRange(foundRow, photoIdx + 1).setValue(photoUrl);
+  } else {
+    sheet.appendRow([
+      identityId || ("ADM_" + Utilities.getUuid().substring(0, 8)),
+      normalized,
+      name,
+      role,
+      status,
+      nowIso || new Date().toISOString(),
+      photoUrl || ""
+    ]);
+  }
+}
+
+function syncUserToPengasuhIdentitiesSheet(ss, identityId, email, name, phone, role, status, photoUrl, nowIso) {
+  if (!ss) ss = getDatabaseSpreadsheet();
+  if (!ss) return;
+  const sheet = getAuthSheet(ss, SHEET_PENGASUH_IDENTITIES);
+  if (!sheet) return;
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+  const idIdx = headers.indexOf("identity_id") !== -1 ? headers.indexOf("identity_id") : 0;
+  const emailIdx = headers.indexOf("email") !== -1 ? headers.indexOf("email") : 1;
+  const phoneIdx = headers.indexOf("phone") !== -1 ? headers.indexOf("phone") : 2;
+  let nameIdx = headers.indexOf("title_name");
+  if (nameIdx === -1) nameIdx = headers.indexOf("name");
+  const roleIdx = headers.indexOf("role") !== -1 ? headers.indexOf("role") : 4;
+  const statusIdx = headers.indexOf("status") !== -1 ? headers.indexOf("status") : 5;
+  let photoIdx = headers.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+
+  const normalized = String(email || "").trim().toLowerCase();
+  let foundRow = -1;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = String(data[i][idIdx] || "").trim();
+    const rowEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
+    if ((identityId && rowId === identityId) || (normalized && rowEmail === normalized)) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  if (foundRow !== -1) {
+    if (nameIdx !== -1) sheet.getRange(foundRow, nameIdx + 1).setValue(name);
+    if (emailIdx !== -1) sheet.getRange(foundRow, emailIdx + 1).setValue(normalized);
+    if (phoneIdx !== -1 && phone) sheet.getRange(foundRow, phoneIdx + 1).setValue(phone);
+    if (roleIdx !== -1) sheet.getRange(foundRow, roleIdx + 1).setValue(role);
+    if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(status);
+    if (photoIdx !== -1 && photoUrl) sheet.getRange(foundRow, photoIdx + 1).setValue(photoUrl);
+  } else {
+    sheet.appendRow([
+      identityId || ("PNS_" + Utilities.getUuid().substring(0, 8)),
+      normalized,
+      phone || "",
+      name,
+      role || "PENGASUH",
+      status || "ACTIVE",
+      nowIso || new Date().toISOString(),
+      photoUrl || ""
+    ]);
+  }
+}
+
+function syncUserToWaliIdentitiesSheet(ss, identityId, email, name, phone, role, status, photoUrl, nowIso) {
+  if (!ss) ss = getDatabaseSpreadsheet();
+  if (!ss) return;
+  const sheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
+  if (!sheet) return;
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+  const idIdx = headers.indexOf("identity_id") !== -1 ? headers.indexOf("identity_id") : 0;
+  const emailIdx = headers.indexOf("email") !== -1 ? headers.indexOf("email") : 1;
+  const phoneIdx = headers.indexOf("phone") !== -1 ? headers.indexOf("phone") : 2;
+  const nameIdx = headers.indexOf("name") !== -1 ? headers.indexOf("name") : 3;
+  const roleIdx = headers.indexOf("role") !== -1 ? headers.indexOf("role") : 4;
+  const statusIdx = headers.indexOf("status") !== -1 ? headers.indexOf("status") : 5;
+  let photoIdx = headers.indexOf("photo_url");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
+  if (photoIdx === -1) photoIdx = headers.indexOf("foto");
+
+  const normalized = String(email || "").trim().toLowerCase();
+  let foundRow = -1;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = String(data[i][idIdx] || "").trim();
+    const rowEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
+    if ((identityId && rowId === identityId) || (normalized && rowEmail === normalized)) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  if (foundRow !== -1) {
+    if (nameIdx !== -1) sheet.getRange(foundRow, nameIdx + 1).setValue(name);
+    if (emailIdx !== -1) sheet.getRange(foundRow, emailIdx + 1).setValue(normalized);
+    if (phoneIdx !== -1 && phone) sheet.getRange(foundRow, phoneIdx + 1).setValue(phone);
+    if (roleIdx !== -1) sheet.getRange(foundRow, roleIdx + 1).setValue(role);
+    if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(status);
+    if (photoIdx !== -1 && photoUrl) sheet.getRange(foundRow, photoIdx + 1).setValue(photoUrl);
+  } else {
+    sheet.appendRow([
+      identityId || ("WAL_" + Utilities.getUuid().substring(0, 8)),
+      normalized,
+      phone || "",
+      name,
+      role || "WALI_SANTRI",
+      status || "ACTIVE",
+      nowIso || new Date().toISOString(),
+      photoUrl || ""
+    ]);
+  }
+}
+
+function syncUserStatusToLegacySheets(ss, userId, email, newStatus) {
+  if (!ss) ss = getDatabaseSpreadsheet();
+  if (!ss) return;
+  const legacySheets = [SHEET_ADMIN_IDENTITIES, SHEET_PENGASUH_IDENTITIES, SHEET_WALI_IDENTITIES];
+  legacySheets.forEach(sName => {
+    const s = ss.getSheetByName(sName);
+    if (!s) return;
+    const sData = s.getDataRange().getValues();
+    if (!sData || sData.length < 2) return;
+    const h = sData[0].map(x => String(x || "").trim().toLowerCase());
+    const idCol = h.indexOf("identity_id");
+    const emCol = h.indexOf("email");
+    const stCol = h.indexOf("status");
+    if (stCol === -1) return;
+    for (let r = 1; r < sData.length; r++) {
+      const rId = idCol !== -1 ? String(sData[r][idCol] || "").trim() : "";
+      const rEm = emCol !== -1 ? String(sData[r][emCol] || "").trim().toLowerCase() : "";
+      if ((userId && rId === userId) || (email && rEm === email)) {
+        s.getRange(r + 1, stCol + 1).setValue(newStatus);
+        break;
+      }
+    }
+  });
 }
 
 /**
@@ -5222,9 +5452,53 @@ function getAuthSheet(ss, targetName) {
 
 function getAdminIdentityByEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized) return null;
+  if (!normalized || !normalized.includes("@")) return null;
 
   const ss = getDatabaseSpreadsheet();
+  if (!ss) return null;
+
+  // 1. Cek dari sheet Users (Master Terpadu)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+      const emailIdx = header.indexOf("email");
+      const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      const createdAtIdx = header.indexOf("created_at") !== -1 ? header.indexOf("created_at") : header.indexOf("dibuat_pada");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+      const allowedRoles = ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "BENDAHARA", "PENGURUS"];
+
+      for (let i = 1; i < data.length; i++) {
+        const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+        if (rowEmail === normalized) {
+          const rawRole = roleIdx !== -1 ? String(data[i][roleIdx] || "ADMIN").trim().toUpperCase() : "ADMIN";
+          if (allowedRoles.includes(rawRole)) {
+            const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+            return {
+              identityId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+              userId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+              email: normalized,
+              name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+              role: rawRole,
+              status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+              photoUrl: rawPhoto,
+              photo_url: rawPhoto,
+              createdAt: createdAtIdx !== -1 ? String(data[i][createdAtIdx] || "") : ""
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback ke legacy sheet Admin_Identities
   const sheet = getAuthSheet(ss, SHEET_ADMIN_IDENTITIES);
   if (!sheet) return null;
 
@@ -5255,9 +5529,10 @@ function getAdminIdentityByEmail(email) {
       const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
+        userId: String(data[i][idIdx] || ""),
         email: String(data[i][emailIdx] || ""),
         name: String(data[i][nameIdx] || ""),
-        role: String(data[i][roleIdx] || "ADMIN"),
+        role: String(data[i][roleIdx] || "ADMIN").toUpperCase(),
         status: String(data[i][statusIdx] || "").trim().toUpperCase(),
         photoUrl: rawPhoto,
         photo_url: rawPhoto,
@@ -5273,6 +5548,50 @@ function getAdminIdentityById(identityId) {
   const targetId = String(identityId).trim();
 
   const ss = getDatabaseSpreadsheet();
+  if (!ss) return null;
+
+  // 1. Cek dari sheet Users (Master Terpadu)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+      const emailIdx = header.indexOf("email");
+      const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      const createdAtIdx = header.indexOf("created_at") !== -1 ? header.indexOf("created_at") : header.indexOf("dibuat_pada");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+      const allowedRoles = ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "BENDAHARA", "PENGURUS"];
+
+      for (let i = 1; i < data.length; i++) {
+        const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+        if (rowId === targetId) {
+          const rawRole = roleIdx !== -1 ? String(data[i][roleIdx] || "ADMIN").trim().toUpperCase() : "ADMIN";
+          if (allowedRoles.includes(rawRole)) {
+            const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+            return {
+              identityId: targetId,
+              userId: targetId,
+              email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim() : "",
+              name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+              role: rawRole,
+              status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+              photoUrl: rawPhoto,
+              photo_url: rawPhoto,
+              createdAt: createdAtIdx !== -1 ? String(data[i][createdAtIdx] || "") : ""
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback ke legacy sheet Admin_Identities
   const sheet = getAuthSheet(ss, SHEET_ADMIN_IDENTITIES);
   if (!sheet) return null;
 
@@ -5285,6 +5604,7 @@ function getAdminIdentityById(identityId) {
   let nameIdx = header.indexOf("name");
   let roleIdx = header.indexOf("role");
   let statusIdx = header.indexOf("status");
+  let createdAtIdx = header.indexOf("created_at");
   let photoIdx = header.indexOf("photo_url");
   if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
   if (photoIdx === -1) photoIdx = header.indexOf("foto");
@@ -5294,18 +5614,21 @@ function getAdminIdentityById(identityId) {
   if (nameIdx === -1) nameIdx = 2;
   if (roleIdx === -1) roleIdx = 3;
   if (statusIdx === -1) statusIdx = 4;
+  if (createdAtIdx === -1) createdAtIdx = 5;
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][idIdx] || "").trim() === targetId) {
       const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
       return {
         identityId: String(data[i][idIdx] || ""),
+        userId: String(data[i][idIdx] || ""),
         email: String(data[i][emailIdx] || ""),
         name: String(data[i][nameIdx] || ""),
-        role: String(data[i][roleIdx] || "ADMIN"),
+        role: String(data[i][roleIdx] || "ADMIN").toUpperCase(),
         status: String(data[i][statusIdx] || "").trim().toUpperCase(),
         photoUrl: rawPhoto,
-        photo_url: rawPhoto
+        photo_url: rawPhoto,
+        createdAt: String(data[i][createdAtIdx] || "")
       };
     }
   }
@@ -5320,6 +5643,48 @@ function getWaliIdentityByEmail(email) {
   if (!normalized || !normalized.includes("@")) return null;
 
   const ss = getDatabaseSpreadsheet();
+  if (!ss) return null;
+
+  // 1. Cek dari sheet Users (Master Terpadu)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone") !== -1 ? header.indexOf("phone") : (header.indexOf("telepon") !== -1 ? header.indexOf("telepon") : header.indexOf("no_hp"));
+      const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+      for (let i = 1; i < data.length; i++) {
+        const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+        if (rowEmail === normalized) {
+          const rawRole = roleIdx !== -1 ? String(data[i][roleIdx] || "WALI_SANTRI").trim().toUpperCase() : "WALI_SANTRI";
+          if (rawRole === "WALI_SANTRI") {
+            const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+            return {
+              identityId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+              userId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+              email: normalized,
+              phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+              name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+              role: "WALI_SANTRI",
+              status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+              photoUrl: rawPhoto,
+              photo_url: rawPhoto
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback ke legacy sheet Wali_Identities
   const sheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
   if (!sheet) return null;
 
@@ -5418,6 +5783,48 @@ function getWaliIdentityById(identityId) {
   const targetId = String(identityId).trim();
 
   const ss = getDatabaseSpreadsheet();
+  if (!ss) return null;
+
+  // 1. Cek dari sheet Users (Master Terpadu)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone") !== -1 ? header.indexOf("phone") : (header.indexOf("telepon") !== -1 ? header.indexOf("telepon") : header.indexOf("no_hp"));
+      const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+      for (let i = 1; i < data.length; i++) {
+        const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+        if (rowId === targetId) {
+          const rawRole = roleIdx !== -1 ? String(data[i][roleIdx] || "WALI_SANTRI").trim().toUpperCase() : "WALI_SANTRI";
+          if (rawRole === "WALI_SANTRI") {
+            const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+            return {
+              identityId: targetId,
+              userId: targetId,
+              email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
+              phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+              name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "",
+              role: "WALI_SANTRI",
+              status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+              photoUrl: rawPhoto,
+              photo_url: rawPhoto
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback ke legacy sheet Wali_Identities
   const sheet = getAuthSheet(ss, SHEET_WALI_IDENTITIES);
   if (!sheet) return null;
 
@@ -5467,6 +5874,49 @@ function getPengasuhIdentityByEmail(email) {
   if (!normalized || !normalized.includes("@")) return null;
 
   const ss = getDatabaseSpreadsheet();
+  if (!ss) return null;
+
+  // 1. Cek dari sheet Users (Master Terpadu)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone") !== -1 ? header.indexOf("phone") : (header.indexOf("telepon") !== -1 ? header.indexOf("telepon") : header.indexOf("no_hp"));
+      const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+      for (let i = 1; i < data.length; i++) {
+        const rowEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+        if (rowEmail === normalized) {
+          const rawRole = roleIdx !== -1 ? String(data[i][roleIdx] || "PENGASUH").trim().toUpperCase() : "PENGASUH";
+          if (rawRole === "PENGASUH") {
+            const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+            return {
+              identityId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+              userId: idIdx !== -1 ? String(data[i][idIdx] || "") : "",
+              email: normalized,
+              phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+              name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+              titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+              role: "PENGASUH",
+              status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+              photoUrl: rawPhoto,
+              photo_url: rawPhoto
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback ke legacy sheet Pengasuh_Identities
   const sheet = getAuthSheet(ss, SHEET_PENGASUH_IDENTITIES);
   if (!sheet) return null;
 
@@ -5520,6 +5970,49 @@ function getPengasuhIdentityById(identityId) {
   const targetId = String(identityId).trim();
 
   const ss = getDatabaseSpreadsheet();
+  if (!ss) return null;
+
+  // 1. Cek dari sheet Users (Master Terpadu)
+  const usersSheet = getAuthSheet(ss, SHEET_USERS);
+  if (usersSheet) {
+    const data = usersSheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      const header = data[0].map(h => String(h || "").trim().toLowerCase());
+      const idIdx = header.indexOf("user_id") !== -1 ? header.indexOf("user_id") : header.indexOf("id");
+      const emailIdx = header.indexOf("email");
+      const phoneIdx = header.indexOf("phone") !== -1 ? header.indexOf("phone") : (header.indexOf("telepon") !== -1 ? header.indexOf("telepon") : header.indexOf("no_hp"));
+      const nameIdx = header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("nama");
+      const roleIdx = header.indexOf("role");
+      const statusIdx = header.indexOf("status");
+      let photoIdx = header.indexOf("photo_url");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto_profil");
+      if (photoIdx === -1) photoIdx = header.indexOf("foto");
+
+      for (let i = 1; i < data.length; i++) {
+        const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+        if (rowId === targetId) {
+          const rawRole = roleIdx !== -1 ? String(data[i][roleIdx] || "PENGASUH").trim().toUpperCase() : "PENGASUH";
+          if (rawRole === "PENGASUH") {
+            const rawPhoto = photoIdx !== -1 ? String(data[i][photoIdx] || "").trim() : "";
+            return {
+              identityId: targetId,
+              userId: targetId,
+              email: emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "",
+              phone: phoneIdx !== -1 ? String(data[i][phoneIdx] || "") : "",
+              name: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+              titleName: nameIdx !== -1 ? String(data[i][nameIdx] || "") : "Pengasuh",
+              role: "PENGASUH",
+              status: statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE",
+              photoUrl: rawPhoto,
+              photo_url: rawPhoto
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Fallback ke legacy sheet Pengasuh_Identities
   const sheet = getAuthSheet(ss, SHEET_PENGASUH_IDENTITIES);
   if (!sheet) return null;
 
@@ -6286,6 +6779,20 @@ function saveAdminUserData(payload, token) {
       }
     }
 
+    // Dual-Write Sync ke Sheet Identitas sesuai Role
+    try {
+      const adminRoles = ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "BENDAHARA", "PENGURUS"];
+      if (adminRoles.includes(role)) {
+        syncUserToAdminIdentitiesSheet(ss, actualUserId, email, name, role, status, userData.photoUrl || "", nowIso);
+      } else if (role === "PENGASUH") {
+        syncUserToPengasuhIdentitiesSheet(ss, actualUserId, email, name, phone, role, status, userData.photoUrl || "", nowIso);
+      } else if (role === "WALI_SANTRI") {
+        syncUserToWaliIdentitiesSheet(ss, actualUserId, email, name, phone, role, status, userData.photoUrl || "", nowIso);
+      }
+    } catch (syncErr) {
+      console.warn("[SAVE USER DUAL-WRITE ERROR]", syncErr);
+    }
+
     return {
       success: true,
       status: "success",
@@ -6334,6 +6841,16 @@ function toggleUserStatus(payload, token) {
         const currentStatus = statusIdx !== -1 ? String(data[i][statusIdx] || "").trim().toUpperCase() : "ACTIVE";
         const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
         usersSheet.getRange(i + 1, statusIdx + 1).setValue(newStatus);
+
+        // Sinkronkan status ke sheet identitas legacy
+        try {
+          const emailIdx = uHeaders.indexOf("email");
+          const userEmail = emailIdx !== -1 ? String(data[i][emailIdx] || "").trim().toLowerCase() : "";
+          syncUserStatusToLegacySheets(ss, userId, userEmail, newStatus);
+        } catch (syncStatusErr) {
+          console.warn("[TOGGLE USER STATUS SYNC ERROR]", syncStatusErr);
+        }
+
         return {
           success: true,
           status: "success",
@@ -7555,7 +8072,8 @@ function authenticateSession(tokenString) {
   // P0-1: Cek Status Identitas di Master (Sheet Users first, then fallback)
   let identity = getUserIdentityById(claims.identityId);
   if (!identity) {
-    if (claims.role === "ADMIN" || claims.role === "EDITOR") {
+    const adminRoles = ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "BENDAHARA", "PENGURUS"];
+    if (adminRoles.includes(claims.role)) {
       identity = getAdminIdentityById(claims.identityId);
     } else if (claims.role === "WALI_SANTRI") {
       identity = getWaliIdentityById(claims.identityId);
@@ -8059,9 +8577,10 @@ function handleAuthApiAction(action, payload, e) {
           });
         }
 
-        // 2. Cek Pengelola / Admin
+        // 2. Cek Pengelola / Admin / Asatidz / Staf
         let admin = null;
-        if (!targetRoleHint || targetRoleHint === "ADMIN" || targetRoleHint === "EDITOR") {
+        const adminRoles = ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "BENDAHARA", "PENGURUS"];
+        if (!targetRoleHint || adminRoles.includes(targetRoleHint)) {
           admin = getAdminIdentityByEmail(email);
         }
         if (admin && admin.status === "ACTIVE") {

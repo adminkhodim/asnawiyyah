@@ -7,11 +7,20 @@
  */
 const ASN_ROLES = Object.freeze({
     PUBLIC: 'PUBLIC',
+    SUPER_ADMIN: 'SUPER_ADMIN',
     ADMIN: 'ADMIN',
     EDITOR: 'EDITOR',
+    ASATIDZ: 'ASATIDZ',
+    BENDAHARA: 'BENDAHARA',
+    PENGURUS: 'PENGURUS',
     WALI_SANTRI: 'WALI_SANTRI',
     PENGASUH: 'PENGASUH'
 });
+
+function isAsnAdminRole(role) {
+    const r = String(role || '').trim().toUpperCase();
+    return [ASN_ROLES.SUPER_ADMIN, ASN_ROLES.ADMIN, ASN_ROLES.EDITOR, ASN_ROLES.ASATIDZ, ASN_ROLES.BENDAHARA, ASN_ROLES.PENGURUS].includes(r);
+}
 
 /**
  * Frontend Identity State Machine States (Phase 3)
@@ -606,13 +615,14 @@ const ASNIdentity = {
 
     setAdminSession(token, adminData) {
         if (!token) return;
+        const role = (adminData && adminData.role) || ASN_ROLES.ADMIN;
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
         localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
-        sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, ASN_ROLES.ADMIN);
-        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, ASN_ROLES.ADMIN);
+        sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, role);
+        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, role);
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(adminData || {}));
         localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(adminData || {}));
-        this.currentRole = ASN_ROLES.ADMIN;
+        this.currentRole = role;
         this.currentUser = adminData;
         if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
         this.currentState = ASN_STATES.ADMIN_AUTH_ACTIVE;
@@ -773,7 +783,7 @@ const ASNIdentity = {
                 if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1.5 text-amber-400"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || '-')}`;
                 this.updateAvatarUI(ASN_ROLES.PENGASUH, (this.currentUser && (this.currentUser.photoUrl || this.currentUser.photo_url)) || '');
             }
-        } else if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
+        } else if (isAsnAdminRole(this.currentRole)) {
             if (window.innerWidth >= 768) {
                 const pagePengaturan = document.getElementById('page-pengaturan');
                 if (pagePengaturan && !pagePengaturan.classList.contains('hidden')) {
@@ -815,7 +825,7 @@ const ASNIdentity = {
             label.innerText = 'Pengasuh';
             if (icon) icon.className = 'fa-solid fa-kaaba text-xs text-amber-300';
             btn.className = 'bg-emerald-950 hover:bg-emerald-900 text-amber-200 border border-amber-500/40 px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm transition-all duration-200 flex items-center space-x-1.5';
-        } else if (this.currentRole === ASN_ROLES.ADMIN || this.currentRole === ASN_ROLES.EDITOR) {
+        } else if (isAsnAdminRole(this.currentRole)) {
             label.innerText = 'Pengelola';
             if (icon) icon.className = 'fa-solid fa-shield-halved text-xs text-emerald-300';
             btn.className = 'bg-brand-800 hover:bg-brand-700 text-emerald-300 border border-emerald-500/30 px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm transition-all duration-200 flex items-center space-x-1.5';
@@ -1177,7 +1187,7 @@ const ASNIdentity = {
         if (normalizedRole === ASN_ROLES.PENGASUH) {
             imgId = 'pengasuh-avatar-img';
             iconId = 'pengasuh-avatar-icon';
-        } else if (normalizedRole === ASN_ROLES.ADMIN || normalizedRole === ASN_ROLES.EDITOR) {
+        } else if (isAsnAdminRole(normalizedRole)) {
             imgId = 'admin-avatar-img';
             iconId = 'admin-avatar-icon';
         } else {
@@ -1255,7 +1265,7 @@ const ASNIdentity = {
                     if (role === ASN_ROLES.PENGASUH) {
                         sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(this.currentUser || {}));
                         localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(this.currentUser || {}));
-                    } else if (role === ASN_ROLES.ADMIN || role === ASN_ROLES.EDITOR) {
+                    } else if (isAsnAdminRole(role)) {
                         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(this.currentUser || {}));
                         localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(this.currentUser || {}));
                     } else if (role === ASN_ROLES.WALI_SANTRI) {
