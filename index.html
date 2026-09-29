@@ -3760,7 +3760,7 @@
         </div>
 
         <!-- ==================== TABS: AL-QUR'AN POJOK (BACA PER HALAMAN 1 JUZ = 20 HALAMAN) ==================== -->
-        <div id="page-quran-page" class="tab-content hidden space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-8 py-3 sm:py-4 md:py-6 max-w-7xl mx-auto">
+        <div id="page-quran-page" class="tab-content hidden space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6 pb-28 sm:pb-32 max-w-7xl mx-auto">
             <!-- Header Navigasi & Mode Switcher -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-3">
                 <div class="flex items-center space-x-2.5">
@@ -3799,17 +3799,17 @@
             <!-- ==================== 1. TAMPILAN MODE MUSHAF GAMBAR KEMENAG (DEFAULT) ==================== -->
             <div id="quran-mushaf-view-container" class="space-y-2.5 sm:space-y-3">
                 <!-- 3 Pill Header Kemenag (Persis seperti contoh gambar quran.kemenag.go.id) -->
-                <div id="mushaf-3pill-header" class="flex items-center justify-between max-w-xl mx-auto px-2 py-0.5 text-xs">
+                <div id="mushaf-3pill-header" class="flex items-center justify-between max-w-xl mx-auto px-1 sm:px-2 py-0.5 text-xs gap-1.5">
                     <!-- Pill Kiri: JUZ X -->
-                    <span id="mushaf-pill-juz" class="px-4 py-1 rounded-full border border-slate-300/80 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-extrabold text-[11px] shadow-xs">
+                    <span id="mushaf-pill-juz" class="px-3 sm:px-4 py-1 rounded-full border border-slate-300/80 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-extrabold text-[11px] shadow-xs shrink-0 whitespace-nowrap">
                         JUZ 1
                     </span>
                     <!-- Pill Tengah: Nomor Halaman -->
-                    <span id="mushaf-pill-page" class="px-4 py-1 rounded-full border border-slate-300/80 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-extrabold text-[11px] shadow-xs">
+                    <span id="mushaf-pill-page" class="px-3 sm:px-4 py-1 rounded-full border border-slate-300/80 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-extrabold text-[11px] shadow-xs shrink-0 whitespace-nowrap">
                         1
                     </span>
-                    <!-- Pill Kanan: Nomor & Nama Surah -->
-                    <span id="mushaf-pill-surah" class="px-4 py-1 rounded-full border border-slate-300/80 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-extrabold text-[11px] shadow-xs">
+                    <!-- Pill Kanan: Nomor & Nama Surah (Truncate jika panjang agar tidak overload) -->
+                    <span id="mushaf-pill-surah" class="px-3 sm:px-4 py-1 rounded-full border border-slate-300/80 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-extrabold text-[11px] shadow-xs max-w-[50%] truncate text-right">
                         1. Al-Fatihah
                     </span>
                 </div>
@@ -3818,14 +3818,14 @@
                 <div id="quran-mushaf-image-wrapper"
                     class="relative max-w-xl mx-auto bg-white dark:bg-[#070d14] rounded-2xl shadow-lg border border-slate-200/80 dark:border-[#253447] p-1.5 sm:p-2.5 overflow-hidden flex flex-col items-center select-none touch-pan-y">
                     <!-- Skeleton Loader saat gambar memuat -->
-                    <div id="mushaf-img-loading" class="w-full aspect-[2/3] max-h-[82vh] bg-slate-100 dark:bg-[#15202d] animate-pulse rounded-xl flex flex-col items-center justify-center text-slate-400 space-y-2">
+                    <div id="mushaf-img-loading" class="w-full aspect-[2/3] max-h-[68vh] sm:max-h-[82vh] bg-slate-100 dark:bg-[#15202d] animate-pulse rounded-xl flex flex-col items-center justify-center text-slate-400 space-y-2">
                         <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-500"></i>
                         <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Memuat Lembar Mushaf Kemenag...</span>
                     </div>
 
                     <!-- Lembar Gambar Mushaf Kemenag RI (WebP) -->
                     <img id="quran-mushaf-img" src="" alt="Mushaf Standar Kemenag RI"
-                        class="hidden w-auto max-w-full max-h-[84vh] object-contain rounded-xl transition-transform duration-200 ease-out origin-center cursor-zoom-in"
+                        class="hidden w-auto max-w-full max-h-[70vh] sm:max-h-[84vh] object-contain rounded-xl transition-transform duration-200 ease-out origin-center cursor-zoom-in"
                         onload="onMushafImageLoaded()"
                         onerror="onMushafImageError()"
                         onclick="toggleMushafZoomClick()" />
@@ -3872,18 +3872,26 @@
                 </div>
             </div>
 
-            <!-- Lompat Halaman Cepat Bar (Aktif untuk Semua Mode) -->
-            <div class="flex items-center justify-between bg-emerald-50/70 dark:bg-[#1a2b3c] px-4 py-2.5 rounded-2xl border border-emerald-500/20 text-xs">
-                <span class="text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
-                    <i class="fa-solid fa-book-bookmark text-emerald-600 dark:text-emerald-400"></i>
-                    <span id="quran-page-surah-info">Memuat info surah...</span>
-                </span>
-                <div class="flex items-center space-x-2">
-                    <span class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">Lompat:</span>
-                    <select id="select-jump-page" onchange="jumpToQuranPage(this.value)"
-                        class="bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#253447] text-xs rounded-lg px-2 py-1 font-semibold focus:outline-none focus:border-emerald-500">
-                        <!-- Options 1 to 604 generated by JS -->
-                    </select>
+            <!-- Bar Pilihan Halaman & Surah (Anti-Overload & Responsif) -->
+            <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs shadow-xs">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1 mb-0.5">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                                Pilihan Surah & Halaman
+                            </span>
+                            <span id="quran-page-surah-info" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 truncate max-w-[140px] text-right">
+                                Memuat...
+                            </span>
+                        </div>
+                        <select id="select-jump-page" onchange="jumpToQuranPage(this.value)"
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-[#253447] text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer truncate">
+                            <!-- Options 1 to 604 generated by JS -->
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -3892,22 +3900,27 @@
                 <!-- Loaded via JS openQuranPage() jika mode teks aktif -->
             </div>
 
-            <!-- Footer Navigasi Bolak-Balik Lembaran Halaman (Mushaf & Teks) -->
-            <div class="flex items-center justify-between p-3.5 md:p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm mt-4">
-                <button type="button" id="btn-page-prev" onclick="navigateQuranPage(-1)"
-                    class="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none">
+            <!-- Footer Navigasi Bolak-Balik Lembaran Halaman (RTL Mushaf Al-Qur'an: Selanjutnya di Kiri, Sebelumnya di Kanan) -->
+            <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm mt-4 gap-2">
+                <!-- KIRI: Halaman Selanjutnya (Membuka ke kiri sesuai arah mushaf RTL) -->
+                <button type="button" id="btn-page-next" onclick="navigateQuranPage(1)"
+                    class="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-sm shrink-0">
                     <i class="fa-solid fa-arrow-left text-xs"></i>
-                    <span>Hal. Sebelumnya</span>
+                    <span>Hal. Selanjutnya</span>
                 </button>
-                <div class="text-center">
+
+                <!-- TENGAH: Nomor Halaman & Status -->
+                <div class="text-center px-1">
                     <span id="footer-current-page-num" class="text-xs font-bold text-emerald-700 dark:text-emerald-400">
                         Hal. 1
                     </span>
-                    <span class="text-[10px] text-slate-400 block">Mushaf Kemenag RI</span>
+                    <span class="text-[10px] text-slate-400 block whitespace-nowrap">Mushaf Kemenag RI</span>
                 </div>
-                <button type="button" id="btn-page-next" onclick="navigateQuranPage(1)"
-                    class="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none">
-                    <span>Hal. Selanjutnya</span>
+
+                <!-- KANAN: Halaman Sebelumnya (Kembali ke kanan sesuai arah mushaf RTL) -->
+                <button type="button" id="btn-page-prev" onclick="navigateQuranPage(-1)"
+                    class="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none shrink-0">
+                    <span>Hal. Sebelumnya</span>
                     <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
             </div>

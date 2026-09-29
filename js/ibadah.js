@@ -484,7 +484,8 @@
             const surahs = QURAN_CHAPTER_PAGES.filter(s => p >= s.startPage && p <= s.endPage);
             if (surahs.length === 0) return '';
             if (surahs.length === 1) return `${surahs[0].id}. ${surahs[0].name}`;
-            return surahs.map(s => `${s.id}. ${s.name}`).join(' | ');
+            if (surahs.length === 2) return `${surahs[0].id}. ${surahs[0].name} & ${surahs[1].id}. ${surahs[1].name}`;
+            return `${surahs[0].id}. ${surahs[0].name} - ${surahs[surahs.length - 1].name} (${surahs.length} Surah)`;
         }
 
         function switchQuranIndexSubTab(tabName) {
@@ -545,7 +546,7 @@
                     const opt = document.createElement('option');
                     opt.value = p;
                     const sInfo = getSurahInfoFromPage(p);
-                    opt.innerText = `Hal ${p} (${sInfo})`;
+                    opt.innerText = `Hal. ${p} — ${sInfo}`;
                     selectJump.appendChild(opt);
                 }
             }
@@ -1016,10 +1017,10 @@
             // Jangan picu navigasi keyboard jika user sedang mengetik di input atau dropdown
             if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
 
-            if (e.key === 'ArrowRight') {
-                navigateQuranPage(1);
-            } else if (e.key === 'ArrowLeft') {
-                navigateQuranPage(-1);
+            if (e.key === 'ArrowLeft') {
+                navigateQuranPage(1); // Panah Kiri = Lembar Selanjutnya (arah RTL Mushaf)
+            } else if (e.key === 'ArrowRight') {
+                navigateQuranPage(-1); // Panah Kanan = Lembar Sebelumnya (arah RTL Mushaf)
             }
         });
 
