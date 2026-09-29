@@ -1052,6 +1052,38 @@ function migrasiKolomViewsBerita() {
   }
 }
 
+// ============================================================================
+// HELPER: EKSTRAK INLINE BASE64 IMAGES KE GOOGLE DRIVE AGAR SHEET RINGAN
+// ============================================================================
+function processNewsInlineImages(folder, isiHtml) {
+  if (!isiHtml || typeof isiHtml !== 'string' || isiHtml.indexOf("data:image/") === -1) {
+    return isiHtml;
+  }
+
+  // Regex mencari tag <img ... src="data:image/(...);base64,(...)" ...>
+  var regex = /<img([^>]*?)src=["']data:image\/([a-zA-Z0-9.+_-]+);base64,([^"']+)["']([^>]*?)>/gi;
+  
+  return isiHtml.replace(regex, function(match, prefix, ext, base64Data, suffix) {
+    try {
+      var decoded = Utilities.base64Decode(base64Data);
+      var normalizedExt = String(ext).toLowerCase();
+      if (normalizedExt === 'jpeg') normalizedExt = 'jpg';
+      var mimeType = "image/" + (normalizedExt === 'jpg' ? 'jpeg' : normalizedExt);
+      var fileName = "BERITA_INLINE_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000) + "." + normalizedExt;
+      var blob = Utilities.newBlob(decoded, mimeType, fileName);
+      var newFile = folder.createFile(blob);
+      try {
+        newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (aclErr) {}
+      var driveUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+      return '<img' + prefix + 'src="' + driveUrl + '"' + suffix + '>';
+    } catch (err) {
+      Logger.log("processNewsInlineImages error: " + err.message);
+      return match;
+    }
+  });
+}
+
 function simpanBerita(formData) {
   var lock = LockService.getScriptLock();
   try {
@@ -1062,23 +1094,41 @@ function simpanBerita(formData) {
 
   try {
     var fileUrl = "";
+    var folder = null;
 
-    // 1. Upload ke Google Drive jika ada file gambar
-    if (formData.file && formData.file.base64) {
-      var folder = DriveApp.getFolderById(FOLDER_ID);
-      var decodedData = Utilities.base64Decode(formData.file.base64);
-      var blob = Utilities.newBlob(
-        decodedData,
-        formData.file.mimeType,
-        "BERITA_" + new Date().getTime() + "_" + formData.file.name
-      );
+    // 1. Upload ke Google Drive jika ada file gambar utama
+    if (formData.file) {
+      var base64Str = formData.file.base64;
+      var mimeType = formData.file.mimeType || "image/webp";
+      var fileName = formData.file.name || ("BERITA_" + new Date().getTime() + ".webp");
 
-      var newFile = folder.createFile(blob);
-      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+      if (!base64Str && typeof formData.file === 'string' && formData.file.indexOf(',') > -1) {
+        var parts = formData.file.split(',');
+        var match = parts[0].match(/:(.*?);/);
+        if (match) mimeType = match[1];
+        base64Str = parts[1];
+      }
+
+      if (base64Str) {
+        folder = DriveApp.getFolderById(FOLDER_ID);
+        var decodedData = Utilities.base64Decode(base64Str);
+        var blob = Utilities.newBlob(decodedData, mimeType, fileName);
+        var newFile = folder.createFile(blob);
+        try {
+          newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (aclErr) {}
+        fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+      }
     }
 
-    // 2. Simpan ke Google Spreadsheet
+    // 2. Ekstrak foto inline di dalam isi berita (jika ada) ke Google Drive agar sheet tidak lemot
+    var cleanIsi = formData.isi || "";
+    if (cleanIsi.indexOf("data:image/") > -1) {
+      if (!folder) folder = DriveApp.getFolderById(FOLDER_ID);
+      cleanIsi = processNewsInlineImages(folder, cleanIsi);
+    }
+
+    // 3. Simpan ke Google Spreadsheet
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
@@ -1107,11 +1157,11 @@ function simpanBerita(formData) {
       formData.penulis,
       fileUrl,
       formData.ringkasan,
-      formData.isi,
+      cleanIsi,
       0 // Views awal
     ]);
 
-    return { success: true, message: "Berita berhasil dipublikasikan!" };
+    return { success: true, message: "Berita berhasil dipublikasikan!", data: { news_id: identities.newsId, slug: identities.slug } };
   } catch (error) {
     return { success: false, message: error.toString() };
   } finally {
@@ -1152,13 +1202,30 @@ function updateBerita(formData) {
     }
 
     var fileUrl = data[targetRow - 1][6]; // Keep existing Gambar_URL by default
-    if (formData.file && formData.file.base64) {
-      var folder = DriveApp.getFolderById(FOLDER_ID);
-      var decodedData = Utilities.base64Decode(formData.file.base64);
-      var blob = Utilities.newBlob(decodedData, formData.file.mimeType, "BERITA_UPD_" + new Date().getTime() + "_" + formData.file.name);
-      var newFile = folder.createFile(blob);
-      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+    var folder = null;
+
+    if (formData.file) {
+      var base64Str = formData.file.base64;
+      var mimeType = formData.file.mimeType || "image/webp";
+      var fileName = formData.file.name || ("BERITA_UPD_" + new Date().getTime() + ".webp");
+
+      if (!base64Str && typeof formData.file === 'string' && formData.file.indexOf(',') > -1) {
+        var parts = formData.file.split(',');
+        var match = parts[0].match(/:(.*?);/);
+        if (match) mimeType = match[1];
+        base64Str = parts[1];
+      }
+
+      if (base64Str) {
+        folder = DriveApp.getFolderById(FOLDER_ID);
+        var decodedData = Utilities.base64Decode(base64Str);
+        var blob = Utilities.newBlob(decodedData, mimeType, fileName);
+        var newFile = folder.createFile(blob);
+        try {
+          newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (aclErr) {}
+        fileUrl = "https://lh3.googleusercontent.com/d/" + newFile.getId();
+      }
     }
 
     var judul = formData.judul !== undefined ? formData.judul : data[targetRow - 1][3];
@@ -1166,6 +1233,12 @@ function updateBerita(formData) {
     var penulis = formData.penulis !== undefined ? formData.penulis : data[targetRow - 1][5];
     var ringkasan = formData.ringkasan !== undefined ? formData.ringkasan : data[targetRow - 1][7];
     var isi = formData.isi !== undefined ? formData.isi : data[targetRow - 1][8];
+
+    // Ekstrak foto inline jika ada
+    if (isi && isi.indexOf("data:image/") > -1) {
+      if (!folder) folder = DriveApp.getFolderById(FOLDER_ID);
+      isi = processNewsInlineImages(folder, isi);
+    }
 
     // Array to update: D to I (Judul, Kategori, Penulis, Gambar_URL, Ringkasan, Isi)
     sheet.getRange(targetRow, 4, 1, 6).setValues([[judul, kategori, penulis, fileUrl, ringkasan, isi]]);

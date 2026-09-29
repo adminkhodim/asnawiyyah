@@ -1038,11 +1038,11 @@
             ctx.drawImage(adminNewsRawImage, drawX, drawY, drawWidth, drawHeight);
         }
 
-        // Iterative compression function guaranteeing file size <= 250 KB
-        async function compressCanvasToMax250KB(sourceCanvas, targetMaxKB = 250) {
+        // Iterative compression function - super ringan & tajam untuk web modern (maks 150 KB, optimal ~70-100 KB)
+        async function compressCanvasToMax250KB(sourceCanvas, targetMaxKB = 150) {
             const exportCanvas = document.createElement('canvas');
-            let width = 1280;
-            let height = 720;
+            let width = 1200;
+            let height = 675;
             exportCanvas.width = width;
             exportCanvas.height = height;
             const ctx = exportCanvas.getContext('2d');
@@ -1054,7 +1054,7 @@
             const maxChars = targetMaxKB * 1024 * 1.37;
 
             let format = 'image/webp';
-            let quality = 0.90;
+            let quality = 0.82;
             let base64 = exportCanvas.toDataURL(format, quality);
 
             // Fallback to jpeg if browser doesn't export webp
@@ -1069,7 +1069,7 @@
                 base64 = exportCanvas.toDataURL(format, quality);
             }
 
-            // If still above 250KB, scale down dimension to 960x540
+            // If still above target, scale down dimension to 960x540
             if (base64.length > maxChars) {
                 exportCanvas.width = 960;
                 exportCanvas.height = 540;
@@ -1077,7 +1077,7 @@
                 ctx2.imageSmoothingEnabled = true;
                 ctx2.imageSmoothingQuality = 'high';
                 ctx2.drawImage(sourceCanvas, 0, 0, 960, 540);
-                quality = 0.80;
+                quality = 0.78;
                 base64 = exportCanvas.toDataURL(format, quality);
                 while (base64.length > maxChars && quality > 0.35) {
                     quality -= 0.08;
@@ -1093,15 +1093,15 @@
             if (!canvas || !adminNewsRawImage) return;
 
             try {
-                // Render at high-res 16:9 offscreen
+                // Render at high-res 16:9 offscreen (1200x675)
                 const hiResCanvas = document.createElement('canvas');
-                hiResCanvas.width = 1280;
-                hiResCanvas.height = 720;
+                hiResCanvas.width = 1200;
+                hiResCanvas.height = 675;
                 const hiCtx = hiResCanvas.getContext('2d');
                 hiCtx.imageSmoothingEnabled = true;
                 hiCtx.imageSmoothingQuality = 'high';
 
-                const ratio = 1280 / canvas.width;
+                const ratio = 1200 / canvas.width;
                 const baseScale = Math.max(hiResCanvas.width / adminNewsRawImage.width, hiResCanvas.height / adminNewsRawImage.height);
                 const scale = baseScale * (adminNewsCropState.zoom || 1);
                 const drawWidth = adminNewsRawImage.width * scale;
@@ -1111,8 +1111,8 @@
 
                 hiCtx.drawImage(adminNewsRawImage, drawX, drawY, drawWidth, drawHeight);
 
-                // Compress <= 250 KB
-                const compressedBase64 = await compressCanvasToMax250KB(hiResCanvas, 250);
+                // Compress with optimal target 150 KB
+                const compressedBase64 = await compressCanvasToMax250KB(hiResCanvas, 150);
                 adminNewsCroppedBase64 = compressedBase64;
 
                 const sizeKB = Math.round(compressedBase64.length * 0.75 / 1024);
@@ -1130,13 +1130,13 @@
                     previewImg.classList.remove('hidden');
                 }
                 if (placeholder) placeholder.classList.add('hidden');
-                if (sizeText) sizeText.innerText = `Ukuran: ${sizeKB} KB / Maks 250 KB`;
+                if (sizeText) sizeText.innerText = `Ukuran: ${sizeKB} KB (Ringan & Cepat)`;
                 if (sizeBadge) sizeBadge.classList.remove('hidden');
                 if (recropBtn) recropBtn.classList.remove('hidden');
                 if (removeBtn) removeBtn.classList.remove('hidden');
 
                 closeAdminNewsCropModal();
-                showToast(`✅ Foto 16:9 berhasil dipotong & dikompres (${sizeKB} KB)!`);
+                showToast(`✅ Foto 16:9 berhasil dipotong & dioptimalkan (${sizeKB} KB)!`);
             } catch (err) {
                 console.error("Gagal crop berita:", err);
                 showToast("❌ Gagal memproses pemotongan gambar: " + err.message);
@@ -1207,7 +1207,7 @@
                     const canvas = document.createElement('canvas');
                     let w = img.width;
                     let h = img.height;
-                    const maxDim = 1000;
+                    const maxDim = 800; // Optimal untuk inline article images
                     if (w > maxDim || h > maxDim) {
                         if (w > h) {
                             h = Math.round((h * maxDim) / w);
@@ -1222,7 +1222,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
 
-                    const compressed = await compressCanvasToMax250KB(canvas, 200);
+                    const compressed = await compressCanvasToMax250KB(canvas, 100);
                     adminNewsInlineSelectedBase64 = compressed;
 
                     const previewImg = document.getElementById('admin-news-inline-preview-img');
@@ -1232,7 +1232,7 @@
                     if (previewImg) previewImg.src = compressed;
                     if (previewWrap) previewWrap.classList.remove('hidden');
                     const sizeKB = Math.round(compressed.length * 0.75 / 1024);
-                    if (sizeBadge) sizeBadge.innerText = `Ukuran foto terkompres: ${sizeKB} KB`;
+                    if (sizeBadge) sizeBadge.innerText = `Ukuran foto terkompres: ${sizeKB} KB (Ringan & Cepat)`;
                 };
                 img.src = e.target.result;
             };
@@ -1252,7 +1252,6 @@
             const editor = document.getElementById('admin-news-editor');
             if (editor) {
                 editor.focus();
-                // Gunakan insertHTML jika didukung, atau sisipkan di akhir
                 const inserted = document.execCommand('insertHTML', false, figureHtml);
                 if (!inserted) {
                     editor.innerHTML += figureHtml;
@@ -1294,6 +1293,19 @@
                     if (rawFile) {
                         fileData = await readFileAsBase64(rawFile);
                     }
+                }
+
+                // Normalisasi fileData menjadi object { base64, mimeType, name }
+                if (fileData && typeof fileData === 'string' && fileData.startsWith('data:')) {
+                    const parts = fileData.split(',');
+                    const mimeMatch = parts[0].match(/:(.*?);/);
+                    const mimeType = mimeMatch ? mimeMatch[1] : 'image/webp';
+                    const ext = mimeType === 'image/webp' ? '.webp' : '.jpg';
+                    fileData = {
+                        base64: parts[1],
+                        mimeType: mimeType,
+                        name: 'berita_' + Date.now() + ext
+                    };
                 }
 
                 const token = getAdminSessionToken();

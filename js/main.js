@@ -451,20 +451,44 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        const NEWS_CACHE_KEY = 'asnawiyyah_news_cache';
+
         async function loadNews() {
-            if (!isApiConfigured()) {
-                renderAllNewsViews(mockNewsData);
-                checkPendingNewsRoute();
-                return;
+            // 1. STALE (INSTANT): Render secepat kilat dalam 0 ms dari cache lokal jika ada
+            try {
+                const cached = localStorage.getItem(NEWS_CACHE_KEY);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        mockNewsData = parsed;
+                        renderAllNewsViews(mockNewsData);
+                        checkPendingNewsRoute();
+                    }
+                } else if (Array.isArray(mockNewsData) && mockNewsData.length > 0) {
+                    renderAllNewsViews(mockNewsData);
+                    checkPendingNewsRoute();
+                }
+            } catch (e) {
+                console.warn("Gagal membaca cache berita:", e);
             }
 
+            if (!isApiConfigured()) return;
+
+            // 2. REVALIDATE: Ambil pembaruan terkini dari backend di latar belakang tanpa memblokir UI
             try {
                 const response = await apiGet("getKabar");
                 if (response && response.status === "success" &&
                     Array.isArray(response.data) && response.data.length > 0) {
+                    const newDataStr = JSON.stringify(response.data);
+                    const oldDataStr = localStorage.getItem(NEWS_CACHE_KEY);
+
+                    localStorage.setItem(NEWS_CACHE_KEY, newDataStr);
                     mockNewsData = response.data;
+
+                    if (newDataStr !== oldDataStr) {
+                        renderAllNewsViews(mockNewsData);
+                    }
                 }
-                renderAllNewsViews(mockNewsData);
                 checkPendingNewsRoute();
             } catch (err) {
                 console.error("Gagal memuat berita via API:", err);
