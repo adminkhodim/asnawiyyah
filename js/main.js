@@ -109,7 +109,11 @@
                 switchTab('poskestren', false);
             } else if (path === '/administrator') {
                 const isMobile = window.innerWidth < 768;
-                if (isMobile) {
+                const hasAdminToken = !!(
+                    (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
+                    (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
+                );
+                if (isMobile && !isAdminLoggedIn && !hasAdminToken) {
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                     switchTab('pengaturan', false);
                 } else {
@@ -269,7 +273,11 @@
         }
 
         function switchTab(tabId, updateUrl = true, customUrl = null) {
-            if (tabId === 'admin' && window.innerWidth < 768 && (typeof isAdminLoggedIn === 'undefined' || !isAdminLoggedIn)) {
+            const hasAdminToken = !!(
+                (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
+                (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
+            );
+            if (tabId === 'admin' && window.innerWidth < 768 && !isAdminLoggedIn && !hasAdminToken) {
                 if (updateUrl) {
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                 }
@@ -367,7 +375,11 @@
                 if (deskActionMenu) deskActionMenu.classList.add('hidden');
                 if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
                 if (mainFooter) mainFooter.classList.add('hidden');
-                if (!isAdminLoggedIn) {
+                const hasAdminToken = !!(
+                    (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
+                    (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
+                );
+                if (!isAdminLoggedIn && !hasAdminToken) {
                     setTimeout(() => {
                         if (typeof openAdminAuthModal === 'function') {
                             openAdminAuthModal();

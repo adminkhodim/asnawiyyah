@@ -412,14 +412,17 @@ const ASNIdentity = {
                 const saved = sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
                 if (saved) this.currentUser = JSON.parse(saved);
             } catch (e) {}
+            if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
         } else if (adminToken) {
-            this.currentRole = ASN_ROLES.ADMIN;
+            const savedRole = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_ROLE) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_ROLE) || 'ADMIN';
+            const normalizedRole = String(savedRole).toUpperCase();
+            this.currentRole = normalizedRole;
             this.currentState = ASN_STATES.ADMIN_AUTH_ACTIVE;
             try {
-                const savedRole = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_ROLE) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
                 const savedData = sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_DATA);
-                this.currentUser = savedData ? JSON.parse(savedData) : { name: 'Administrator Pesantren', email: 'admin@asnawiyyah.sch.id', role: savedRole || 'ADMIN' };
+                this.currentUser = savedData ? JSON.parse(savedData) : { name: 'Administrator Pesantren', email: 'admin@asnawiyyah.sch.id', role: normalizedRole };
             } catch (e) {}
+            if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
         } else if (parentToken) {
             this.currentRole = ASN_ROLES.WALI_SANTRI;
             this.currentState = ASN_STATES.PARENT_AUTH_ACTIVE;
@@ -472,6 +475,12 @@ const ASNIdentity = {
         try {
             const verifyRes = await ASNAuthAPI.verifySession(token);
             if (!verifyRes.success || !verifyRes.valid) {
+                // Grace Period: Jika server tidak dapat dihubungi (koneksi offline/timeout), jangan logout paksa
+                if (verifyRes.unavailable) {
+                    console.warn('[ASNIdentity] Server autentikasi tidak dapat dihubungi, mempertahankan sesi lokal (offline grace period).');
+                    this.isHydrating = false;
+                    return;
+                }
                 console.warn('[ASNIdentity] Sesi ditolak atau telah dicabut server.');
                 this.clearLocalSession();
                 this.currentState = ASN_STATES.SESSION_EXPIRED;
@@ -483,6 +492,8 @@ const ASNIdentity = {
             }
 
             const serverRole = String(verifyRes.role || '').toUpperCase();
+            const isAdminTier = (serverRole === 'ADMIN' || serverRole === 'SUPER_ADMIN' || serverRole === 'EDITOR' || serverRole === 'PENGURUS' || serverRole === 'ASATIDZ' || serverRole === 'BENDAHARA');
+
             if (serverRole === 'PENGASUH') {
                 this.currentRole = ASN_ROLES.PENGASUH;
                 const profRes = await ASNAuthAPI.getPengasuhProfile(token);
@@ -493,14 +504,20 @@ const ASNIdentity = {
                 } else if (verifyRes.identity) {
                     this.currentUser = verifyRes.identity;
                 }
+                sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, 'PENGASUH');
+                localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, 'PENGASUH');
+                if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
                 this.currentState = ASN_STATES.PENGASUH_AUTH_ACTIVE;
                 this.isHydrating = false;
                 this.renderAccountCenterUI();
-            } else if (serverRole === 'ADMIN' || serverRole === 'EDITOR') {
-                this.currentRole = ASN_ROLES.ADMIN;
+                if (typeof applyAdminRoleVisibility === 'function') {
+                    applyAdminRoleVisibility('PENGASUH');
+                }
+            } else if (isAdminTier) {
+                this.currentRole = serverRole;
                 this.currentUser = verifyRes.identity || {
-                    name: 'Administrator Pesantren',
-                    email: 'admin@asnawiyyah.sch.id',
+                    name: (verifyRes.identity && verifyRes.identity.name) || 'Administrator Pesantren',
+                    email: (verifyRes.identity && verifyRes.identity.email) || 'admin@asnawiyyah.sch.id',
                     role: serverRole
                 };
                 sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, serverRole);
@@ -511,6 +528,9 @@ const ASNIdentity = {
                 this.currentState = ASN_STATES.ADMIN_AUTH_ACTIVE;
                 this.isHydrating = false;
                 this.renderAccountCenterUI();
+                if (typeof applyAdminRoleVisibility === 'function') {
+                    applyAdminRoleVisibility(serverRole);
+                }
             } else if (serverRole === 'WALI_SANTRI') {
                 this.currentRole = ASN_ROLES.WALI_SANTRI;
                 if (!isSilent) {
@@ -554,13 +574,9 @@ const ASNIdentity = {
                 this.renderAccountCenterUI();
             }
         } catch (err) {
-            console.error('[ASNIdentity] Exception saat session hydration:', err);
-            this.clearLocalSession();
-            this.currentState = ASN_STATES.PUBLIC;
-            this.currentRole = ASN_ROLES.PUBLIC;
-            this.currentUser = null;
+            console.error('[ASNIdentity] Network exception saat session hydration:', err);
+            // Toleransi offline / network spike: pertahankan sesi lokal
             this.isHydrating = false;
-            this.renderAccountCenterUI();
         }
     },
 

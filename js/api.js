@@ -162,7 +162,10 @@
         let heroSlideTimer = null;
         let currentHeroSlide = 0;
         let previousTabBeforeNews = 'beranda';
-        let isAdminLoggedIn = false;
+        let isAdminLoggedIn = !!(
+            (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
+            (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
+        );
         let isLoggedIn = true;
 
 

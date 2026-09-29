@@ -2913,18 +2913,18 @@ function setupPhase2BScriptProperties(forceRegenerate = false) {
  * Generates Server-Signed Session Token (HMAC SHA-256)
  * Menggunakan AUTH_TOKEN_SIGNING_SECRET secara eksplisit.
  */
-// ==================== SESSION TTL CONFIGURATION (P1-1) ====================
-// Role-specific bounded session lifetimes (Owner-approved policy)
-const SESSION_TTL_ADMIN_HOURS = 8;
-const SESSION_TTL_EDITOR_HOURS = 8;
-const SESSION_TTL_PENGASUH_HOURS = 8;
-const SESSION_TTL_WALI_HOURS = 24;
-const SESSION_TTL_DEFAULT_HOURS = 8;
+// ==================== SESSION TTL CONFIGURATION (PERSISTENT REMEMBER-ME) ====================
+// Long-lived bounded session lifetimes (Owner-approved policy: 30 hari / 720 jam)
+const SESSION_TTL_ADMIN_HOURS = 720;
+const SESSION_TTL_EDITOR_HOURS = 720;
+const SESSION_TTL_PENGASUH_HOURS = 720;
+const SESSION_TTL_WALI_HOURS = 720;
+const SESSION_TTL_DEFAULT_HOURS = 720;
 
 function getSessionTtlHoursForRole(role) {
   const r = String(role || "").trim().toUpperCase();
-  if (r === "ADMIN") return SESSION_TTL_ADMIN_HOURS;
-  if (r === "EDITOR") return SESSION_TTL_EDITOR_HOURS;
+  if (r === "ADMIN" || r === "SUPER_ADMIN") return SESSION_TTL_ADMIN_HOURS;
+  if (r === "EDITOR" || r === "PENGURUS" || r === "ASATIDZ" || r === "BENDAHARA") return SESSION_TTL_EDITOR_HOURS;
   if (r === "PENGASUH") return SESSION_TTL_PENGASUH_HOURS;
   if (r === "WALI_SANTRI") return SESSION_TTL_WALI_HOURS;
   return SESSION_TTL_DEFAULT_HOURS;
