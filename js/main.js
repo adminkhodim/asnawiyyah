@@ -395,7 +395,11 @@
                 if (mainFooter) mainFooter.classList.remove('hidden');
             }
 
-            if (tabId === 'alumni') {
+            if (tabId === 'admin') {
+                if (typeof applyAdminRoleVisibility === 'function') {
+                    applyAdminRoleVisibility();
+                }
+            } else if (tabId === 'alumni') {
                 loadAlumniTestimonials();
             }
             if (tabId === 'form-alumni') {
@@ -408,6 +412,9 @@
             } else if (tabId === 'pengaturan') {
                 if (typeof ASNIdentity !== 'undefined' && typeof ASNIdentity.renderAccountCenterUI === 'function') {
                     ASNIdentity.renderAccountCenterUI();
+                }
+                if (typeof applyAdminRoleVisibility === 'function') {
+                    applyAdminRoleVisibility();
                 }
             } else if (tabId === 'notifikasi') {
                 loadNotifikasi();

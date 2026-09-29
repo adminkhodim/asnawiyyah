@@ -449,6 +449,9 @@ const ASNIdentity = {
 
         // Tampilkan antarmuka seketika (0 ms) tanpa kedipan skeleton
         this.renderAccountCenterUI();
+        if (typeof applyAdminRoleVisibility === 'function' && (this.currentRole === ASN_ROLES.PENGASUH || isAsnAdminRole(this.currentRole))) {
+            applyAdminRoleVisibility(this.currentRole);
+        }
 
         // Silent background session re-validation
         if (pengasuhToken || adminToken || parentToken) {
@@ -782,6 +785,9 @@ const ASNIdentity = {
                 if (nameEl) nameEl.innerText = (this.currentUser && (this.currentUser.titleName || this.currentUser.name)) || 'Pengasuh Pesantren';
                 if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1.5 text-amber-400"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || '-')}`;
                 this.updateAvatarUI(ASN_ROLES.PENGASUH, (this.currentUser && (this.currentUser.photoUrl || this.currentUser.photo_url)) || '');
+                if (typeof applyAdminRoleVisibility === 'function') {
+                    applyAdminRoleVisibility('PENGASUH');
+                }
             }
         } else if (isAsnAdminRole(this.currentRole)) {
             if (window.innerWidth >= 768) {
@@ -799,6 +805,9 @@ const ASNIdentity = {
             if (nameEl) nameEl.innerText = (this.currentUser && this.currentUser.name) || 'Administrator';
             if (emailEl) emailEl.innerHTML = `<i class="fa-regular fa-envelope mr-1"></i> ${escapeHtml((this.currentUser && this.currentUser.email) || 'admin@asnawiyyah.sch.id')}`;
             this.updateAvatarUI(ASN_ROLES.ADMIN, (this.currentUser && (this.currentUser.photoUrl || this.currentUser.photo_url)) || '');
+            if (typeof applyAdminRoleVisibility === 'function') {
+                applyAdminRoleVisibility(this.currentRole);
+            }
         } else if (this.currentRole === ASN_ROLES.WALI_SANTRI) {
             waliStateEl.classList.remove('hidden');
             const nameEl = document.getElementById('parent-display-name');
@@ -1867,6 +1876,16 @@ function togglePintuAksesResmi() {
 }
 
 function openAdminModuleFromControlCenter(viewName) {
+    const currentRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                        sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+    if (typeof isModuleAllowedForRole === 'function' && !isModuleAllowedForRole(viewName, currentRole)) {
+        if (typeof showToast === 'function') {
+            showToast(`Akses Ditolak: Peran ${currentRole} tidak memiliki izin untuk modul ini.`);
+        } else {
+            alert(`Akses Ditolak: Peran ${currentRole} tidak memiliki izin untuk modul ini.`);
+        }
+        return;
+    }
     if (typeof switchTab === 'function') {
         switchTab('admin', false);
     }

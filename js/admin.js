@@ -67,6 +67,18 @@
         }
 
         function showAdminView(viewName) {
+            // Guard Navigasi RBAC: Validasi wewenang peran sebelum membuka sub-view
+            if (viewName && viewName !== 'hub') {
+                const currentRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                                    sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+                if (typeof isModuleAllowedForRole === 'function' && !isModuleAllowedForRole(viewName, currentRole)) {
+                    if (typeof showToast === 'function') {
+                        showToast(`Akses Ditolak: Peran ${currentRole} tidak memiliki hak akses modul ini.`);
+                    }
+                    viewName = 'hub';
+                }
+            }
+
             // Update Sidebar Active state
             document.querySelectorAll('.admin-nav-item').forEach(btn => {
                 if (btn.dataset.view === viewName) {
@@ -167,6 +179,9 @@
                 renderAdminUnitKegiatanList();
             } else {
                 hubView.classList.remove('hidden');
+                if (typeof applyAdminRoleVisibility === 'function') {
+                    applyAdminRoleVisibility();
+                }
             }
 
             // Sembunyikan double header di layar mobile saat sub-view aktif

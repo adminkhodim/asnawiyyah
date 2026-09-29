@@ -229,7 +229,7 @@
         'sorogan': ['sorogan.view', 'sorogan.entry'],
         'presensi': ['presensi.view', 'presensi.entry'],
         'ppdb': ['ppdb.manage'],
-        'program': ['program.manage', 'unit.manage', 'profil.manage'],
+        'program': ['program.manage'],
         'unit-kegiatan': ['unit.manage'],
         'users': ['users.manage'],
         'roles': ['roles.manage'],
@@ -243,7 +243,7 @@
         'keuangan': ['keuangan.view', 'keuangan.spp', 'keuangan.verify']
     };
 
-    // Default Baseline Permissions per Role
+    // Default Baseline Permissions per Role (Isolasi Ketat Sesuai Ranah Tanggung Jawab)
     const DEFAULT_ROLE_PERMISSIONS_MAP = {
         'SUPER_ADMIN': ['*'],
         'ADMIN': [
@@ -254,21 +254,24 @@
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config'
         ],
         'ASATIDZ': [
-            'santri.view',
-            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tpq.view', 'tpq.entry', 'sorogan.view', 'sorogan.entry', 'presensi.view', 'presensi.entry',
-            'pegawai.manage', 'profil.manage'
+            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target',
+            'tpq.view', 'tpq.entry',
+            'sorogan.view', 'sorogan.entry',
+            'presensi.view', 'presensi.entry'
         ],
         'BENDAHARA': [
-            'santri.view', 'ppdb.manage', 'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'notifikasi.broadcast', 'pegawai.manage', 'profil.manage'
+            'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'notifikasi.broadcast'
         ],
         'PENGURUS': [
-            'santri.view', 'presensi.view', 'presensi.entry', 'unit.manage', 'ppdb.manage', 'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast', 'profil.manage'
+            'presensi.view', 'presensi.entry', 'unit.manage', 'ppdb.manage',
+            'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'unit.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
+            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view',
+            'unit.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
         ],
         'WALI_SANTRI': [
-            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'keuangan.view', 'berita.manage', 'galeri.manage', 'profil.manage'
+            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'keuangan.view'
         ]
     };
 
@@ -1420,6 +1423,9 @@
      * Cek apakah sebuah modul boleh diakses oleh peran tertentu (Dinamis dari Konfigurasi Izin)
      */
     function isModuleAllowedForRole(moduleKey, roleKey) {
+        if (!moduleKey) return false;
+        if (moduleKey === 'hub') return true;
+
         if (!roleKey) {
             roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
                       sessionStorage.getItem('ASN_ADMIN_ROLE') || 
@@ -1430,11 +1436,18 @@
         
         if (roleKey === 'SUPER_ADMIN') return true;
 
-        const rolePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
+        // Cek izin khusus pengguna (user-level override) jika tersedia
+        let rolePerms = null;
+        if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && Array.isArray(ASNIdentity.currentUser.permissions) && ASNIdentity.currentUser.permissions.length > 0) {
+            rolePerms = ASNIdentity.currentUser.permissions;
+        } else {
+            rolePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
+        }
+
         if (rolePerms.includes('*')) return true;
 
         const reqPerms = MODULE_TO_PERMISSIONS[moduleKey];
-        if (!reqPerms || reqPerms.length === 0) return true;
+        if (!reqPerms || reqPerms.length === 0) return false;
 
         return reqPerms.some(pk => rolePerms.includes(pk));
     }
@@ -1586,10 +1599,10 @@
             else pengasuhWidget.classList.add('hidden');
         }
 
-        // 5. Filter Kartu di Menu Hub Admin
-        const hubCards = document.querySelectorAll('#admin-menu-hub [data-admin-module]');
+        // 5. Filter Kartu di Menu Hub Admin (Mendukung data-admin-module dan data-role-module)
+        const hubCards = document.querySelectorAll('#admin-menu-hub [data-admin-module], #admin-menu-hub [data-role-module]');
         hubCards.forEach(card => {
-            const modKey = card.dataset.adminModule;
+            const modKey = card.dataset.adminModule || card.dataset.roleModule;
             const isAllowed = isModuleAllowedForRole(modKey, roleKey);
             
             if (isAllowed) {
@@ -1602,7 +1615,7 @@
         // 6. Hitung & Filter Kategori Hub
         const hubCategories = document.querySelectorAll('.admin-hub-category');
         hubCategories.forEach(cat => {
-            const visibleCards = cat.querySelectorAll('[data-admin-module]:not(.hidden)');
+            const visibleCards = cat.querySelectorAll('[data-admin-module]:not(.hidden), [data-role-module]:not(.hidden)');
             const countBadge = cat.querySelector('.admin-hub-category-count');
             
             if (visibleCards.length === 0) {
@@ -1615,15 +1628,22 @@
             }
         });
 
-        // 7. Filter Sidebar Navigation
+        // 7. Filter Sidebar Navigation (Sembunyikan juga pembungkus li)
         const sidebarNavItems = document.querySelectorAll('#admin-sidebar .admin-nav-item[data-view]');
         sidebarNavItems.forEach(item => {
             const viewKey = item.dataset.view;
+            if (viewKey === 'hub') {
+                item.classList.remove('hidden');
+                if (item.closest('li')) item.closest('li').classList.remove('hidden');
+                return;
+            }
             const isAllowed = isModuleAllowedForRole(viewKey, roleKey);
             if (isAllowed) {
                 item.classList.remove('hidden');
+                if (item.closest('li')) item.closest('li').classList.remove('hidden');
             } else {
                 item.classList.add('hidden');
+                if (item.closest('li')) item.closest('li').classList.add('hidden');
             }
         });
 
@@ -1638,11 +1658,11 @@
             }
         });
 
-        // 8. Filter Mobile Control Center Grid
-        const mobileButtons = document.querySelectorAll('#admin-control-center-grid [data-admin-module]');
+        // 8. Filter Mobile Control Center Grid (Pusat Kontrol Admin di Tab Profil/Akun)
+        const mobileButtons = document.querySelectorAll('#admin-control-center-grid [data-admin-module], #admin-control-center-grid [data-role-module]');
         let visibleMobileCount = 0;
         mobileButtons.forEach(btn => {
-            const modKey = btn.dataset.adminModule;
+            const modKey = btn.dataset.adminModule || btn.dataset.roleModule;
             const isAllowed = isModuleAllowedForRole(modKey, roleKey);
             if (isAllowed) {
                 btn.classList.remove('hidden');
@@ -1654,7 +1674,16 @@
 
         const mobileCountEl = document.getElementById('admin-control-center-count');
         if (mobileCountEl) {
-            mobileCountEl.innerText = `${visibleMobileCount} Modul CMS`;
+            mobileCountEl.innerText = `${visibleMobileCount} Modul Aktif`;
+        }
+
+        const mobileTitleText = document.getElementById('admin-control-center-title-text');
+        if (mobileTitleText) {
+            if (roleKey === 'ASATIDZ') mobileTitleText.innerText = 'Pusat Kontrol Asatidz';
+            else if (roleKey === 'PENGASUH') mobileTitleText.innerText = 'Pusat Kontrol Pengasuh';
+            else if (roleKey === 'BENDAHARA') mobileTitleText.innerText = 'Pusat Kontrol Keuangan';
+            else if (roleKey === 'PENGURUS') mobileTitleText.innerText = 'Pusat Kontrol Pengurus';
+            else mobileTitleText.innerText = 'Pusat Kontrol Admin';
         }
 
         // 9. Update Active Pill pada Role Switcher Bar
