@@ -538,7 +538,11 @@
                 }
             }
 
-            // Populate Jump Page Select (1 to 604)
+            populateJumpPageSelect();
+            selectQuranPojokJuz(currentQuranJuz || 1);
+        }
+
+        function populateJumpPageSelect() {
             const selectJump = document.getElementById('select-jump-page');
             if (selectJump && selectJump.options.length <= 1) {
                 selectJump.innerHTML = '';
@@ -550,8 +554,6 @@
                     selectJump.appendChild(opt);
                 }
             }
-
-            selectQuranPojokJuz(currentQuranJuz || 1);
         }
 
         function selectQuranPojokJuz(juzNo) {
@@ -779,6 +781,7 @@
             const footerNumEl = document.getElementById('footer-current-page-num');
             if (footerNumEl) footerNumEl.innerText = `Hal. ${p}`;
 
+            populateJumpPageSelect();
             const selectJump = document.getElementById('select-jump-page');
             if (selectJump) selectJump.value = p;
 
@@ -1076,6 +1079,7 @@
         window.selectQuranPojokJuz = selectQuranPojokJuz;
         window.getKemenagPageImageUrl = getKemenagPageImageUrl;
         window.getSurahInfoFromPage = getSurahInfoFromPage;
+        window.populateJumpPageSelect = populateJumpPageSelect;
 
         // Expose state properties to window for direct external inspection
         try {
