@@ -94,7 +94,7 @@
         let quranData = [];
         let currentAudio = null;
         let isLatinVisible = false;
-        let isTranslationVisible = true;
+        let isTranslationVisible = false;
         let currentQuranPage = 1;
         let currentQuranJuz = 1;
         let quranPageCache = {};
@@ -223,6 +223,12 @@
                     } else {
                         btnPlayAudio.classList.add('hidden');
                     }
+
+                    // Sinkronkan teks tombol toggle
+                    const textLatinBtn = document.getElementById('text-toggle-latin');
+                    if (textLatinBtn) textLatinBtn.innerText = isLatinVisible ? "Sembunyikan Latin" : "Tampilkan Latin";
+                    const textTransBtn = document.getElementById('text-toggle-translation');
+                    if (textTransBtn) textTransBtn.innerText = isTranslationVisible ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
 
                     // Render Ayah
                     container.innerHTML = '';
@@ -520,6 +526,12 @@
             // Reset page audio button
             resetQuranPageAudio();
 
+            // Sinkronkan tombol toggle latin & terjemah di halaman Quran Pojok
+            const textPageLatin = document.getElementById('text-toggle-page-latin');
+            if (textPageLatin) textPageLatin.innerText = isLatinVisible ? "Sembunyikan Latin" : "Tampilkan Latin";
+            const textPageTrans = document.getElementById('text-toggle-page-trans');
+            if (textPageTrans) textPageTrans.innerText = isTranslationVisible ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
+
             const container = document.getElementById('quran-page-ayah-container');
             if (!container) return;
 
@@ -765,8 +777,8 @@
 
         // ==================== QASIDAH BURDAH CONTROLLER ====================
         let currentBurdahBabId = 1;
-        let burdahShowLatin = true;
-        let burdahShowTranslation = true;
+        let burdahShowLatin = false;
+        let burdahShowTranslation = false;
 
         function openBurdahIndex() {
             renderBurdahIndex();
@@ -872,6 +884,12 @@
             if (btnPrev) btnPrev.disabled = (currentBurdahBabId <= 1);
             if (btnNext) btnNext.disabled = (currentBurdahBabId >= qasidahBurdah.length);
 
+            // Sinkronkan teks tombol toggle
+            const textBurdahLatin = document.getElementById('text-toggle-burdah-latin');
+            if (textBurdahLatin) textBurdahLatin.innerText = burdahShowLatin ? "Sembunyikan Latin" : "Tampilkan Latin";
+            const textBurdahTrans = document.getElementById('text-toggle-burdah-translation');
+            if (textBurdahTrans) textBurdahTrans.innerText = burdahShowTranslation ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
+
             switchTab('burdah-detail');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -918,8 +936,8 @@
 
         // ==================== FITUR TAHLIL & SURAT YASIN (QURAN NU ONLINE) ====================
         let currentTahlilYasinSubTab = 'tahlil';
-        let tahlilShowLatin = true;
-        let tahlilShowTranslation = true;
+        let tahlilShowLatin = false;
+        let tahlilShowTranslation = false;
         let yasinAudioPlaying = false;
 
         function openTahlilYasinPage(subTab = 'tahlil') {
@@ -989,6 +1007,12 @@
                 }
                 renderDoaTahlilContent();
             }
+
+            // Sinkronkan tombol toggle latin & terjemah di Tahlil/Yasin
+            const textTahlilLatin = document.getElementById('text-toggle-tahlil-latin');
+            if (textTahlilLatin) textTahlilLatin.innerText = tahlilShowLatin ? "Sembunyikan Latin" : "Tampilkan Latin";
+            const textTahlilTrans = document.getElementById('text-toggle-tahlil-trans');
+            if (textTahlilTrans) textTahlilTrans.innerText = tahlilShowTranslation ? "Sembunyikan Terjemah" : "Tampilkan Terjemah";
         }
 
         function renderTahlilContent() {
