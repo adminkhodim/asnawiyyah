@@ -5532,6 +5532,17 @@ function sendOtpEmail(email, otpCode, subject = "Kode OTP — PPTQ Asnawiyyah") 
 }
 
 /**
+ * Helper Pemicu Otorisasi Izin Eksternal (UrlFetchApp)
+ * Jalankan fungsi ini 1x di editor Apps Script dan klik "Review Permissions" -> "Allow"
+ * agar skrip memiliki scope: https://www.googleapis.com/auth/script.external_request
+ */
+function triggerAuthorizationUrlFetch() {
+  const res = UrlFetchApp.fetch("https://oauth2.googleapis.com/tokeninfo", { muteHttpExceptions: true });
+  Logger.log("Izin UrlFetchApp aktif! Response Code: " + res.getResponseCode());
+  return "Izin UrlFetchApp berhasil diotorisasi.";
+}
+
+/**
  * Verifikasi Google ID Token secara Server-Side via Tokeninfo Endpoint
  */
 function verifyGoogleIdToken(idToken) {
