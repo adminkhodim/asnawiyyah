@@ -1054,6 +1054,9 @@
             if (text) {
                 text.innerText = isDark ? "Mode Gelap (Dark)" : "Mode Terang (Light)";
             }
+            if (typeof window.applyMushafTheme === 'function') {
+                window.applyMushafTheme();
+            }
         }
 
         function toggleDarkMode(isDark) {
@@ -1079,6 +1082,10 @@
                 if (icon) icon.className = "fa-solid fa-sun text-amber-500";
                 if (text) text.innerText = "Mode Terang (Light)";
                 showToast("Mode Terang diaktifkan");
+            }
+
+            if (typeof window.applyMushafTheme === 'function') {
+                window.applyMushafTheme();
             }
         }
 

@@ -635,7 +635,66 @@
             }
         }
 
-        // ==================== KEMENAG MUSHAF CONTROLS & VIEWER ====================
+        // ==================== KEMENAG MUSHAF THEME & CONTROLS ====================
+        let mushafTheme = localStorage.getItem('asnawiyyah_mushaf_theme') || 'auto';
+
+        function setMushafTheme(theme) {
+            mushafTheme = theme;
+            localStorage.setItem('asnawiyyah_mushaf_theme', theme);
+            applyMushafTheme();
+        }
+
+        function applyMushafTheme() {
+            const wrapper = document.getElementById('quran-mushaf-image-wrapper');
+            const img = document.getElementById('quran-mushaf-img');
+            const btnWhite = document.getElementById('btn-mushaf-theme-white');
+            const btnSepia = document.getElementById('btn-mushaf-theme-sepia');
+            const btnDark = document.getElementById('btn-mushaf-theme-dark');
+
+            if (!wrapper || !img) return;
+
+            const isAppDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+            const effectiveTheme = (mushafTheme === 'auto') ? (isAppDark ? 'dark' : 'white') : mushafTheme;
+
+            // Reset inline styles
+            wrapper.style.backgroundColor = '';
+            img.style.backgroundColor = 'transparent';
+            img.style.filter = '';
+            img.style.transition = 'filter 0.3s ease, transform 0.2s ease-out';
+
+            if (effectiveTheme === 'dark') {
+                // Area lembar mushaf tetap mode gelap pekat, tulisan arab otomatis menjadi putih terang
+                wrapper.style.backgroundColor = '#070d14';
+                img.style.filter = 'invert(1) hue-rotate(180deg) brightness(0.96) contrast(1.12)';
+            } else if (effectiveTheme === 'sepia') {
+                // Kertas krem klasik teduh
+                wrapper.style.backgroundColor = '#fbf7ee';
+                img.style.filter = 'sepia(0.28) contrast(1.02)';
+            } else {
+                // Kertas putih alami (khat hitam pekat)
+                wrapper.style.backgroundColor = '#ffffff';
+                img.style.filter = 'none';
+            }
+
+            // Update Theme Switcher Button UI
+            const activeClass = "bg-emerald-600 text-white shadow-xs font-bold";
+            const inactiveClass = "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium";
+
+            [
+                { el: btnDark, active: effectiveTheme === 'dark' },
+                { el: btnWhite, active: effectiveTheme === 'white' },
+                { el: btnSepia, active: effectiveTheme === 'sepia' }
+            ].forEach(({ el, active }) => {
+                if (el) {
+                    if (active) {
+                        el.className = `px-2 py-0.5 rounded-md text-[10px] transition active:scale-95 flex items-center gap-1 ${activeClass}`;
+                    } else {
+                        el.className = `px-2 py-0.5 rounded-md text-[10px] transition active:scale-95 flex items-center gap-1 ${inactiveClass}`;
+                    }
+                }
+            });
+        }
+
         function zoomMushaf(delta) {
             mushafZoom = Math.min(Math.max(0.6, Math.round((mushafZoom + delta) * 100) / 100), 2.5);
             applyMushafZoom();
@@ -669,6 +728,7 @@
 
         function loadMushafPageImage(pageNo) {
             resetMushafZoom();
+            applyMushafTheme();
             const img = document.getElementById('quran-mushaf-img');
             const skeleton = document.getElementById('mushaf-img-loading');
             if (!img) return;
@@ -693,6 +753,7 @@
             const skeleton = document.getElementById('mushaf-img-loading');
             if (skeleton) skeleton.classList.add('hidden');
             if (img) img.classList.remove('hidden');
+            applyMushafTheme();
         }
 
         function onMushafImageError() {
@@ -1080,6 +1141,8 @@
         window.getKemenagPageImageUrl = getKemenagPageImageUrl;
         window.getSurahInfoFromPage = getSurahInfoFromPage;
         window.populateJumpPageSelect = populateJumpPageSelect;
+        window.setMushafTheme = setMushafTheme;
+        window.applyMushafTheme = applyMushafTheme;
 
         // Expose state properties to window for direct external inspection
         try {

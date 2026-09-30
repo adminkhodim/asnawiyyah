@@ -3893,43 +3893,59 @@
 
             <!-- ==================== 1. TAMPILAN MODE MUSHAF GAMBAR KEMENAG (DEFAULT) ==================== -->
             <div id="quran-mushaf-view-container" class="space-y-2.5 sm:space-y-3">
-                <!-- Kontainer Lembar Gambar Mushaf Kemenag RI -->
-                <div class="max-w-xl mx-auto w-full bg-white dark:bg-[#070d14] rounded-2xl shadow-lg border border-slate-200/80 dark:border-[#253447] overflow-hidden flex flex-col items-center">
-                    <!-- Area Gambar Lembaran Mushaf (Bebas dari elemen penghalang tulisan Al-Qur'an) -->
+                <!-- Kontainer Lembar Gambar Mushaf Kemenag RI (Adaptif & Nyaman Dibaca di Mode Terang maupun Gelap) -->
+                <div class="max-w-xl mx-auto w-full bg-white dark:bg-[#15202d] rounded-2xl shadow-lg border border-slate-200/80 dark:border-[#253447] overflow-hidden flex flex-col items-center">
+                    <!-- Area Gambar Lembaran Mushaf (Latar Mushaf Gelap & Kaligrafi Putih Terang saat Mode Gelap) -->
                     <div id="quran-mushaf-image-wrapper"
-                        class="relative w-full p-1.5 sm:p-2.5 overflow-hidden flex flex-col items-center select-none touch-pan-y">
+                        class="relative w-full p-2 sm:p-3 overflow-hidden flex flex-col items-center select-none touch-pan-y bg-white dark:bg-[#070d14] rounded-t-xl transition-colors duration-200">
                         <!-- Skeleton Loader saat gambar memuat -->
-                        <div id="mushaf-img-loading" class="w-full aspect-[2/3] max-h-[66vh] sm:max-h-[80vh] bg-slate-100 dark:bg-[#15202d] animate-pulse rounded-xl flex flex-col items-center justify-center text-slate-400 space-y-2">
+                        <div id="mushaf-img-loading" class="w-full aspect-[2/3] max-h-[66vh] sm:max-h-[80vh] bg-slate-100 dark:bg-[#1c2836] animate-pulse rounded-xl flex flex-col items-center justify-center text-slate-400 space-y-2">
                             <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-500"></i>
                             <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Memuat Lembar Mushaf Kemenag...</span>
                         </div>
 
                         <!-- Lembar Gambar Mushaf Kemenag RI (WebP) -->
                         <img id="quran-mushaf-img" src="" alt="Mushaf Standar Kemenag RI"
-                            class="hidden w-auto max-w-full max-h-[68vh] sm:max-h-[82vh] object-contain rounded-xl transition-transform duration-200 ease-out origin-center cursor-zoom-in"
+                            class="hidden w-auto max-w-full max-h-[68vh] sm:max-h-[82vh] object-contain rounded-xl bg-transparent shadow-xs transition-transform duration-200 ease-out origin-center cursor-zoom-in"
                             onload="onMushafImageLoaded()"
                             onerror="onMushafImageError()"
                             onclick="toggleMushafZoomClick()" />
                     </div>
 
-                    <!-- Sisi Tepi Bawah Mushaf: Kontrol Zoom (Tidak Menghalangi Tulisan Mushaf) -->
-                    <div class="w-full bg-slate-50 dark:bg-[#111a24] border-t border-slate-100 dark:border-[#1e2d3d] px-3 py-1.5 flex items-center justify-between text-xs">
-                        <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                            <i class="fa-solid fa-hand-pointer text-[10px] text-emerald-500"></i>
-                            <span class="hidden xs:inline">Ketuk gambar / tombol untuk perbesar</span>
-                            <span class="xs:hidden">Zoom Mushaf</span>
-                        </span>
+                    <!-- Sisi Tepi Bawah Mushaf: Pilihan Kertas Mushaf & Kontrol Zoom -->
+                    <div class="w-full bg-slate-50 dark:bg-[#111a24] border-t border-slate-100 dark:border-[#1e2d3d] px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <!-- Pilihan Tema Kertas Mushaf (Malam / Gelap Teks Putih, Putih Asli, Krem Sepia) -->
+                        <div class="flex items-center space-x-1 bg-white dark:bg-[#1c2836] border border-slate-200/80 dark:border-[#253447] p-0.5 rounded-lg shadow-2xs">
+                            <button type="button" id="btn-mushaf-theme-dark" onclick="setMushafTheme('dark')"
+                                class="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-600 text-white shadow-xs transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                                title="Mode Malam Lembut (Latar Gelap, Tulisan Arab Putih)">
+                                <i class="fa-solid fa-moon text-[10px]"></i>
+                                <span class="hidden xs:inline">Malam (Putih)</span>
+                            </button>
+                            <button type="button" id="btn-mushaf-theme-white" onclick="setMushafTheme('white')"
+                                class="px-2 py-0.5 rounded-md font-medium text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                                title="Kertas Putih Alami (Tulisan Arab Hitam)">
+                                <i class="fa-solid fa-sun text-[10px]"></i>
+                                <span class="hidden xs:inline">Putih</span>
+                            </button>
+                            <button type="button" id="btn-mushaf-theme-sepia" onclick="setMushafTheme('sepia')"
+                                class="px-2 py-0.5 rounded-md font-medium text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                                title="Kertas Krem Sepia (Teduh di Mata)">
+                                <i class="fa-solid fa-book-bookmark text-[10px]"></i>
+                                <span class="hidden xs:inline">Sepia</span>
+                            </button>
+                        </div>
 
                         <!-- Zoom Controls Button Group -->
-                        <div class="flex items-center space-x-1.5 bg-white dark:bg-[#1c2836] border border-slate-200/80 dark:border-[#253447] px-2 py-0.5 rounded-full text-slate-700 dark:text-slate-200 shadow-xs">
-                            <button type="button" onclick="zoomMushaf(-0.15)" class="hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-90 transition p-1" title="Perkecil Ukuran">
+                        <div class="flex items-center space-x-1.5 bg-white dark:bg-[#1c2836] border border-slate-200/80 dark:border-[#253447] px-2 py-0.5 rounded-full text-slate-700 dark:text-slate-200 shadow-2xs">
+                            <button type="button" onclick="zoomMushaf(-0.15)" class="hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-90 transition p-1 cursor-pointer" title="Perkecil Ukuran">
                                 <i class="fa-solid fa-magnifying-glass-minus text-[11px]"></i>
                             </button>
                             <span id="mushaf-zoom-level" class="text-[11px] font-bold min-w-[32px] text-center text-slate-800 dark:text-slate-100 select-none">100%</span>
-                            <button type="button" onclick="zoomMushaf(0.15)" class="hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-90 transition p-1" title="Perbesar Ukuran">
+                            <button type="button" onclick="zoomMushaf(0.15)" class="hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-90 transition p-1 cursor-pointer" title="Perbesar Ukuran">
                                 <i class="fa-solid fa-magnifying-glass-plus text-[11px]"></i>
                             </button>
-                            <button type="button" onclick="resetMushafZoom()" class="hover:text-amber-500 active:scale-90 transition p-1 ml-0.5 border-l border-slate-200 dark:border-[#253447] pl-1.5" title="Kembalikan Ukuran Asli (100%)">
+                            <button type="button" onclick="resetMushafZoom()" class="hover:text-amber-500 active:scale-90 transition p-1 ml-0.5 border-l border-slate-200 dark:border-[#253447] pl-1.5 cursor-pointer" title="Kembalikan Ukuran Asli (100%)">
                                 <i class="fa-solid fa-rotate-right text-[10px]"></i>
                             </button>
                         </div>
