@@ -59,10 +59,10 @@
             borderColor: 'border-amber-300 dark:border-amber-800',
             icon: 'fa-hands-praying',
             iconColor: 'text-amber-600 dark:text-amber-400',
-            summary: 'Akses khusus Dewan Masyayikh untuk supervisi menyeluruh perkembangan santri, tahfidz, sorogan, kedisiplinan, dan kegiatan pondok tanpa beban input operasional.',
+            summary: 'Akses khusus Dewan Masyayikh untuk supervisi menyeluruh perkembangan santri, tahfidz, kedisiplinan, dan kegiatan pondok tanpa beban input operasional.',
             capabilities: [
                 'Dashboard Eksekutif Pengawasan Santri & Mutaba\'ah Qur\'an',
-                'Monitoring capaian hafalan Tahfidz, TPQ Yanbu\'a, dan Sorogan',
+                'Monitoring capaian hafalan Tahfidz Al-Qur\'an 30 Juz',
                 'Melihat rekap kehadiran santri dan ketertiban pesantren',
                 'Read-Only mode aman: melindungi data agar tidak terhapus tanpa sengaja'
             ],
@@ -80,9 +80,9 @@
             iconColor: 'text-indigo-600 dark:text-indigo-400',
             summary: 'Guru pengampu pembelajaran dan pengasuh halaqah untuk menginput setoran hafalan, mutaba\'ah harian santri, presensi, dan penilaian berkala.',
             capabilities: [
-                'Entri & validasi setoran hafalan Tahfidz Al-Qur\'an',
-                'Simakan & mutaba\'ah TPQ metode Yanbu\'a (8 tingkat jilid)',
-                'Simakan Sorogan Al-Qur\'an dan Bandongan Kitab',
+                'Entri & validasi setoran hafalan Tahfidz Al-Qur\'an (Ziyadah & Muraja\'ah)',
+                'Penentuan target capaian juz & kurikulum hafalan santri',
+                'Pengelolaan kelompok halaqah & plotting santri binaan',
                 'Input presensi kehadiran halaqah dan jadwal mengajar'
             ],
             scopeNote: 'Fokus pada pencatatan kemajuan belajar santri binaannya.'
@@ -137,7 +137,7 @@
             iconColor: 'text-sky-600 dark:text-sky-400',
             summary: 'Orang tua atau wali yang terhubung secara khusus dengan data santri putra-putrinya melalui verifikasi NIS dan nomor telepon.',
             capabilities: [
-                'Melihat mutaba\'ah setoran Tahfidz, TPQ, dan Sorogan anak',
+                'Melihat mutaba\'ah setoran Tahfidz Al-Qur\'an anak',
                 'Melihat riwayat presensi harian, sholat, dan kegiatan anak',
                 'Mengecek status tagihan SPP dan riwayat pembayaran resmi',
                 'Menerima notifikasi perkembangan belajar dan pengumuman pondok'
@@ -173,10 +173,7 @@
                 { key: 'tahfidz.view', label: 'Melihat Mutaba\'ah Tahfidz', desc: 'Akses melihat rekapitulasi setoran & capaian hafalan 30 juz' },
                 { key: 'tahfidz.entry', label: 'Entri Setoran Tahfidz', desc: 'Izin menginput setoran ziyadah & muraja\'ah santri' },
                 { key: 'tahfidz.target', label: 'Mengatur Target Tahfidz', desc: 'Izin menentukan target capaian juz santri' },
-                { key: 'tpq.view', label: 'Melihat Mutaba\'ah TPQ', desc: 'Akses melihat capaian 8 jilid Kitab Yanbu\'a santri' },
-                { key: 'tpq.entry', label: 'Entri Simakan TPQ Yanbu\'a', desc: 'Izin menginput setoran jilid & halaman santri' },
-                { key: 'sorogan.view', label: 'Melihat Mutaba\'ah Sorogan', desc: 'Akses melihat riwayat sorogan binnazhar & kitab kuning' },
-                { key: 'sorogan.entry', label: 'Entri Simakan Sorogan', desc: 'Izin menginput setoran sorogan Al-Qur\'an & kitab' },
+                { key: 'tahfidz.halaqah', label: 'Kelola Halaqah & Plotting', desc: 'Izin mengelola kelompok halaqah & plotting santri binaan' },
                 { key: 'presensi.view', label: 'Melihat Rekap Presensi', desc: 'Akses memantau grafik kehadiran kegiatan santri' },
                 { key: 'presensi.entry', label: 'Checklist & Scan QR Presensi', desc: 'Izin melakukan absensi live kegiatan & sholat' }
             ]
@@ -224,9 +221,7 @@
     // Pemetaan Modul Sistem ke Izin Terkait
     const MODULE_TO_PERMISSIONS = {
         'santri': ['santri.view', 'santri.create', 'santri.edit'],
-        'tahfidz': ['tahfidz.view', 'tahfidz.entry'],
-        'tpq': ['tpq.view', 'tpq.entry'],
-        'sorogan': ['sorogan.view', 'sorogan.entry'],
+        'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
         'presensi': ['presensi.view', 'presensi.entry'],
         'ppdb': ['ppdb.manage'],
         'program': ['program.manage'],
@@ -248,16 +243,16 @@
         'SUPER_ADMIN': ['*'],
         'ADMIN': [
             'santri.view', 'santri.create', 'santri.edit', 'santri.export', 'unit.manage',
-            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tpq.view', 'tpq.entry', 'sorogan.view', 'sorogan.entry', 'presensi.view', 'presensi.entry',
+            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah', 'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config'
         ],
         'ASATIDZ': [
-            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target',
-            'tpq.view', 'tpq.entry',
-            'sorogan.view', 'sorogan.entry',
-            'presensi.view', 'presensi.entry'
+            'santri.view',
+            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah',
+            'presensi.view', 'presensi.entry',
+            'pegawai.manage', 'profil.manage'
         ],
         'BENDAHARA': [
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'notifikasi.broadcast'
@@ -267,21 +262,36 @@
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view',
+            'santri.view', 'tahfidz.view', 'presensi.view',
             'unit.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
         ],
         'WALI_SANTRI': [
-            'santri.view', 'tahfidz.view', 'tpq.view', 'sorogan.view', 'presensi.view', 'keuangan.view'
+            'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view'
         ]
     };
 
-    // State Permissions Aktif (Diambil dari Local Storage / Backend)
+    // State Permissions Aktif (Diambil dari Local Storage / Backend dengan sanitasi otomatis)
     let ROLE_PERMISSIONS_STATE = (function() {
+        const validKeys = new Set(['*']);
+        SYSTEM_PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => validKeys.add(i.key)));
+
+        let state = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS_MAP));
         try {
             const cached = localStorage.getItem('ASNAWIYYAH_ROLE_PERMS_CACHE');
-            if (cached) return JSON.parse(cached);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                for (const r in parsed) {
+                    if (Array.isArray(parsed[r])) {
+                        state[r] = parsed[r].filter(k => validKeys.has(k));
+                        if ((r === 'ADMIN' || r === 'ASATIDZ') && !state[r].includes('tahfidz.halaqah')) {
+                            state[r].push('tahfidz.halaqah');
+                        }
+                    }
+                }
+                localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(state));
+            }
         } catch (e) {}
-        return JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS_MAP));
+        return state;
     })();
 
     let currentConfiguringRole = null;
@@ -309,42 +319,12 @@
             category: 'Kesiswaan & Akademik',
             module: 'Tahfidz Al-Qur\'an',
             icon: 'fa-book-quran',
-            desc: 'Hafalan 30 juz, rekapitulasi, target, mutaba\'ah & estimasi khatam.',
+            desc: 'Hafalan 30 juz, rekapitulasi, target capaian, halaqah plotting & estimasi khatam.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
                 PENGASUH: 'read',
-                ASATIDZ: 'write',
-                PENGURUS: 'read',
-                BENDAHARA: 'none',
-                WALI_SANTRI: 'read_own'
-            }
-        },
-        {
-            category: 'Kesiswaan & Akademik',
-            module: 'TPQ Yanbu\'a',
-            icon: 'fa-book-open',
-            desc: 'Mutaba\'ah 8 tingkat jilid Yanbu\'a (356 hal), simakan & matriks.',
-            permissions: {
-                SUPER_ADMIN: 'full',
-                ADMIN: 'full',
-                PENGASUH: 'read',
-                ASATIDZ: 'write',
-                PENGURUS: 'read',
-                BENDAHARA: 'none',
-                WALI_SANTRI: 'read_own'
-            }
-        },
-        {
-            category: 'Kesiswaan & Akademik',
-            module: 'Sorogan Al-Qur\'an',
-            icon: 'fa-book-bookmark',
-            desc: 'Sorogan tartil, tajwid, makharijul huruf, dan bandongan kitab.',
-            permissions: {
-                SUPER_ADMIN: 'full',
-                ADMIN: 'full',
-                PENGASUH: 'read',
-                ASATIDZ: 'write',
+                ASATIDZ: 'full',
                 PENGURUS: 'read',
                 BENDAHARA: 'none',
                 WALI_SANTRI: 'read_own'
@@ -1200,21 +1180,21 @@
     // Mapping Modul yang Boleh Diakses per Peran
     const ROLE_ALLOWED_MODULES = {
         'SUPER_ADMIN': [
-            'santri', 'tahfidz', 'tpq', 'sorogan', 'presensi', 'ppdb', 'program', 'unit-kegiatan',
+            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan',
             'keuangan',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ADMIN': [
-            'santri', 'tahfidz', 'tpq', 'sorogan', 'presensi', 'ppdb', 'program', 'unit-kegiatan',
+            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan',
             'keuangan',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ASATIDZ': [
-            'tahfidz', 'tpq', 'sorogan', 'presensi', 'santri', 'pegawai', 'profil-lembaga'
+            'tahfidz', 'presensi', 'santri', 'pegawai', 'profil-lembaga'
         ],
         'BENDAHARA': [
             'keuangan', 'santri', 'ppdb', 'notifikasi', 'pegawai', 'profil-lembaga'
@@ -1223,10 +1203,10 @@
             'presensi', 'unit-kegiatan', 'ppdb', 'santri', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
         ],
         'PENGASUH': [
-            'santri', 'tahfidz', 'tpq', 'sorogan', 'presensi', 'unit-kegiatan', 'ppdb', 'pegawai', 'berita', 'galeri', 'profil-lembaga'
+            'santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'ppdb', 'pegawai', 'berita', 'galeri', 'profil-lembaga'
         ],
         'WALI_SANTRI': [
-            'santri', 'tahfidz', 'tpq', 'sorogan', 'presensi', 'berita', 'galeri', 'profil-lembaga'
+            'santri', 'tahfidz', 'presensi', 'berita', 'galeri', 'profil-lembaga'
         ]
     };
 
@@ -1273,7 +1253,7 @@
             noticeBadgeClass: 'bg-brand-200/70 text-brand-800 dark:bg-brand-900 dark:text-brand-200',
             kpis: [
                 { label: 'Total Santri Aktif', icon: 'fa-user-graduate', color: 'cyan', valueKey: 'santri', sub: 'Santri Belajar' },
-                { label: 'Setoran Tahfidz & TPQ', icon: 'fa-book-quran', color: 'emerald', valueKey: 'tahfidz_tpq', sub: 'Terdata di Sistem' },
+                { label: 'Setoran Tahfidz Qur\'an', icon: 'fa-book-quran', color: 'emerald', valueKey: 'tahfidz_tpq', sub: 'Terdata di Sistem' },
                 { label: 'Presensi Kegiatan Santri', icon: 'fa-calendar-check', color: 'teal', valueKey: 'presensi', sub: 'Live & QR Code' },
                 { label: 'Pendaftar PPDB Baru', icon: 'fa-user-plus', color: 'amber', valueKey: 'ppdb', sub: 'Menunggu Seleksi' }
             ]
@@ -1286,18 +1266,18 @@
             badgeBg: 'bg-indigo-600 text-white',
             btnActiveBg: 'bg-indigo-600 text-white shadow-xs',
             title: 'Dashboard Akademik & Halaqah Asatidz',
-            desc: 'Pusat entri setoran hafalan Tahfidz, simakan TPQ Yanbu\'a, Sorogan Al-Qur\'an, dan presensi santri bimbingan.',
+            desc: 'Pusat entri setoran hafalan Tahfidz Al-Qur\'an, target capaian juz, halaqah santri, dan presensi bimbingan.',
             gradientClass: 'from-indigo-950 via-slate-900 to-purple-950 border-indigo-500/40',
             bgIcon: 'fa-chalkboard-user',
             noticeTitle: 'Akses Khusus Dewan Asatidz (Fokus Pembelajaran)',
-            noticeText: 'Diberikan hak input simakan Tahfidz, TPQ Yanbu\'a, Sorogan Qur\'an, presensi halaqah, dan data santri bimbingan. Modul teknis dan keuangan disembunyikan.',
+            noticeText: 'Diberikan hak input setoran Tahfidz Al-Qur\'an, kelola halaqah & plotting santri, presensi, dan data santri bimbingan. Modul teknis dan keuangan disembunyikan.',
             noticeBoxClass: 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800/40 text-indigo-900 dark:text-indigo-200',
             noticeIconClass: 'fa-chalkboard-user text-indigo-600 dark:text-indigo-400',
             noticeBadgeClass: 'bg-indigo-200/70 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
             kpis: [
                 { label: 'Santri Bimbingan Halaqah', icon: 'fa-users-line', color: 'indigo', valueKey: 'santri', sub: 'Santri Binaan' },
                 { label: 'Entri Tahfidz Qur\'an', icon: 'fa-book-quran', color: 'emerald', valueKey: 'tahfidz', sub: '30 Juz Mushaf' },
-                { label: 'Simakan TPQ Yanbu\'a', icon: 'fa-book-open-reader', color: 'teal', valueKey: 'tpq', sub: '8 Tingkat Jilid' },
+                { label: 'Kelompok Halaqah', icon: 'fa-people-group', color: 'teal', valueKey: 'halaqah', sub: 'Halaqah Binaan' },
                 { label: 'Presensi Halaqah', icon: 'fa-clipboard-check', color: 'sky', valueKey: 'presensi', sub: 'Checklist Harian' }
             ]
         },
@@ -1366,7 +1346,7 @@
             kpis: [
                 { label: 'Total Santriwan & Santriwati', icon: 'fa-users', color: 'amber', valueKey: 'santri', sub: 'Santri Aktif' },
                 { label: 'Pantauan Tahfidz Al-Qur\'an', icon: 'fa-book-quran', color: 'emerald', value: '30 Juz', sub: 'Supervisi Makro' },
-                { label: 'TPQ Yanbu\'a & Sorogan', icon: 'fa-book-open-reader', color: 'teal', value: '8 Jilid', sub: 'Evaluasi Mutaba\'ah' },
+                { label: 'Presensi & Disiplin Santri', icon: 'fa-clipboard-check', color: 'teal', value: 'Terdata', sub: 'Evaluasi Mutu' },
                 { label: 'Dewan Asatidz & Pengurus', icon: 'fa-user-tie', color: 'sky', valueKey: 'users', sub: 'Staf & Pembina' }
             ]
         },
@@ -1378,7 +1358,7 @@
             badgeBg: 'bg-teal-500 text-white',
             btnActiveBg: 'bg-teal-600 text-white shadow-xs',
             title: 'Portal Terpadu Wali Santri',
-            desc: 'Pemantauan real-time perkembangan belajar, hafalan Tahfidz, TPQ Yanbu\'a, presensi, dan informasi resmi untuk putra-putri tercinta.',
+            desc: 'Pemantauan real-time perkembangan belajar, hafalan Tahfidz Al-Qur\'an, presensi kegiatan, dan informasi resmi untuk putra-putri tercinta.',
             gradientClass: 'from-teal-950 via-slate-900 to-emerald-950 border-teal-500/40',
             bgIcon: 'fa-people-roof',
             noticeTitle: 'Akses Portal Terisolasi Wali Santri',
@@ -1389,7 +1369,7 @@
             kpis: [
                 { label: 'Kartu Santri Terhubung', icon: 'fa-child', color: 'teal', value: 'Terhubung', sub: 'Verifikasi NIS Resmi' },
                 { label: 'Mutaba\'ah Tahfidz', icon: 'fa-book-quran', color: 'emerald', value: 'Aktif', sub: 'Setoran Harian' },
-                { label: 'Capaian TPQ Yanbu\'a', icon: 'fa-book-open', color: 'cyan', value: 'Aktif', sub: 'Target & Simakan' },
+                { label: 'Presensi & Kehadiran', icon: 'fa-clipboard-check', color: 'cyan', value: 'Aktif', sub: 'Kegiatan Pondok' },
                 { label: 'Kehadiran Sholat & Kegiatan', icon: 'fa-calendar-check', color: 'sky', value: 'Terpantau', sub: 'Presensi Harian' }
             ]
         }
@@ -1465,13 +1445,12 @@
         if (valueKey === 'tahfidz') {
             return (typeof adminTahfidzList !== 'undefined' && Array.isArray(adminTahfidzList)) ? adminTahfidzList.length + ' Santri' : '30 Juz';
         }
-        if (valueKey === 'tpq') {
-            return (typeof adminTPQStudents !== 'undefined' && Array.isArray(adminTPQStudents)) ? adminTPQStudents.length + ' Santri' : '8 Jilid';
+        if (valueKey === 'halaqah') {
+            return (typeof ASNTahfidz !== 'undefined' && ASNTahfidz.data && Array.isArray(ASNTahfidz.data.halaqahs)) ? ASNTahfidz.data.halaqahs.length + ' Halaqah' : 'Aktif';
         }
         if (valueKey === 'tahfidz_tpq') {
             const t = (typeof adminTahfidzList !== 'undefined' && Array.isArray(adminTahfidzList)) ? adminTahfidzList.length : 0;
-            const q = (typeof adminTPQStudents !== 'undefined' && Array.isArray(adminTPQStudents)) ? adminTPQStudents.length : 0;
-            return (t + q) > 0 ? (t + q) + ' Simakan' : 'Aktif';
+            return t > 0 ? t + ' Santri' : '30 Juz';
         }
         if (valueKey === 'presensi') {
             return (typeof adminPresensiData !== 'undefined' && Array.isArray(adminPresensiData)) ? adminPresensiData.length + ' Sesi' : 'Live & QR';

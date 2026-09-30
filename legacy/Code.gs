@@ -198,7 +198,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "PENGASUH"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -209,7 +209,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -227,7 +227,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -238,7 +238,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -254,7 +254,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -265,7 +265,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -276,7 +276,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -288,7 +288,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -314,7 +314,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -330,7 +330,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -341,7 +341,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -7129,14 +7129,14 @@ const DEFAULT_ROLE_PERMISSIONS_MAP = {
   "SUPER_ADMIN": ["*"],
   "ADMIN": [
     "santri.view", "santri.create", "santri.edit", "santri.export", "unit.manage",
-    "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tpq.view", "tpq.entry", "sorogan.view", "sorogan.entry", "presensi.view", "presensi.entry",
+    "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tahfidz.halaqah", "presensi.view", "presensi.entry",
     "keuangan.view", "keuangan.spp", "keuangan.verify", "ppdb.manage",
     "berita.manage", "banner.manage", "galeri.manage", "notifikasi.broadcast",
     "profil.manage", "pegawai.manage", "users.manage", "roles.manage", "system.config"
   ],
   "ASATIDZ": [
     "santri.view",
-    "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tpq.view", "tpq.entry", "sorogan.view", "sorogan.entry", "presensi.view", "presensi.entry",
+    "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tahfidz.halaqah", "presensi.view", "presensi.entry",
     "pegawai.manage", "profil.manage"
   ],
   "BENDAHARA": [
@@ -7146,10 +7146,10 @@ const DEFAULT_ROLE_PERMISSIONS_MAP = {
     "santri.view", "presensi.view", "presensi.entry", "unit.manage", "ppdb.manage", "berita.manage", "banner.manage", "galeri.manage", "notifikasi.broadcast", "profil.manage"
   ],
   "PENGASUH": [
-    "santri.view", "tahfidz.view", "tpq.view", "sorogan.view", "presensi.view", "unit.manage", "ppdb.manage", "keuangan.view", "berita.manage", "galeri.manage", "profil.manage", "pegawai.manage"
+    "santri.view", "tahfidz.view", "presensi.view", "unit.manage", "ppdb.manage", "keuangan.view", "berita.manage", "galeri.manage", "profil.manage", "pegawai.manage"
   ],
   "WALI_SANTRI": [
-    "santri.view", "tahfidz.view", "tpq.view", "sorogan.view", "presensi.view", "keuangan.view", "berita.manage", "galeri.manage", "profil.manage"
+    "santri.view", "tahfidz.view", "presensi.view", "keuangan.view", "berita.manage", "galeri.manage", "profil.manage"
   ]
 };
 
@@ -10725,7 +10725,7 @@ function saveTahfidzLog(payload, token) {
     if (token) {
       try {
         actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "PENGASUH"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -11230,7 +11230,7 @@ function saveTahfidzTarget(payload, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -11292,7 +11292,7 @@ function saveBulkTahfidzTarget(payload, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -11449,7 +11449,7 @@ function saveTahfidzHalaqah(payload, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -11516,7 +11516,7 @@ function saveTahfidzPlotting(payload, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -11584,7 +11584,7 @@ function deleteTahfidzHalaqah(halaqahId, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -11683,7 +11683,7 @@ function saveTahfidzSesi(payload, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
