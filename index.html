@@ -307,33 +307,61 @@
             <!-- =================================================================== -->
             <!-- 1. KHUSUS TAMPILAN MOBILE (Hanya tampil di layar kecil / < 768px)  -->
             <!-- =================================================================== -->
-            <div id="beranda-mobile-section" class="block md:hidden max-w-xl mx-auto px-4 py-5 space-y-4">
+            <div id="beranda-mobile-section" class="block md:hidden max-w-xl mx-auto px-3.5 pt-2 pb-4 space-y-2.5">
 
-                <!-- Widget Lokasi & Jadwal Shalat (Mobile) -->
-                <section
-                    class="bg-gradient-to-r from-brand-900 via-brand-800 to-emerald-800 text-white p-4 rounded-xl shadow-md border border-brand-700 relative overflow-hidden space-y-1">
+                <!-- Widget Lokasi & Jadwal Shalat (Mobile - Aesthetic & Compact) -->
+                <section onclick="openJadwalSholatPage()" title="Buka Portal Ibadah Jadwal Sholat"
+                    class="bg-gradient-to-r from-brand-900 via-brand-800 to-emerald-800 text-white px-3.5 py-2.5 rounded-xl shadow-sm border border-brand-700/80 relative overflow-hidden space-y-1.5 cursor-pointer active:scale-[0.99] transition hover:brightness-105">
                     <div class="absolute -right-6 -bottom-6 text-white/5 text-8xl pointer-events-none">
                         <i class="fa-solid fa-kaaba"></i>
                     </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <div class="flex items-center space-x-1.5 font-bold">
-                            <i class="fa-solid fa-location-dot text-amber-400 text-xs"></i>
-                            <span id="home-prayer-location" class="tracking-wide">Demak, Jawa Tengah</span>
+
+                    <!-- 1. Bagian Atas: Kiri (Lokasi & Hari) | Kanan (Shalat Terdekat & Countdown) -->
+                    <div class="flex justify-between items-start gap-2 relative z-10">
+                        <!-- Sebelah Kiri -->
+                        <div class="flex flex-col items-start space-y-1 min-w-0 flex-1">
+                            <!-- Baris 1: Lokasi -->
+                            <div class="flex items-center space-x-1.5 font-bold text-white leading-tight min-w-0 w-full" style="font-size: 11px;">
+                                <i class="fa-solid fa-location-dot text-amber-400 shrink-0 text-xs"></i>
+                                <span id="home-prayer-location" class="truncate tracking-tight">Kab. Demak, Jawa Tengah</span>
+                            </div>
+                            <!-- Baris 2: Hari (Model & Font Disamakan dengan Countdown Waktu Shalat) -->
+                            <div id="home-current-day"
+                                class="font-mono font-bold text-amber-300 bg-black/40 px-2 py-0.5 rounded border border-amber-400/20 shadow-inner inline-flex items-center tracking-wide"
+                                style="font-size: 10.5px; line-height: 1;">
+                                Rabu Kliwon
+                            </div>
                         </div>
-                        <div id="home-next-prayer-name" class="font-extrabold text-white">
-                            Dzuhur <span id="home-next-prayer-time" class="text-amber-300 font-normal ml-1">11:51
-                                WIB</span>
+
+                        <!-- Sebelah Kanan -->
+                        <div class="flex flex-col items-end space-y-1 shrink-0 ml-1">
+                            <!-- Baris 1: Waktu Shalat Terdekat -->
+                            <div id="home-next-prayer-name" class="font-bold text-white text-right leading-tight" style="font-size: 11.5px;">
+                                Zuhur <span id="home-next-prayer-time" class="text-amber-300 font-semibold ml-1">11:30 WIB</span>
+                            </div>
+                            <!-- Baris 2: Countdown Waktu Shalat -->
+                            <div id="home-prayer-countdown"
+                                class="font-mono font-bold text-amber-300 bg-black/40 px-2 py-0.5 rounded border border-amber-400/20 shadow-inner inline-flex items-center tracking-wider"
+                                style="font-size: 10.5px; line-height: 1;">
+                                00:00:00
+                            </div>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center text-xs pt-0.5">
-                        <div id="home-current-date" class="font-bold text-amber-300">
-                            Rabu Kliwon, 12 Agustus 2026
+
+                    <!-- 2. Baris 3 Paling Bawah: (Tanggal Masehi / Tanggal Hijriyah) Rata Kanan Kiri (Font Diperkecil & Estetik) -->
+                    <div class="flex justify-between items-center text-emerald-100/90 relative z-10 pt-0.5" style="font-size: 10px; line-height: 1.2;">
+                        <!-- Tanggal Masehi (Rata Kiri) -->
+                        <div id="home-date-masehi" class="flex items-center space-x-1.5 text-slate-200/90" style="white-space: nowrap; font-size: 10px;">
+                            <i class="fa-regular fa-calendar text-emerald-300 text-[10px]"></i>
+                            <span class="home-date-masehi-val font-medium">30 September 2026</span>
                         </div>
-                        <div id="home-prayer-countdown"
-                            class="text-xs font-mono font-extrabold text-amber-400 bg-black/30 px-2.5 py-0.5 rounded-lg">
-                            00:00:00
+                        <!-- Tanggal Hijriyah (Rata Kanan) -->
+                        <div id="home-date-hijri" class="flex items-center space-x-1.5 text-amber-200/90" style="white-space: nowrap; font-size: 10px;">
+                            <i class="fa-solid fa-moon text-amber-300 text-[10px]"></i>
+                            <span class="home-date-hijri-val font-medium">18 Rabi'ul Akhir 1448 H</span>
                         </div>
                     </div>
+                    <span id="home-current-date" class="sr-only">Rabu Kliwon, 30 September 2026</span>
                 </section>
 
                 <!-- Menu Grid Layanan Cepat (Mobile - 4 Kolom) -->
@@ -1893,51 +1921,118 @@
                     <div class="grid grid-cols-5 gap-1.5 text-center text-[10px] pt-1">
                         <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-800/40">
                             <span class="block text-slate-400 dark:text-emerald-300">Subuh</span>
-                            <span class="font-bold text-brand-800 dark:text-emerald-300">04:32</span>
+                            <span id="settings-preview-subuh" class="font-bold text-brand-800 dark:text-emerald-300 font-mono">04:32</span>
                         </div>
                         <div class="p-2 bg-slate-50 dark:bg-[#1c2836] rounded-xl border border-slate-100 dark:border-[#253447]">
                             <span class="block text-slate-400 dark:text-slate-300">Dzuhur</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-100">11:51</span>
+                            <span id="settings-preview-zuhur" class="font-bold text-slate-700 dark:text-slate-100 font-mono">11:51</span>
                         </div>
                         <div class="p-2 bg-slate-50 dark:bg-[#1c2836] rounded-xl border border-slate-100 dark:border-[#253447]">
                             <span class="block text-slate-400 dark:text-slate-300">Ashar</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-100">15:12</span>
+                            <span id="settings-preview-ashar" class="font-bold text-slate-700 dark:text-slate-100 font-mono">15:12</span>
                         </div>
                         <div class="p-2 bg-slate-50 dark:bg-[#1c2836] rounded-xl border border-slate-100 dark:border-[#253447]">
                             <span class="block text-slate-400 dark:text-slate-300">Maghrib</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-100">17:48</span>
+                            <span id="settings-preview-maghrib" class="font-bold text-slate-700 dark:text-slate-100 font-mono">17:48</span>
                         </div>
                         <div class="p-2 bg-slate-50 dark:bg-[#1c2836] rounded-xl border border-slate-100 dark:border-[#253447]">
                             <span class="block text-slate-400 dark:text-slate-300">Isya</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-100">18:58</span>
+                            <span id="settings-preview-isya" class="font-bold text-slate-700 dark:text-slate-100 font-mono">18:58</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- ==================== 4. NOTIFIKASI WAKTU SHALAT ==================== -->
-            <div class="bg-white dark:bg-[#15202d] p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 transition-colors">
-                <h3 class="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest flex items-center">
+            <div
+                class="bg-white dark:bg-[#15202d] p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 transition-colors">
+                <h3
+                    class="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest flex items-center">
                     <span class="w-1.5 h-4 bg-brand-600 dark:bg-emerald-500 rounded-full mr-2"></span> Notifikasi
                 </h3>
-                <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] transition-colors">
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-9 h-9 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 rounded-xl flex items-center justify-center text-sm">
-                            <i class="fa-solid fa-bell"></i>
+                <div
+                    class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] transition-colors space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div
+                                class="w-9 h-9 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 rounded-xl flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-bell"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-700 dark:text-slate-100">Pengingat Azan & Shalat
+                                </h4>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-300">Bunyikan pengingat saat masuk
+                                    waktu shalat</p>
+                            </div>
                         </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="prayer-notification-toggle" checked onchange="togglePrayerNotification(this.checked)"
+                                class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-700 dark:peer-checked:bg-emerald-600">
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Pilihan Suara Azan Reguler & Subuh -->
+                    <div class="pt-2.5 border-t border-slate-200/50 dark:border-[#283a4e]/60 space-y-2.5">
                         <div>
-                            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-100">Pengingat Azan & Shalat</h4>
-                            <p class="text-[10px] text-slate-400 dark:text-slate-300">Bunyikan pengingat saat masuk waktu shalat</p>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="prayer-adzan-sound-select" class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-volume-high text-emerald-600 dark:text-emerald-400 text-xs"></i>
+                                    <span>Lantunan Azan Reguler:</span>
+                                </label>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-300">Dzuhur, Ashar, Maghrib, Isya'</span>
+                            </div>
+                            <select id="prayer-adzan-sound-select" onchange="ASNJadwalSholat.setAdzanSound(this.value)"
+                                class="w-full text-xs py-2 px-3 bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 rounded-xl border border-slate-200 dark:border-[#2b3d54] focus:ring-2 focus:ring-emerald-500 outline-none transition cursor-pointer shadow-2xs">
+                                <option value="mecca">Makkah Al-Mukarramah</option>
+                                <option value="misyari">Syaikh Misyari Rasyid (Lengkap)</option>
+                                <option value="misyari_ringkas">Misyari Rasyid (Ringkas)</option>
+                                <option value="alaqsa">Masjid Al-Aqsa</option>
+                                <option value="mesir1">Langgam Mesir (Irama 1)</option>
+                                <option value="mesir3">Langgam Mesir (Irama 2)</option>
+                                <option value="bosnia">Langgam Bosnia</option>
+                                <option value="malaysia">Imam Malaysia</option>
+                                <option value="chime">Genta Sintetis (Web Audio API - 0 KB)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="prayer-adzan-subuh-select" class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-cloud-sun text-amber-500 text-xs"></i>
+                                    <span>Khusus Waktu Subuh:</span>
+                                </label>
+                                <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Ada Tatswib Subuh</span>
+                            </div>
+                            <select id="prayer-adzan-subuh-select" onchange="ASNJadwalSholat.setAdzanSubuhSound(this.value)"
+                                class="w-full text-xs py-2 px-3 bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 rounded-xl border border-slate-200 dark:border-[#2b3d54] focus:ring-2 focus:ring-amber-500 outline-none transition cursor-pointer shadow-2xs">
+                                <option value="subuh_abuhazim">Subuh Abu Hazim (Tatswib Subuh)</option>
+                                <option value="subuh_fajr">Subuh Fajr Standar</option>
+                                <option value="same_as_regular">Sama dengan Pilihan Adzan Reguler</option>
+                            </select>
                         </div>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked onchange="togglePrayerNotification(this.checked)"
-                            class="sr-only peer">
-                        <div
-                            class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-700 dark:peer-checked:bg-emerald-600">
+
+                    <!-- Tombol Uji Coba Suara, Hentikan & Status Izin Browser -->
+                    <div class="pt-2 border-t border-slate-200/50 dark:border-[#283a4e]/60 flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                        <span id="prayer-notif-permission-status" class="text-slate-400 dark:text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500"></i> Mode: Suara & Spanduk Aplikasi
+                        </span>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" id="prayer-stop-audio-btn" onclick="stopPrayerNotificationAudio()"
+                                class="hidden px-2.5 py-1 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-semibold rounded-lg border border-rose-700 transition items-center gap-1 shadow-2xs cursor-pointer">
+                                <i class="fa-solid fa-stop text-xs"></i>
+                                <span>Stop</span>
+                            </button>
+                            <button type="button" id="prayer-test-audio-btn" onclick="testPrayerNotificationAudio()"
+                                class="px-2.5 py-1 bg-white dark:bg-[#253447] hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-semibold rounded-lg border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 active:scale-95 shadow-2xs cursor-pointer">
+                                <i class="fa-solid fa-volume-high text-xs"></i>
+                                <span>Tes Bunyi Azan</span>
+                            </button>
                         </div>
-                    </label>
+                    </div>
                 </div>
             </div>
 

@@ -387,11 +387,40 @@ const ASNJadwalSholat = (function () {
 
     function populateCitySelector() {
         const selectEl = document.getElementById('sholat-city-select');
-        if (!selectEl) return;
+        const settingsSelectEl = document.getElementById('prayer-city-select');
 
-        selectEl.innerHTML = Object.entries(CITIES).map(([k, c]) => {
+        const optionsHtml = Object.entries(CITIES).map(([k, c]) => {
             return `<option value="${k}" ${k === currentCityKey ? 'selected' : ''}>${c.name}</option>`;
         }).join('');
+
+        if (selectEl) {
+            selectEl.innerHTML = optionsHtml;
+            selectEl.value = currentCityKey;
+        }
+        if (settingsSelectEl) {
+            settingsSelectEl.innerHTML = optionsHtml;
+            settingsSelectEl.value = currentCityKey;
+        }
+
+        renderSettingsPreview();
+    }
+
+    function renderSettingsPreview() {
+        const city = CITIES[currentCityKey] || CITIES.demak;
+        const sched = calculateDay(new Date(), city);
+        if (!sched || !sched.times) return;
+
+        const subuhEl = document.getElementById('settings-preview-subuh');
+        const zuhurEl = document.getElementById('settings-preview-zuhur');
+        const asharEl = document.getElementById('settings-preview-ashar');
+        const maghribEl = document.getElementById('settings-preview-maghrib');
+        const isyaEl = document.getElementById('settings-preview-isya');
+
+        if (subuhEl) subuhEl.innerText = sched.times.subuh;
+        if (zuhurEl) zuhurEl.innerText = sched.times.zuhur;
+        if (asharEl) asharEl.innerText = sched.times.ashar;
+        if (maghribEl) maghribEl.innerText = sched.times.maghrib;
+        if (isyaEl) isyaEl.innerText = sched.times.isya;
     }
 
     function renderView() {
@@ -487,15 +516,72 @@ const ASNJadwalSholat = (function () {
         if (nextTimeEl) nextTimeEl.innerText = `${nextInfo.nextPrayer.time} ${todaySchedule.tzName}`;
         if (countdownEl) countdownEl.innerText = nextInfo.countdown;
 
-        // Sinkronisasi otomatis ke Widget Beranda (agar beranda juga dinamis dan akurat)
-        const homeNextName = document.getElementById('home-next-prayer-name');
-        const homeNextCountdown = document.getElementById('home-prayer-countdown');
-        if (homeNextName) {
-            homeNextName.innerHTML = `${nextInfo.nextPrayer.name} <span class="text-amber-300 font-normal ml-1">${nextInfo.nextPrayer.time} ${todaySchedule.tzName}</span>`;
+        // Sinkronisasi otomatis ke Widget Beranda (Mobile & Desktop)
+        const cleanCityName = (city.name || '').replace(/\s*\(Default\)/gi, '').replace(/\s*\([^)]*\)/gi, '').trim() || 'Kab. Demak';
+        const locString = `${cleanCityName}${city.province ? ', ' + city.province : ''}`;
+
+        // 1. Lokasi (Kiri Baris 1)
+        ['home-prayer-location', 'home-prayer-location-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = locString;
+        });
+
+        // 2. Hari (Kiri Baris 2)
+        ['home-current-day', 'home-current-day-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && todaySchedule) {
+                const pasaran = todaySchedule.pasaran ? ` ${todaySchedule.pasaran}` : '';
+                el.innerText = `${todaySchedule.dayName}${pasaran}`;
+            }
+        });
+
+        // 3. Waktu Shalat Terdekat (Kanan Baris 1)
+        ['home-next-prayer-name', 'home-next-prayer-name-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = `${nextInfo.nextPrayer.name} <span class="text-amber-300 font-semibold ml-1">${nextInfo.nextPrayer.time} ${todaySchedule.tzName}</span>`;
+        });
+
+        // 4. Countdown Waktu Shalat (Kanan Baris 2)
+        ['home-prayer-countdown', 'home-prayer-countdown-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = nextInfo.countdown;
+        });
+
+        // 5. Tanggal Masehi (Baris 3 Kiri)
+        const masehiStr = `${todaySchedule.masehiDay} ${namaBulanIndo[todaySchedule.masehiMonth - 1]} ${todaySchedule.masehiYear}`;
+        ['home-date-masehi', 'home-date-masehi-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                const valEl = el.querySelector('.home-date-masehi-val');
+                if (valEl) valEl.innerText = masehiStr;
+                else el.innerText = masehiStr;
+            }
+        });
+
+        // 6. Tanggal Hijriyah (Baris 3 Kanan)
+        let hijriStr = todaySchedule.hijri ? todaySchedule.hijri.formatted : '';
+        if (!hijriStr && typeof getHijriDate === 'function') {
+            const h = getHijriDate(viewDate);
+            if (h && h.formatted) hijriStr = h.formatted;
         }
-        if (homeNextCountdown) {
-            homeNextCountdown.innerText = nextInfo.countdown;
-        }
+        ['home-date-hijri', 'home-date-hijri-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && hijriStr) {
+                const valEl = el.querySelector('.home-date-hijri-val');
+                if (valEl) valEl.innerText = hijriStr;
+                else el.innerText = hijriStr;
+            }
+        });
+
+        // Fallback untuk home-current-date
+        ['home-current-date', 'home-current-date-desktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && todaySchedule) {
+                const hari = todaySchedule.dayName;
+                const pasaran = todaySchedule.pasaran ? ` ${todaySchedule.pasaran},` : ',';
+                el.innerText = `${hari}${pasaran} ${masehiStr}`;
+            }
+        });
     }
 
     // ----------------------------------------------------------------
@@ -596,14 +682,404 @@ const ASNJadwalSholat = (function () {
         if (!CITIES[newCityKey]) return;
         currentCityKey = newCityKey;
         localStorage.setItem("asnawiyyah_prayer_city", newCityKey);
+
+        const selectEl = document.getElementById('sholat-city-select');
+        const settingsSelectEl = document.getElementById('prayer-city-select');
+        if (selectEl && selectEl.value !== newCityKey) selectEl.value = newCityKey;
+        if (settingsSelectEl && settingsSelectEl.value !== newCityKey) settingsSelectEl.value = newCityKey;
+
+        renderSettingsPreview();
         renderView();
+
         if (typeof showToast === 'function') {
-            showToast(`Wilayah diubah ke ${CITIES[newCityKey].name}`);
+            showToast(`Wilayah jadwal shalat diubah ke ${CITIES[newCityKey].name}`);
         }
     }
 
     // ----------------------------------------------------------------
-    // 8. SALIN JADWAL HARI INI KE CLIPBOARD (WHATSAPP READY)
+    // 8. NOTIFIKASI PENGINGAT AZAN & WAKTU SHALAT REAL-TIME
+    // ----------------------------------------------------------------
+    const NOTIF_STORAGE_KEY = "asnawiyyah_prayer_notification_enabled";
+    const ADZAN_SOUND_STORAGE_KEY = "asnawiyyah_adzan_sound_choice";
+    const ADZAN_SUBUH_STORAGE_KEY = "asnawiyyah_adzan_subuh_choice";
+    let lastNotifiedKey = null;
+    let notifCheckTimer = null;
+    let currentPrayerAudio = null;
+    let isPrayerAudioPlaying = false;
+
+    const ADZAN_SOUND_OPTIONS = [
+        { id: "mecca", name: "Makkah Al-Mukarramah", file: "assets/audio/mecca_56_22.mp3", badge: "Syahdu" },
+        { id: "misyari", name: "Syaikh Misyari Rasyid (Lengkap)", file: "assets/audio/Adzan-Misyari-Rasyid.mp3", badge: "Merdu" },
+        { id: "misyari_ringkas", name: "Misyari Rasyid (Ringkas)", file: "assets/audio/adzan_by_mishari_rashid_al-afasy-2.mp3", badge: "Cepat" },
+        { id: "alaqsa", name: "Masjid Al-Aqsa", file: "assets/audio/alaqsa1_64_22.mp3", badge: "Palestina" },
+        { id: "mesir1", name: "Langgam Mesir (Irama 1)", file: "assets/audio/adzan-mesir-1.mp3", badge: "Mesir" },
+        { id: "mesir3", name: "Langgam Mesir (Irama 2)", file: "assets/audio/adzan-mesir-3.mp3", badge: "Mesir" },
+        { id: "bosnia", name: "Langgam Bosnia", file: "assets/audio/Adzan-Bosnia.mp3", badge: "Eropa Timur" },
+        { id: "malaysia", name: "Imam Malaysia", file: "assets/audio/Adzan-imam-Malaysia.mp3", badge: "Nusantara" },
+        { id: "chime", name: "Genta Sintetis (Web Audio API)", file: null, badge: "Hemat 0 KB" }
+    ];
+
+    const ADZAN_SUBUH_OPTIONS = [
+        { id: "subuh_abuhazim", name: "Subuh Abu Hazim (Tatswib Subuh)", file: "assets/audio/Adzan-Shubuh-Abu-Hazim.mp3" },
+        { id: "subuh_fajr", name: "Subuh Fajr Standar", file: "assets/audio/fajr_128_44.mp3" },
+        { id: "same_as_regular", name: "Sama dengan Pilihan Adzan Reguler", file: null }
+    ];
+
+    function isNotificationEnabled() {
+        const val = localStorage.getItem(NOTIF_STORAGE_KEY);
+        return val === null ? true : (val === "true");
+    }
+
+    function getSelectedAdzanSound() {
+        return localStorage.getItem(ADZAN_SOUND_STORAGE_KEY) || "mecca";
+    }
+
+    function setSelectedAdzanSound(soundId) {
+        localStorage.setItem(ADZAN_SOUND_STORAGE_KEY, soundId);
+    }
+
+    function getSelectedSubuhSound() {
+        return localStorage.getItem(ADZAN_SUBUH_STORAGE_KEY) || "subuh_abuhazim";
+    }
+
+    function setSelectedSubuhSound(soundId) {
+        localStorage.setItem(ADZAN_SUBUH_STORAGE_KEY, soundId);
+    }
+
+    function stopPrayerAudio() {
+        if (currentPrayerAudio) {
+            try {
+                currentPrayerAudio.pause();
+                currentPrayerAudio.currentTime = 0;
+            } catch (e) {
+                console.warn("Gagal menghentikan audio azan:", e);
+            }
+            currentPrayerAudio = null;
+        }
+        isPrayerAudioPlaying = false;
+        updateAudioControlsUI(false);
+        const banner = document.getElementById('adzan-active-floating-banner');
+        if (banner) banner.remove();
+    }
+
+    function updateAudioControlsUI(playing) {
+        isPrayerAudioPlaying = playing;
+        const stopBtn = document.getElementById('prayer-stop-audio-btn');
+        const testBtn = document.getElementById('prayer-test-audio-btn');
+        if (stopBtn) {
+            if (playing) {
+                stopBtn.classList.remove('hidden');
+                stopBtn.classList.add('inline-flex');
+            } else {
+                stopBtn.classList.add('hidden');
+                stopBtn.classList.remove('inline-flex');
+            }
+        }
+        if (testBtn) {
+            if (playing) {
+                testBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Sedang Berbunyi...</span>`;
+            } else {
+                testBtn.innerHTML = `<i class="fa-solid fa-volume-high text-xs"></i> <span>Tes Bunyi Azan</span>`;
+            }
+        }
+    }
+
+    function showFloatingAdzanBanner(title, subtitle) {
+        let banner = document.getElementById('adzan-active-floating-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'adzan-active-floating-banner';
+            banner.className = "fixed bottom-20 left-4 right-4 z-50 max-w-md mx-auto bg-slate-900/95 dark:bg-[#15202d]/95 text-white p-3.5 rounded-2xl shadow-2xl border border-emerald-500/50 backdrop-blur-md flex items-center justify-between transition-all";
+            document.body.appendChild(banner);
+        }
+        banner.innerHTML = `
+            <div class="flex items-center space-x-3 overflow-hidden mr-2">
+                <div class="w-9 h-9 shrink-0 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center text-sm animate-pulse">
+                    <i class="fa-solid fa-mosque"></i>
+                </div>
+                <div class="truncate">
+                    <h5 class="text-xs font-bold text-white truncate">${title}</h5>
+                    <p class="text-[10px] text-emerald-300 truncate">${subtitle || "Lantunan azan sedang berkumandang"}</p>
+                </div>
+            </div>
+            <button type="button" onclick="ASNJadwalSholat.stopPrayerAudio()" class="shrink-0 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-stop text-xs"></i>
+                <span>Hentikan</span>
+            </button>
+        `;
+    }
+
+    /**
+     * Memainkan nada genta sintetis islami menggunakan Web Audio API (Fallback jika file MP3 gagal/offline)
+     */
+    function playSynthesizedChimeFallback(isTest = false) {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+
+            const notes = isTest ? [
+                { freq: 523.25, start: 0.0, dur: 0.5 }, // C5
+                { freq: 659.25, start: 0.45, dur: 0.6 }, // E5
+                { freq: 784.00, start: 1.0, dur: 1.2 }  // G5
+            ] : [
+                { freq: 261.63, start: 0.0, dur: 0.9 }, // Do (C4)
+                { freq: 392.00, start: 0.8, dur: 1.1 }, // Sol (G4)
+                { freq: 523.25, start: 1.8, dur: 1.3 }, // Do' (C5)
+                { freq: 659.25, start: 3.0, dur: 1.2 }, // Mi' (E5)
+                { freq: 587.33, start: 4.1, dur: 1.3 }, // Re' (D5)
+                { freq: 523.25, start: 5.3, dur: 2.2 }  // Do' (C5 panjang)
+            ];
+
+            notes.forEach(n => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.start);
+
+                gain.gain.setValueAtTime(0.0001, ctx.currentTime + n.start);
+                gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + n.start + 0.06);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + n.start + n.dur);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start(ctx.currentTime + n.start);
+                osc.stop(ctx.currentTime + n.start + n.dur + 0.1);
+            });
+        } catch (err) {
+            console.warn("AudioContext chime not available:", err);
+        }
+    }
+
+    /**
+     * Memainkan lantunan suara adzan MP3 atau fallback ke Web Audio API
+     */
+    function playPrayerChime(isTest = false, prayerName = null) {
+        stopPrayerAudio();
+
+        let soundFile = null;
+        let soundTitle = "Azan Shalat";
+
+        const isSubuh = (prayerName && prayerName.toLowerCase().includes("subuh"));
+
+        if (isSubuh) {
+            const subuhChoice = getSelectedSubuhSound();
+            const subuhOpt = ADZAN_SUBUH_OPTIONS.find(o => o.id === subuhChoice);
+            if (subuhOpt && subuhOpt.file) {
+                soundFile = subuhOpt.file;
+                soundTitle = subuhOpt.name;
+            }
+        }
+
+        if (!soundFile) {
+            const regChoice = getSelectedAdzanSound();
+            const regOpt = ADZAN_SOUND_OPTIONS.find(o => o.id === regChoice);
+            if (regOpt) {
+                soundFile = regOpt.file;
+                soundTitle = regOpt.name;
+            }
+        }
+
+        // Jika opsi yang dipilih adalah nada genta sintetis (tanpa file)
+        if (!soundFile) {
+            playSynthesizedChimeFallback(isTest);
+            return;
+        }
+
+        // Putar file MP3 menggunakan HTML5 Audio
+        try {
+            const audio = new Audio(soundFile);
+            audio.volume = 1.0;
+            currentPrayerAudio = audio;
+
+            audio.addEventListener('play', () => {
+                updateAudioControlsUI(true);
+                showFloatingAdzanBanner(
+                    isTest ? `🔔 Uji Coba: ${soundTitle}` : `🕌 Waktu Shalat Telah Tiba`,
+                    isTest ? "Mengetes lantunan suara azan pilihan" : `${prayerName || 'Shalat'} - ${soundTitle}`
+                );
+            });
+
+            audio.addEventListener('ended', () => {
+                stopPrayerAudio();
+            });
+
+            audio.addEventListener('error', (err) => {
+                console.warn("Gagal memuat file MP3, beralih ke nada sintetis:", err);
+                stopPrayerAudio();
+                playSynthesizedChimeFallback(isTest);
+            });
+
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.warn("Autoplay terhalang kebijakan browser, beralih ke nada sintetis:", err);
+                    stopPrayerAudio();
+                    playSynthesizedChimeFallback(isTest);
+                });
+            }
+        } catch (e) {
+            console.warn("Eksepsi saat memutar audio azan:", e);
+            playSynthesizedChimeFallback(isTest);
+        }
+    }
+
+    function sendPrayerNotification(prayerName, timeStr, cityName) {
+        playPrayerChime(false, prayerName);
+
+        // 1. Browser Native Notification
+        if ("Notification" in window && Notification.permission === "granted") {
+            try {
+                new Notification(`🕌 Waktu Shalat ${prayerName} Telah Tiba`, {
+                    body: `Saatnya menunaikan shalat ${prayerName} (${timeStr} WIB) untuk wilayah ${cityName}. Mari tegakkan shalat berjamaah di PPTQ Asnawiyyah.`,
+                    icon: "favicon.ico",
+                    badge: "favicon.ico",
+                    tag: `asnawiyyah-prayer-${prayerName}-${timeStr}`
+                });
+            } catch (e) {
+                console.warn("Browser notification trigger failed:", e);
+            }
+        }
+
+        // 2. In-App Banner Toast
+        if (typeof showToast === 'function') {
+            showToast(`🕌 Waktu Shalat ${prayerName} telah tiba (${timeStr}) untuk wilayah ${cityName}!`);
+        }
+    }
+
+    function checkPrayerTimes() {
+        if (!isNotificationEnabled()) return;
+
+        const city = CITIES[currentCityKey] || CITIES.demak;
+        const now = new Date();
+        const sched = calculateDay(now, city);
+        if (!sched || !sched.times) return;
+
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const currentHM = `${hh}:${mm}`;
+        const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+        const prayers = [
+            { name: "Subuh", time: sched.times.subuh },
+            { name: "Dzuhur", time: sched.times.zuhur },
+            { name: "Ashar", time: sched.times.ashar },
+            { name: "Maghrib", time: sched.times.maghrib },
+            { name: "Isya'", time: sched.times.isya }
+        ];
+
+        for (const p of prayers) {
+            if (p.time === currentHM) {
+                const notifKey = `${todayStr}_${p.name}_${p.time}`;
+                if (lastNotifiedKey !== notifKey) {
+                    lastNotifiedKey = notifKey;
+                    sendPrayerNotification(p.name, p.time, city.name);
+                }
+                break;
+            }
+        }
+    }
+
+    function startPrayerNotificationChecker() {
+        if (notifCheckTimer) clearInterval(notifCheckTimer);
+        notifCheckTimer = setInterval(checkPrayerTimes, 25000);
+        checkPrayerTimes();
+    }
+
+    function toggleNotification(enabled) {
+        localStorage.setItem(NOTIF_STORAGE_KEY, enabled ? "true" : "false");
+        const toggleEl = document.getElementById('prayer-notification-toggle');
+        if (toggleEl) toggleEl.checked = enabled;
+
+        updatePermissionStatusUI();
+
+        if (enabled) {
+            if ("Notification" in window) {
+                if (Notification.permission === "default") {
+                    Notification.requestPermission().then(perm => {
+                        updatePermissionStatusUI();
+                        if (perm === "granted") {
+                            if (typeof showToast === 'function') showToast("✅ Notifikasi Azan diaktifkan & izin browser diberikan!");
+                            playPrayerChime(true);
+                        } else {
+                            if (typeof showToast === 'function') showToast("🔔 Pengingat suara & banner dalam aplikasi tetap aktif!");
+                            playPrayerChime(true);
+                        }
+                    });
+                    return;
+                } else if (Notification.permission === "granted") {
+                    if (typeof showToast === 'function') showToast("✅ Pengingat Azan & Waktu Shalat diaktifkan!");
+                    playPrayerChime(true);
+                } else {
+                    if (typeof showToast === 'function') showToast("🔔 Pengingat suara & banner dalam aplikasi diaktifkan!");
+                    playPrayerChime(true);
+                }
+            } else {
+                if (typeof showToast === 'function') showToast("✅ Pengingat Azan & Waktu Shalat diaktifkan!");
+                playPrayerChime(true);
+            }
+        } else {
+            stopPrayerAudio();
+            if (typeof showToast === 'function') showToast("Pengingat Azan dinonaktifkan");
+        }
+    }
+
+    function updatePermissionStatusUI() {
+        const statusEl = document.getElementById('prayer-notif-permission-status');
+        if (!statusEl) return;
+
+        const enabled = isNotificationEnabled();
+        if (!enabled) {
+            statusEl.innerHTML = `<i class="fa-solid fa-bell-slash text-slate-400"></i> Mode: Nonaktif`;
+            return;
+        }
+
+        if ("Notification" in window && Notification.permission === "granted") {
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> Mode: Suara + Notifikasi Sistem`;
+        } else {
+            statusEl.innerHTML = `<i class="fa-solid fa-volume-high text-amber-500"></i> Mode: Suara & Spanduk Aplikasi`;
+        }
+    }
+
+    function populateAdzanSoundSelectors() {
+        const regSelect = document.getElementById('prayer-adzan-sound-select');
+        if (regSelect) {
+            const currentChoice = getSelectedAdzanSound();
+            regSelect.innerHTML = ADZAN_SOUND_OPTIONS.map(opt => {
+                const selected = opt.id === currentChoice ? 'selected' : '';
+                return `<option value="${opt.id}" ${selected}>${opt.name}</option>`;
+            }).join('');
+        }
+
+        const subuhSelect = document.getElementById('prayer-adzan-subuh-select');
+        if (subuhSelect) {
+            const currentSubuh = getSelectedSubuhSound();
+            subuhSelect.innerHTML = ADZAN_SUBUH_OPTIONS.map(opt => {
+                const selected = opt.id === currentSubuh ? 'selected' : '';
+                return `<option value="${opt.id}" ${selected}>${opt.name}</option>`;
+            }).join('');
+        }
+    }
+
+    function initPrayerSettings() {
+        populateCitySelector();
+        renderSettingsPreview();
+        populateAdzanSoundSelectors();
+
+        const toggleEl = document.getElementById('prayer-notification-toggle');
+        if (toggleEl) {
+            toggleEl.checked = isNotificationEnabled();
+        }
+
+        updatePermissionStatusUI();
+    }
+
+    // ----------------------------------------------------------------
+    // 9. SALIN JADWAL HARI INI KE CLIPBOARD (WHATSAPP READY)
     // ----------------------------------------------------------------
     function copyTodaySchedule() {
         const city = CITIES[currentCityKey] || CITIES.demak;
@@ -638,7 +1114,7 @@ const ASNJadwalSholat = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 9. PUBLIC API & AUTO-EXPORT
+    // 10. PUBLIC API & AUTO-EXPORT
     // ----------------------------------------------------------------
     return {
         init: initJadwalSholat,
@@ -651,9 +1127,48 @@ const ASNJadwalSholat = (function () {
         printMonthlySchedule: printMonthlySchedule,
         calculateDay: calculateDay,
         CITIES: CITIES,
-        getCurrentCity: () => CITIES[currentCityKey] || CITIES.demak
+        getCurrentCity: () => CITIES[currentCityKey] || CITIES.demak,
+        initPrayerSettings: initPrayerSettings,
+        renderSettingsPreview: renderSettingsPreview,
+        populateCitySelector: populateCitySelector,
+        populateAdzanSoundSelectors: populateAdzanSoundSelectors,
+        playPrayerChime: playPrayerChime,
+        stopPrayerAudio: stopPrayerAudio,
+        setAdzanSound: (val) => {
+            setSelectedAdzanSound(val);
+            if (typeof showToast === 'function') {
+                const opt = ADZAN_SOUND_OPTIONS.find(o => o.id === val);
+                showToast(`Suara azan: ${opt ? opt.name : val}`);
+            }
+        },
+        setAdzanSubuhSound: (val) => {
+            setSelectedSubuhSound(val);
+            if (typeof showToast === 'function') {
+                const opt = ADZAN_SUBUH_OPTIONS.find(o => o.id === val);
+                showToast(`Azan Subuh: ${opt ? opt.name : val}`);
+            }
+        },
+        getAdzanSoundOptions: () => ADZAN_SOUND_OPTIONS,
+        getAdzanSubuhOptions: () => ADZAN_SUBUH_OPTIONS,
+        toggleNotification: toggleNotification,
+        startPrayerNotificationChecker: startPrayerNotificationChecker
     };
 })();
+
+// Jalankan inisialisasi pengaturan sholat & background checker saat dokumen siap
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof ASNJadwalSholat !== 'undefined') {
+            ASNJadwalSholat.initPrayerSettings();
+            ASNJadwalSholat.startPrayerNotificationChecker();
+        }
+    });
+} else {
+    if (typeof ASNJadwalSholat !== 'undefined') {
+        ASNJadwalSholat.initPrayerSettings();
+        ASNJadwalSholat.startPrayerNotificationChecker();
+    }
+}
 
 // Helper navigasi pembuka tab dari menu Ibadah
 function openJadwalSholatPage() {
