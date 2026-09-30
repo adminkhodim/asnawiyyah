@@ -1558,22 +1558,44 @@
                         </div>
                     </div>
 
+                    <!-- PUSAT KONTROL UTAMA PENGASUH -->
+                    <div class="bg-gradient-to-r from-emerald-950 via-[#0a2318] to-amber-950 p-4 sm:p-5 rounded-3xl border border-amber-500/40 shadow-md text-white space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-lg border border-amber-400/30">
+                                    <i class="fa-solid fa-kaaba"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-extrabold text-amber-200">Pusat Kontrol Eksekutif</h4>
+                                    <p class="text-[11px] text-amber-300/80">Supervisi makro 9 modul utama pesantren.</p>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md">Mode Aman</span>
+                        </div>
+                        <button type="button" onclick="switchTab('admin', true); showAdminView('hub'); window.scrollTo({ top: 0, behavior: 'smooth' });"
+                            class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-2xl shadow-md transition flex items-center justify-center space-x-2 active:scale-95">
+                            <i class="fa-solid fa-table-columns"></i>
+                            <span>Buka Dashboard Eksekutif Dewan Masyayikh</span>
+                            <i class="fa-solid fa-arrow-right text-[10px] ml-1"></i>
+                        </button>
+                    </div>
+
                     <!-- Pengasuh Tahfidz Executive Widget -->
-                    <div class="bg-white dark:bg-[#15202d] p-5 rounded-3xl shadow-sm border border-amber-200/60 dark:border-amber-500/20 space-y-4">
+                    <div class="bg-white dark:bg-[#15202d] p-5 rounded-3xl shadow-sm border border-amber-200/60 dark:border-amber-500/20 space-y-3">
                         <div class="flex items-center justify-between">
                             <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center">
-                                <i class="fa-solid fa-book-quran text-amber-500 mr-2"></i> Pantauan Eksekutif Tahfidz
+                                <i class="fa-solid fa-book-quran text-amber-500 mr-2"></i> Pantauan Khusus Tahfidz
                             </h3>
                             <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md">30 Juz Standar Mushaf</span>
                         </div>
 
                         <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            Pemantauan mutaba'ah ziyadah, muraja'ah, dan capaian hafalan Al-Qur'an santri PPTQ Asnawiyyah secara makro maupun perorangan.
+                            Akses langsung lembar mutaba'ah, ziyadah, muraja'ah, dan target hafalan santri se-pesantren.
                         </p>
 
-                        <button type="button" onclick="openTahfidzPengasuhView()" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-2xl shadow-md transition flex items-center justify-center space-x-2 active:scale-95">
-                            <i class="fa-solid fa-chart-line text-sm"></i>
-                            <span>Buka Pantauan Lengkap Tahfidz Pesantren</span>
+                        <button type="button" onclick="openTahfidzPengasuhView()" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-amber-50 text-slate-800 hover:text-amber-800 dark:bg-slate-800 dark:text-amber-200 dark:hover:bg-slate-700 font-bold text-xs rounded-2xl border border-slate-200 dark:border-slate-700 transition flex items-center justify-center space-x-2 active:scale-95">
+                            <i class="fa-solid fa-chart-line text-sm text-amber-500"></i>
+                            <span>Buka Pantauan Tahfidz</span>
                         </button>
                     </div>
                 </div>

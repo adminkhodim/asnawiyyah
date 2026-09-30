@@ -610,10 +610,16 @@ const ASNIdentity = {
         localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN, token);
         sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(pengasuhData || {}));
         localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(pengasuhData || {}));
+        sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, 'PENGASUH');
+        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, 'PENGASUH');
         this.currentRole = ASN_ROLES.PENGASUH;
         this.currentUser = pengasuhData;
+        if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
         this.currentState = ASN_STATES.PENGASUH_AUTH_ACTIVE;
         this.renderAccountCenterUI();
+        if (typeof applyAdminRoleVisibility === 'function') {
+            applyAdminRoleVisibility('PENGASUH');
+        }
     },
 
     setAdminSession(token, adminData) {
@@ -1504,14 +1510,29 @@ async function handleAdminVerifyOtp(e) {
     try {
         const result = await ASNAuthAPI.verifyAdminOtp(email, otp);
         if (result.success && result.token) {
-            ASNIdentity.setAdminSession(result.token, result.admin);
-            closeAdminAuthModal();
-            if (typeof showToast === 'function') {
-                showToast('Login Admin Berhasil!');
-            }
-            if (window.innerWidth >= 768) {
-                if (typeof switchTab === 'function') switchTab('admin');
-                if (typeof showAdminView === 'function') showAdminView('hub');
+            const role = String((result.admin && result.admin.role) || '').toUpperCase();
+            if (role === 'PENGASUH') {
+                ASNIdentity.setPengasuhSession(result.token, result.admin);
+                closeAdminAuthModal();
+                if (typeof showToast === 'function') {
+                    showToast(`Ahlan wa Sahlan, ${result.admin?.name || 'Pengasuh'}`);
+                }
+                setTimeout(() => {
+                    if (typeof switchTab === 'function') switchTab('admin', true);
+                    if (typeof showAdminView === 'function') showAdminView('hub');
+                    if (typeof applyAdminRoleVisibility === 'function') applyAdminRoleVisibility('PENGASUH');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
+            } else {
+                ASNIdentity.setAdminSession(result.token, result.admin);
+                closeAdminAuthModal();
+                if (typeof showToast === 'function') {
+                    showToast('Login Admin Berhasil!');
+                }
+                if (window.innerWidth >= 768) {
+                    if (typeof switchTab === 'function') switchTab('admin');
+                    if (typeof showAdminView === 'function') showAdminView('hub');
+                }
             }
         } else {
             // Fail safely: tampilkan error, jangan login, jangan bypass!
@@ -2144,6 +2165,14 @@ async function handleCredentialResponse(response) {
                 ASNIdentity.setPengasuhSession(ssoResult.token, ssoResult.pengasuh || ssoResult.identity);
                 if (typeof closePengasuhAuthModal === 'function') closePengasuhAuthModal();
                 if (typeof showToast === 'function') showToast(`Ahlan wa Sahlan, ${ssoResult.identity?.name || 'Pengasuh'}`);
+                
+                // Langsung arahkan masuk ke tampilan Dashboard Eksekutif Dewan Masyayikh
+                setTimeout(() => {
+                    if (typeof switchTab === 'function') switchTab('admin', true);
+                    if (typeof showAdminView === 'function') showAdminView('hub');
+                    if (typeof applyAdminRoleVisibility === 'function') applyAdminRoleVisibility('PENGASUH');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
             } else if (role === 'ADMIN' || role === 'EDITOR') {
                 ASNIdentity.setAdminSession(ssoResult.token, ssoResult.admin || ssoResult.identity);
                 if (typeof closeAdminAuthModal === 'function') closeAdminAuthModal();

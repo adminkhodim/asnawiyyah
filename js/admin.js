@@ -203,6 +203,12 @@
          * - Pada desktop, kembali ke Hub Menu Admin
          */
         function backFromAdminModule() {
+            const currentRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                                sessionStorage.getItem('asnawiyyah_admin_role') || '';
+            if (currentRole === 'PENGASUH') {
+                showAdminView('hub');
+                return;
+            }
             if (window.innerWidth < 1024) {
                 if (typeof switchTab === 'function') {
                     switchTab('pengaturan');

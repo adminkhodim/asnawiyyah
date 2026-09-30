@@ -121,7 +121,8 @@
                 }
             } else if (path === '/pengaturan') {
                 const isMobile = window.innerWidth < 768;
-                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor'));
+                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || 
+                                (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor' || ASNIdentity.currentRole === 'PENGASUH' || (typeof isAsnAdminRole === 'function' && isAsnAdminRole(ASNIdentity.currentRole))));
                 if (isMobile) {
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                     switchTab('pengaturan', false);
@@ -286,7 +287,8 @@
             }
 
             if (tabId === 'pengaturan' && window.innerWidth >= 768) {
-                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor'));
+                const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || 
+                                (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor' || ASNIdentity.currentRole === 'PENGASUH' || (typeof isAsnAdminRole === 'function' && isAsnAdminRole(ASNIdentity.currentRole))));
                 if (isAdmin) {
                     switchTab('admin', updateUrl);
                     return;
