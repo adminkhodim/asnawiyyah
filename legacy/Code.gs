@@ -9478,9 +9478,13 @@ const TAHFIDZ_CURRICULUM_JUZ_ORDER = [
   11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 ];
 
-function getTahfidzCurriculumTotalTuntas_(juz, hal) {
+function getTahfidzCurriculumRank_(juz) {
   var idx = TAHFIDZ_CURRICULUM_JUZ_ORDER.indexOf(Number(juz));
-  var rank = idx !== -1 ? idx : 0;
+  return idx !== -1 ? idx : 0;
+}
+
+function getTahfidzCurriculumTotalTuntas_(juz, hal) {
+  var rank = getTahfidzCurriculumRank_(juz);
   var h = Math.min(20, Math.max(1, Number(hal) || 1));
   return rank * 20 + h;
 }
@@ -10307,18 +10311,45 @@ function getTahfidzDashboard(token) {
       sLogs.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
       const latestLog = sLogs.length > 0 ? sLogs[0] : null;
 
-      // Hitung capaian Juz tertinggi
-      let currentJuz = 0;
+      // Hitung capaian berbasis urutan kurikulum (Juz 30 s/d 21, lalu 1 s/d 20)
+      let maxRank = -1;
+      let currentJuz = 30;
+      let currentHal = 1;
+      let hasZiyadah = false;
+
       sLogs.forEach(lg => {
-        if (lg.juz && lg.juz > currentJuz) {
-          currentJuz = lg.juz;
+        if (lg.tipe === "ZIYADAH" && lg.statusSetoran !== "ULANG") {
+          hasZiyadah = true;
+          const j = Number(lg.juz) || 30;
+          const r = getTahfidzCurriculumRank_(j);
+          const h = Number(String(lg.halamanList || 1).replace(/\D/g, "")) || 1;
+          if (r > maxRank || (r === maxRank && h > currentHal)) {
+            maxRank = r;
+            currentJuz = j;
+            currentHal = h;
+          }
         }
       });
-      if (currentJuz === 0 && st.program && st.program.toLowerCase().includes("tahfidz")) {
-        currentJuz = 1;
+
+      if (!hasZiyadah) {
+        if (latestLog && latestLog.juz) {
+          currentJuz = Number(latestLog.juz) || 30;
+          currentHal = Number(String(latestLog.halamanList || 1).replace(/\D/g, "")) || 1;
+          maxRank = getTahfidzCurriculumRank_(currentJuz);
+        } else {
+          currentJuz = 30;
+          currentHal = 1;
+          maxRank = 0;
+        }
       }
-      if (currentJuz >= 30) khatam30Count++;
-      totalJuzAllStudents += currentJuz;
+
+      const totalTuntasPages = Math.min(600, maxRank * 20 + currentHal);
+      const juzCompleted = maxRank + (currentHal >= 20 ? 1 : (currentHal / 20));
+      const percent = Math.min(100, Math.max(1, Math.round((totalTuntasPages / 600) * 100)));
+      const isKhatam30 = totalTuntasPages >= 600 || (maxRank === 29 && currentHal >= 20);
+
+      if (isKhatam30) khatam30Count++;
+      totalJuzAllStudents += juzCompleted;
 
       // Hitung setoran pekan ini
       let setoranPekanIni = 0;
@@ -10406,8 +10437,12 @@ function getTahfidzDashboard(token) {
         } : null,
         progress: {
           currentJuz: currentJuz,
+          currentHalaman: currentHal,
+          curriculumRank: maxRank + 1,
+          totalHalamanTuntas: totalTuntasPages,
           totalJuz: 30,
-          percent: Math.min(100, Math.round((currentJuz / 30) * 100)),
+          percent: percent,
+          isKhatam: isKhatam30,
           onTrackStatus: onTrack
         },
         totalSetoran: sLogs.length
@@ -10420,12 +10455,14 @@ function getTahfidzDashboard(token) {
     let totalJuzHalaqahStudents = 0;
     let khatam30HalaqahCount = 0;
     halaqahMembers.forEach(st => {
-      const jz = (st.progress && st.progress.currentJuz) || 0;
-      totalJuzHalaqahStudents += jz;
-      if (jz >= 30) khatam30HalaqahCount++;
+      const p = st.progress;
+      const jzComp = p ? ((p.curriculumRank - 1) + (p.currentHalaman >= 20 ? 1 : (p.currentHalaman / 20))) : 0;
+      totalJuzHalaqahStudents += jzComp;
+      if (p && p.isKhatam) khatam30HalaqahCount++;
     });
 
-    const avgJuz = (totalJuzHalaqahStudents / activeStudentCount).toFixed(1);
+    const baseTotalJuz = totalJuzHalaqahStudents > 0 ? totalJuzHalaqahStudents : totalJuzAllStudents;
+    const avgJuz = (baseTotalJuz / activeStudentCount).toFixed(1);
     const totalWeeklyActivity = weeklyZiyadahCount + weeklyMurajaahCount;
     const ziyadahPercent = totalWeeklyActivity > 0 ? Math.round((weeklyZiyadahCount / totalWeeklyActivity) * 100) : 100;
     const murajaahPercent = 100 - ziyadahPercent;
@@ -10436,7 +10473,7 @@ function getTahfidzDashboard(token) {
       summary: {
         khatam30Juz: khatam30HalaqahCount > 0 ? khatam30HalaqahCount : khatam30Count,
         rataRataHafalan: `${avgJuz} Juz / Santri`,
-        totalHafalanJuz: totalJuzHalaqahStudents > 0 ? totalJuzHalaqahStudents : totalJuzAllStudents,
+        totalHafalanJuz: Number(baseTotalJuz.toFixed(1)),
         totalSantriHalaqah: halaqahMembers.length,
         aktivitasPekanIni: {
           ziyadahPercent: ziyadahPercent,
@@ -10938,19 +10975,44 @@ function getTahfidzStudentDetail(studentId, token) {
     // Urutkan riwayat dari yang terbaru
     riwayat.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
 
-    // 4. Hitung Capaian Saat Ini & Rata-rata Nilai
-    let currentJuz = 0;
+    // 4. Hitung Capaian Saat Ini & Rata-rata Nilai Berdasarkan Urutan Kurikulum
+    let maxRank = -1;
+    let currentJuz = 30;
+    let currentHal = 1;
     let totalScorePoints = 0;
+
     riwayat.forEach(r => {
-      if (r.juz && r.juz > currentJuz) currentJuz = r.juz;
+      if (r.tipe === "ZIYADAH" && r.statusSetoran !== "ULANG") {
+        const j = Number(r.juz) || 30;
+        const rk = getTahfidzCurriculumRank_(j);
+        const h = Number(String(r.halamanList || 1).replace(/\D/g, "")) || 1;
+        if (rk > maxRank || (rk === maxRank && h > currentHal)) {
+          maxRank = rk;
+          currentJuz = j;
+          currentHal = h;
+        }
+      }
       if (r.nilai === "MUMTAZ") totalScorePoints += 4;
       else if (r.nilai === "JAYYID_JIDDAN") totalScorePoints += 3;
       else if (r.nilai === "JAYYID") totalScorePoints += 2;
       else totalScorePoints += 1;
     });
 
-    if (currentJuz === 0) currentJuz = 1;
-    const percent = Math.min(100, Math.round((currentJuz / 30) * 100));
+    if (maxRank === -1) {
+      if (riwayat.length > 0 && riwayat[0].juz) {
+        currentJuz = Number(riwayat[0].juz) || 30;
+        currentHal = Number(String(riwayat[0].halamanList || 1).replace(/\D/g, "")) || 1;
+        maxRank = getTahfidzCurriculumRank_(currentJuz);
+      } else {
+        currentJuz = 30;
+        currentHal = 1;
+        maxRank = 0;
+      }
+    }
+
+    const totalTuntas = Math.min(600, maxRank * 20 + currentHal);
+    const percent = Math.min(100, Math.max(1, Math.round((totalTuntas / 600) * 100)));
+    const curriculumJuzIndex = maxRank + 1;
 
     let avgNilaiText = "-";
     if (riwayat.length > 0) {
@@ -11087,6 +11149,9 @@ function getTahfidzStudentDetail(studentId, token) {
         totalSetoran: `${riwayat.length} Kali`,
         rataRataNilai: avgNilaiText,
         progressJuz: currentJuz,
+        progressHalaman: currentHal,
+        curriculumJuzIndex: curriculumJuzIndex,
+        totalHalamanTuntas: totalTuntas,
         progressMax: 30,
         progressPercent: percent
       },

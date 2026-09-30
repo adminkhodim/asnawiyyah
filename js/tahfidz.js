@@ -759,7 +759,7 @@ function renderTahfidzStudentTable() {
             const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
             const currentHal = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
             const curProg = getCurriculumProgress(currentJuz, currentHal);
-            const percent = Number(cap.persentase) || Number(st.progress?.percent) || curProg.percent;
+            const percent = curProg.percent;
             const onTrackStatus = st.progress?.onTrackStatus || 'Belum Setor';
             const isOnTrack = onTrackStatus.includes('On-Track');
 
@@ -931,7 +931,7 @@ function renderTahfidzStudentTable() {
             const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
             const currentHal = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
             const curProg = getCurriculumProgress(currentJuz, currentHal);
-            const percent = Number(cap.persentase) || Number(st.progress?.percent) || curProg.percent;
+            const percent = curProg.percent;
             const targetZ = st.target?.ziyadahSesi || 1;
             const targetM = st.target?.murajaahSesi || 2;
             const isSelected = ASNTahfidz.selectedStudentIds && ASNTahfidz.selectedStudentIds.has(st.studentId);
@@ -2137,27 +2137,28 @@ function renderTahfidzEstimasiKhatam() {
     const stats = res.stats || {};
     const riwayat = res.riwayat || [];
 
-    // 1. Hitung total halaman yang sudah tuntas (Max 600 halaman Mushaf Pojok)
-    const progressJuz = Number(stats.progressJuz || 1);
-    const lastHalamanRaw = String(st.setoranTerakhir?.halaman || '1');
+    // 1. Hitung total halaman yang sudah tuntas (Max 600 halaman Mushaf Pojok) berbasis kurikulum (30-21 lalu 1-20)
+    const progressJuz = Number(stats.progressJuz || st.progress?.currentJuz || 30);
+    const lastHalamanRaw = String(st.setoranTerakhir?.halaman || stats.progressHalaman || '1');
     const lastHalamanNum = parseInt(lastHalamanRaw.replace(/\D+/g, '')) || 1;
 
-    let halamanTuntas = Math.max(0, (progressJuz - 1) * 20 + Math.min(20, lastHalamanNum));
+    let halamanTuntas = stats.totalHalamanTuntas || getCurriculumProgress(progressJuz, lastHalamanNum).totalTuntas;
 
     // Validasi dengan riwayat setoran ziyadah unik jika ada
     const ziyadahLogs = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH' && r.statusSetoran !== 'ULANG');
     if (ziyadahLogs.length > 0) {
-        let maxJuzZiyadah = 1;
+        let maxRankZiyadah = -1;
         let maxHlmZiyadah = 1;
         ziyadahLogs.forEach(log => {
-            const j = Number(log.juz || 1);
+            const j = Number(log.juz || 30);
+            const rk = getJuzCurriculumIndex(j);
             const h = parseInt(String(log.halamanList || '1').replace(/\D+/g, '')) || 1;
-            if (j > maxJuzZiyadah || (j === maxJuzZiyadah && h > maxHlmZiyadah)) {
-                maxJuzZiyadah = j;
+            if (rk > maxRankZiyadah || (rk === maxRankZiyadah && h > maxHlmZiyadah)) {
+                maxRankZiyadah = rk;
                 maxHlmZiyadah = h;
             }
         });
-        const calcFromLogs = (maxJuzZiyadah - 1) * 20 + Math.min(20, maxHlmZiyadah);
+        const calcFromLogs = maxRankZiyadah * 20 + maxHlmZiyadah;
         if (calcFromLogs > halamanTuntas) {
             halamanTuntas = calcFromLogs;
         }
@@ -2405,7 +2406,11 @@ function renderTahfidzStudentDetailView() {
     const elTotal = document.getElementById('tahfidz-detail-stat-total');
     const elNilai = document.getElementById('tahfidz-detail-stat-nilai');
 
-    if (elCapaian) elCapaian.innerHTML = `Juz ${stats.progressJuz || 1} <span class="text-xs font-bold text-slate-400">(${stats.progressPercent || 3}%)</span>`;
+    const curJuzNo = Number(stats.progressJuz || st.progress?.currentJuz || 30);
+    const curJuzIdx = stats.curriculumJuzIndex || (getJuzCurriculumIndex(curJuzNo) + 1);
+    const curPercent = stats.progressPercent || getCurriculumProgress(curJuzNo, stats.progressHalaman || 1).percent;
+
+    if (elCapaian) elCapaian.innerHTML = `Juz ${curJuzNo} <span class="text-xs font-bold text-slate-400">(${curPercent}%)</span>`;
     if (elTarget) elTarget.innerText = stats.targetCapaian || "-";
     if (elTotal) elTotal.innerText = `${riwayat.length || stats.totalSetoran || 0} Kali`;
     if (elNilai) elNilai.innerText = stats.rataRataNilai || "-";
@@ -2413,8 +2418,8 @@ function renderTahfidzStudentDetailView() {
     // Progress Bar 30 Juz
     const elProgressText = document.getElementById('tahfidz-detail-progress-text');
     const elProgressBar = document.getElementById('tahfidz-detail-progress-bar');
-    if (elProgressText) elProgressText.innerText = `${stats.progressJuz || 1} / 30 Juz`;
-    if (elProgressBar) elProgressBar.style.width = `${Math.min(100, Math.max(2, stats.progressPercent || 3))}%`;
+    if (elProgressText) elProgressText.innerText = `Juz ${curJuzNo} • Progres ${curJuzIdx}/30 Juz Kurikulum (${curPercent}%)`;
+    if (elProgressBar) elProgressBar.style.width = `${Math.min(100, Math.max(2, curPercent))}%`;
 
     // Posisi Muroja'ah Sabqi & Manzil
     const cap = res.capaian || st.capaian || {};
@@ -3872,11 +3877,14 @@ function renderTahfidzMatriksBeban() {
 
         matrix = halaqahs.map(h => {
             const enrolled = students.filter(st => st.halaqah && (st.halaqah.halaqahId === h.halaqahId || st.halaqah.namaHalaqah === h.namaHalaqah || st.halaqah.muhafiz === h.muhafiz));
-            let totalJuz = 0;
+            let totalJuzTuntas = 0;
             enrolled.forEach(st => {
-                totalJuz += Number(st.progress?.currentJuz || 0);
+                const jz = Number(st.capaian?.juzAktif || st.progress?.currentJuz || 30);
+                const hl = Number(st.capaian?.halamanTerakhir || st.progress?.currentHalaman || 1);
+                const prog = getCurriculumProgress(jz, hl);
+                totalJuzTuntas += (prog.totalTuntas / 20);
             });
-            const avg = enrolled.length > 0 ? (totalJuz / enrolled.length).toFixed(1) : "0.0";
+            const avg = enrolled.length > 0 ? (totalJuzTuntas / enrolled.length).toFixed(1) : "0.0";
             return {
                 muhafiz: h.muhafiz || 'Ustadz Pembina',
                 targetKurikulum: h.targetKurikulum || 'Tahfidz 30 Juz',
