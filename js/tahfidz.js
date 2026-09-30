@@ -128,6 +128,214 @@ const SURAH_JUZ_REFERENCE = {
     30: "An-Naba' 1 - An-Nas 6 (Juz 'Amma)"
 };
 
+// Urutan Kurikulum Tahfidz Pesantren (Mulai Juz 30 s/d 21, lalu Juz 1 s/d 20)
+const JUZ_CURRICULUM_ORDER = [
+    30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+];
+
+// Metadata Lengkap 114 Surah Al-Qur'an (Jumlah Ayat, Halaman Standar Mushaf Pojok, & Pemetaan Juz)
+const QURAN_114_SURAHS = [
+    { no: 1, name: "Al-Fatihah", ayat: 7, startPage: 1, endPage: 1, juz: [1] },
+    { no: 2, name: "Al-Baqarah", ayat: 286, startPage: 2, endPage: 49, juz: [1, 2, 3] },
+    { no: 3, name: "Ali 'Imran", ayat: 200, startPage: 50, endPage: 76, juz: [3, 4] },
+    { no: 4, name: "An-Nisa'", ayat: 176, startPage: 77, endPage: 106, juz: [4, 5, 6] },
+    { no: 5, name: "Al-Ma'idah", ayat: 120, startPage: 106, endPage: 127, juz: [6, 7] },
+    { no: 6, name: "Al-An'am", ayat: 165, startPage: 128, endPage: 150, juz: [7, 8] },
+    { no: 7, name: "Al-A'raf", ayat: 206, startPage: 151, endPage: 176, juz: [8, 9] },
+    { no: 8, name: "Al-Anfal", ayat: 75, startPage: 177, endPage: 186, juz: [9, 10] },
+    { no: 9, name: "At-Taubah", ayat: 129, startPage: 187, endPage: 207, juz: [10, 11] },
+    { no: 10, name: "Yunus", ayat: 109, startPage: 208, endPage: 221, juz: [11] },
+    { no: 11, name: "Hud", ayat: 123, startPage: 221, endPage: 235, juz: [11, 12] },
+    { no: 12, name: "Yusuf", ayat: 111, startPage: 235, endPage: 248, juz: [12, 13] },
+    { no: 13, name: "Ar-Ra'd", ayat: 43, startPage: 249, endPage: 255, juz: [13] },
+    { no: 14, name: "Ibrahim", ayat: 52, startPage: 255, endPage: 261, juz: [13] },
+    { no: 15, name: "Al-Hijr", ayat: 99, startPage: 262, endPage: 267, juz: [14] },
+    { no: 16, name: "An-Nahl", ayat: 128, startPage: 267, endPage: 281, juz: [14] },
+    { no: 17, name: "Al-Isra'", ayat: 111, startPage: 282, endPage: 293, juz: [15] },
+    { no: 18, name: "Al-Kahf", ayat: 110, startPage: 293, endPage: 304, juz: [15, 16] },
+    { no: 19, name: "Maryam", ayat: 98, startPage: 305, endPage: 312, juz: [16] },
+    { no: 20, name: "Ta-Ha", ayat: 135, startPage: 312, endPage: 321, juz: [16] },
+    { no: 21, name: "Al-Anbiya'", ayat: 112, startPage: 322, endPage: 331, juz: [17] },
+    { no: 22, name: "Al-Hajj", ayat: 78, startPage: 332, endPage: 341, juz: [17] },
+    { no: 23, name: "Al-Mu'minun", ayat: 118, startPage: 342, endPage: 349, juz: [18] },
+    { no: 24, name: "An-Nur", ayat: 64, startPage: 350, endPage: 359, juz: [18] },
+    { no: 25, name: "Al-Furqan", ayat: 77, startPage: 359, endPage: 366, juz: [18, 19] },
+    { no: 26, name: "Asy-Syu'ara'", ayat: 227, startPage: 367, endPage: 376, juz: [19] },
+    { no: 27, name: "An-Naml", ayat: 93, startPage: 377, endPage: 385, juz: [19, 20] },
+    { no: 28, name: "Al-Qashash", ayat: 88, startPage: 385, endPage: 396, juz: [20] },
+    { no: 29, name: "Al-'Ankabut", ayat: 69, startPage: 396, endPage: 404, juz: [20, 21] },
+    { no: 30, name: "Ar-Rum", ayat: 60, startPage: 404, endPage: 410, juz: [21] },
+    { no: 31, name: "Luqman", ayat: 34, startPage: 411, endPage: 414, juz: [21] },
+    { no: 32, name: "As-Sajdah", ayat: 30, startPage: 415, endPage: 417, juz: [21] },
+    { no: 33, name: "Al-Ahzab", ayat: 73, startPage: 418, endPage: 427, juz: [21, 22] },
+    { no: 34, name: "Saba'", ayat: 54, startPage: 428, endPage: 434, juz: [22] },
+    { no: 35, name: "Fathir", ayat: 45, startPage: 434, endPage: 440, juz: [22] },
+    { no: 36, name: "Ya-Sin", ayat: 83, startPage: 440, endPage: 445, juz: [22, 23] },
+    { no: 37, name: "Ash-Shaffat", ayat: 182, startPage: 446, endPage: 452, juz: [23] },
+    { no: 38, name: "Shad", ayat: 88, startPage: 453, endPage: 458, juz: [23] },
+    { no: 39, name: "Az-Zumar", ayat: 75, startPage: 458, endPage: 467, juz: [23, 24] },
+    { no: 40, name: "Ghafir", ayat: 85, startPage: 467, endPage: 476, juz: [24] },
+    { no: 41, name: "Fushshilat", ayat: 54, startPage: 477, endPage: 482, juz: [24, 25] },
+    { no: 42, name: "Asy-Syura", ayat: 53, startPage: 483, endPage: 489, juz: [25] },
+    { no: 43, name: "Az-Zukhruf", ayat: 89, startPage: 489, endPage: 495, juz: [25] },
+    { no: 44, name: "Ad-Dukhan", ayat: 59, startPage: 496, endPage: 498, juz: [25] },
+    { no: 45, name: "Al-Jatsiyah", ayat: 37, startPage: 499, endPage: 502, juz: [25] },
+    { no: 46, name: "Al-Ahqaf", ayat: 35, startPage: 502, endPage: 506, juz: [26] },
+    { no: 47, name: "Muhammad", ayat: 38, startPage: 507, endPage: 510, juz: [26] },
+    { no: 48, name: "Al-Fath", ayat: 29, startPage: 511, endPage: 515, juz: [26] },
+    { no: 49, name: "Al-Hujurat", ayat: 18, startPage: 515, endPage: 517, juz: [26] },
+    { no: 50, name: "Qaf", ayat: 45, startPage: 518, endPage: 520, juz: [26] },
+    { no: 51, name: "Adz-Dzariyat", ayat: 60, startPage: 520, endPage: 523, juz: [26, 27] },
+    { no: 52, name: "Ath-Thur", ayat: 49, startPage: 523, endPage: 525, juz: [27] },
+    { no: 53, name: "An-Najm", ayat: 62, startPage: 526, endPage: 528, juz: [27] },
+    { no: 54, name: "Al-Qamar", ayat: 55, startPage: 528, endPage: 531, juz: [27] },
+    { no: 55, name: "Ar-Rahman", ayat: 78, startPage: 531, endPage: 534, juz: [27] },
+    { no: 56, name: "Al-Waqi'ah", ayat: 96, startPage: 534, endPage: 537, juz: [27] },
+    { no: 57, name: "Al-Hadid", ayat: 29, startPage: 537, endPage: 541, juz: [27] },
+    { no: 58, name: "Al-Mujadilah", ayat: 22, startPage: 542, endPage: 545, juz: [28] },
+    { no: 59, name: "Al-Hasyr", ayat: 24, startPage: 545, endPage: 548, juz: [28] },
+    { no: 60, name: "Al-Mumtahanah", ayat: 13, startPage: 549, endPage: 551, juz: [28] },
+    { no: 61, name: "Ash-Shaff", ayat: 14, startPage: 551, endPage: 552, juz: [28] },
+    { no: 62, name: "Al-Jumu'ah", ayat: 11, startPage: 553, endPage: 554, juz: [28] },
+    { no: 63, name: "Al-Munafiqun", ayat: 11, startPage: 554, endPage: 555, juz: [28] },
+    { no: 64, name: "At-Taghabun", ayat: 18, startPage: 556, endPage: 557, juz: [28] },
+    { no: 65, name: "Ath-Thalaq", ayat: 12, startPage: 558, endPage: 559, juz: [28] },
+    { no: 66, name: "At-Tahrim", ayat: 12, startPage: 560, endPage: 561, juz: [28] },
+    { no: 67, name: "Al-Mulk", ayat: 30, startPage: 562, endPage: 564, juz: [29] },
+    { no: 68, name: "Al-Qalam", ayat: 52, startPage: 564, endPage: 566, juz: [29] },
+    { no: 69, name: "Al-Haqqah", ayat: 52, startPage: 566, endPage: 568, juz: [29] },
+    { no: 70, name: "Al-Ma'arij", ayat: 44, startPage: 568, endPage: 570, juz: [29] },
+    { no: 71, name: "Nuh", ayat: 28, startPage: 570, endPage: 571, juz: [29] },
+    { no: 72, name: "Al-Jinn", ayat: 28, startPage: 572, endPage: 573, juz: [29] },
+    { no: 73, name: "Al-Muzzammil", ayat: 20, startPage: 574, endPage: 575, juz: [29] },
+    { no: 74, name: "Al-Muddatstsir", ayat: 56, startPage: 575, endPage: 577, juz: [29] },
+    { no: 75, name: "Al-Qiyamah", ayat: 40, startPage: 577, endPage: 578, juz: [29] },
+    { no: 76, name: "Al-Insan", ayat: 31, startPage: 578, endPage: 580, juz: [29] },
+    { no: 77, name: "Al-Mursalat", ayat: 50, startPage: 580, endPage: 581, juz: [29] },
+    { no: 78, name: "An-Naba'", ayat: 40, startPage: 582, endPage: 583, juz: [30] },
+    { no: 79, name: "An-Nazi'at", ayat: 46, startPage: 583, endPage: 584, juz: [30] },
+    { no: 80, name: "'Abasa", ayat: 42, startPage: 585, endPage: 586, juz: [30] },
+    { no: 81, name: "At-Takwir", ayat: 29, startPage: 586, endPage: 586, juz: [30] },
+    { no: 82, name: "Al-Infithar", ayat: 19, startPage: 587, endPage: 587, juz: [30] },
+    { no: 83, name: "Al-Muthaffifin", ayat: 36, startPage: 587, endPage: 589, juz: [30] },
+    { no: 84, name: "Al-Insyiqaq", ayat: 25, startPage: 589, endPage: 590, juz: [30] },
+    { no: 85, name: "Al-Buruj", ayat: 22, startPage: 590, endPage: 590, juz: [30] },
+    { no: 86, name: "Ath-Thariq", ayat: 17, startPage: 591, endPage: 591, juz: [30] },
+    { no: 87, name: "Al-A'la", ayat: 19, startPage: 591, endPage: 592, juz: [30] },
+    { no: 88, name: "Al-Ghasyiyah", ayat: 26, startPage: 592, endPage: 593, juz: [30] },
+    { no: 89, name: "Al-Fajr", ayat: 30, startPage: 593, endPage: 594, juz: [30] },
+    { no: 90, name: "Al-Balad", ayat: 20, startPage: 594, endPage: 595, juz: [30] },
+    { no: 91, name: "Asy-Syams", ayat: 15, startPage: 595, endPage: 595, juz: [30] },
+    { no: 92, name: "Al-Lail", ayat: 21, startPage: 595, endPage: 596, juz: [30] },
+    { no: 93, name: "Adh-Dhuha", ayat: 11, startPage: 596, endPage: 596, juz: [30] },
+    { no: 94, name: "Asy-Syarh", ayat: 8, startPage: 596, endPage: 597, juz: [30] },
+    { no: 95, name: "At-Tin", ayat: 8, startPage: 597, endPage: 597, juz: [30] },
+    { no: 96, name: "Al-'Alaq", ayat: 19, startPage: 597, endPage: 598, juz: [30] },
+    { no: 97, name: "Al-Qadr", ayat: 5, startPage: 598, endPage: 598, juz: [30] },
+    { no: 98, name: "Al-Bayyinah", ayat: 8, startPage: 598, endPage: 599, juz: [30] },
+    { no: 99, name: "Az-Zalzalah", ayat: 8, startPage: 599, endPage: 599, juz: [30] },
+    { no: 100, name: "Al-'Adiyat", ayat: 11, startPage: 599, endPage: 600, juz: [30] },
+    { no: 101, name: "Al-Qari'ah", ayat: 11, startPage: 600, endPage: 600, juz: [30] },
+    { no: 102, name: "At-Takatsur", ayat: 8, startPage: 600, endPage: 600, juz: [30] },
+    { no: 103, name: "Al-'Ashr", ayat: 3, startPage: 601, endPage: 601, juz: [30] },
+    { no: 104, name: "Al-Humazah", ayat: 9, startPage: 601, endPage: 601, juz: [30] },
+    { no: 105, name: "Al-Fil", ayat: 5, startPage: 601, endPage: 601, juz: [30] },
+    { no: 106, name: "Quraisy", ayat: 4, startPage: 602, endPage: 602, juz: [30] },
+    { no: 107, name: "Al-Ma'un", ayat: 7, startPage: 602, endPage: 602, juz: [30] },
+    { no: 108, name: "Al-Kautsar", ayat: 3, startPage: 602, endPage: 602, juz: [30] },
+    { no: 109, name: "Al-Kafirun", ayat: 6, startPage: 603, endPage: 603, juz: [30] },
+    { no: 110, name: "An-Nashr", ayat: 3, startPage: 603, endPage: 603, juz: [30] },
+    { no: 111, name: "Al-Lahab", ayat: 5, startPage: 603, endPage: 603, juz: [30] },
+    { no: 112, name: "Al-Ikhlas", ayat: 4, startPage: 604, endPage: 604, juz: [30] },
+    { no: 113, name: "Al-Falaq", ayat: 5, startPage: 604, endPage: 604, juz: [30] },
+    { no: 114, name: "An-Nas", ayat: 6, startPage: 604, endPage: 604, juz: [30] }
+];
+
+/**
+ * Mendapatkan indeks urutan rank kurikulum tahfidz (0 = Juz 30 ... 29 = Juz 20)
+ */
+function getJuzCurriculumIndex(juz) {
+    const idx = JUZ_CURRICULUM_ORDER.indexOf(Number(juz));
+    return idx !== -1 ? idx : 0;
+}
+
+/**
+ * Menghitung capaian kumulatif tuntas (halaman) & persentase berbasis kurikulum
+ */
+function getCurriculumProgress(juz, hal) {
+    const r = getJuzCurriculumIndex(juz);
+    const h = Math.min(20, Math.max(1, Number(hal) || 1));
+    const totalTuntas = r * 20 + h;
+    const percent = Math.min(100, Math.max(1, Math.round((totalTuntas / 600) * 100)));
+    return { rank: r, totalTuntas, percent };
+}
+
+/**
+ * Mendapatkan rekomendasi juz dan halaman berikutnya berdasarkan kurikulum
+ */
+function getNextCurriculumPosition(juz, hal) {
+    const r = getJuzCurriculumIndex(juz);
+    const h = Number(hal) || 1;
+    if (h >= 20) {
+        if (r < JUZ_CURRICULUM_ORDER.length - 1) {
+            return { juz: JUZ_CURRICULUM_ORDER[r + 1], halaman: 1, khatam: false };
+        } else {
+            return { juz: JUZ_CURRICULUM_ORDER[r], halaman: 20, khatam: true };
+        }
+    }
+    return { juz: JUZ_CURRICULUM_ORDER[r], halaman: h + 1, khatam: false };
+}
+
+/**
+ * Mengambil daftar surah yang berada di juz tertentu
+ */
+function getSurahsByJuz(juz) {
+    const j = Number(juz);
+    const filtered = QURAN_114_SURAHS.filter(s => s.juz && s.juz.includes(j));
+    return filtered.length > 0 ? filtered : QURAN_114_SURAHS.slice(0, 5);
+}
+
+/**
+ * Halaman awal mushaf pojok 15 baris untuk juz tertentu
+ */
+function getJuzStartPage(juz) {
+    const j = Number(juz);
+    if (j === 1) return 1;
+    if (j === 30) return 582;
+    return (j - 1) * 20 + 2;
+}
+
+/**
+ * Memetakan surah & ayat ke nomor halaman relatif juz (1-20 mushaf pojok)
+ */
+function mapSurahAyatToPage(juz, surah, ayatMulai, ayatSampai) {
+    if (!surah) return [1];
+    const juzStart = getJuzStartPage(juz);
+    let globalStart = surah.startPage || 1;
+    let globalEnd = surah.endPage || globalStart;
+
+    if (surah.ayat > 1 && globalEnd > globalStart) {
+        const a1 = Math.max(1, Math.min(surah.ayat, Number(ayatMulai) || 1));
+        const a2 = Math.max(a1, Math.min(surah.ayat, Number(ayatSampai) || a1));
+        const ratio1 = (a1 - 1) / (surah.ayat - 1);
+        const ratio2 = (a2 - 1) / (surah.ayat - 1);
+        const gP1 = Math.round(globalStart + ratio1 * (globalEnd - globalStart));
+        const gP2 = Math.round(globalStart + ratio2 * (globalEnd - globalStart));
+        globalStart = gP1;
+        globalEnd = Math.max(gP1, gP2);
+    }
+
+    const relStart = Math.max(1, Math.min(20, globalStart - juzStart + 1));
+    const relEnd = Math.max(1, Math.min(20, globalEnd - juzStart + 1));
+    const pages = [];
+    for (let p = relStart; p <= relEnd; p++) {
+        pages.push(p);
+    }
+    return pages.length > 0 ? pages : [relStart];
+}
+
 // ====================================================================
 // 1. DASHBOARD TAHFIDZ (LOAD & RENDER)
 // ====================================================================
@@ -548,8 +756,10 @@ function renderTahfidzStudentTable() {
             const cap = st.capaian || {};
             const mur = st.murojaah || {};
 
-            const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 1;
-            const percent = Number(cap.persentase) || Number(st.progress?.percent) || 3;
+            const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
+            const currentHal = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
+            const curProg = getCurriculumProgress(currentJuz, currentHal);
+            const percent = Number(cap.persentase) || Number(st.progress?.percent) || curProg.percent;
             const onTrackStatus = st.progress?.onTrackStatus || 'Belum Setor';
             const isOnTrack = onTrackStatus.includes('On-Track');
 
@@ -718,8 +928,10 @@ function renderTahfidzStudentTable() {
             const cap = st.capaian || {};
             const mur = st.murojaah || {};
 
-            const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 1;
-            const percent = Number(cap.persentase) || Number(st.progress?.percent) || 3;
+            const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
+            const currentHal = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
+            const curProg = getCurriculumProgress(currentJuz, currentHal);
+            const percent = Number(cap.persentase) || Number(st.progress?.percent) || curProg.percent;
             const targetZ = st.target?.ziyadahSesi || 1;
             const targetM = st.target?.murajaahSesi || 2;
             const isSelected = ASNTahfidz.selectedStudentIds && ASNTahfidz.selectedStudentIds.has(st.studentId);
@@ -1034,21 +1246,197 @@ function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
 }
 
 /**
+ * Switch mode satuan setoran: HALAMAN vs AYAT (Tahfidz Anak)
+ */
+function setTahfidzSatuanMode(mode) {
+    ASNTahfidz.catatState.inputMode = mode;
+    const btnHal = document.getElementById('btn-mode-halaman');
+    const btnAyat = document.getElementById('btn-mode-ayat');
+    const contHal = document.getElementById('container-mode-halaman');
+    const contAyat = document.getElementById('container-mode-ayat');
+
+    if (mode === 'AYAT') {
+        if (btnAyat) {
+            btnAyat.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
+        }
+        if (btnHal) {
+            btnHal.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600";
+        }
+        if (contHal) contHal.classList.add('hidden');
+        if (contAyat) contAyat.classList.remove('hidden');
+
+        // Populate surah for current juz
+        const currentJuz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 30);
+        populateTahfidzSurahDropdown(currentJuz, ASNTahfidz.catatState.surahNo);
+        onTahfidzAyatChange();
+    } else {
+        if (btnHal) {
+            btnHal.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
+        }
+        if (btnAyat) {
+            btnAyat.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600";
+        }
+        if (contAyat) contAyat.classList.add('hidden');
+        if (contHal) contHal.classList.remove('hidden');
+
+        renderTahfidzPageSelector();
+    }
+}
+
+/**
+ * Mengisi dropdown Juz berdasarkan urutan kurikulum (30, 29, ..., 21, 1, ..., 20)
+ */
+function populateTahfidzJuzDropdown(selectedJuz = null) {
+    const selJuz = document.getElementById('tahfidz-catat-juz');
+    if (!selJuz) return;
+
+    let juzHtml = '';
+    JUZ_CURRICULUM_ORDER.forEach((j) => {
+        juzHtml += `<option value="${j}">Juz ${j} (${SURAH_JUZ_REFERENCE[j] || ''})</option>`;
+    });
+    selJuz.innerHTML = juzHtml;
+
+    const targetVal = selectedJuz ? String(selectedJuz) : (JUZ_CURRICULUM_ORDER[0] ? String(JUZ_CURRICULUM_ORDER[0]) : "30");
+    selJuz.value = targetVal;
+    ASNTahfidz.catatState.juz = Number(targetVal);
+}
+
+/**
+ * Mengisi dropdown Surah berdasarkan Juz terpilih
+ */
+function populateTahfidzSurahDropdown(juz, preselectedSurahNo = null) {
+    const selSurah = document.getElementById('tahfidz-catat-surah');
+    if (!selSurah) return;
+
+    const surahs = getSurahsByJuz(juz);
+    let optHtml = '';
+    surahs.forEach(s => {
+        optHtml += `<option value="${s.no}">${s.no}. ${s.name} (${s.ayat} Ayat)</option>`;
+    });
+    selSurah.innerHTML = optHtml;
+
+    if (preselectedSurahNo && surahs.some(s => s.no === Number(preselectedSurahNo))) {
+        selSurah.value = String(preselectedSurahNo);
+    } else if (surahs.length > 0) {
+        selSurah.value = String(surahs[0].no);
+    }
+
+    onTahfidzSurahChange();
+}
+
+/**
+ * Handler saat Juz diubah pada dropdown
+ */
+function onTahfidzJuzChange(juzVal) {
+    const juz = Number(juzVal || 30);
+    ASNTahfidz.catatState.juz = juz;
+
+    if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+        populateTahfidzSurahDropdown(juz);
+    } else {
+        renderTahfidzPageSelector();
+    }
+}
+
+/**
+ * Handler saat Surah diubah pada dropdown mode per ayat
+ */
+function onTahfidzSurahChange() {
+    const selSurah = document.getElementById('tahfidz-catat-surah');
+    const inputMulai = document.getElementById('tahfidz-catat-ayat-mulai');
+    const inputSampai = document.getElementById('tahfidz-catat-ayat-sampai');
+    const infoEl = document.getElementById('tahfidz-surah-info');
+
+    if (!selSurah) return;
+    const surahNo = Number(selSurah.value);
+    const surahObj = QURAN_114_SURAHS.find(s => s.no === surahNo) || { name: `Surah ${surahNo}`, ayat: 40 };
+
+    ASNTahfidz.catatState.surahNo = surahNo;
+    ASNTahfidz.catatState.surahName = surahObj.name;
+
+    if (inputMulai) {
+        inputMulai.max = surahObj.ayat;
+        if (!inputMulai.value || Number(inputMulai.value) > surahObj.ayat) inputMulai.value = "1";
+    }
+    if (inputSampai) {
+        inputSampai.max = surahObj.ayat;
+        const defaultSampai = Math.min(surahObj.ayat, (Number(inputMulai?.value) || 1) + 9);
+        inputSampai.value = String(defaultSampai);
+    }
+
+    if (infoEl) {
+        infoEl.innerHTML = `<i class="fa-solid fa-circle-info text-emerald-500"></i> <span>Surah <b>${escapeHtml(surahObj.name)}</b> (${surahObj.ayat} Ayat)</span>`;
+    }
+
+    onTahfidzAyatChange();
+}
+
+/**
+ * Handler saat input Ayat berubah (menghitung jumlah ayat & memetakan ke halaman mushaf pojok)
+ */
+function onTahfidzAyatChange() {
+    const selSurah = document.getElementById('tahfidz-catat-surah');
+    const inputMulai = document.getElementById('tahfidz-catat-ayat-mulai');
+    const inputSampai = document.getElementById('tahfidz-catat-ayat-sampai');
+    const countEl = document.getElementById('tahfidz-ayat-count-text');
+    const badgeHalEl = document.getElementById('tahfidz-ayat-halaman-badge');
+    const summaryBadge = document.getElementById('tahfidz-page-summary-badge');
+    const summaryList = document.getElementById('tahfidz-page-summary-list');
+
+    const juz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 30);
+    const surahNo = Number(selSurah?.value || ASNTahfidz.catatState.surahNo || 78);
+    const surahObj = QURAN_114_SURAHS.find(s => s.no === surahNo) || { name: `Surah ${surahNo}`, ayat: 40 };
+
+    let a1 = Math.max(1, Math.min(surahObj.ayat, Number(inputMulai?.value) || 1));
+    let a2 = Math.max(1, Math.min(surahObj.ayat, Number(inputSampai?.value) || a1));
+    if (a2 < a1) a2 = a1;
+
+    ASNTahfidz.catatState.ayatMulai = a1;
+    ASNTahfidz.catatState.ayatSampai = a2;
+
+    const totalAyat = (a2 - a1) + 1;
+    if (countEl) countEl.innerText = `${totalAyat} Ayat`;
+
+    // Kalkulasi pemetaan halaman mushaf pojok
+    const mappedPages = mapSurahAyatToPage(juz, surahObj, a1, a2);
+    ASNTahfidz.catatState.selectedPages = mappedPages;
+
+    const halStr = mappedPages.length === 1 ? `Halaman ${mappedPages[0]}` : `Halaman ${mappedPages[0]} - ${mappedPages[mappedPages.length - 1]}`;
+    if (badgeHalEl) {
+        badgeHalEl.innerText = `± ${halStr} Mushaf`;
+    }
+
+    if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+        if (summaryList) {
+            summaryList.innerText = `${surahObj.name} : Ayat ${a1} - ${a2} (${halStr})`;
+        }
+        if (summaryBadge) {
+            summaryBadge.innerText = `TERPILIH: ${totalAyat} AYAT (${mappedPages.length} HAL)`;
+        }
+    }
+}
+
+/**
  * Buka modal catat setoran cepat
  */
 function openTahfidzCatatModal(studentId = null) {
     const modal = document.getElementById('modal-tahfidz-catat');
     if (!modal) return;
 
-    // Reset State
+    // Reset State (Default kurikulum diawali dari Juz 30)
     ASNTahfidz.catatState = {
         studentId: studentId || "",
-        juz: 1,
+        juz: 30,
         tipe: "ZIYADAH",
         selectedPages: [1],
         sesi: "Pagi (Ba'da Subuh)",
         nilai: "MUMTAZ",
-        statusSetoran: "LANJUT"
+        statusSetoran: "LANJUT",
+        inputMode: "HALAMAN",
+        surahNo: 78,
+        surahName: "An-Naba'",
+        ayatMulai: 1,
+        ayatSampai: 10
     };
 
     // Reset Catatan Khusus Tajwid
@@ -1100,16 +1488,8 @@ function openTahfidzCatatModal(studentId = null) {
     // Set Tipe Setoran Buttons (Ziyadah default)
     setTahfidzCatatTipe('ZIYADAH');
 
-    // Populate Juz Dropdown 1 - 30
-    const selJuz = document.getElementById('tahfidz-catat-juz');
-    if (selJuz) {
-        let juzHtml = '';
-        for (let j = 1; j <= 30; j++) {
-            juzHtml += `<option value="${j}">Juz ${j} (${SURAH_JUZ_REFERENCE[j] || ''})</option>`;
-        }
-        selJuz.innerHTML = juzHtml;
-        selJuz.value = "1";
-    }
+    // Populate Juz Dropdown Sesuai Urutan Kurikulum (30, 29, ..., 21, 1, 2, ..., 20)
+    populateTahfidzJuzDropdown(30);
 
     // Set Nilai Default & Listener
     const nilaiSelect = document.getElementById('tahfidz-catat-nilai');
@@ -1126,6 +1506,9 @@ function openTahfidzCatatModal(studentId = null) {
 
     // Set Keputusan Default: LANJUT
     setTahfidzStatusDecision('LANJUT');
+
+    // Default Satuan Setoran: HALAMAN
+    setTahfidzSatuanMode('HALAMAN');
 
     // Render Grid Tombol Halaman 1-20 Mushaf Pojok
     renderTahfidzPageSelector();
@@ -1184,10 +1567,10 @@ function applyTahfidzRecommendation(studentId, tipe) {
     const cap = st.capaian || {};
     const mur = st.murojaah || {};
 
-    const ziyadahJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 1;
+    const ziyadahJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
     const ziyadahHalaman = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
 
-    const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
+    const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 30;
     const manzilHalaman = Number(mur.manzilHalaman || cap.manzilHalaman) || 1;
     const manzilPutaran = Number(mur.manzilPutaran || cap.manzilPutaran) || 1;
 
@@ -1202,8 +1585,13 @@ function applyTahfidzRecommendation(studentId, tipe) {
         if (posEl) posEl.innerText = `Juz ${ziyadahJuz} Hlm ${ziyadahHalaman}`;
 
         if (selJuz) selJuz.value = String(ziyadahJuz);
+        ASNTahfidz.catatState.juz = ziyadahJuz;
         ASNTahfidz.catatState.selectedPages = [Math.min(20, Math.max(1, ziyadahHalaman))];
-        renderTahfidzPageSelector();
+        if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+            populateTahfidzSurahDropdown(ziyadahJuz);
+        } else {
+            renderTahfidzPageSelector();
+        }
     } else if (tipe === 'MURAJAAH_SABQI') {
         if (badgeEl) {
             badgeEl.innerText = "Muroja'ah Sabqi (Dekat)";
@@ -1215,6 +1603,7 @@ function applyTahfidzRecommendation(studentId, tipe) {
         if (posEl) posEl.innerText = `Juz ${ziyadahJuz} • ${sabqiDisp}`;
 
         if (selJuz) selJuz.value = String(ziyadahJuz);
+        ASNTahfidz.catatState.juz = ziyadahJuz;
         // Default rentang halaman sabqi: halaman-halaman sebelum posisi ziyadah saat ini
         const sabqiEnd = Math.max(1, ziyadahHalaman > 1 ? ziyadahHalaman - 1 : 1);
         const sabqiStart = Math.max(1, sabqiEnd - 1);
@@ -1223,7 +1612,11 @@ function applyTahfidzRecommendation(studentId, tipe) {
             sabqiPages.push(p);
         }
         ASNTahfidz.catatState.selectedPages = sabqiPages.length > 0 ? sabqiPages : [1];
-        renderTahfidzPageSelector();
+        if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+            populateTahfidzSurahDropdown(ziyadahJuz);
+        } else {
+            renderTahfidzPageSelector();
+        }
     } else if (tipe === 'MURAJAAH_MANZIL') {
         if (badgeEl) {
             badgeEl.innerText = `Muroja'ah Manzil (Putaran ${manzilPutaran})`;
@@ -1233,9 +1626,14 @@ function applyTahfidzRecommendation(studentId, tipe) {
         if (posEl) posEl.innerText = `Juz ${manzilJuz} Hlm ${manzilHalaman} (Putaran ${manzilPutaran})`;
 
         if (selJuz) selJuz.value = String(manzilJuz);
+        ASNTahfidz.catatState.juz = manzilJuz;
         const targetPage = Math.min(20, Math.max(1, manzilHalaman));
         ASNTahfidz.catatState.selectedPages = [targetPage];
-        renderTahfidzPageSelector();
+        if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+            populateTahfidzSurahDropdown(manzilJuz);
+        } else {
+            renderTahfidzPageSelector();
+        }
     } else if (tipe === 'TASMI') {
         if (badgeEl) {
             badgeEl.innerText = "Tasmi' Ujian Sekali Duduk";
@@ -1245,10 +1643,15 @@ function applyTahfidzRecommendation(studentId, tipe) {
         if (posEl) posEl.innerText = `Juz ${ziyadahJuz} (1 Juz Penuh)`;
 
         if (selJuz) selJuz.value = String(ziyadahJuz);
+        ASNTahfidz.catatState.juz = ziyadahJuz;
         const fullPages = [];
         for (let p = 1; p <= 20; p++) fullPages.push(p);
         ASNTahfidz.catatState.selectedPages = fullPages;
-        renderTahfidzPageSelector();
+        if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+            populateTahfidzSurahDropdown(ziyadahJuz);
+        } else {
+            renderTahfidzPageSelector();
+        }
     }
 }
 
@@ -1400,7 +1803,7 @@ async function submitTahfidzCatat(e) {
 
     const tanggal = document.getElementById('tahfidz-catat-tanggal')?.value || "";
     const sesi = document.getElementById('tahfidz-catat-sesi')?.value || "Pagi (Ba'da Subuh)";
-    const juz = Number(document.getElementById('tahfidz-catat-juz')?.value || 1);
+    const juz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 30);
     const selMuhafiz = document.getElementById('tahfidz-catat-muhafiz');
     let muhafiz = selMuhafiz ? selMuhafiz.value : "";
     if (muhafiz === '__CUSTOM__') {
@@ -1410,9 +1813,32 @@ async function submitTahfidzCatat(e) {
     const nilai = document.getElementById('tahfidz-catat-nilai')?.value || ASNTahfidz.catatState.nilai || "MUMTAZ";
     const catatan = (document.getElementById('tahfidz-catat-catatan')?.value || "").trim();
 
-    const selectedPages = ASNTahfidz.catatState.selectedPages || [1];
-    const halamanList = selectedPages.join(",");
-    const totalHalaman = selectedPages.length;
+    let surah = SURAH_JUZ_REFERENCE[juz] || `Juz ${juz}`;
+    let halamanList = "";
+    let totalHalaman = 1;
+    let ayatMulaiVal = null;
+    let ayatSampaiVal = null;
+
+    if (ASNTahfidz.catatState.inputMode === 'AYAT') {
+        const selSurah = document.getElementById('tahfidz-catat-surah');
+        const surahNo = Number(selSurah?.value || ASNTahfidz.catatState.surahNo || 78);
+        const surahObj = QURAN_114_SURAHS.find(s => s.no === surahNo) || { name: `Surah ${surahNo}`, ayat: 40 };
+        const a1 = Math.max(1, Number(document.getElementById('tahfidz-catat-ayat-mulai')?.value) || 1);
+        const a2 = Math.max(a1, Number(document.getElementById('tahfidz-catat-ayat-sampai')?.value) || a1);
+        ayatMulaiVal = a1;
+        ayatSampaiVal = a2;
+        surah = `${surahObj.name} : ${a1} - ${a2}`;
+
+        const calcPages = mapSurahAyatToPage(juz, surahObj, a1, a2);
+        ASNTahfidz.catatState.selectedPages = calcPages;
+        halamanList = calcPages.join(",");
+        totalHalaman = calcPages.length;
+    } else {
+        const selectedPages = ASNTahfidz.catatState.selectedPages || [1];
+        halamanList = selectedPages.join(",");
+        totalHalaman = selectedPages.length;
+    }
+
     const statusSetoran = document.querySelector('input[name="tahfidz-status-setoran"]:checked')?.value || ASNTahfidz.catatState.statusSetoran || (nilai === 'DHAIF' ? 'ULANG' : 'LANJUT');
 
     const btn = document.getElementById('btn-submit-tahfidz-catat');
@@ -1436,8 +1862,13 @@ async function submitTahfidzCatat(e) {
             tanggal,
             sesi,
             tipe: ASNTahfidz.catatState.tipe,
+            satuan: ASNTahfidz.catatState.inputMode,
             juz,
-            surah: SURAH_JUZ_REFERENCE[juz] || `Juz ${juz}`,
+            surah,
+            ayatMulai: ayatMulaiVal,
+            ayatSampai: ayatSampaiVal,
+            ayat_mulai: ayatMulaiVal,
+            ayat_sampai: ayatSampaiVal,
             halamanList,
             halaman_list: halamanList,
             totalHalaman,
@@ -1464,7 +1895,9 @@ async function submitTahfidzCatat(e) {
                 if (!st) return;
                 st.setoranTerakhir = {
                     juz: juz,
-                    surah: SURAH_JUZ_REFERENCE[juz] || `Juz ${juz}`,
+                    surah: surah,
+                    ayatMulai: ayatMulaiVal,
+                    ayatSampai: ayatSampaiVal,
                     halaman: `Halaman ${halamanList}`,
                     totalHalaman: totalHalaman,
                     tanggal: tanggal,
@@ -1481,11 +1914,20 @@ async function submitTahfidzCatat(e) {
 
                 if (tipeAktif === 'ZIYADAH') {
                     if (statusSetoran === 'LANJUT') {
-                        if (juz >= (st.progress.currentJuz || 0)) {
-                            st.progress.currentJuz = juz;
-                            const maxP = Math.max(...(selectedPages || [1]));
-                            st.progress.currentHalaman = maxP >= 20 ? 1 : maxP + 1;
-                            st.progress.percent = Math.min(100, Math.round((juz / 30) * 100));
+                        const curRank = getJuzCurriculumIndex(juz);
+                        const prevRank = getJuzCurriculumIndex(st.progress.currentJuz || 30);
+                        const maxP = Math.max(...(ASNTahfidz.catatState.selectedPages || [1]));
+                        if (curRank > prevRank || (curRank === prevRank && maxP >= (st.progress.currentHalaman || 1))) {
+                            if (maxP >= 20) {
+                                const nextPos = getNextCurriculumPosition(juz, 20);
+                                st.progress.currentJuz = nextPos.juz;
+                                st.progress.currentHalaman = nextPos.halaman;
+                            } else {
+                                st.progress.currentJuz = juz;
+                                st.progress.currentHalaman = maxP + 1;
+                            }
+                            const prog = getCurriculumProgress(st.progress.currentJuz, st.progress.currentHalaman);
+                            st.progress.percent = prog.percent;
                         }
                         st.progress.onTrackStatus = "On-Track (Lulus Ziyadah)";
                     } else {
@@ -1500,15 +1942,16 @@ async function submitTahfidzCatat(e) {
                     }
                 } else if (tipeAktif === 'MURAJAAH_MANZIL') {
                     if (statusSetoran === 'LANJUT') {
-                        const lastP = Math.max(...(selectedPages || [1]));
-                        const limitJ = st.progress.currentJuz || 1;
+                        const lastP = Math.max(...(ASNTahfidz.catatState.selectedPages || [1]));
                         if (lastP >= 20) {
-                            if (juz >= limitJ) {
-                                st.murojaah.manzilJuz = 1;
+                            const nextPos = getNextCurriculumPosition(juz, 20);
+                            const limitRank = getJuzCurriculumIndex(st.progress.currentJuz || 30);
+                            if (nextPos.khatam || getJuzCurriculumIndex(nextPos.juz) > limitRank) {
+                                st.murojaah.manzilJuz = JUZ_CURRICULUM_ORDER[0];
                                 st.murojaah.manzilHalaman = 1;
                                 st.murojaah.manzilPutaran = (st.murojaah.manzilPutaran || 1) + 1;
                             } else {
-                                st.murojaah.manzilJuz = Math.min(30, juz + 1);
+                                st.murojaah.manzilJuz = nextPos.juz;
                                 st.murojaah.manzilHalaman = 1;
                             }
                         } else {

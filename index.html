@@ -7809,8 +7809,8 @@
                             <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                                 Juz <span class="text-rose-500">*</span>
                             </label>
-                            <select id="tahfidz-catat-juz" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
-                                <!-- Populated 1 to 30 with Surah names -->
+                            <select id="tahfidz-catat-juz" onchange="onTahfidzJuzChange(this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                                <!-- Populated in curriculum order with Surah names -->
                             </select>
                         </div>
 
@@ -7825,8 +7825,27 @@
                         </div>
                     </div>
 
+                    <!-- Pilihan Mode Satuan Setoran (Halaman vs Per Ayat) -->
+                    <div class="flex items-center justify-between pb-1">
+                        <span class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-sliders text-emerald-600"></i> Satuan Setoran
+                        </span>
+                        <div class="inline-flex p-1 bg-slate-100 dark:bg-[#15202d] rounded-xl border border-slate-200 dark:border-[#283a4e]">
+                            <button type="button" id="btn-mode-halaman" onclick="setTahfidzSatuanMode('HALAMAN')"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm">
+                                <i class="fa-solid fa-book-open text-[11px]"></i>
+                                <span>Per Halaman</span>
+                            </button>
+                            <button type="button" id="btn-mode-ayat" onclick="setTahfidzSatuanMode('AYAT')"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600">
+                                <i class="fa-solid fa-list-ol text-[11px]"></i>
+                                <span>Per Ayat (Tahfidz Anak)</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Pemilih Halaman Mushaf Pojok (1 - 20) Standar Madinah -->
-                    <div class="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-[#1c2836]/50 border border-slate-200/80 dark:border-[#253447] space-y-2.5">
+                    <div id="container-mode-halaman" class="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-[#1c2836]/50 border border-slate-200/80 dark:border-[#253447] space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
                                 <i class="fa-solid fa-table-cells text-emerald-600"></i> Pilih Halaman (1 - 20 Mushaf Pojok)
@@ -7848,6 +7867,54 @@
                         <!-- Number Grid (1 to 20) -->
                         <div id="tahfidz-page-grid" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 pt-1">
                             <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Panel Khusus Mode Per Ayat (Tahfidz Anak) -->
+                    <div id="container-mode-ayat" class="hidden p-3.5 rounded-2xl bg-slate-50/70 dark:bg-[#1c2836]/50 border border-slate-200/80 dark:border-[#253447] space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-book-quran text-emerald-600"></i> Setoran Per Ayat (Khusus Tahfidz Anak)
+                            </span>
+                            <span id="tahfidz-ayat-halaman-badge" class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md">
+                                Hal. 1 Mushaf
+                            </span>
+                        </div>
+
+                        <!-- Dropdown Surah -->
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 text-xs">
+                                Pilih Surah di Juz Ini <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="tahfidz-catat-surah" onchange="onTahfidzSurahChange()" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 transition">
+                                <!-- Populated dynamically based on selected Juz -->
+                            </select>
+                        </div>
+
+                        <!-- Input Rentang Ayat -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 text-xs">
+                                    Dari Ayat <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="number" id="tahfidz-catat-ayat-mulai" min="1" value="1" oninput="onTahfidzAyatChange()" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 transition">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 text-xs">
+                                    Sampai Ayat <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="number" id="tahfidz-catat-ayat-sampai" min="1" value="10" oninput="onTahfidzAyatChange()" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 transition">
+                            </div>
+                        </div>
+
+                        <!-- Info Helper Ayat -->
+                        <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-[#15202d] p-2 rounded-xl border border-slate-200/60 dark:border-[#283a4e]">
+                            <span id="tahfidz-surah-info" class="font-medium flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-info text-emerald-500"></i> Surah An-Naba' (40 Ayat)
+                            </span>
+                            <span id="tahfidz-ayat-count-text" class="font-bold text-emerald-600 dark:text-emerald-400">
+                                10 Ayat
+                            </span>
                         </div>
                     </div>
 

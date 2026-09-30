@@ -9471,6 +9471,20 @@ const SHEET_TAHFIDZ_TARGET = "Tahfidz_Target";
 const SHEET_TAHFIDZ_HALAQAH = "Tahfidz_Halaqah";
 const SHEET_TAHFIDZ_SESI = "Tahfidz_Jadwal_Sesi";
 
+// Urutan Kurikulum Tahfidz Pesantren (Mulai Juz 30 s/d 21, lalu Juz 1 s/d 20)
+const TAHFIDZ_CURRICULUM_JUZ_ORDER = [
+  30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+];
+
+function getTahfidzCurriculumTotalTuntas_(juz, hal) {
+  var idx = TAHFIDZ_CURRICULUM_JUZ_ORDER.indexOf(Number(juz));
+  var rank = idx !== -1 ? idx : 0;
+  var h = Math.min(20, Math.max(1, Number(hal) || 1));
+  return rank * 20 + h;
+}
+
 /**
  * Helper untuk mendapatkan atau membuat sheet tahfidz secara otomatis dengan styling header rapi
  */
@@ -9700,7 +9714,7 @@ function syncTahfidzCapaianSheet_(ss) {
       // Urutkan logs dari yang paling baru
       logs.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
 
-      let juzAktif = 1;
+      let juzAktif = 30;
       let halTerakhir = 1;
       let totalTuntas = 0;
       let statusTerakhir = "LANJUT";
@@ -9714,10 +9728,10 @@ function syncTahfidzCapaianSheet_(ss) {
       // Cari Ziyadah terakhir
       const lastZiyadah = logs.find(l => l.tipe === "ZIYADAH");
       if (lastZiyadah) {
-        juzAktif = lastZiyadah.juz || 1;
+        juzAktif = lastZiyadah.juz || 30;
         const halNum = Number(String(lastZiyadah.halamanList).replace(/\D/g, "")) || 1;
         halTerakhir = halNum;
-        totalTuntas = (juzAktif - 1) * 20 + halTerakhir;
+        totalTuntas = getTahfidzCurriculumTotalTuntas_(juzAktif, halTerakhir);
         statusTerakhir = lastZiyadah.statusSetoran || (lastZiyadah.nilai === "DHAIF" ? "ULANG" : "LANJUT");
         if (!muhafizPembina && lastZiyadah.muhafiz) muhafizPembina = lastZiyadah.muhafiz;
       }
@@ -10619,7 +10633,7 @@ function saveTahfidzLog(payload, token) {
       }
 
       const halNum = Number(String(halamanList).replace(/\D/g, "")) || 1;
-      const totalTuntas = (juz - 1) * 20 + halNum;
+      const totalTuntas = getTahfidzCurriculumTotalTuntas_(juz, halNum);
 
       // Cari relasi halaqah santri jika ada
       let studentHalaqahId = "";
