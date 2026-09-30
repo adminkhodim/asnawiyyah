@@ -9490,18 +9490,20 @@ function getTahfidzCurriculumTotalTuntas_(juz, hal) {
  */
 
 /**
- * Auto-migration & Schema Check untuk Tahfidz_Logs (kolom Q=status_setoran) & Sheet Tahfidz_Capaian
+ * Auto-migration & Schema Check untuk Tahfidz_Logs (kolom status_setoran, satuan, ayat_mulai, ayat_sampai) & Sheet Tahfidz_Capaian
  */
 function ensureTahfidzLogsAndCapaianSchema_(ss) {
   try {
     if (!ss) return;
 
-    // 1. Pastikan kolom status_setoran ada di Tahfidz_Logs (Kolom Q)
+    // 1. Pastikan kolom status_setoran, satuan, ayat_mulai, ayat_sampai ada di Tahfidz_Logs
     const logsSheet = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
     if (logsSheet) {
-      const lastCol = logsSheet.getLastColumn();
+      let lastCol = logsSheet.getLastColumn();
       if (lastCol > 0) {
-        const headers = logsSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+        let headers = logsSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+        
+        // 1a. Kolom status_setoran
         const statusIdx = headers.indexOf("status_setoran");
         if (statusIdx === -1) {
           const nextCol = lastCol + 1;
@@ -9531,8 +9533,42 @@ function ensureTahfidzLogsAndCapaianSchema_(ss) {
             }
             logsSheet.getRange(2, nextCol, values.length, 1).setValues(values);
           }
-          console.log("[SCHEMA SUCCESS] Kolom status_setoran (Q) berhasil ditambahkan ke Tahfidz_Logs.");
+          lastCol = nextCol;
+          headers.push("status_setoran");
+          console.log("[SCHEMA SUCCESS] Kolom status_setoran berhasil ditambahkan ke Tahfidz_Logs.");
         }
+
+        // 1b. Kolom khusus Setoran Per Ayat (Tahfidz Anak): satuan, ayat_mulai, ayat_sampai
+        const extraColumns = [
+          { name: "satuan", defaultVal: "HALAMAN" },
+          { name: "ayat_mulai", defaultVal: "" },
+          { name: "ayat_sampai", defaultVal: "" }
+        ];
+
+        extraColumns.forEach(colObj => {
+          if (headers.indexOf(colObj.name) === -1) {
+            const nextCol = lastCol + 1;
+            if (nextCol > logsSheet.getMaxColumns()) {
+              logsSheet.insertColumnAfter(logsSheet.getMaxColumns());
+            }
+            logsSheet.getRange(1, nextCol).setValue(colObj.name)
+              .setFontWeight("bold")
+              .setBackground("#059669")
+              .setFontColor("#ffffff");
+
+            const lastRow = logsSheet.getLastRow();
+            if (lastRow > 1) {
+              const defaultVals = [];
+              for (let i = 0; i < lastRow - 1; i++) {
+                defaultVals.push([colObj.defaultVal]);
+              }
+              logsSheet.getRange(2, nextCol, defaultVals.length, 1).setValues(defaultVals);
+            }
+            lastCol = nextCol;
+            headers.push(colObj.name);
+            console.log(`[SCHEMA SUCCESS] Kolom ${colObj.name} berhasil ditambahkan ke Tahfidz_Logs.`);
+          }
+        });
       }
     }
 
@@ -9871,7 +9907,7 @@ function runTahfidzSchemaMigration() {
   console.log("[SCHEMA MIGRATION SUCCESS] Migrasi skema & sinkronisasi Tahfidz selesai.");
   return {
     status: "success",
-    message: "Migrasi skema Tahfidz (Halaqah 5 kolom, Kolom Q status_setoran pada Tahfidz_Logs, Sinkronisasi Sheet Tahfidz_Capaian, & Sheet Roles_Permissions) berhasil."
+    message: "Migrasi skema Tahfidz (Halaqah 5 kolom, Kolom status_setoran, satuan, ayat_mulai, ayat_sampai pada Tahfidz_Logs, Sinkronisasi Sheet Tahfidz_Capaian, & Sheet Roles_Permissions) berhasil."
   };
 }
 
@@ -9923,7 +9959,8 @@ function initTahfidzSheets(token) {
     const headersLogs = [
       "log_id", "student_id", "nis", "student_name", "gender",
       "tanggal", "sesi", "tipe", "juz", "surah",
-      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "status_setoran", "created_at"
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "status_setoran",
+      "satuan", "ayat_mulai", "ayat_sampai", "created_at"
     ];
     let sheetLogs = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
     if (!sheetLogs) {
@@ -10092,7 +10129,8 @@ function getTahfidzDashboard(token) {
     const logsSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_LOGS, [
       "log_id", "student_id", "nis", "student_name", "gender",
       "tanggal", "sesi", "tipe", "juz", "surah",
-      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "created_at"
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "status_setoran",
+      "satuan", "ayat_mulai", "ayat_sampai", "created_at"
     ]);
 
     const targetSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_TARGET, [
@@ -10140,11 +10178,15 @@ function getTahfidzDashboard(token) {
           tipe: String(r[hLogs.indexOf("tipe")] || "ZIYADAH").trim().toUpperCase(),
           juz: Number(r[hLogs.indexOf("juz")] || 1),
           surah: String(r[hLogs.indexOf("surah")] || "").trim(),
+          satuan: hLogs.indexOf("satuan") !== -1 ? String(r[hLogs.indexOf("satuan")] || "HALAMAN").trim().toUpperCase() : "HALAMAN",
+          ayatMulai: hLogs.indexOf("ayat_mulai") !== -1 && r[hLogs.indexOf("ayat_mulai")] !== "" ? Number(r[hLogs.indexOf("ayat_mulai")]) : null,
+          ayatSampai: hLogs.indexOf("ayat_sampai") !== -1 && r[hLogs.indexOf("ayat_sampai")] !== "" ? Number(r[hLogs.indexOf("ayat_sampai")]) : null,
           halamanList: String(r[hLogs.indexOf("halaman_list")] || "1").trim(),
           totalHalaman: Number(r[hLogs.indexOf("total_halaman")] || 1),
           nilai: String(r[hLogs.indexOf("nilai")] || "MUMTAZ").trim().toUpperCase(),
           muhafiz: String(r[hLogs.indexOf("muhafiz")] || "").trim(),
           catatan: String(r[hLogs.indexOf("catatan")] || "").trim(),
+          statusSetoran: hLogs.indexOf("status_setoran") !== -1 ? String(r[hLogs.indexOf("status_setoran")] || "LANJUT").trim().toUpperCase() : "LANJUT",
           createdAt: String(r[hLogs.indexOf("created_at")] || "")
         });
       }
@@ -10515,7 +10557,8 @@ function saveTahfidzLog(payload, token) {
     const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_LOGS, [
       "log_id", "student_id", "nis", "student_name", "gender",
       "tanggal", "sesi", "tipe", "juz", "surah",
-      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "status_setoran", "created_at"
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "status_setoran",
+      "satuan", "ayat_mulai", "ayat_sampai", "created_at"
     ]);
 
     const studentId = String(payload.studentId || payload.student_id || "").trim();
@@ -10532,6 +10575,13 @@ function saveTahfidzLog(payload, token) {
     const tipe = String(payload.tipe || "ZIYADAH").trim().toUpperCase();
     const juz = Number(payload.juz || 1);
     const surah = String(payload.surah || `Juz ${juz}`).trim();
+    const satuan = String(payload.satuan || (payload.ayatMulai || payload.ayat_mulai ? "AYAT" : "HALAMAN")).trim().toUpperCase();
+    const ayatMulai = payload.ayatMulai !== undefined && payload.ayatMulai !== null && payload.ayatMulai !== "" 
+      ? Number(payload.ayatMulai) 
+      : (payload.ayat_mulai !== undefined && payload.ayat_mulai !== null && payload.ayat_mulai !== "" ? Number(payload.ayat_mulai) : "");
+    const ayatSampai = payload.ayatSampai !== undefined && payload.ayatSampai !== null && payload.ayatSampai !== "" 
+      ? Number(payload.ayatSampai) 
+      : (payload.ayat_sampai !== undefined && payload.ayat_sampai !== null && payload.ayat_sampai !== "" ? Number(payload.ayat_sampai) : "");
     const halamanList = String(payload.halamanList || payload.halaman_list || payload.halaman || "1").trim();
     const totalHalaman = Number(payload.totalHalaman || payload.total_halaman || 1);
     const nilai = String(payload.nilai || "MUMTAZ").trim().toUpperCase();
@@ -10556,13 +10606,19 @@ function saveTahfidzLog(payload, token) {
 
     const statusSetoran = String(payload.statusSetoran || payload.status_setoran || (nilai === "DHAIF" ? "ULANG" : "LANJUT")).trim().toUpperCase();
 
-    // Pastikan kolom status_setoran ada pada header
-    let statusColIdx = headers.indexOf("status_setoran");
-    if (statusColIdx === -1) {
-      const nextCol = (sheet.getLastColumn() || 0) + 1;
-      sheet.getRange(1, nextCol).setValue("status_setoran").setFontWeight("bold").setBackground("#059669").setFontColor("#ffffff");
-      headers.push("status_setoran");
-    }
+    // Pastikan kolom baru (status_setoran, satuan, ayat_mulai, ayat_sampai) ada pada header
+    const extraCols = ["status_setoran", "satuan", "ayat_mulai", "ayat_sampai"];
+    extraCols.forEach(colName => {
+      let colIdx = headers.indexOf(colName);
+      if (colIdx === -1) {
+        const nextCol = (sheet.getLastColumn() || 0) + 1;
+        if (nextCol > sheet.getMaxColumns()) {
+          sheet.insertColumnAfter(sheet.getMaxColumns());
+        }
+        sheet.getRange(1, nextCol).setValue(colName).setFontWeight("bold").setBackground("#059669").setFontColor("#ffffff");
+        headers.push(colName);
+      }
+    });
 
     const rowMap = {
       "log_id": logId,
@@ -10575,6 +10631,9 @@ function saveTahfidzLog(payload, token) {
       "tipe": tipe,
       "juz": juz,
       "surah": surah,
+      "satuan": satuan,
+      "ayat_mulai": ayatMulai,
+      "ayat_sampai": ayatSampai,
       "halaman_list": halamanList,
       "total_halaman": totalHalaman,
       "nilai": nilai,
@@ -10840,7 +10899,8 @@ function getTahfidzStudentDetail(studentId, token) {
     const logsSheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_LOGS, [
       "log_id", "student_id", "nis", "student_name", "gender",
       "tanggal", "sesi", "tipe", "juz", "surah",
-      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "created_at"
+      "halaman_list", "total_halaman", "nilai", "muhafiz", "catatan", "status_setoran",
+      "satuan", "ayat_mulai", "ayat_sampai", "created_at"
     ]);
     const logsData = logsSheet.getDataRange().getValues();
     const riwayat = [];
@@ -10860,11 +10920,15 @@ function getTahfidzStudentDetail(studentId, token) {
             tipe: String(r[hLogs.indexOf("tipe")] || "ZIYADAH").trim().toUpperCase(),
             juz: Number(r[hLogs.indexOf("juz")] || 1),
             surah: String(r[hLogs.indexOf("surah")] || "").trim(),
+            satuan: hLogs.indexOf("satuan") !== -1 ? String(r[hLogs.indexOf("satuan")] || "HALAMAN").trim().toUpperCase() : "HALAMAN",
+            ayatMulai: hLogs.indexOf("ayat_mulai") !== -1 && r[hLogs.indexOf("ayat_mulai")] !== "" ? Number(r[hLogs.indexOf("ayat_mulai")]) : null,
+            ayatSampai: hLogs.indexOf("ayat_sampai") !== -1 && r[hLogs.indexOf("ayat_sampai")] !== "" ? Number(r[hLogs.indexOf("ayat_sampai")]) : null,
             halamanList: String(r[hLogs.indexOf("halaman_list")] || "1").trim(),
             totalHalaman: Number(r[hLogs.indexOf("total_halaman")] || 1),
             nilai: String(r[hLogs.indexOf("nilai")] || "MUMTAZ").trim().toUpperCase(),
             muhafiz: String(r[hLogs.indexOf("muhafiz")] || "").trim(),
             catatan: String(r[hLogs.indexOf("catatan")] || "").trim(),
+            statusSetoran: hLogs.indexOf("status_setoran") !== -1 ? String(r[hLogs.indexOf("status_setoran")] || "LANJUT").trim().toUpperCase() : "LANJUT",
             createdAt: String(r[hLogs.indexOf("created_at")] || "")
           });
         }
