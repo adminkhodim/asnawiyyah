@@ -273,7 +273,7 @@
     // State Permissions Aktif (Diambil dari Local Storage / Backend dengan sanitasi otomatis)
     let ROLE_PERMISSIONS_STATE = (function() {
         const validKeys = new Set(['*']);
-        SYSTEM_PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => validKeys.add(i.key)));
+        PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => validKeys.add(i.key)));
 
         let state = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS_MAP));
         try {
