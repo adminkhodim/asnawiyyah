@@ -468,8 +468,9 @@ const ASNIdentity = {
             applyAdminRoleVisibility(this.currentRole);
         }
 
-        // Silent background session re-validation
+        // Silent background session re-validation & Presence Heartbeat
         if (pengasuhToken || adminToken || parentToken) {
+            if (typeof startUserPresenceHeartbeat === 'function') startUserPresenceHeartbeat();
             this.hydrateSession(true).catch(err => {
                 console.warn('[ASNIdentity] Silent hydration caught error:', err);
             });
@@ -2235,3 +2236,118 @@ async function handleCredentialResponse(response) {
         if (typeof showToast === 'function') showToast('Terjadi kendala memproses Google Sign-In.');
     }
 }
+
+// ==================== USER PRESENCE & HEARTBEAT ENGINE ====================
+let userPresenceTimer = null;
+
+function detectClientDeviceInfo() {
+    if (typeof window === 'undefined') return 'Desktop Browser';
+    const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+    
+    let os = 'Desktop';
+    if (/Android/i.test(ua)) os = 'Android';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Macintosh|Mac OS X/i.test(ua)) os = 'Mac';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+
+    let browser = 'Browser';
+    if (/Edg/i.test(ua)) browser = 'Edge';
+    else if (/Chrome/i.test(ua)) browser = 'Chrome';
+    else if (/Safari/i.test(ua)) browser = 'Safari';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+
+    if (isStandalone) {
+        return `📱 PWA ${os}`;
+    }
+    if (os === 'Android' || os === 'iOS') {
+        return `📱 Mobile ${browser} (${os})`;
+    }
+    return `💻 ${browser} ${os}`;
+}
+
+async function sendUserPresenceHeartbeat() {
+    const config = window.ASNAWIYYAH_CONFIG || {};
+    const sbUrl = config.supabaseUrl;
+    const sbKey = config.supabaseKey;
+    if (!sbUrl || !sbKey) return;
+
+    let currentId = null;
+    let currentEmail = null;
+    let currentPhone = null;
+
+    if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser) {
+        const u = ASNIdentity.currentUser;
+        currentId = u.userId || u.user_id || u.identityId || u.id;
+        currentEmail = u.email;
+        currentPhone = u.phone || u.telepon;
+    }
+
+    if (!currentId && !currentEmail && !currentPhone) {
+        try {
+            const adminData = JSON.parse(sessionStorage.getItem('asnawiyyah_admin_data') || localStorage.getItem('asnawiyyah_admin_data') || '{}');
+            currentId = adminData.userId || adminData.id;
+            currentEmail = adminData.email;
+        } catch (e) {}
+    }
+
+    if (!currentId && !currentEmail && !currentPhone) return;
+
+    let filterParam = '';
+    if (currentId) filterParam = `user_id=eq.${encodeURIComponent(currentId)}`;
+    else if (currentEmail) filterParam = `email=eq.${encodeURIComponent(currentEmail)}`;
+    else if (currentPhone) filterParam = `phone=eq.${encodeURIComponent(currentPhone)}`;
+
+    try {
+        const deviceInfo = detectClientDeviceInfo();
+        await fetch(`${sbUrl}/rest/v1/users?${filterParam}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': sbKey,
+                'Authorization': `Bearer ${sbKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                last_seen_at: new Date().toISOString(),
+                device_info: deviceInfo
+            })
+        });
+    } catch (e) {
+        // Silent failover
+    }
+}
+
+function startUserPresenceHeartbeat() {
+    sendUserPresenceHeartbeat();
+    if (!userPresenceTimer && typeof setInterval !== 'undefined') {
+        userPresenceTimer = setInterval(sendUserPresenceHeartbeat, 60000);
+    }
+}
+
+function calculateUserOnlineStatus(lastSeenAt) {
+    if (!lastSeenAt) return { status: 'offline', label: 'Offline', color: 'slate', text: 'Belum aktif', isOnline: false };
+    const diffMs = Date.now() - new Date(lastSeenAt).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins <= 3) return { status: 'online', label: 'Online', color: 'emerald', text: 'Online sekarang', isOnline: true };
+    if (diffMins <= 7) return { status: 'idle', label: 'Idle', color: 'amber', text: `${diffMins} mnt lalu (Idle)`, isOnline: true };
+    if (diffMins < 60) return { status: 'offline', label: 'Offline', color: 'slate', text: `${diffMins} mnt lalu`, isOnline: false };
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return { status: 'offline', label: 'Offline', color: 'slate', text: `${diffHours} jam lalu`, isOnline: false };
+    return { status: 'offline', label: 'Offline', color: 'slate', text: `${Math.floor(diffHours / 24)} hari lalu`, isOnline: false };
+}
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            sendUserPresenceHeartbeat();
+        }
+    });
+}
+
+// Export ke window
+window.detectClientDeviceInfo = detectClientDeviceInfo;
+window.sendUserPresenceHeartbeat = sendUserPresenceHeartbeat;
+window.startUserPresenceHeartbeat = startUserPresenceHeartbeat;
+window.calculateUserOnlineStatus = calculateUserOnlineStatus;

@@ -1230,7 +1230,7 @@
             noticeBadgeClass: 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/30',
             kpis: [
                 { id: 'kpi-sa-users', label: 'Total Pengguna Sistem', icon: 'fa-users-gear', color: 'indigo', valueKey: 'sa_users', sub: '25 Akun • 7 Peran', action: "showAdminView('users')" },
-                { id: 'kpi-sa-sessions', label: 'Sesi Aktif Real-time', icon: 'fa-shield-halved', color: 'emerald', valueKey: 'sa_sessions', sub: 'Terotentikasi & Aman', action: "showAdminView('users')" },
+                { id: 'kpi-sa-sessions', label: 'Sesi Aktif Real-time', icon: 'fa-shield-halved', color: 'emerald', valueKey: 'sa_sessions', sub: 'Klik untuk Lihat Daftar', action: "openOnlineUsersModal()" },
                 { id: 'kpi-sa-db', label: 'Infrastruktur Cloud DB', icon: 'fa-database', color: 'cyan', valueKey: 'sa_cloud_db', sub: 'PostgreSQL Singapore', action: "showAdminView('pengaturan')" },
                 { id: 'kpi-sa-pwa', label: 'Kesehatan Web & PWA', icon: 'fa-mobile-screen-button', color: 'amber', valueKey: 'sa_pwa', sub: 'Service Worker Aktif', action: "showAdminView('pengaturan')" }
             ]
@@ -1443,7 +1443,14 @@
             return count + ' Akun';
         }
         if (valueKey === 'sa_sessions') {
-            return '1 Sesi Aktif';
+            if (typeof adminUsersList !== 'undefined' && Array.isArray(adminUsersList) && adminUsersList.length > 0) {
+                const onlineCount = adminUsersList.filter(u => {
+                    const status = typeof calculateUserOnlineStatus === 'function' ? calculateUserOnlineStatus(u.last_seen_at) : { isOnline: false };
+                    return status.isOnline;
+                }).length;
+                return `${Math.max(1, onlineCount)} Pengguna Online`;
+            }
+            return '1 Pengguna Online';
         }
         if (valueKey === 'sa_cloud_db') {
             return '< 50ms (Optimal)';
@@ -1451,10 +1458,10 @@
         if (valueKey === 'sa_pwa') {
             if (typeof window !== 'undefined') {
                 const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-                if (isStandalone) return 'Standalone (v18)';
-                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) return 'Optimal (v18)';
+                if (isStandalone) return 'Standalone (v19)';
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) return 'Optimal (v19)';
             }
-            return 'Aktif (v18)';
+            return 'Aktif (v19)';
         }
         if (valueKey === 'santri') {
             return (typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList)) ? adminStudentsList.length + ' Santri' : '0 Santri';
@@ -1771,6 +1778,9 @@
 
         // 3. Status Kesehatan PWA & Service Worker
         checkPwaHealthStatus();
+
+        // 4. Update online presence count
+        updateOnlineUsersPresenceTelemetry();
     }
 
     async function measureSupabasePing() {
@@ -1819,12 +1829,35 @@
         const hasSw = 'serviceWorker' in navigator && !!navigator.serviceWorker.controller;
         
         if (isStandalone) {
-            kpiPwaEl.textContent = 'Standalone (v18)';
+            kpiPwaEl.textContent = 'Standalone (v19)';
         } else if (hasSw) {
-            kpiPwaEl.textContent = 'Optimal (v18)';
+            kpiPwaEl.textContent = 'Optimal (v19)';
         } else {
-            kpiPwaEl.textContent = 'Aktif (v18)';
+            kpiPwaEl.textContent = 'Aktif (v19)';
         }
+    }
+
+    async function updateOnlineUsersPresenceTelemetry() {
+        const kpiSessionsEl = document.getElementById('kpi-val-sa_sessions');
+        if (!kpiSessionsEl) return;
+        try {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (sbUrl && sbKey) {
+                const threeMinAgo = new Date(Date.now() - 5 * 60000).toISOString();
+                const res = await fetch(`${sbUrl}/rest/v1/users?last_seen_at=gte.${encodeURIComponent(threeMinAgo)}&select=user_id`, {
+                    headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    const count = Math.max(1, rows.length);
+                    kpiSessionsEl.innerText = `${count} Pengguna Online`;
+                    return;
+                }
+            }
+        } catch (e) {}
+        kpiSessionsEl.innerText = '1 Pengguna Online';
     }
 
     function openSuperAdminQuickAction(type) {
@@ -1854,6 +1887,7 @@
     window.initSuperAdminTelemetry = initSuperAdminTelemetry;
     window.measureSupabasePing = measureSupabasePing;
     window.checkPwaHealthStatus = checkPwaHealthStatus;
+    window.updateOnlineUsersPresenceTelemetry = updateOnlineUsersPresenceTelemetry;
     window.openSuperAdminQuickAction = openSuperAdminQuickAction;
 
     window.loadAdminRolesData = loadAdminRolesData;

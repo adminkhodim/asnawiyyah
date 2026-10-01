@@ -189,6 +189,8 @@
                             status: u.status || "ACTIVE",
                             created_at: u.created_at,
                             last_login_at: u.last_login_at,
+                            last_seen_at: u.last_seen_at,
+                            device_info: u.device_info,
                             linkedStudents: userMaps.map(m => ({
                                 studentId: m.student_id,
                                 relationship: m.relationship
