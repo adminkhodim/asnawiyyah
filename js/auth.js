@@ -90,6 +90,19 @@ const ASN_PHASE2B_AUTH_URL = (typeof ASNAWIYYAH_CONFIG !== 'undefined' && ASNAWI
     : (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec");
 
 async function authApiPost(action, payload = {}) {
+    // Akselerasi Cepat via Supabase Cloud DB untuk Read User List (<50ms)
+    const fastReadActions = ['auth.admin.userList', 'admin.users.list', 'admin.userList', 'getUsers'];
+    if (fastReadActions.includes(action) && typeof fetchFromSupabase === 'function') {
+        try {
+            const sbData = await fetchFromSupabase(action, payload);
+            if (sbData && (sbData.success || sbData.status === 'success') && Array.isArray(sbData.users)) {
+                return sbData;
+            }
+        } catch (sbErr) {
+            console.warn('[SUPABASE FAILOVER] authApiPost beralih ke Apps Script:', sbErr);
+        }
+    }
+
     const targetUrl = ASN_PHASE2B_AUTH_URL || (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
     if (!targetUrl) throw new Error("Endpoint autentikasi belum dikonfigurasi.");
 

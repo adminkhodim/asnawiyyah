@@ -1451,10 +1451,10 @@
         if (valueKey === 'sa_pwa') {
             if (typeof window !== 'undefined') {
                 const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-                if (isStandalone) return 'Standalone (v17)';
-                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) return 'Optimal (v17)';
+                if (isStandalone) return 'Standalone (v18)';
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) return 'Optimal (v18)';
             }
-            return 'Aktif (v17)';
+            return 'Aktif (v18)';
         }
         if (valueKey === 'santri') {
             return (typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList)) ? adminStudentsList.length + ' Santri' : '0 Santri';
@@ -1819,11 +1819,11 @@
         const hasSw = 'serviceWorker' in navigator && !!navigator.serviceWorker.controller;
         
         if (isStandalone) {
-            kpiPwaEl.textContent = 'Standalone (v17)';
+            kpiPwaEl.textContent = 'Standalone (v18)';
         } else if (hasSw) {
-            kpiPwaEl.textContent = 'Optimal (v17)';
+            kpiPwaEl.textContent = 'Optimal (v18)';
         } else {
-            kpiPwaEl.textContent = 'Aktif (v17)';
+            kpiPwaEl.textContent = 'Aktif (v18)';
         }
     }
 

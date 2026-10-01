@@ -164,6 +164,110 @@
                         data: settings
                     };
                 }
+
+                // 8. Manajemen Pengguna Terpadu (Users + Wali Santri Map)
+                if (action === "auth.admin.userList" || action === "admin.users.list" || action === "admin.userList" || action === "getUsers") {
+                    const res = await fetch(`${sbUrl}/rest/v1/users?order=created_at.desc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+
+                    let mapRows = [];
+                    try {
+                        const mRes = await fetch(`${sbUrl}/rest/v1/wali_santri_map?select=*`, { headers });
+                        if (mRes.ok) mapRows = await mRes.json();
+                    } catch (e) {}
+
+                    const users = rows.map(u => {
+                        const userMaps = mapRows.filter(m => m.wali_id === u.user_id);
+                        return {
+                            userId: u.user_id,
+                            name: u.name,
+                            email: u.email || "",
+                            phone: u.phone || "",
+                            role: u.role,
+                            photoUrl: u.photo_url || "",
+                            status: u.status || "ACTIVE",
+                            created_at: u.created_at,
+                            last_login_at: u.last_login_at,
+                            linkedStudents: userMaps.map(m => ({
+                                studentId: m.student_id,
+                                relationship: m.relationship
+                            }))
+                        };
+                    });
+
+                    const summary = {
+                        total: users.length,
+                        wali: users.filter(u => u.role === 'WALI_SANTRI').length,
+                        asatidz: users.filter(u => u.role === 'ASATIDZ' || u.role === 'PEGAWAI' || u.role === 'EDITOR').length,
+                        pengurus: users.filter(u => u.role === 'PENGURUS').length,
+                        bendahara: users.filter(u => u.role === 'BENDAHARA').length,
+                        pengasuh: users.filter(u => u.role === 'PENGASUH').length,
+                        admin: users.filter(u => u.role === 'ADMIN').length,
+                        superAdmin: users.filter(u => u.role === 'SUPER_ADMIN').length
+                    };
+
+                    return {
+                        success: true,
+                        status: "success",
+                        users: users,
+                        summary: summary
+                    };
+                }
+
+                // 9. Master Data Santri (Students)
+                if (action === "getStudents" || action === "student.list" || action === "auth.student.list") {
+                    const res = await fetch(`${sbUrl}/rest/v1/students?order=name.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    const students = rows.map(s => ({
+                        id: s.student_id,
+                        student_id: s.student_id,
+                        nis: s.nis || "",
+                        nik: s.nik || "",
+                        name: s.name,
+                        gender: s.gender || "L",
+                        birth_date: s.birth_date || "",
+                        program: s.program || "Tahfidz",
+                        status: s.status || "ACTIVE",
+                        photo_url: s.photo_url || ""
+                    }));
+
+                    return {
+                        success: true,
+                        status: "success",
+                        data: students,
+                        summary: {
+                            total: students.length,
+                            putra: students.filter(s => (s.gender || '').toUpperCase() === 'L').length,
+                            putri: students.filter(s => (s.gender || '').toUpperCase() === 'P').length,
+                            aktif: students.filter(s => (s.status || '').toUpperCase() === 'ACTIVE').length
+                        }
+                    };
+                }
+
+                // 10. Data Pegawai / Asatidz
+                if (action === "getEmployees" || action === "employee.list" || action === "auth.employee.list") {
+                    const res = await fetch(`${sbUrl}/rest/v1/pegawai?order=nama.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        success: true,
+                        status: "success",
+                        data: rows.map(p => ({
+                            id: p.employee_id,
+                            employee_id: p.employee_id,
+                            nama: p.nama,
+                            nip: p.nip || "",
+                            gender: p.gender || "L",
+                            jabatan: p.jabatan || "Pengajar",
+                            spesialisasi: p.spesialisasi || "",
+                            telepon: p.telepon || "",
+                            email: p.email || "",
+                            status: p.status || "ACTIVE"
+                        }))
+                    };
+                }
             } catch (err) {
                 console.warn("[SUPABASE FETCH ERROR]", action, err);
                 return null;
@@ -201,6 +305,22 @@
         }
 
         async function apiPost(action, payload = {}) {
+            // Akselerasi Cepat via Supabase untuk Read Actions
+            const fastReadActions = [
+                'auth.admin.userList', 'admin.users.list', 'admin.userList', 'getUsers',
+                'getStudents', 'student.list', 'auth.student.list',
+                'getEmployees', 'employee.list', 'auth.employee.list',
+                'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getPengaturan'
+            ];
+            if (fastReadActions.includes(action)) {
+                try {
+                    const sbData = await fetchFromSupabase(action, payload);
+                    if (sbData) return sbData;
+                } catch (sbErr) {
+                    console.warn('[SUPABASE FAILOVER] apiPost beralih ke Apps Script:', sbErr);
+                }
+            }
+
             const endpoint = getApiUrl();
             if (!endpoint) throw new Error("API URL belum dikonfigurasi.");
 
@@ -223,6 +343,10 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
         }
+
+        window.fetchFromSupabase = fetchFromSupabase;
+        window.apiGet = apiGet;
+        window.apiPost = apiPost;
 
         function isApiConfigured() {
             return Boolean(getApiUrl());

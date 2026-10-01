@@ -4469,10 +4469,19 @@
                 const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || localStorage.getItem("asnawiyyah_admin_token") || "";
                 
                 let response = null;
-                if (typeof authApiPost === 'function') {
-                    response = await authApiPost('auth.admin.userList', { token });
-                } else if (typeof apiPost === 'function') {
-                    response = await apiPost('auth.admin.userList', { token });
+                if (typeof fetchFromSupabase === 'function') {
+                    try {
+                        response = await fetchFromSupabase('auth.admin.userList');
+                    } catch (e) {
+                        console.warn('[SUPABASE FAILOVER] loadAdminUsersData:', e);
+                    }
+                }
+                if (!response || (!response.success && response.status !== 'success')) {
+                    if (typeof authApiPost === 'function') {
+                        response = await authApiPost('auth.admin.userList', { token });
+                    } else if (typeof apiPost === 'function') {
+                        response = await apiPost('auth.admin.userList', { token });
+                    }
                 }
 
                 if (response && (response.success || response.status === 'success')) {
