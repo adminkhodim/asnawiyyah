@@ -3599,7 +3599,7 @@ function openPlottingFromHalaqahCard(halaqahId) {
 /**
  * Mengisi dropdown pilihan halaqah di Tab 2
  */
-function populatePlottingHalaqahSelector() {
+function populatePlottingHalaqahSelector(preserveHalaqahId) {
     const sel = document.getElementById('select-plotting-halaqah');
     if (!sel) return;
 
@@ -3620,8 +3620,8 @@ function populatePlottingHalaqahSelector() {
         return `<option value="${escapeHtml(h.halaqahId)}">${letter}. ${escapeHtml(muh)} (${escapeHtml(tgt)})</option>`;
     }).join('');
 
-    let targetId = currentVal;
-    if (!targetId || !halaqahs.some(h => h.halaqahId === targetId)) {
+    let targetId = preserveHalaqahId || (ASNTahfidz.activePlottingHalaqah && ASNTahfidz.activePlottingHalaqah.halaqahId) || currentVal;
+    if (!targetId || !halaqahs.some(h => String(h.halaqahId).trim() === String(targetId).trim())) {
         targetId = halaqahs[0].halaqahId;
     }
     sel.value = targetId;
@@ -3633,7 +3633,7 @@ function populatePlottingHalaqahSelector() {
  */
 function onSelectPlottingHalaqah(halaqahId) {
     const halaqahs = ASNTahfidz.data.halaqahs || [];
-    const halaqah = halaqahs.find(h => h.halaqahId === halaqahId) || halaqahs[0] || null;
+    const halaqah = halaqahs.find(h => String(h.halaqahId).trim() === String(halaqahId).trim()) || halaqahs[0] || null;
 
     ASNTahfidz.activePlottingHalaqah = halaqah;
     if (!halaqah) {
@@ -3642,16 +3642,31 @@ function onSelectPlottingHalaqah(halaqahId) {
         return;
     }
 
-    // Ambil daftar studentIds yang sudah ada di halaqah ini
-    let currentIds = [];
-    if (Array.isArray(halaqah.studentIds) && halaqah.studentIds.length > 0) {
-        currentIds = [...halaqah.studentIds];
-    } else if (Array.isArray(ASNTahfidz.data.students)) {
-        currentIds = ASNTahfidz.data.students
-            .filter(st => st.halaqah && (st.halaqah.halaqahId === halaqah.halaqahId || st.halaqah.namaHalaqah === halaqah.namaHalaqah))
-            .map(st => st.studentId || st.nis);
+    // Ambil daftar studentIds yang sudah ada di halaqah ini (gabungkan halaqah.studentIds dan st.halaqah secara tangguh)
+    const idSet = new Set();
+    if (Array.isArray(halaqah.studentIds)) {
+        halaqah.studentIds.forEach(id => {
+            const clean = String(id || '').trim();
+            if (clean) idSet.add(clean);
+        });
     }
-    ASNTahfidz.activePlottingStudentIds = currentIds.map(id => String(id).trim()).filter(Boolean);
+    if (Array.isArray(ASNTahfidz.data.students)) {
+        ASNTahfidz.data.students.forEach(st => {
+            const hId = String(st.halaqah?.halaqahId || '').trim().toLowerCase();
+            const hName = String(st.halaqah?.namaHalaqah || '').trim().toLowerCase();
+            const targetHId = String(halaqah.halaqahId || '').trim().toLowerCase();
+            const targetHName = String(halaqah.namaHalaqah || '').trim().toLowerCase();
+            const targetMuh = String(halaqah.muhafiz || '').trim().toLowerCase();
+
+            if ((targetHId && hId === targetHId) || (targetHName && hName === targetHName) || (targetMuh && hName && hName.includes(targetMuh))) {
+                const sId = String(st.studentId || '').trim();
+                const sNis = String(st.nis || '').trim();
+                if (sId) idSet.add(sId);
+                if (sNis) idSet.add(sNis);
+            }
+        });
+    }
+    ASNTahfidz.activePlottingStudentIds = Array.from(idSet);
 
     // Update banner halaqah di Tab 2
     const muhEl = document.getElementById('tab2-plotting-muhafiz');
@@ -3672,13 +3687,13 @@ function renderTahfidzPlottingLists() {
     const enrolledCountBadge = document.getElementById('tab2-plotting-enrolled-count') || document.getElementById('tahfidz-plotting-enrolled-count');
 
     const allStudents = ASNTahfidz.data.students || [];
-    const currentEnrolledIds = new Set(ASNTahfidz.activePlottingStudentIds.map(s => String(s).trim()));
+    const currentEnrolledIds = new Set(ASNTahfidz.activePlottingStudentIds.map(s => String(s).trim().toLowerCase()));
 
-    // Pisahkan enrolled vs available
+    // Pisahkan enrolled vs available (case-insensitive & tangguh terhadap sId maupun NIS)
     const enrolledStudents = allStudents.filter(st => {
-        const sId = String(st.studentId || "").trim();
-        const sNis = String(st.nis || "").trim();
-        return currentEnrolledIds.has(sId) || currentEnrolledIds.has(sNis);
+        const sId = String(st.studentId || "").trim().toLowerCase();
+        const sNis = String(st.nis || "").trim().toLowerCase();
+        return (sId && currentEnrolledIds.has(sId)) || (sNis && currentEnrolledIds.has(sNis));
     });
 
     const searchInp = document.getElementById('tab2-plotting-search') || document.getElementById('tahfidz-plotting-search');
@@ -3688,14 +3703,15 @@ function renderTahfidzPlottingLists() {
     const genderFilter = (filterGen?.value || "ALL").toUpperCase();
 
     const availableStudents = allStudents.filter(st => {
-        const sId = String(st.studentId || "").trim();
-        const sNis = String(st.nis || "").trim();
-        const isAlreadyEnrolled = currentEnrolledIds.has(sId) || currentEnrolledIds.has(sNis);
+        const sId = String(st.studentId || "").trim().toLowerCase();
+        const sNis = String(st.nis || "").trim().toLowerCase();
+        const isAlreadyEnrolled = (sId && currentEnrolledIds.has(sId)) || (sNis && currentEnrolledIds.has(sNis));
         if (isAlreadyEnrolled) return false;
 
         const matchSearch = !searchQuery ||
             (st.name && st.name.toLowerCase().includes(searchQuery)) ||
-            (st.nis && st.nis.toLowerCase().includes(searchQuery)) ||
+            (st.nis && String(st.nis).toLowerCase().includes(searchQuery)) ||
+            (st.studentId && String(st.studentId).toLowerCase().includes(searchQuery)) ||
             (st.program && st.program.toLowerCase().includes(searchQuery));
 
         const matchGender = (genderFilter === 'ALL') || (String(st.gender || 'L').toUpperCase() === genderFilter);
@@ -3818,8 +3834,9 @@ async function submitTahfidzPlotting() {
         return;
     }
 
-    const halaqahId = ASNTahfidz.activePlottingHalaqah.halaqahId;
-    const studentIds = ASNTahfidz.activePlottingStudentIds || [];
+    const halaqah = ASNTahfidz.activePlottingHalaqah;
+    const halaqahId = halaqah.halaqahId;
+    const studentIds = (ASNTahfidz.activePlottingStudentIds || []).map(s => String(s).trim()).filter(Boolean);
 
     const btnSubmit = document.getElementById('tab2-btn-save-plotting') || document.getElementById('btn-save-tahfidz-plotting');
     setTahfidzButtonLoading(btnSubmit, true, "Menyimpan Plotting...");
@@ -3833,18 +3850,73 @@ async function submitTahfidzPlotting() {
         });
 
         if (res && (res.success || res.status === "success")) {
-            if (typeof showToast === 'function') {
-                showToast(`✅ Berhasil mengatur ${studentIds.length} santri binaan ke ${ASNTahfidz.activePlottingHalaqah.namaHalaqah}!`);
+            // 1. Update data halaqah aktif di memori
+            halaqah.studentIds = [...studentIds];
+            halaqah.studentCount = studentIds.length;
+
+            // 2. Update objek halaqah di ASNTahfidz.data.halaqahs
+            if (Array.isArray(ASNTahfidz.data.halaqahs)) {
+                const targetH = ASNTahfidz.data.halaqahs.find(h => String(h.halaqahId).trim() === String(halaqahId).trim());
+                if (targetH) {
+                    targetH.studentIds = [...studentIds];
+                    targetH.studentCount = studentIds.length;
+                }
             }
-            // Update jumlah santri di halaqah lokal
-            if (ASNTahfidz.activePlottingHalaqah) {
-                ASNTahfidz.activePlottingHalaqah.studentCount = studentIds.length;
+
+            // 3. Update status halaqah pada setiap santri di ASNTahfidz.data.students
+            const enrolledSet = new Set(studentIds.map(s => s.toLowerCase()));
+            if (Array.isArray(ASNTahfidz.data.students)) {
+                ASNTahfidz.data.students.forEach(st => {
+                    const sId = String(st.studentId || "").trim().toLowerCase();
+                    const sNis = String(st.nis || "").trim().toLowerCase();
+                    const isNowEnrolled = (sId && enrolledSet.has(sId)) || (sNis && enrolledSet.has(sNis));
+
+                    if (isNowEnrolled) {
+                        st.halaqah = {
+                            halaqahId: halaqah.halaqahId,
+                            namaHalaqah: halaqah.namaHalaqah || ("Halaqah " + (halaqah.muhafiz || "Pembina")),
+                            muhafiz: halaqah.muhafiz || "Ustadz Pembina"
+                        };
+                        st.isInHalaqah = true;
+                    } else if (st.halaqah && (String(st.halaqah.halaqahId).trim() === String(halaqahId).trim() || st.halaqah.namaHalaqah === halaqah.namaHalaqah)) {
+                        st.halaqah = {
+                            halaqahId: "",
+                            namaHalaqah: st.program || "Tahfidz",
+                            muhafiz: "Pembina Tahfidz"
+                        };
+                        st.isInHalaqah = false;
+                    }
+                });
             }
+
+            // 4. Update index pencarian halaqah
+            if (typeof buildTahfidzHalaqahIndex === 'function') buildTahfidzHalaqahIndex();
+
+            // 5. Simpan snapshot mutakhir ke storage lokal
+            try {
+                const cachePayload = JSON.stringify({
+                    data: ASNTahfidz.data,
+                    timestamp: Date.now()
+                });
+                localStorage.setItem(TAHFIDZ_CACHE_KEY, cachePayload);
+                sessionStorage.setItem(TAHFIDZ_CACHE_KEY, cachePayload);
+            } catch (e) {}
+
+            // 6. Tetap pertahankan santri terdaftar dan re-render komponen secara sinkron
+            ASNTahfidz.activePlottingStudentIds = [...studentIds];
+            renderTahfidzPlottingLists();
             renderTahfidzHalaqahCards();
-            populatePlottingHalaqahSelector();
             renderTahfidzMatriksBeban();
 
-            // Sinkronisasi data di latar belakang
+            // 7. Update dropdown selector tanpa mereset activePlottingStudentIds
+            const sel = document.getElementById('select-plotting-halaqah');
+            if (sel) sel.value = halaqahId;
+
+            if (typeof showToast === 'function') {
+                showToast(`✅ Berhasil mengatur ${studentIds.length} santri binaan ke ${halaqah.namaHalaqah || halaqah.muhafiz}!`);
+            }
+
+            // 8. Sinkronisasi data di latar belakang
             loadAdminTahfidzData(true);
         } else {
             if (typeof showToast === 'function') {

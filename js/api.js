@@ -591,6 +591,23 @@
                         });
                     }
                 }
+                else if (action === 'saveTahfidzPlotting') {
+                    const halaqahId = payload.halaqahId || payload.halaqah_id;
+                    const rawList = payload.studentIds || payload.student_ids || [];
+                    const studentIds = Array.isArray(rawList) 
+                        ? rawList.map(s => String(s).trim()).filter(Boolean) 
+                        : (typeof rawList === 'string' ? rawList.split(',').map(s => s.trim()).filter(Boolean) : []);
+                    if (halaqahId) {
+                        await fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?halaqah_id=eq.${encodeURIComponent(halaqahId)}`, {
+                            method: 'PATCH',
+                            headers,
+                            body: JSON.stringify({
+                                student_ids: studentIds,
+                                updated_at: new Date().toISOString()
+                            })
+                        });
+                    }
+                }
 
                 // ==================== 5. BERITA & KABAR PESANTREN ====================
                 else if (action === 'saveBerita' || action === 'updateBerita') {

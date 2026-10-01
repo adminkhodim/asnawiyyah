@@ -11484,7 +11484,9 @@ function saveTahfidzPlotting(payload, token) {
 
     let foundRow = -1;
     for (let i = 1; i < data.length; i++) {
-      if (String(data[i][colMap.id] || "").trim() === halaqahId) {
+      const curId = String(data[i][colMap.id] || "").trim();
+      const curMuh = colMap.muhafiz !== -1 ? String(data[i][colMap.muhafiz] || "").trim() : "";
+      if (curId.toLowerCase() === halaqahId.toLowerCase() || (curMuh && curMuh.toLowerCase() === halaqahId.toLowerCase())) {
         foundRow = i + 1;
         break;
       }
@@ -11493,9 +11495,15 @@ function saveTahfidzPlotting(payload, token) {
     if (foundRow <= 0) throw new Error("Halaqah ID '" + halaqahId + "' tidak ditemukan.");
 
     sheet.getRange(foundRow, colMap.studentIds + 1).setValue(cleanStudentIds.join(","));
+    if (typeof SpreadsheetApp !== "undefined" && SpreadsheetApp.flush) {
+      SpreadsheetApp.flush();
+    }
 
     // Sinkronisasi otomatis ke Sheet Tahfidz_Capaian
     syncTahfidzCapaianSheet_(ss);
+    if (typeof SpreadsheetApp !== "undefined" && SpreadsheetApp.flush) {
+      SpreadsheetApp.flush();
+    }
 
     return {
       status: "success",
