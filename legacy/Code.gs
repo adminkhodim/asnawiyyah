@@ -187,14 +187,15 @@ function doPost(e) {
     }
 
     // ========================================================
+    // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
     // ========================================================
-    if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard") {
+    if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard" || action === "auth.tahfidz.dashboard") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getTahfidzDashboard(token));
     }
 
-    if (action === "saveTahfidzLog" || action === "tahfidz.saveLog") {
+    if (action === "saveTahfidzLog" || action === "tahfidz.saveLog" || action === "auth.tahfidz.saveLog") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -205,7 +206,7 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzLog(payload.data || payload, token));
     }
 
-    if (action === "deleteTahfidzLog" || action === "tahfidz.deleteLog") {
+    if (action === "deleteTahfidzLog" || action === "tahfidz.deleteLog" || action === "auth.tahfidz.deleteLog") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -217,13 +218,13 @@ function doPost(e) {
       return createJsonResponse(deleteTahfidzLog(logId, token));
     }
 
-    if (action === "getTahfidzStudentDetail" || action === "tahfidz.studentDetail") {
+    if (action === "getTahfidzStudentDetail" || action === "tahfidz.studentDetail" || action === "auth.tahfidz.studentDetail") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       const studentId = payload.studentId || payload.student_id || (payload.data && (payload.data.studentId || payload.data.student_id));
       return createJsonResponse(getTahfidzStudentDetail(studentId, token));
     }
 
-    if (action === "saveTahfidzTarget" || action === "tahfidz.saveTarget") {
+    if (action === "saveTahfidzTarget" || action === "tahfidz.saveTarget" || action === "auth.tahfidz.saveTarget") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -234,7 +235,7 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzTarget(payload.data || payload, token));
     }
 
-    if (action === "saveBulkTahfidzTarget" || action === "tahfidz.saveBulkTarget" || action === "saveTahfidzTargetBulk") {
+    if (action === "saveBulkTahfidzTarget" || action === "tahfidz.saveBulkTarget" || action === "saveTahfidzTargetBulk" || action === "auth.tahfidz.saveBulkTarget") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -245,12 +246,12 @@ function doPost(e) {
       return createJsonResponse(saveBulkTahfidzTarget(payload.data || payload, token));
     }
 
-    if (action === "getTahfidzHalaqahList" || action === "tahfidz.getHalaqah") {
+    if (action === "getTahfidzHalaqahList" || action === "tahfidz.getHalaqah" || action === "auth.tahfidz.getHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getTahfidzHalaqahList(token));
     }
 
-    if (action === "saveTahfidzHalaqah" || action === "tahfidz.saveHalaqah") {
+    if (action === "saveTahfidzHalaqah" || action === "tahfidz.saveHalaqah" || action === "auth.tahfidz.saveHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -261,7 +262,7 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
     }
 
-    if (action === "saveTahfidzPlotting" || action === "tahfidz.savePlotting") {
+    if (action === "saveTahfidzPlotting" || action === "tahfidz.savePlotting" || action === "auth.tahfidz.savePlotting") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -272,7 +273,7 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzPlotting(payload.data || payload, token));
     }
 
-    if (action === "deleteTahfidzHalaqah" || action === "tahfidz.deleteHalaqah") {
+    if (action === "deleteTahfidzHalaqah" || action === "tahfidz.deleteHalaqah" || action === "auth.tahfidz.deleteHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -284,7 +285,7 @@ function doPost(e) {
       return createJsonResponse(deleteTahfidzHalaqah(hId, token));
     }
 
-    if (action === "cleanTahfidzCapaianDuplicates" || action === "tahfidz.cleanDuplicates" || action === "syncTahfidzCapaian") {
+    if (action === "cleanTahfidzCapaianDuplicates" || action === "tahfidz.cleanDuplicates" || action === "syncTahfidzCapaian" || action === "auth.tahfidz.cleanDuplicates") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -310,7 +311,7 @@ function doPost(e) {
       return createJsonResponse(saveRolePermissionsBackend(roleKey, permissions, token));
     }
 
-    if (action === "initTahfidzSheets" || action === "tahfidz.initSheets") {
+    if (action === "initTahfidzSheets" || action === "tahfidz.initSheets" || action === "auth.tahfidz.initSheets") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -321,12 +322,12 @@ function doPost(e) {
       return createJsonResponse(initTahfidzSheets(token));
     }
 
-    if (action === "getTahfidzSesiList" || action === "tahfidz.getSesi") {
+    if (action === "getTahfidzSesiList" || action === "tahfidz.getSesi" || action === "auth.tahfidz.getSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getTahfidzSesiList(token));
     }
 
-    if (action === "saveTahfidzSesi" || action === "tahfidz.saveSesi") {
+    if (action === "saveTahfidzSesi" || action === "tahfidz.saveSesi" || action === "auth.tahfidz.saveSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -337,7 +338,7 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzSesi(payload.data || payload.sesi || payload, token));
     }
 
-    if (action === "deleteTahfidzSesi" || action === "tahfidz.deleteSesi") {
+    if (action === "deleteTahfidzSesi" || action === "tahfidz.deleteSesi" || action === "auth.tahfidz.deleteSesi") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
@@ -1374,22 +1375,31 @@ function doGet(e) {
       : null;
 
   // ==========================================================
-  // LEGACY ACCESS
-  // Tetap menampilkan Index.html jika URL dibuka tanpa action.
+  // DEFAULT GATEWAY / FALLBACK
+  // Alihkan akses browser ke portal resmi Vercel, atau kirim status API jika dipanggil programmatically.
   // ==========================================================
 
   if (!action) {
+    if (e && e.parameter && (e.parameter.format === "json" || e.parameter.output === "json")) {
+      return createJsonResponse({
+        status: "ok",
+        name: "PPTQ Asnawiyyah API Gateway",
+        message: "API Gateway is active. Please provide an action parameter.",
+        portalUrl: "https://asnawiyyah.vercel.app/",
+        timestamp: new Date().toISOString()
+      });
+    }
 
-    return HtmlService
-      .createHtmlOutputFromFile("Index")
-      .setTitle("PPTQ Asnawiyyah")
-      .setXFrameOptionsMode(
-        HtmlService.XFrameOptionsMode.ALLOWALL
-      )
-      .addMetaTag(
-        "viewport",
-        "width=device-width, initial-scale=1"
-      );
+    return HtmlService.createHtmlOutput(
+      '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+      '<meta http-equiv="refresh" content="0; url=https://asnawiyyah.vercel.app/">' +
+      '<title>Mengalihkan ke Portal Resmi PPTQ Asnawiyyah...</title>' +
+      '</head><body style="font-family:sans-serif;text-align:center;padding:50px;">' +
+      '<h2>Portal Resmi PPTQ Asnawiyyah</h2>' +
+      '<p>Mengalihkan ke portal resmi: <a href="https://asnawiyyah.vercel.app/">https://asnawiyyah.vercel.app/</a></p>' +
+      '<script>window.location.replace("https://asnawiyyah.vercel.app/");</script>' +
+      '</body></html>'
+    ).setTitle("PPTQ Asnawiyyah").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
   try {
@@ -3162,13 +3172,13 @@ function setupPhase2BScriptProperties(forceRegenerate = false) {
  * Generates Server-Signed Session Token (HMAC SHA-256)
  * Menggunakan AUTH_TOKEN_SIGNING_SECRET secara eksplisit.
  */
-// ==================== SESSION TTL CONFIGURATION (PERSISTENT REMEMBER-ME) ====================
-// Long-lived bounded session lifetimes (Owner-approved policy: 30 hari / 720 jam)
-const SESSION_TTL_ADMIN_HOURS = 720;
-const SESSION_TTL_EDITOR_HOURS = 720;
-const SESSION_TTL_PENGASUH_HOURS = 720;
-const SESSION_TTL_WALI_HOURS = 720;
-const SESSION_TTL_DEFAULT_HOURS = 720;
+// ==================== SESSION TTL CONFIGURATION ====================
+// Role-specific bounded session lifetimes (Standard Security Policy: 8 - 24 jam)
+const SESSION_TTL_ADMIN_HOURS = 8;
+const SESSION_TTL_EDITOR_HOURS = 8;
+const SESSION_TTL_PENGASUH_HOURS = 8;
+const SESSION_TTL_WALI_HOURS = 24;
+const SESSION_TTL_DEFAULT_HOURS = 8;
 
 function getSessionTtlHoursForRole(role) {
   const r = String(role || "").trim().toUpperCase();
@@ -4550,12 +4560,10 @@ function hashPassword(password) {
 }
 
 /**
- * Verifikasi password dengan dukungan migrasi backward-compatibility
+ * Verifikasi password hash SHA-256
  */
 function verifyPassword(inputPassword, storedPassword) {
-  if (!storedPassword) return false;
-  // Backward compatibility untuk data lama yang sempat tersimpan plain-text
-  if (storedPassword === inputPassword) return true;
+  if (!storedPassword || !inputPassword) return false;
   return hashPassword(inputPassword) === storedPassword;
 }
 
@@ -9262,89 +9270,7 @@ function handleAuthApiAction(action, payload, e) {
     }
 
     // ----------------------------------------------------
-    // 15. TAHFIDZ AL-QUR'AN MANAGEMENT
-    // ----------------------------------------------------
-    if (action === "auth.tahfidz.dashboard" || action === "tahfidz.dashboard" || action === "getTahfidzDashboard") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(getTahfidzDashboard(token));
-    }
-
-    if (action === "auth.tahfidz.saveLog" || action === "tahfidz.saveLog" || action === "saveTahfidzLog") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(saveTahfidzLog(payload.data || payload, token));
-    }
-
-    if (action === "auth.tahfidz.deleteLog" || action === "tahfidz.deleteLog" || action === "deleteTahfidzLog") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      const logId = payload.logId || payload.log_id || (payload.data && (payload.data.logId || payload.data.log_id));
-      return createJsonResponse(deleteTahfidzLog(logId, token));
-    }
-
-    if (action === "auth.tahfidz.studentDetail" || action === "tahfidz.studentDetail" || action === "getTahfidzStudentDetail") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      const studentId = payload.studentId || payload.student_id || (payload.data && (payload.data.studentId || payload.data.student_id));
-      return createJsonResponse(getTahfidzStudentDetail(studentId, token));
-    }
-
-    if (action === "auth.tahfidz.saveTarget" || action === "tahfidz.saveTarget" || action === "saveTahfidzTarget") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(saveTahfidzTarget(payload.data || payload, token));
-    }
-
-    if (action === "auth.tahfidz.saveBulkTarget" || action === "tahfidz.saveBulkTarget" || action === "saveBulkTahfidzTarget" || action === "saveTahfidzTargetBulk") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(saveBulkTahfidzTarget(payload.data || payload, token));
-    }
-
-    if (action === "auth.tahfidz.getHalaqah" || action === "tahfidz.getHalaqah" || action === "getTahfidzHalaqahList") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(getTahfidzHalaqahList(token));
-    }
-
-    if (action === "auth.tahfidz.saveHalaqah" || action === "tahfidz.saveHalaqah" || action === "saveTahfidzHalaqah") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(saveTahfidzHalaqah(payload.data || payload, token));
-    }
-
-    if (action === "auth.tahfidz.savePlotting" || action === "tahfidz.savePlotting" || action === "saveTahfidzPlotting") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(saveTahfidzPlotting(payload.data || payload, token));
-    }
-
-    if (action === "auth.tahfidz.deleteHalaqah" || action === "tahfidz.deleteHalaqah" || action === "deleteTahfidzHalaqah") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      const hId = payload.halaqahId || (payload.data && payload.data.halaqahId) || "";
-      return createJsonResponse(deleteTahfidzHalaqah(hId, token));
-    }
-
-    if (action === "auth.tahfidz.initSheets" || action === "tahfidz.initSheets" || action === "initTahfidzSheets") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(initTahfidzSheets(token));
-    }
-
-    if (action === "auth.tahfidz.cleanDuplicates" || action === "tahfidz.cleanDuplicates" || action === "cleanTahfidzCapaianDuplicates" || action === "syncTahfidzCapaian") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(cleanTahfidzCapaianDuplicates(token));
-    }
-
-    if (action === "auth.tahfidz.getSesi" || action === "tahfidz.getSesi" || action === "getTahfidzSesiList") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(getTahfidzSesiList(token));
-    }
-
-    if (action === "auth.tahfidz.saveSesi" || action === "tahfidz.saveSesi" || action === "saveTahfidzSesi") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      return createJsonResponse(saveTahfidzSesi(payload.data || payload, token));
-    }
-
-    if (action === "auth.tahfidz.deleteSesi" || action === "tahfidz.deleteSesi" || action === "deleteTahfidzSesi") {
-      const token = payload.token || (payload.data && payload.data.token) || "";
-      const sId = payload.sesiId || (payload.data && payload.data.sesiId) || "";
-      return createJsonResponse(deleteTahfidzSesi(sId, token));
-    }
-
-    // ----------------------------------------------------
-    // 16. DATA PEGAWAI (ASATIDZ & KARYAWAN)
+    // 15. DATA PEGAWAI (ASATIDZ & KARYAWAN)
     // ----------------------------------------------------
     if (action === "auth.employee.list" || action === "employee.list" || action === "getEmployees") {
       const token = payload.token || (payload.data && payload.data.token) || "";

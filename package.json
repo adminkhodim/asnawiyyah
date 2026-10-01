@@ -9,7 +9,12 @@
     "build": "npm run build:css",
     "backend:status": "cd legacy && clasp status",
     "backend:push": "cd legacy && clasp push -f",
-    "backend:pull": "cd legacy && clasp pull"
+    "backend:pull": "cd legacy && clasp pull",
+    "backend:split": "node scripts/split_backend.js",
+    "backend:bundle": "node scripts/bundle_backend.js",
+    "test:syntax": "node scripts/check_syntax.js",
+    "test": "node scripts/run_all_tests.js",
+    "validate": "npm run build && npm run test"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.19"

@@ -1,12 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 
+const GAS_API_URL = process.env.GAS_API_URL || "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec";
+
 module.exports = async function handler(req, res) {
     const { slug } = req.query;
 
     try {
         // Fetch data from Google Apps Script
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec?action=getKabar";
+        const scriptUrl = `${GAS_API_URL}?action=getKabar`;
         const response = await fetch(scriptUrl);
         const data = await response.json();
 

@@ -1,11 +1,191 @@
-        // ==================== API ADAPTER LAYER ====================
-        // STEP 4: seluruh komunikasi backend melewati adapter ini.
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec";
+        // ==================== ASNAWIYYAH GLOBAL CONFIGURATION ====================
+        // Seluruh komunikasi backend melewati adapter ini dengan konfigurasi tersentralisasi.
+        window.ASNAWIYYAH_CONFIG = window.ASNAWIYYAH_CONFIG || {};
+        if (!window.ASNAWIYYAH_CONFIG.apiUrl) {
+            window.ASNAWIYYAH_CONFIG.apiUrl = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec";
+        }
+        window.ASNAWIYYAH_CONFIG.supabaseUrl = "https://tkjhfhyabacbyknwrysh.supabase.co";
+        window.ASNAWIYYAH_CONFIG.supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRramhmaHlhYmFjYnlrbndyeXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDk1MDMsImV4cCI6MjEwNjM4NTUwM30.uIeUO_v29ztXFUyDAxb_50ybP62BO0ta_QEzgwWFdlo";
+        window.ASNAWIYYAH_CONFIG.dbProvider = "hybrid";
+
+        // Backward-compatibility alias
+        const WEB_APP_URL = window.ASNAWIYYAH_CONFIG.apiUrl;
+
+        function getApiUrl() {
+            return (window.ASNAWIYYAH_CONFIG && window.ASNAWIYYAH_CONFIG.apiUrl) || WEB_APP_URL || "";
+        }
+
+        /**
+         * Akselerasi Query Cepat (Fast-Read) langsung dari Supabase REST API (<50ms).
+         * Menyediakan fallback otomatis ke Google Apps Script jika terjadi offline / network issue.
+         */
+        async function fetchFromSupabase(action, params = {}) {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (!sbUrl || !sbKey) return null;
+
+            const headers = {
+                'apikey': sbKey,
+                'Authorization': `Bearer ${sbKey}`,
+                'Accept': 'application/json'
+            };
+
+            try {
+                if (action === "getBanner") {
+                    const res = await fetch(`${sbUrl}/rest/v1/banner?status=eq.Aktif&order=urutan.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(b => ({
+                            id: b.id_banner,
+                            nama: b.nama_banner,
+                            gambar: b.gambar_url,
+                            tipeAksi: b.tipe_aksi,
+                            targetAksi: b.target_aksi,
+                            urutan: b.urutan,
+                            status: b.status
+                        }))
+                    };
+                }
+
+                if (action === "getKabar") {
+                    const res = await fetch(`${sbUrl}/rest/v1/berita?status=eq.Publish&order=created_at.desc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(n => ({
+                            news_id: n.news_id,
+                            slug: n.slug,
+                            tanggal: n.tanggal,
+                            judul: n.judul,
+                            kategori: n.kategori,
+                            ringkasan: n.ringkasan,
+                            isi: n.isi,
+                            penulis: n.penulis || "Admin",
+                            gambar: n.gambar_url || n.foto_url || ""
+                        }))
+                    };
+                }
+
+                if (action === "getNotifikasi") {
+                    const res = await fetch(`${sbUrl}/rest/v1/notifikasi?status=eq.Aktif&order=created_at.desc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(notif => ({
+                            id: notif.id,
+                            judul: notif.judul,
+                            kategori: notif.kategori,
+                            tanggal: notif.tanggal,
+                            ringkasan: notif.ringkasan,
+                            isi: notif.isi,
+                            gambar: notif.gambar_url || "",
+                            isPopup: Boolean(notif.is_popup),
+                            status: notif.status
+                        }))
+                    };
+                }
+
+                if (action === "getGaleri") {
+                    const res = await fetch(`${sbUrl}/rest/v1/galeri?status=eq.Aktif&order=timestamp.desc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(g => ({
+                            id: g.id_galeri,
+                            judul: g.judul,
+                            kategori: g.kategori,
+                            keterangan: g.keterangan,
+                            gambar: g.gambar_url,
+                            status: g.status,
+                            timestamp: g.timestamp
+                        }))
+                    };
+                }
+
+                if (action === "getUnitKegiatan") {
+                    const res = await fetch(`${sbUrl}/rest/v1/unit_kegiatan?status=eq.Aktif&order=urutan.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(u => ({
+                            id: u.id_kegiatan,
+                            nama: u.nama,
+                            kategori: u.kategori,
+                            jadwal: u.jadwal,
+                            deskripsi: u.deskripsi,
+                            gambar: u.gambar_url,
+                            urutan: u.urutan,
+                            status: u.status
+                        }))
+                    };
+                }
+
+                if (action === "program.listPublished") {
+                    const res = await fetch(`${sbUrl}/rest/v1/programs?status=eq.published&order=sort_order.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows
+                    };
+                }
+
+                if (action === "alumni.getTestimonials") {
+                    const res = await fetch(`${sbUrl}/rest/v1/alumni?izin_publikasi=eq.Ya&select=*`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(a => ({
+                            nama: a.nama_lengkap,
+                            angkatan: a.tahun_lulus,
+                            pekerjaan: a.kesibukan,
+                            pesan: a.kesan_pesan,
+                            foto: a.foto
+                        }))
+                    };
+                }
+
+                if (action === "getPengaturan") {
+                    const res = await fetch(`${sbUrl}/rest/v1/pengaturan?select=*`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    const settings = {};
+                    rows.forEach(r => { settings[r.key] = r.value; });
+                    return {
+                        status: "success",
+                        data: settings
+                    };
+                }
+            } catch (err) {
+                console.warn("[SUPABASE FETCH ERROR]", action, err);
+                return null;
+            }
+
+            return null;
+        }
 
         async function apiGet(action, params = {}) {
-            if (!WEB_APP_URL) throw new Error("WEB_APP_URL belum dikonfigurasi.");
+            // 1. Akselerasi tercepat via Supabase Cloud DB
+            try {
+                const sbData = await fetchFromSupabase(action, params);
+                if (sbData) return sbData;
+            } catch (sbErr) {
+                console.warn("[SUPABASE FAILOVER] Beralih ke Google Apps Script:", sbErr);
+            }
 
-            const url = new URL(WEB_APP_URL);
+            // 2. Fallback aman ke Google Apps Script
+            const endpoint = getApiUrl();
+            if (!endpoint) throw new Error("API URL belum dikonfigurasi.");
+
+            const url = new URL(endpoint);
             url.searchParams.set("action", action);
             Object.entries(params).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
@@ -21,7 +201,8 @@
         }
 
         async function apiPost(action, payload = {}) {
-            if (!WEB_APP_URL) throw new Error("WEB_APP_URL belum dikonfigurasi.");
+            const endpoint = getApiUrl();
+            if (!endpoint) throw new Error("API URL belum dikonfigurasi.");
 
             const adminToken = (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
             const bodyPayload = { action, ...payload };
@@ -29,7 +210,7 @@
                 bodyPayload.token = adminToken;
             }
 
-            const response = await fetch(WEB_APP_URL, {
+            const response = await fetch(endpoint, {
                 method: "POST",
                 // text/plain menghindari CORS preflight OPTIONS pada Apps Script Web App.
                 headers: {
@@ -44,7 +225,7 @@
         }
 
         function isApiConfigured() {
-            return Boolean(WEB_APP_URL);
+            return Boolean(getApiUrl());
         }
 
         function escapeHtml(value) {

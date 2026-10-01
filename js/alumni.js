@@ -61,7 +61,41 @@
         }
 
 
+        function loadLeaflet(callback) {
+            if (typeof L !== 'undefined') {
+                if (typeof callback === 'function') callback();
+                return;
+            }
+            if (!document.getElementById('leaflet-css')) {
+                const link = document.createElement('link');
+                link.id = 'leaflet-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+                link.crossOrigin = '';
+                document.head.appendChild(link);
+            }
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+            script.crossOrigin = '';
+            script.onload = () => {
+                if (typeof callback === 'function') callback();
+            };
+            script.onerror = () => {
+                console.warn('Gagal memuat Leaflet map library secara on-demand.');
+            };
+            document.head.appendChild(script);
+        }
+
         function initAlumniMap() {
+            if (typeof L === 'undefined') {
+                loadLeaflet(() => {
+                    initAlumniMap();
+                });
+                return;
+            }
+
             if (alumniMap) {
                 setTimeout(() => { alumniMap.invalidateSize(); }, 300);
                 return;
@@ -244,10 +278,10 @@
                     errBox.classList.remove('hidden');
                 }
             } catch (err) {
-                document.getElementById('alumni-form').classList.add('hidden');
-                document.getElementById('alumni-form-success').classList.remove('hidden');
-                window.scrollTo({top: 0, behavior: 'smooth'});
-                console.warn(err);
+                console.error("Gagal menyimpan data alumni:", err);
+                errBox.innerText = "Terjadi kendala koneksi ke database: " + (err.message || "Silakan periksa jaringan dan coba kembali.");
+                errBox.classList.remove('hidden');
+                errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Simpan Data</span>';

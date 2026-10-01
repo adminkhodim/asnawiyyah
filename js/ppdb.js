@@ -81,8 +81,8 @@
                 return;
             }
 
-            if (!WEB_APP_URL) {
-                showToast("Maaf, API status kelulusan belum terpasang (WEB_APP_URL kosong).");
+            if (!isApiConfigured()) {
+                showToast("Maaf, API status kelulusan belum terpasang.");
                 return;
             }
 

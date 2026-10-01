@@ -85,7 +85,9 @@ const ASN_STORAGE_KEYS = Object.freeze({
  * Mengarahkan panggilan autentikasi Phase 2B ke deployment aktif
  * tanpa mengganggu WEB_APP_URL legacy yang menjadi anchor rollback.
  */
-const ASN_PHASE2B_AUTH_URL = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec";
+const ASN_PHASE2B_AUTH_URL = (typeof ASNAWIYYAH_CONFIG !== 'undefined' && ASNAWIYYAH_CONFIG.apiUrl)
+    ? ASNAWIYYAH_CONFIG.apiUrl
+    : (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec");
 
 async function authApiPost(action, payload = {}) {
     const targetUrl = ASN_PHASE2B_AUTH_URL || (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
@@ -1936,7 +1938,9 @@ function toggleLegacyAuthPanel() {
 // LEGACY AUTHENTICATION COMPATIBILITY LAYER
 // (Dipertahankan untuk kompatibilitas backward selama migrasi)
 // =====================================================================
-const AUTH_API_URL = "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec"; 
+const AUTH_API_URL = (typeof ASNAWIYYAH_CONFIG !== 'undefined' && ASNAWIYYAH_CONFIG.apiUrl)
+    ? ASNAWIYYAH_CONFIG.apiUrl
+    : ASN_PHASE2B_AUTH_URL; 
 const GOOGLE_CLIENT_ID = "967127815898-6padn433letamnjfuacb5eg8pnv728p4.apps.googleusercontent.com"; 
 
 document.addEventListener('DOMContentLoaded', () => {

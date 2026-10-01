@@ -1,0 +1,65 @@
+name: CI Pipeline - Syntax, Build & Automated Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Lint, Build CSS & Automated Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: 📦 Install Node Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: 🔍 Check Code Syntax (Frontend JS & Apps Script GS)
+        run: npm run test:syntax
+
+      - name: 🎨 Build & Minify Tailwind CSS
+        run: npm run build:css
+
+      - name: 🛡️ Verify Compiled CSS Artifact
+        run: |
+          if [ ! -s ./css/styles.min.css ]; then
+            echo "❌ Error: css/styles.min.css is missing or empty after build!"
+            exit 1
+          fi
+          echo "✅ css/styles.min.css successfully compiled and verified."
+
+      - name: 🧩 Verify Modular Apps Script Backend Generation
+        run: npm run backend:split
+
+      - name: 🧪 Execute Automated Security, Session & Integration Test Suites
+        run: npm test
+
+      - name: 📢 Report CI Success
+        if: success()
+        run: echo "🎉 CI Pipeline Succeeded: Codebase is verified for production deployment."

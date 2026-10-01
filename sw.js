@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v13';
+const CACHE_NAME = 'asnawiyyah-cache-v16';
 
 const PRECACHE_URLS = [
   '/',
@@ -9,21 +9,23 @@ const PRECACHE_URLS = [
   '/assets/img/logo-asnawiyyah.jpg',
   '/assets/img/kartu-santri.png',
   '/assets/img/abi-cholil.jpg',
-  '/assets/audio/mecca_56_22.mp3',
-  '/assets/audio/Adzan-Shubuh-Abu-Hazim.mp3',
   '/data-maulid-dibai.js',
   '/data-qasidah-burdah.js',
   '/data-tahlil-yasin.js',
   '/js/pwa.js',
   '/js/api.js',
+  '/js/db-adapter.js',
   '/js/data-programs.js',
   '/js/programs.js',
   '/js/ppdb.js',
   '/js/ibadah.js',
   '/js/jadwal-sholat.js',
+  '/js/roles.js',
   '/js/admin.js',
   '/js/alumni.js',
   '/js/auth.js',
+  '/js/pegawai.js',
+  '/js/tahfidz.js',
   '/js/main.js'
 ];
 

@@ -25,13 +25,11 @@
             initThemeUI();
             initMobileSplash();
             initializeProgramRuntime();
-            // Eksekusi paralel tanpa blocking waterfall
-            loadBanners();
+            // Eksekusi paralel tanpa blocking waterfall (banner & notifikasi sudah diinisialisasi secepat kilat pada DOMContentLoaded)
             loadNews();
             loadGaleri();
             loadPengaturan();
             loadUnitKegiatan();
-            loadNotifikasi();
             if (typeof renderCalendar === 'function') {
                 try {
                     renderCalendar();
@@ -876,6 +874,7 @@
             return url;
         }
 
+        let _isBannerFetching = false;
         async function loadBanners() {
             // 1. STALE: Coba render secepat kilat dari cache lokal jika ada
             try {
@@ -895,7 +894,8 @@
                 console.warn("Gagal membaca cache banner:", e);
             }
 
-            if (!isApiConfigured()) return;
+            if (!isApiConfigured() || _isBannerFetching) return;
+            _isBannerFetching = true;
 
             // 2. REVALIDATE: Ambil data segar dari backend di background
             try {
@@ -916,6 +916,8 @@
                 }
             } catch (err) {
                 console.error("Gagal memuat banner via API:", err);
+            } finally {
+                _isBannerFetching = false;
             }
         }
 
@@ -1511,9 +1513,10 @@
                 checkHomePosterPopup();
             }
 
-            if (typeof isApiConfigured === 'function' && !isApiConfigured()) {
+            if ((typeof isApiConfigured === 'function' && !isApiConfigured()) || _isNotifFetching) {
                 return;
             }
+            _isNotifFetching = true;
 
             // 2. Fetch fresh data from server in background
             try {
@@ -1536,6 +1539,8 @@
                 }
             } catch (err) {
                 console.warn('Gagal memuat notifikasi dari server:', err);
+            } finally {
+                _isNotifFetching = false;
             }
         }
 
