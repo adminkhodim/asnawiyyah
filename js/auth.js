@@ -1452,7 +1452,210 @@ function closeAdminAuthModal() {
     }, 250);
 }
 
+// ==================== OTP COOLDOWN & RESEND CONTROLLERS ====================
+let adminOtpTimer = null;
+let parentOtpTimer = null;
+
+function startAdminOtpCooldown(seconds = 60) {
+    if (adminOtpTimer) clearInterval(adminOtpTimer);
+    const container = document.getElementById('admin-otp-cooldown');
+    if (!container) return;
+
+    let remaining = Math.max(1, parseInt(seconds, 10) || 60);
+
+    const updateDisplay = () => {
+        if (remaining > 0) {
+            container.innerHTML = `<span class="text-slate-400">Kirim ulang dalam <span class="font-bold text-slate-600 dark:text-slate-200 font-mono">${remaining}s</span></span>`;
+            remaining--;
+        } else {
+            clearInterval(adminOtpTimer);
+            adminOtpTimer = null;
+            container.innerHTML = `
+                <button type="button" onclick="resendAdminOtp()" class="text-brand-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                    <span>Kirim Ulang OTP</span>
+                </button>
+            `;
+        }
+    };
+
+    updateDisplay();
+    adminOtpTimer = setInterval(updateDisplay, 1000);
+}
+
+function stopAdminOtpCooldown() {
+    if (adminOtpTimer) {
+        clearInterval(adminOtpTimer);
+        adminOtpTimer = null;
+    }
+    const container = document.getElementById('admin-otp-cooldown');
+    if (container) {
+        container.innerHTML = `<span class="text-slate-400">Kirim ulang dalam 60s</span>`;
+    }
+}
+
+async function resendAdminOtp() {
+    const email = sessionStorage.getItem('asn_temp_admin_email') || document.getElementById('admin-auth-email')?.value?.trim();
+    const container = document.getElementById('admin-otp-cooldown');
+    const alertBox = document.getElementById('admin-auth-alert');
+    const alertText = document.getElementById('admin-auth-alert-text');
+    const otpInput = document.getElementById('admin-auth-otp');
+
+    if (!email) {
+        if (typeof showToast === 'function') showToast('⚠️ Email tidak ditemukan, silakan ganti email.');
+        return;
+    }
+
+    if (container) {
+        container.innerHTML = `<span class="text-slate-400 text-[11px] flex items-center space-x-1"><i class="fa-solid fa-spinner fa-spin text-xs"></i><span>Mengirim kode baru...</span></span>`;
+    }
+    if (alertBox) alertBox.classList.add('hidden');
+
+    try {
+        const result = await ASNAuthAPI.requestAdminOtp(email);
+        if (result.success) {
+            if (typeof showToast === 'function') {
+                showToast('✅ Kode OTP baru berhasil dikirim ke email!');
+            }
+            if (otpInput) {
+                otpInput.value = '';
+                otpInput.focus();
+            }
+            startAdminOtpCooldown(result.cooldownSeconds || 60);
+        } else {
+            if (alertBox && alertText) {
+                alertText.innerText = result.message || 'Gagal mengirim ulang OTP.';
+                alertBox.classList.remove('hidden');
+            }
+            if (result.cooldownSeconds && result.cooldownSeconds > 0) {
+                startAdminOtpCooldown(result.cooldownSeconds);
+            } else if (container) {
+                container.innerHTML = `
+                    <button type="button" onclick="resendAdminOtp()" class="text-rose-600 dark:text-rose-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                        <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                        <span>Coba Kirim Ulang</span>
+                    </button>
+                `;
+            }
+        }
+    } catch (err) {
+        console.error('resendAdminOtp error:', err);
+        if (container) {
+            container.innerHTML = `
+                <button type="button" onclick="resendAdminOtp()" class="text-rose-600 dark:text-rose-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                    <span>Coba Kirim Ulang</span>
+                </button>
+            `;
+        }
+        if (alertBox && alertText) {
+            alertText.innerText = 'Terjadi kesalahan sistem saat meminta kode baru.';
+            alertBox.classList.remove('hidden');
+        }
+    }
+}
+
+function startParentOtpCooldown(seconds = 60) {
+    if (parentOtpTimer) clearInterval(parentOtpTimer);
+    const container = document.getElementById('parent-otp-cooldown');
+    if (!container) return;
+
+    let remaining = Math.max(1, parseInt(seconds, 10) || 60);
+
+    const updateDisplay = () => {
+        if (remaining > 0) {
+            container.innerHTML = `<span class="text-slate-400">Kirim ulang dalam <span class="font-bold text-slate-600 dark:text-slate-200 font-mono">${remaining}s</span></span>`;
+            remaining--;
+        } else {
+            clearInterval(parentOtpTimer);
+            parentOtpTimer = null;
+            container.innerHTML = `
+                <button type="button" onclick="resendParentOtp()" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                    <span>Kirim Ulang OTP</span>
+                </button>
+            `;
+        }
+    };
+
+    updateDisplay();
+    parentOtpTimer = setInterval(updateDisplay, 1000);
+}
+
+function stopParentOtpCooldown() {
+    if (parentOtpTimer) {
+        clearInterval(parentOtpTimer);
+        parentOtpTimer = null;
+    }
+    const container = document.getElementById('parent-otp-cooldown');
+    if (container) {
+        container.innerHTML = `<span class="text-slate-400">Kirim ulang dalam 60s</span>`;
+    }
+}
+
+async function resendParentOtp() {
+    const email = sessionStorage.getItem('asn_temp_parent_email') || document.getElementById('parent-auth-email')?.value?.trim();
+    const container = document.getElementById('parent-otp-cooldown');
+    const alertBox = document.getElementById('parent-auth-alert');
+    const alertText = document.getElementById('parent-auth-alert-text');
+    const otpInput = document.getElementById('parent-otp-code');
+
+    if (!email) {
+        if (typeof showToast === 'function') showToast('⚠️ Email tidak ditemukan, silakan ganti email.');
+        return;
+    }
+
+    if (container) {
+        container.innerHTML = `<span class="text-slate-400 text-[11px] flex items-center space-x-1"><i class="fa-solid fa-spinner fa-spin text-xs"></i><span>Mengirim kode baru...</span></span>`;
+    }
+    if (alertBox) alertBox.classList.add('hidden');
+
+    try {
+        const result = await ASNAuthAPI.requestParentOtp(email);
+        if (result.success) {
+            if (typeof showToast === 'function') {
+                showToast('✅ Kode OTP baru berhasil dikirim ke email!');
+            }
+            if (otpInput) {
+                otpInput.value = '';
+                otpInput.focus();
+            }
+            startParentOtpCooldown(result.cooldownSeconds || 60);
+        } else {
+            if (alertBox && alertText) {
+                alertText.innerText = result.message || 'Gagal mengirim ulang OTP.';
+                alertBox.classList.remove('hidden');
+            }
+            if (result.cooldownSeconds && result.cooldownSeconds > 0) {
+                startParentOtpCooldown(result.cooldownSeconds);
+            } else if (container) {
+                container.innerHTML = `
+                    <button type="button" onclick="resendParentOtp()" class="text-rose-600 dark:text-rose-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                        <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                        <span>Coba Kirim Ulang</span>
+                    </button>
+                `;
+            }
+        }
+    } catch (err) {
+        console.error('resendParentOtp error:', err);
+        if (container) {
+            container.innerHTML = `
+                <button type="button" onclick="resendParentOtp()" class="text-rose-600 dark:text-rose-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                    <span>Coba Kirim Ulang</span>
+                </button>
+            `;
+        }
+        if (alertBox && alertText) {
+            alertText.innerText = 'Terjadi kesalahan sistem saat meminta kode baru.';
+            alertBox.classList.remove('hidden');
+        }
+    }
+}
+
 function resetAdminAuthStep() {
+    stopAdminOtpCooldown();
     const formReq = document.getElementById('form-admin-request-otp');
     const formVer = document.getElementById('form-admin-verify-otp');
     const alertBox = document.getElementById('admin-auth-alert');
@@ -1494,6 +1697,9 @@ async function handleAdminRequestOtp(e) {
                 otpInput.value = '';
                 setTimeout(() => otpInput.focus(), 150);
             }
+
+            // Jalankan hitungan mundur dinamis
+            startAdminOtpCooldown(result.cooldownSeconds || 60);
         } else {
             // Tampilkan error secara aman (fail safely)
             if (alertBox && alertText) {
@@ -1530,6 +1736,7 @@ async function handleAdminVerifyOtp(e) {
     try {
         const result = await ASNAuthAPI.verifyAdminOtp(email, otp);
         if (result.success && result.token) {
+            stopAdminOtpCooldown();
             const role = String((result.admin && result.admin.role) || '').toUpperCase();
             if (role === 'PENGASUH') {
                 ASNIdentity.setPengasuhSession(result.token, result.admin);
@@ -1560,6 +1767,19 @@ async function handleAdminVerifyOtp(e) {
                 alertText.innerText = result.message || 'Kode OTP tidak valid atau layanan server belum siap.';
                 alertBox.classList.remove('hidden');
             }
+            // Jika OTP sudah kedaluwarsa atau tidak ditemukan, segera munculkan tombol kirim ulang
+            const errMsg = String(result.message || '').toLowerCase();
+            if (errMsg.includes('kedaluwarsa') || errMsg.includes('expired') || errMsg.includes('tidak ditemukan')) {
+                const container = document.getElementById('admin-otp-cooldown');
+                if (container && (!adminOtpTimer || adminOtpTimer === null)) {
+                    container.innerHTML = `
+                        <button type="button" onclick="resendAdminOtp()" class="text-brand-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                            <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                            <span>Kirim Ulang OTP</span>
+                        </button>
+                    `;
+                }
+            }
         }
     } catch (err) {
         if (alertBox && alertText) {
@@ -1589,6 +1809,7 @@ function openParentAuthModal() {
 }
 
 function closeParentAuthModal() {
+    stopParentOtpCooldown();
     const modal = document.getElementById('modal-auth-parent');
     const content = document.getElementById('modal-auth-parent-content');
     if (!modal || !content) return;
@@ -1600,6 +1821,7 @@ function closeParentAuthModal() {
 }
 
 function resetParentAuthStep() {
+    stopParentOtpCooldown();
     const formReq = document.getElementById('form-parent-request-otp');
     const formVer = document.getElementById('form-parent-verify-otp');
     const alertBox = document.getElementById('parent-auth-alert');
@@ -1641,6 +1863,9 @@ async function handleParentRequestOtp(e) {
                 otpInput.value = '';
                 setTimeout(() => otpInput.focus(), 150);
             }
+
+            // Jalankan hitungan mundur dinamis
+            startParentOtpCooldown(result.cooldownSeconds || 60);
         } else {
             // Fail safely: tampilkan error, jangan login, jangan bypass!
             if (alertBox && alertText) {
@@ -1677,6 +1902,7 @@ async function handleParentVerifyOtp(e) {
     try {
         const result = await ASNAuthAPI.verifyParentOtp(email, otp);
         if (result.success && result.token) {
+            stopParentOtpCooldown();
             ASNIdentity.setParentSession(result.token, result.parent, result.students);
             closeParentAuthModal();
             if (typeof showToast === 'function') {
@@ -1687,6 +1913,19 @@ async function handleParentVerifyOtp(e) {
             if (alertBox && alertText) {
                 alertText.innerText = result.message || 'Kode OTP tidak valid atau layanan server belum siap.';
                 alertBox.classList.remove('hidden');
+            }
+            // Jika OTP sudah kedaluwarsa atau tidak ditemukan, segera munculkan tombol kirim ulang
+            const errMsg = String(result.message || '').toLowerCase();
+            if (errMsg.includes('kedaluwarsa') || errMsg.includes('expired') || errMsg.includes('tidak ditemukan')) {
+                const container = document.getElementById('parent-otp-cooldown');
+                if (container && (!parentOtpTimer || parentOtpTimer === null)) {
+                    container.innerHTML = `
+                        <button type="button" onclick="resendParentOtp()" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer flex items-center space-x-1 transition">
+                            <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                            <span>Kirim Ulang OTP</span>
+                        </button>
+                    `;
+                }
             }
         }
     } catch (err) {
@@ -2355,3 +2594,9 @@ window.detectClientDeviceInfo = detectClientDeviceInfo;
 window.sendUserPresenceHeartbeat = sendUserPresenceHeartbeat;
 window.startUserPresenceHeartbeat = startUserPresenceHeartbeat;
 window.calculateUserOnlineStatus = calculateUserOnlineStatus;
+window.startAdminOtpCooldown = startAdminOtpCooldown;
+window.stopAdminOtpCooldown = stopAdminOtpCooldown;
+window.resendAdminOtp = resendAdminOtp;
+window.startParentOtpCooldown = startParentOtpCooldown;
+window.stopParentOtpCooldown = stopParentOtpCooldown;
+window.resendParentOtp = resendParentOtp;

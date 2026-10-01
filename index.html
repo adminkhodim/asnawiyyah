@@ -846,7 +846,7 @@
 
             <!-- BARIS KEMBALI & HEADER UTAMA -->
             <div
-                class="bg-white p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
                 <div class="flex items-center space-x-2.5">
                     <button onclick="switchTab('beranda')"
                         class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -862,24 +862,24 @@
             </div>
 
             <!-- LIST ARTIKEL & BERITA -->
-            <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+            <div class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
 
                 <!-- Filter Kategori Berita -->
-                <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100">
-                    <button
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-brand-700 text-white shadow-sm shrink-0">
+                <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100 dark:border-[#253447]">
+                    <button type="button" onclick="filterNewsByCategory('Semua', this)"
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm shrink-0 transition filter-news-btn active-news-filter">
                         Semua Berita
                     </button>
-                    <button
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                    <button type="button" onclick="filterNewsByCategory('Prestasi', this)"
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn">
                         Prestasi Santri
                     </button>
-                    <button
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                    <button type="button" onclick="filterNewsByCategory('Kegiatan', this)"
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn">
                         Kegiatan Pesantren
                     </button>
-                    <button
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 transition">
+                    <button type="button" onclick="filterNewsByCategory('PPDB', this)"
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn">
                         Pengumuman PPDB
                     </button>
                 </div>
@@ -897,7 +897,7 @@
 
             <!-- BARIS KEMBALI & HEADER UTAMA -->
             <div
-                class="bg-white p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+                class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
                 <div class="flex items-center space-x-2.5">
                     <button onclick="switchTab('beranda')"
                         class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -913,23 +913,23 @@
             </div>
 
             <!-- SUB-TAB SELECTOR (Formulir Daftar / Cek Kelulusan) -->
-            <div class="flex p-1 bg-slate-100 rounded-2xl max-w-sm mx-auto">
+            <div class="flex p-1 bg-slate-100 dark:bg-[#1c2836] rounded-2xl max-w-sm mx-auto border border-transparent dark:border-[#253447]">
                 <button onclick="togglePPDBSubPage('daftar')" id="ppdb-sub-daftar"
-                    class="flex-1 text-center py-2 text-xs font-bold rounded-xl bg-white text-brand-900 shadow-sm transition">
+                    class="flex-1 text-center py-2 text-xs font-bold rounded-xl bg-white dark:bg-[#15202d] text-brand-900 dark:text-emerald-400 shadow-sm transition">
                     <i class="fa-solid fa-file-signature mr-1.5"></i> Formulir Daftar
                 </button>
                 <button onclick="togglePPDBSubPage('cek')" id="ppdb-sub-cek"
-                    class="flex-1 text-center py-2 text-xs font-bold rounded-xl text-slate-500 hover:text-brand-900 transition">
+                    class="flex-1 text-center py-2 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 hover:text-brand-900 dark:hover:text-emerald-300 transition">
                     <i class="fa-solid fa-circle-check mr-1.5"></i> Cek Kelulusan
                 </button>
             </div>
 
             <!-- CONTAINER 1: FORMULIR PENDAFTARAN -->
             <div id="ppdb-container-daftar" class="space-y-6">
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                <div class="bg-white dark:bg-[#15202d] p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
                     <div class="text-center max-w-md mx-auto mb-6">
-                        <h2 class="text-xl font-bold text-slate-800">Pendaftaran Santri Baru TA 2026/2027</h2>
-                        <p class="text-xs text-slate-500 mt-1">Lengkapi berkas pendaftaran santri secara online lewat
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Pendaftaran Santri Baru TA 2026/2027</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Lengkapi berkas pendaftaran santri secara online lewat
                             formulir interaktif di bawah ini.</p>
                     </div>
 
@@ -4324,11 +4324,11 @@
                     <span>Kembali</span>
                 </button>
                 <span id="detail-news-badge"
-                    class="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full uppercase">Kategori</span>
+                    class="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-3 py-1 rounded-full uppercase border border-transparent dark:border-emerald-800/40">Kategori</span>
             </div>
 
             <!-- Artikel Lengkap -->
-            <article class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+            <article class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
 
                 <!-- Judul & Meta Data -->
                 <div class="space-y-2.5">

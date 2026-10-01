@@ -520,6 +520,16 @@
             if (!gridContainer) return;
             gridContainer.innerHTML = "";
 
+            if (!newsArray || newsArray.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400 dark:text-slate-500 text-xs space-y-2">
+                        <i class="fa-solid fa-newspaper text-3xl text-slate-300 dark:text-slate-600 block mb-2"></i>
+                        <p class="font-semibold">Belum ada berita pada kategori ini.</p>
+                    </div>
+                `;
+                return;
+            }
+
             newsArray.forEach((news, idx) => {
                 const card = document.createElement('article');
                 card.className = "bg-slate-50 dark:bg-[#15202d] hover:bg-emerald-50/50 dark:hover:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] hover:border-brand-100 dark:hover:border-emerald-500/40 flex flex-col gap-3 cursor-pointer group transition duration-200";
@@ -551,6 +561,30 @@
                 gridContainer.appendChild(card);
             });
         }
+
+        function filterNewsByCategory(category, btnElement) {
+            document.querySelectorAll('.filter-news-btn').forEach(btn => {
+                btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn";
+            });
+            if (btnElement) {
+                btnElement.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm shrink-0 transition filter-news-btn active-news-filter";
+            }
+
+            if (!mockNewsData || mockNewsData.length === 0) return;
+
+            if (category === 'Semua') {
+                renderNews(mockNewsData);
+            } else {
+                const searchCat = category.toLowerCase().trim();
+                const filtered = mockNewsData.filter(n => {
+                    const kat = (n.kategori || '').toLowerCase();
+                    const jud = (n.judul || '').toLowerCase();
+                    return kat.includes(searchCat) || jud.includes(searchCat);
+                });
+                renderNews(filtered);
+            }
+        }
+        window.filterNewsByCategory = filterNewsByCategory;
 
         function renderHeadlineNews(newsArray) {
             const containerMobile = document.getElementById('headline-news-container');
