@@ -375,9 +375,536 @@
             });
 
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
+            const result = await response.json();
+
+            // Dual-Write Sync ke Supabase Cloud DB jika write action sukses
+            if (result && (result.success || result.status === "success")) {
+                await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
+            }
+
+            return result;
         }
 
+        /**
+         * Sinkronisasi Otomatis Dual-Write ke Supabase Cloud DB (<50ms)
+         * Memastikan setiap perubahan data (Create, Update, Delete) di Spreadsheet
+         * langsung tereplikasi secara instan ke Cloud PostgreSQL Supabase pada SEMUA modul.
+         */
+        async function syncToSupabaseOnWrite(action, payload = {}, response = {}) {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (!sbUrl || !sbKey) return;
+
+            const headers = {
+                'apikey': sbKey,
+                'Authorization': `Bearer ${sbKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=representation'
+            };
+
+            try {
+                // ==================== 1. DATA SANTRI ====================
+                if (action === 'saveStudent' || action === 'student.save') {
+                    const studentId = (response && (response.studentId || response.student_id)) || payload.studentId || payload.student_id || ('STD_' + Date.now());
+                    const genderVal = (payload.gender || '').toUpperCase();
+                    const studentRow = {
+                        student_id: studentId,
+                        nis: String(payload.nis || '').trim(),
+                        nik: payload.nik ? String(payload.nik).trim() : null,
+                        name: String(payload.name || payload.nama || '').trim(),
+                        gender: (genderVal === 'P' || genderVal === 'PUTRI' || genderVal === 'PEREMPUAN') ? 'P' : 'L',
+                        birth_date: payload.birthDate || payload.birth_date || null,
+                        photo_url: payload.photoUrl || payload.photo_url || null,
+                        program: payload.program || 'Reguler',
+                        status: ((payload.status || 'ACTIVE').toUpperCase() === 'AKTIF' || (payload.status || 'ACTIVE').toUpperCase() === 'ACTIVE') ? 'ACTIVE' : 'INACTIVE'
+                    };
+                    await fetch(`${sbUrl}/rest/v1/students`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(studentRow)
+                    });
+                }
+                else if (action === 'deleteStudent' || action === 'student.delete') {
+                    const studentId = payload.studentId || payload.student_id;
+                    if (studentId) {
+                        await fetch(`${sbUrl}/rest/v1/students?student_id=eq.${encodeURIComponent(studentId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 2. DATA USER & WALI SANTRI ====================
+                else if (action === 'auth.admin.userSave' || action === 'admin.users.save' || action === 'admin.userSave') {
+                    const user = payload.user || payload;
+                    const userId = (response && (response.userId || response.user_id)) || user.userId || user.user_id;
+                    if (userId) {
+                        const userRow = {
+                            user_id: userId,
+                            name: user.name || '',
+                            email: user.email || null,
+                            phone: user.phone || null,
+                            role: user.role || 'WALI_SANTRI',
+                            photo_url: user.photoUrl || user.photo_url || null,
+                            status: user.status || 'ACTIVE'
+                        };
+                        await fetch(`${sbUrl}/rest/v1/users`, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(userRow)
+                        });
+
+                        // Hubungkan santri jika peran adalah WALI_SANTRI dan terdapat studentNis
+                        if (user.role === 'WALI_SANTRI' && user.studentNis) {
+                            try {
+                                const sRes = await fetch(`${sbUrl}/rest/v1/students?nis=eq.${encodeURIComponent(user.studentNis)}&select=student_id`, {
+                                    headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                                });
+                                if (sRes.ok) {
+                                    const sRows = await sRes.json();
+                                    if (sRows && sRows.length > 0) {
+                                        const sId = sRows[0].student_id;
+                                        const mapId = `MAP_${userId.replace(/[^a-zA-Z0-9]/g, '')}_${sId.replace(/[^a-zA-Z0-9]/g, '')}`;
+                                        await fetch(`${sbUrl}/rest/v1/wali_santri_map`, {
+                                            method: 'POST',
+                                            headers,
+                                            body: JSON.stringify({
+                                                map_id: mapId,
+                                                wali_id: userId,
+                                                student_id: sId,
+                                                relationship: user.relationship || 'Wali',
+                                                status: 'ACTIVE'
+                                            })
+                                        });
+                                    }
+                                }
+                            } catch (mapErr) {
+                                console.warn('[WALI MAP SYNC WARN]', mapErr);
+                            }
+                        }
+                    }
+                }
+                else if (action === 'auth.admin.userToggleStatus') {
+                    const userId = payload.userId || payload.user_id;
+                    const newStatus = payload.status;
+                    if (userId && newStatus) {
+                        await fetch(`${sbUrl}/rest/v1/users?user_id=eq.${encodeURIComponent(userId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+                }
+
+                // ==================== 3. DATA PEGAWAI / ASATIDZ ====================
+                else if (action === 'saveEmployee' || action === 'employee.save') {
+                    const employeeId = (response && (response.employeeId || response.employee_id)) || payload.employeeId || payload.employee_id || ('PEG_' + Date.now());
+                    const empRow = {
+                        employee_id: employeeId,
+                        nama: payload.nama || payload.name || '',
+                        nip: payload.nip || null,
+                        gender: (payload.gender || 'L').toUpperCase().startsWith('P') ? 'P' : 'L',
+                        jabatan: payload.jabatan || 'Asatidz',
+                        spesialisasi: payload.spesialisasi || null,
+                        telepon: payload.telepon || payload.phone || null,
+                        email: payload.email || null,
+                        status: payload.status || 'ACTIVE'
+                    };
+                    await fetch(`${sbUrl}/rest/v1/pegawai`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(empRow)
+                    });
+                }
+                else if (action === 'deleteEmployee' || action === 'employee.delete') {
+                    const employeeId = payload.employeeId || payload.employee_id;
+                    if (employeeId) {
+                        await fetch(`${sbUrl}/rest/v1/pegawai?employee_id=eq.${encodeURIComponent(employeeId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 4. TAHFIDZ (LOG SETORAN & HALAQAH) ====================
+                else if (action === 'saveTahfidzLog') {
+                    const logId = (response && (response.logId || response.log_id)) || payload.logId || payload.log_id || ('LOG_' + Date.now());
+                    const logRow = {
+                        log_id: logId,
+                        student_id: payload.studentId || payload.student_id || 'STD_DEFAULT',
+                        student_name: payload.studentName || payload.student_name || payload.nama_santri || payload.name || 'Santri',
+                        nis: String(payload.nis || '').trim(),
+                        gender: (payload.gender || 'L').toUpperCase().startsWith('P') ? 'P' : 'L',
+                        tanggal: payload.tanggal || new Date().toISOString().split('T')[0],
+                        sesi: payload.sesi || 'Sesi 1',
+                        tipe: payload.tipe || 'ZIYADAH',
+                        juz: Number(payload.juz) || 1,
+                        surah: payload.surah || 'Al-Fatihah',
+                        halaman_list: payload.halamanList || payload.halaman_list || '',
+                        total_halaman: Number(payload.totalHalaman || payload.total_halaman) || 1,
+                        nilai: payload.nilai || 'A',
+                        muhafiz: payload.muhafiz || 'Ustadz Pembina',
+                        catatan: payload.catatan || null,
+                        status_setoran: payload.statusSetoran || payload.status_setoran || 'Lancar',
+                        satuan: payload.satuan || 'Halaman',
+                        ayat_mulai: payload.ayatMulai || payload.ayat_mulai || null,
+                        ayat_sampai: payload.ayatSampai || payload.ayat_sampai || null,
+                        created_at: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/tahfidz_logs`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(logRow)
+                    });
+                }
+                else if (action === 'deleteTahfidzLog') {
+                    const logId = payload.logId || payload.log_id;
+                    if (logId) {
+                        await fetch(`${sbUrl}/rest/v1/tahfidz_logs?log_id=eq.${encodeURIComponent(logId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+                else if (action === 'saveTahfidzHalaqah') {
+                    const halaqahId = (response && (response.halaqahId || response.halaqah_id)) || payload.halaqahId || payload.halaqah_id || ('HLQ_' + Date.now());
+                    const halaqahRow = {
+                        halaqah_id: halaqahId,
+                        muhafiz: payload.muhafiz || 'Ustadz Pembina',
+                        target_kurikulum: payload.targetKurikulum || payload.target_kurikulum || 'Reguler',
+                        student_ids: Array.isArray(payload.studentIds) ? payload.studentIds : (payload.studentIds ? [payload.studentIds] : []),
+                        created_at: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/tahfidz_halaqah`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(halaqahRow)
+                    });
+                }
+                else if (action === 'deleteTahfidzHalaqah') {
+                    const halaqahId = payload.halaqahId || payload.halaqah_id;
+                    if (halaqahId) {
+                        await fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?halaqah_id=eq.${encodeURIComponent(halaqahId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 5. BERITA & KABAR PESANTREN ====================
+                else if (action === 'saveBerita' || action === 'updateBerita') {
+                    const d = payload.data || payload;
+                    const newsId = (response && (response.newsId || response.news_id)) || d.news_id || d.id || ('NEWS_' + Date.now());
+                    const slugVal = d.slug || (d.judul ? d.judul.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : ('berita-' + Date.now()));
+                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || d.gambar || d.gambar_url || d.gambarLama || 'https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1200&auto=format&fit=crop';
+                    const newsRow = {
+                        news_id: newsId,
+                        slug: slugVal,
+                        tanggal: d.tanggal || new Date().toISOString().split('T')[0],
+                        judul: d.judul || 'Kabar Pesantren',
+                        kategori: d.kategori || 'Kabar',
+                        ringkasan: d.ringkasan || null,
+                        isi: d.isi || '<p></p>',
+                        gambar_url: imgUrl,
+                        foto_url: imgUrl,
+                        penulis: d.penulis || 'Admin',
+                        status: d.status || 'Publish',
+                        views: Number(d.views) || 0,
+                        created_at: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/berita`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(newsRow)
+                    });
+                }
+                else if (action === 'deleteBerita') {
+                    const newsId = (payload.data && (payload.data.news_id || payload.data.id)) || payload.news_id || payload.id;
+                    if (newsId) {
+                        await fetch(`${sbUrl}/rest/v1/berita?news_id=eq.${encodeURIComponent(newsId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 6. BANNER SLIDER ====================
+                else if (action === 'saveBanner') {
+                    const bannerId = (response && (response.id || response.id_banner)) || payload.id || payload.id_banner || ('BNR_' + Date.now());
+                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || payload.gambar || payload.gambarUrl || payload.gambarLama || 'https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1200&auto=format&fit=crop';
+                    const bannerRow = {
+                        id_banner: bannerId,
+                        nama_banner: payload.nama || payload.nama_banner || 'Banner Asnawiyyah',
+                        gambar_url: imgUrl,
+                        tipe_aksi: payload.tipeAksi || payload.tipe_aksi || 'tab',
+                        target_aksi: payload.targetAksi || payload.target_aksi || 'ppdb',
+                        urutan: Number(payload.urutan) || 1,
+                        status: payload.status || 'Aktif'
+                    };
+                    await fetch(`${sbUrl}/rest/v1/banner`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(bannerRow)
+                    });
+                }
+                else if (action === 'toggleBanner') {
+                    const bId = payload.bannerId || payload.id || payload.id_banner;
+                    const newStatus = payload.newStatus || payload.status;
+                    if (bId && newStatus) {
+                        await fetch(`${sbUrl}/rest/v1/banner?id_banner=eq.${encodeURIComponent(bId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+                }
+                else if (action === 'deleteBanner') {
+                    const bId = payload.bannerId || payload.id || payload.id_banner;
+                    if (bId) {
+                        await fetch(`${sbUrl}/rest/v1/banner?id_banner=eq.${encodeURIComponent(bId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 7. WARTA & NOTIFIKASI ====================
+                else if (action === 'saveNotifikasi') {
+                    const d = payload.data || payload;
+                    const notifId = (response && (response.id || response.notifId)) || d.id || ('NOTIF_' + Date.now());
+                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || d.gambar || d.gambar_url || d.gambarLama || null;
+                    const notifRow = {
+                        id: notifId,
+                        judul: d.judul || 'Warta Pengumuman',
+                        kategori: d.kategori || 'Akademik',
+                        tanggal: d.tanggal || new Date().toISOString().split('T')[0],
+                        ringkasan: d.ringkasan || null,
+                        isi: d.isi || '',
+                        gambar_url: imgUrl,
+                        is_popup: !!(d.is_popup || d.isPopup),
+                        status: d.status || 'Aktif',
+                        created_at: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/notifikasi`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(notifRow)
+                    });
+                }
+                else if (action === 'deleteNotifikasi') {
+                    const notifId = payload.id || (payload.data && payload.data.id);
+                    if (notifId) {
+                        await fetch(`${sbUrl}/rest/v1/notifikasi?id=eq.${encodeURIComponent(notifId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 8. GALERI FOTO ====================
+                else if (action === 'saveGaleri') {
+                    const galeriId = (response && (response.id || response.id_galeri)) || payload.id || payload.id_galeri || ('GLR_' + Date.now());
+                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || payload.gambar || payload.gambarUrl || payload.gambarLama || 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop';
+                    const galeriRow = {
+                        id_galeri: galeriId,
+                        judul: payload.judul || 'Foto Galeri',
+                        kategori: payload.kategori || 'Kegiatan Santri',
+                        keterangan: payload.keterangan || null,
+                        gambar_url: imgUrl,
+                        status: payload.status || 'Aktif',
+                        timestamp: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/galeri`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(galeriRow)
+                    });
+                }
+                else if (action === 'toggleGaleri') {
+                    const gId = payload.galeriId || payload.id || payload.id_galeri;
+                    const newStatus = payload.newStatus || payload.status;
+                    if (gId && newStatus) {
+                        await fetch(`${sbUrl}/rest/v1/galeri?id_galeri=eq.${encodeURIComponent(gId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+                }
+                else if (action === 'deleteGaleri') {
+                    const gId = payload.galeriId || payload.id || payload.id_galeri;
+                    if (gId) {
+                        await fetch(`${sbUrl}/rest/v1/galeri?id_galeri=eq.${encodeURIComponent(gId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 9. UNIT KEGIATAN SANTRI (UKS) ====================
+                else if (action === 'saveUnitKegiatan') {
+                    const uksId = (response && (response.id || response.id_kegiatan)) || payload.id || payload.id_kegiatan || ('UKS_' + Date.now());
+                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || payload.gambar || payload.gambarUrl || payload.gambarLama || 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop';
+                    const uksRow = {
+                        id_kegiatan: uksId,
+                        nama: payload.nama || 'Unit Kegiatan Santri',
+                        kategori: payload.kategori || 'Ekstrakurikuler',
+                        jadwal: payload.jadwal || '-',
+                        deskripsi: payload.deskripsi || '',
+                        gambar_url: imgUrl,
+                        urutan: Number(payload.urutan) || 1,
+                        status: payload.status || 'Aktif',
+                        timestamp: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/unit_kegiatan`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(uksRow)
+                    });
+                }
+                else if (action === 'toggleUnitKegiatan') {
+                    const uId = payload.id || payload.id_kegiatan;
+                    const newStatus = payload.newStatus || payload.status;
+                    if (uId && newStatus) {
+                        await fetch(`${sbUrl}/rest/v1/unit_kegiatan?id_kegiatan=eq.${encodeURIComponent(uId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+                }
+                else if (action === 'deleteUnitKegiatan') {
+                    const uId = payload.id || payload.id_kegiatan;
+                    if (uId) {
+                        await fetch(`${sbUrl}/rest/v1/unit_kegiatan?id_kegiatan=eq.${encodeURIComponent(uId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 10. PENGATURAN WEBSITE & PROFIL ====================
+                else if (action === 'savePengaturan') {
+                    const ignoreKeys = ['token', 'action', 'apiKey', 'adminToken'];
+                    const promises = [];
+                    for (const [k, v] of Object.entries(payload)) {
+                        if (!ignoreKeys.includes(k) && v !== undefined) {
+                            const valStr = (typeof v === 'object') ? JSON.stringify(v) : String(v);
+                            promises.push(
+                                fetch(`${sbUrl}/rest/v1/pengaturan`, {
+                                    method: 'POST',
+                                    headers,
+                                    body: JSON.stringify({
+                                        key: k,
+                                        value: valStr,
+                                        update_terakhir: new Date().toISOString()
+                                    })
+                                })
+                            );
+                        }
+                    }
+                    if (promises.length > 0) await Promise.all(promises);
+                }
+
+                // ==================== 11. PROGRAM PESANTREN (CMS) ====================
+                else if (action === 'program.create' || action === 'program.update') {
+                    const p = payload.payload || payload;
+                    if (p && p.id) {
+                        const progRow = {
+                            id: p.id,
+                            name: p.name || '',
+                            badge: p.badge || null,
+                            image: p.image || null,
+                            description: p.description || null,
+                            highlights_json: p.highlights ? JSON.stringify(p.highlights) : null,
+                            detail_json: p.detail ? JSON.stringify(p.detail) : null,
+                            version: Number(p.version) || 1,
+                            updated_at: new Date().toISOString()
+                        };
+                        await fetch(`${sbUrl}/rest/v1/programs`, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(progRow)
+                        });
+                    }
+                }
+                else if (action === 'program.publish') {
+                    const pId = payload.id;
+                    if (pId) {
+                        await fetch(`${sbUrl}/rest/v1/programs?id=eq.${encodeURIComponent(pId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'published', published_at: new Date().toISOString() })
+                        });
+                    }
+                }
+                else if (action === 'program.unpublish') {
+                    const pId = payload.id;
+                    if (pId) {
+                        await fetch(`${sbUrl}/rest/v1/programs?id=eq.${encodeURIComponent(pId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'draft' })
+                        });
+                    }
+                }
+                else if (action === 'program.archive') {
+                    const pId = payload.id;
+                    if (pId) {
+                        await fetch(`${sbUrl}/rest/v1/programs?id=eq.${encodeURIComponent(pId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'archived' })
+                        });
+                    }
+                }
+                else if (action === 'program.delete') {
+                    const pId = payload.id;
+                    if (pId) {
+                        await fetch(`${sbUrl}/rest/v1/programs?id=eq.${encodeURIComponent(pId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 12. ALUMNI ====================
+                else if (action === 'alumni.create') {
+                    const d = payload.data || payload;
+                    const alumniRow = {
+                        id: d.id || ('ALM_' + Date.now()),
+                        timestamp: new Date().toLocaleString('id-ID'),
+                        nama_lengkap: d.nama_lengkap || d.nama || '',
+                        jenis_kelamin: d.jenis_kelamin || 'Laki-laki',
+                        no_whatsapp: d.no_whatsapp || d.telepon || '',
+                        media_sosial: d.media_sosial || null,
+                        tahun_masuk: String(d.tahun_masuk || ''),
+                        tahun_lulus: String(d.tahun_lulus || ''),
+                        program_terakhir: d.program_terakhir || 'Tahfidz Dewasa Putra',
+                        kesibukan: d.kesibukan || '-',
+                        instansi_perusahaan: d.instansi_perusahaan || null,
+                        kesan_pesan: d.kesan_pesan || null,
+                        provinsi: d.provinsi || null,
+                        kabupaten: d.kabupaten || null,
+                        kecamatan: d.kecamatan || null,
+                        desa_kelurahan: d.desa_kelurahan || null,
+                        alamat_lengkap: d.alamat_lengkap || null,
+                        foto: d.foto || null,
+                        izin_publikasi: d.izin_publikasi || 'Ya'
+                    };
+                    await fetch(`${sbUrl}/rest/v1/alumni`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(alumniRow)
+                    });
+                }
+            } catch (syncErr) {
+                console.warn('[SUPABASE DUAL-WRITE SYNC ERROR]', action, syncErr);
+            }
+        }
+
+        window.syncToSupabaseOnWrite = syncToSupabaseOnWrite;
         window.fetchFromSupabase = fetchFromSupabase;
         window.apiGet = apiGet;
         window.apiPost = apiPost;

@@ -128,7 +128,11 @@ async function authApiPost(action, payload = {}) {
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
+    const resJson = await response.json();
+    if (resJson && (resJson.success || resJson.status === "success") && typeof window.syncToSupabaseOnWrite === "function") {
+        window.syncToSupabaseOnWrite(action, payload, resJson).catch(e => console.warn("[AUTH DUAL-WRITE CATCH]", e));
+    }
+    return resJson;
 }
 
 /**

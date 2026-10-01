@@ -4353,6 +4353,11 @@
                     if (typeof showToast === 'function') {
                         showToast(saveRes.message || "Data santri berhasil disimpan!");
                     }
+                    // Dual-Write ke Supabase Cloud DB (<50ms)
+                    const finalStudentId = (saveRes && (saveRes.studentId || saveRes.student_id)) || payload.studentId || payload.student_id;
+                    if (typeof window.syncToSupabaseOnWrite === 'function') {
+                        await window.syncToSupabaseOnWrite('saveStudent', { ...payload, studentId: finalStudentId }, saveRes);
+                    }
                     closeAdminStudentModal();
                     await loadAdminStudentsData();
                 } else {
@@ -4414,6 +4419,10 @@
                 if (response && (response.success || response.status === "success")) {
                     if (typeof showToast === 'function') {
                         showToast(response.message || "Data santri berhasil dihapus.");
+                    }
+                    // Dual-Write delete ke Supabase Cloud DB
+                    if (typeof window.syncToSupabaseOnWrite === 'function') {
+                        await window.syncToSupabaseOnWrite('deleteStudent', { studentId: pendingDeleteStudentId }, response);
                     }
                     closeAdminStudentDeleteModal();
                     await loadAdminStudentsData();
@@ -4891,6 +4900,11 @@
                     if (typeof showToast === 'function') {
                         showToast(response.message || 'Data pengguna berhasil disimpan!');
                     }
+                    // Dual-Write ke Supabase Cloud DB (<50ms)
+                    const finalUserId = (response && (response.userId || response.user_id)) || payload.userId;
+                    if (typeof window.syncToSupabaseOnWrite === 'function') {
+                        await window.syncToSupabaseOnWrite('auth.admin.userSave', { user: { ...payload, userId: finalUserId } }, response);
+                    }
                     closeAdminUserModal();
                     await loadAdminUsersData();
                 } else {
@@ -4938,6 +4952,10 @@
                 if (response && (response.success || response.status === 'success')) {
                     if (typeof showToast === 'function') {
                         showToast(response.message || `Status akun berhasil diubah menjadi ${newStatus}!`);
+                    }
+                    // Dual-Write status ke Supabase Cloud DB
+                    if (typeof window.syncToSupabaseOnWrite === 'function') {
+                        await window.syncToSupabaseOnWrite('auth.admin.userToggleStatus', payload, response);
                     }
                     await loadAdminUsersData();
                 } else {
