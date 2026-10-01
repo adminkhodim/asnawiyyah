@@ -132,8 +132,40 @@
                     if (!res.ok) return null;
                     const rows = await res.json();
                     return {
+                        success: true,
                         status: "success",
-                        data: rows
+                        data: rows.map(p => ({
+                            id: p.id,
+                            name: p.name,
+                            badge: p.badge,
+                            image: p.image,
+                            description: p.description,
+                            highlights: p.highlights || p.highlights_json || [],
+                            detail: p.detail || p.detail_json || {}
+                        }))
+                    };
+                }
+
+                if (action === "program.getPublished") {
+                    const progId = params.id || "";
+                    if (!progId) return null;
+                    const res = await fetch(`${sbUrl}/rest/v1/programs?id=eq.${encodeURIComponent(progId)}&status=eq.published`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    if (!rows || rows.length === 0) return null;
+                    const p = rows[0];
+                    return {
+                        success: true,
+                        status: "success",
+                        data: {
+                            id: p.id,
+                            name: p.name,
+                            badge: p.badge,
+                            image: p.image,
+                            description: p.description,
+                            highlights: p.highlights || p.highlights_json || [],
+                            detail: p.detail || p.detail_json || {}
+                        }
                     };
                 }
 

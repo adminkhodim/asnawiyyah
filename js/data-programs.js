@@ -9,7 +9,7 @@
                 headerBadge: "Usia Sekolah Dasar / MI (6 – 12 Tahun)",
                 headerTheme: "from-brand-900 via-brand-800 to-emerald-800",
                 headerIcon: "fa-child-reaching",
-                image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop",
+                image: "https://lh3.googleusercontent.com/d/1l280gY9U9eiO-OESa5DcHPjpn-MQYZ6R",
                 description: "Pembentukan karakter dan hafalan Al-Qur'an sejak dini dengan metode fun & intensif.",
                 highlights: [
                     "Target Hafalan 5–10 Juz",
@@ -138,7 +138,7 @@
                 headerBadge: "Lulusan SMA / MA / Mahasiswa / Umum (Dewasa)",
                 headerTheme: "from-brand-900 via-brand-800 to-emerald-800",
                 headerIcon: "fa-user-graduate",
-                image: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop",
+                image: "https://lh3.googleusercontent.com/d/1_9gm7iF-CTQuAhKzlNYFgBMAUGX_nHbK",
                 description: "Pendalaman kitab kuning, tahsin Al-Qur'an, dan kajian syariah intensif khusus santri putra.",
                 highlights: [
                     "Ijazah Sanad Tahfidz & Formal",
@@ -268,7 +268,7 @@
                 headerTheme: "from-brand-900 via-brand-800 to-purple-950",
                 headerIcon: "fa-person-dress",
                 headerCategoryColor: "text-purple-700",
-                image: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop",
+                image: "https://lh3.googleusercontent.com/d/1Hf--veEYd3rxdHwllKeTnT7t6Pavybi_",
                 description: "Program tahfidz, fikih wanita, dan pendalaman ilmu syariah dalam lingkungan asrama putri yang asri.",
                 highlights: [
                     "Kompleks Asrama Khusus & Asri",
@@ -398,7 +398,7 @@
                 headerTheme: "from-blue-900 via-blue-800 to-cyan-800",
                 headerIcon: "fa-school",
                 headerCategoryColor: "text-blue-700",
-                image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop",
+                image: "https://lh3.googleusercontent.com/d/1pn50ler2HwOEk46eXlTvUVlTxXai_R9s",
                 description: "Pendidikan dasar unggulan memadukan kurikulum nasional dan nilai-nilai Al-Qur'an.",
                 highlights: [
                     "Kurikulum Terintegrasi",

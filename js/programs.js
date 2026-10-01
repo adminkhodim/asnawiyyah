@@ -87,17 +87,24 @@
                     throw new Error("Format respons API tidak valid");
                 }
 
-                if (response.success !== true) {
+                if (response.success !== true && response.status !== "success") {
                     const errObj = response.error || {};
                     const errCode = errObj.code || "SERVER_ERROR";
                     const errMsg = errObj.message || "Gagal memuat data program dari server.";
                     throw new Error(`[${errCode}] ${errMsg}`);
                 }
 
-                const data = response.data;
-                if (!Array.isArray(data) || data.length === 0) {
+                const rawList = response.data;
+                if (!Array.isArray(rawList) || rawList.length === 0) {
                     throw new Error("Data program dari server kosong");
                 }
+
+                // Normalize items so highlights and detail are always present
+                const data = rawList.map(prog => ({
+                    ...prog,
+                    highlights: Array.isArray(prog.highlights) ? prog.highlights : (Array.isArray(prog.highlights_json) ? prog.highlights_json : []),
+                    detail: (prog.detail && typeof prog.detail === 'object') ? prog.detail : (prog.detail_json || {})
+                }));
 
                 // Validate payload contract items (Fail-Closed per item)
                 for (let idx = 0; idx < data.length; idx++) {
