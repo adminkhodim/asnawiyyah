@@ -8227,22 +8227,22 @@
                     <!-- 4 Strip Stat Cards (Matches Screenshot 5) -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CAPAIAN SAAT INI</span>
-                        <div id="tahfidz-detail-stat-capaian" class="text-sm font-black text-emerald-600 dark:text-emerald-400">Juz 1 <span class="text-xs font-bold text-slate-400">(3%)</span></div>
+                            <span id="tahfidz-detail-lbl-capaian" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">CAPAIAN JUZ SEKARANG</span>
+                            <div id="tahfidz-detail-stat-capaian" class="text-sm font-black text-emerald-600 dark:text-emerald-400">Juz 1 <span class="text-xs font-bold text-slate-400">(3%)</span></div>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                            <span id="tahfidz-detail-lbl-target" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">JUMLAH JUZ DISETOR</span>
+                            <div id="tahfidz-detail-stat-target" class="text-sm font-black text-amber-500 dark:text-amber-400">-</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                            <span id="tahfidz-detail-lbl-total" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">ESTIMASI KHATAM</span>
+                            <div id="tahfidz-detail-stat-total" class="text-sm font-black text-slate-800 dark:text-slate-100">Memuat...</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
+                            <span id="tahfidz-detail-lbl-nilai" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">RATA-RATA NILAI</span>
+                            <div id="tahfidz-detail-stat-nilai" class="text-sm font-black text-emerald-600 dark:text-emerald-400">-</div>
+                        </div>
                     </div>
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">TARGET CAPAIAN</span>
-                        <div id="tahfidz-detail-stat-target" class="text-sm font-black text-amber-500 dark:text-amber-400">-</div>
-                    </div>
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">TOTAL SETORAN</span>
-                        <div id="tahfidz-detail-stat-total" class="text-sm font-black text-slate-800 dark:text-slate-100">2 Kali</div>
-                    </div>
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-200/70 dark:border-[#253447] text-center space-y-0.5">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">RATA-RATA NILAI</span>
-                        <div id="tahfidz-detail-stat-nilai" class="text-sm font-black text-emerald-600 dark:text-emerald-400">-</div>
-                    </div>
-                </div>
 
                 <!-- Progress Hafalan 30 Juz Bar -->
                 <div class="space-y-1">
@@ -8622,12 +8622,12 @@
 
             <!-- Modal Footer (Matches Screenshot 5) -->
             <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
-                <div class="flex items-center space-x-2">
-                    <button type="button" onclick="openTahfidzCatatModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                <div id="tahfidz-detail-action-buttons" class="flex items-center space-x-2">
+                    <button type="button" id="btn-tahfidz-detail-catat-setoran" onclick="openTahfidzCatatModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
                         <i class="fa-solid fa-plus text-[10px]"></i><i class="fa-solid fa-plus text-[10px] -ml-1"></i>
                         <span>+ Setor Baru</span>
                     </button>
-                    <button type="button" onclick="openTahfidzTargetModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-3.5 py-2 bg-white hover:bg-slate-100 dark:bg-[#15202d] dark:hover:bg-[#1c2836] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition border border-slate-200 dark:border-[#283a4e] flex items-center gap-1.5 active:scale-95">
+                    <button type="button" id="btn-tahfidz-detail-edit-target" onclick="openTahfidzTargetModal(ASNTahfidz.activeStudentDetail?.student?.studentId)" class="px-3.5 py-2 bg-white hover:bg-slate-100 dark:bg-[#15202d] dark:hover:bg-[#1c2836] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition border border-slate-200 dark:border-[#283a4e] flex items-center gap-1.5 active:scale-95">
                         <i class="fa-solid fa-pencil text-[10px]"></i>
                         <span>Edit Target</span>
                     </button>

@@ -273,6 +273,123 @@ function getCurriculumProgress(juz, hal) {
 }
 
 /**
+ * Helper Terpadu KPI Tahfidz:
+ * Menghitung Capaian Juz Sekarang, Jumlah Juz Disetor, dan Estimasi Khatam
+ * Digunakan secara konsisten baik di Kartu Ringkasan Santri (luar) maupun di Buku Mutaba'ah Lengkap (dalam).
+ */
+function calculateTahfidzMetricsHelper(options = {}) {
+    const currentJuz = Number(options.currentJuz || 30);
+    const currentHal = Number(options.currentHal || 1);
+    const stats = options.stats || {};
+    const riwayat = options.riwayat || [];
+    const target = options.target || {};
+
+    // 1. Capaian Juz Sekarang
+    const curProg = getCurriculumProgress(currentJuz, currentHal);
+    const percent = stats.progressPercent || curProg.percent;
+
+    // 2. Jumlah Juz Disetor
+    let totalHalamanDisetor = 0;
+    const setoranJuzSet = new Set();
+    const ziyadahLogs = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH' && r.statusSetoran !== 'ULANG');
+
+    if (riwayat.length > 0) {
+        riwayat.forEach(r => {
+            if (r.juz) setoranJuzSet.add(Number(r.juz));
+            totalHalamanDisetor += Number(r.totalHalaman || 1);
+        });
+    }
+
+    let jumlahJuzDisetorText = "";
+    if (stats.jumlahJuzDisetorText) {
+        jumlahJuzDisetorText = stats.jumlahJuzDisetorText;
+    } else if (setoranJuzSet.size > 0) {
+        jumlahJuzDisetorText = `${setoranJuzSet.size} Juz`;
+    } else {
+        const estJuz = Math.max(1, Math.round((curProg.totalTuntas || 20) / 20));
+        jumlahJuzDisetorText = `${estJuz} Juz`;
+    }
+
+    // 3. Estimasi Khatam (Bulan & Tahun)
+    let halamanTuntas = stats.totalHalamanTuntas || curProg.totalTuntas;
+    if (ziyadahLogs.length > 0) {
+        let maxRankZiyadah = -1;
+        let maxHlmZiyadah = 1;
+        ziyadahLogs.forEach(log => {
+            const j = Number(log.juz || 30);
+            const rk = getJuzCurriculumIndex(j);
+            const h = parseInt(String(log.halamanList || '1').replace(/\D+/g, '')) || 1;
+            if (rk > maxRankZiyadah || (rk === maxRankZiyadah && h > maxHlmZiyadah)) {
+                maxRankZiyadah = rk;
+                maxHlmZiyadah = h;
+            }
+        });
+        const calcFromLogs = maxRankZiyadah * 20 + maxHlmZiyadah;
+        if (calcFromLogs > halamanTuntas) {
+            halamanTuntas = calcFromLogs;
+        }
+    }
+
+    if (halamanTuntas > 600) halamanTuntas = 600;
+    const sisaHalaman = Math.max(0, 600 - halamanTuntas);
+
+    let lajuPekanRiil = 0;
+    if (ziyadahLogs.length >= 2) {
+        const sortedLogs = [...ziyadahLogs].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+        const firstDate = new Date(sortedLogs[0].tanggal);
+        const lastDate = new Date(sortedLogs[sortedLogs.length - 1].tanggal);
+        const diffDays = Math.max(1, Math.round((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+        const totalHlm = sortedLogs.reduce((sum, item) => sum + (Number(item.totalHalaman) || 1), 0);
+
+        if (diffDays >= 7) {
+            lajuPekanRiil = (totalHlm / (diffDays / 7));
+        } else {
+            lajuPekanRiil = totalHlm;
+        }
+    } else if (ziyadahLogs.length === 1) {
+        lajuPekanRiil = Number(ziyadahLogs[0].totalHalaman) || 2;
+    }
+
+    const targetSantriPekan = Number(target.ziyadahPekan) || 4;
+    let lajuEfektif = (lajuPekanRiil >= 0.5) ? lajuPekanRiil : targetSantriPekan;
+    lajuEfektif = Math.max(0.5, lajuEfektif);
+
+    const namaBulanIndo = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    let estimasiKhatamText = "";
+    let estimasiSubText = "";
+
+    if (sisaHalaman <= 0) {
+        estimasiKhatamText = "Khatam 30 Juz 🏆";
+        estimasiSubText = "Tuntas 600 Halaman";
+    } else {
+        const safeRate = Math.max(0.5, lajuEfektif);
+        const weeksNeeded = sisaHalaman / safeRate;
+        const projDate = new Date();
+        projDate.setDate(projDate.getDate() + Math.round(weeksNeeded * 7));
+        const bulanName = namaBulanIndo[projDate.getMonth()];
+        const tahun = projDate.getFullYear();
+        const durasiBulan = Math.max(1, Math.round(weeksNeeded / 4.33));
+        estimasiKhatamText = `${bulanName} ${tahun}`;
+        estimasiSubText = `± ${durasiBulan} Bulan lagi`;
+    }
+
+    return {
+        currentJuzText: `Juz ${currentJuz}`,
+        percent: percent,
+        percentText: `${percent}% Juz`,
+        jumlahJuzDisetorText: jumlahJuzDisetorText,
+        estimasiKhatamText: estimasiKhatamText,
+        estimasiSubText: estimasiSubText,
+        totalHalamanTuntas: halamanTuntas,
+        sisaHalaman: sisaHalaman
+    };
+}
+
+/**
  * Mendapatkan rekomendasi juz dan halaman berikutnya berdasarkan kurikulum
  */
 function getNextCurriculumPosition(juz, hal) {
@@ -2030,6 +2147,19 @@ async function openTahfidzStudentDetail(studentId, viewerRole = null) {
     if (errorBox) errorBox.classList.add('hidden');
     if (bodyBox) bodyBox.classList.add('hidden');
 
+    // Pastikan tombol aksi (+ Setor & Edit Target) disembunyikan segera jika peran adalah wali santri
+    const btnSetorInit = document.getElementById('btn-tahfidz-detail-catat-setoran');
+    const btnEditTargetInit = document.getElementById('btn-tahfidz-detail-edit-target');
+    const isParentRoleInit = ASNTahfidz.viewerRole === 'parent';
+    if (btnSetorInit) {
+        if (isParentRoleInit) btnSetorInit.classList.add('hidden');
+        else btnSetorInit.classList.remove('hidden');
+    }
+    if (btnEditTargetInit) {
+        if (isParentRoleInit) btnEditTargetInit.classList.add('hidden');
+        else btnEditTargetInit.classList.remove('hidden');
+    }
+
     // Pre-populate student header if available in memory for instant feedback
     const existingStudent = (ASNTahfidz.data.students || []).find(s => {
         const sId = String(s.studentId || s.student_id || s.id || '').trim();
@@ -2400,20 +2530,50 @@ function renderTahfidzStudentDetailView() {
         elAvatar.innerHTML = st.photoUrl ? `<img src="${escapeHtml(st.photoUrl)}" class="w-full h-full object-cover rounded-2xl">` : initials;
     }
 
-    // 4 Strip Stat Cards (Screenshot 5)
+    // 4 Strip Stat Cards (Selaras antara luar dan dalam)
     const elCapaian = document.getElementById('tahfidz-detail-stat-capaian');
     const elTarget = document.getElementById('tahfidz-detail-stat-target');
     const elTotal = document.getElementById('tahfidz-detail-stat-total');
     const elNilai = document.getElementById('tahfidz-detail-stat-nilai');
 
     const curJuzNo = Number(stats.progressJuz || st.progress?.currentJuz || 30);
+    const curHalNo = Number(stats.progressHalaman || st.progress?.currentHalaman || 1);
     const curJuzIdx = stats.curriculumJuzIndex || (getJuzCurriculumIndex(curJuzNo) + 1);
-    const curPercent = stats.progressPercent || getCurriculumProgress(curJuzNo, stats.progressHalaman || 1).percent;
 
-    if (elCapaian) elCapaian.innerHTML = `Juz ${curJuzNo} <span class="text-xs font-bold text-slate-400">(${curPercent}%)</span>`;
-    if (elTarget) elTarget.innerText = stats.targetCapaian || "-";
-    if (elTotal) elTotal.innerText = `${riwayat.length || stats.totalSetoran || 0} Kali`;
+    const unifiedMetrics = calculateTahfidzMetricsHelper({
+        currentJuz: curJuzNo,
+        currentHal: curHalNo,
+        stats: stats,
+        riwayat: res.riwayat || [],
+        target: res.target || st.target || {}
+    });
+
+    const curPercent = unifiedMetrics.percent;
+
+    if (elCapaian) elCapaian.innerHTML = `${unifiedMetrics.currentJuzText} <span class="text-xs font-bold text-slate-400">(${curPercent}%)</span>`;
+    if (elTarget) elTarget.innerText = unifiedMetrics.jumlahJuzDisetorText || "1 Juz";
+    if (elTotal) elTotal.innerText = unifiedMetrics.estimasiKhatamText || "-";
     if (elNilai) elNilai.innerText = stats.rataRataNilai || "-";
+
+    // Kontrol Visibilitas Tombol untuk Akun Wali Santri (+ Setor & Edit Target disembunyikan)
+    const btnSetor = document.getElementById('btn-tahfidz-detail-catat-setoran');
+    const btnEditTarget = document.getElementById('btn-tahfidz-detail-edit-target');
+    const isParentRole = ASNTahfidz.viewerRole === 'parent';
+
+    if (btnSetor) {
+        if (isParentRole) {
+            btnSetor.classList.add('hidden');
+        } else {
+            btnSetor.classList.remove('hidden');
+        }
+    }
+    if (btnEditTarget) {
+        if (isParentRole) {
+            btnEditTarget.classList.add('hidden');
+        } else {
+            btnEditTarget.classList.remove('hidden');
+        }
+    }
 
     // Progress Bar 30 Juz
     const elProgressText = document.getElementById('tahfidz-detail-progress-text');

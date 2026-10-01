@@ -954,11 +954,31 @@ const ASNIdentity = {
             const lastSurah = (tahfidz.lastSetoran && tahfidz.lastSetoran.surah) ? tahfidz.lastSetoran.surah : 'Aktif Bimbingan';
             const studentQrCode = s.qrCode || s.qr_code || ('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(studentNis || studentId));
 
+            // Helper kalkulasi metrik terpadu untuk outer card
+            let outerMetrics = {
+                currentJuzText: `Juz ${currentJuz}`,
+                percent: percent,
+                percentText: `${percent}% Juz`,
+                jumlahJuzDisetorText: tahfidz.jumlahJuzDisetorText || `${tahfidz.totalSetoranJuz || (currentJuz > 1 ? currentJuz : 1)} Juz`,
+                estimasiKhatamText: tahfidz.estimasiKhatamText || "Memuat...",
+                estimasiSubText: tahfidz.estimasiSubText || "Proyeksi 30 Juz"
+            };
+
+            if (typeof calculateTahfidzMetricsHelper === 'function') {
+                outerMetrics = calculateTahfidzMetricsHelper({
+                    currentJuz: currentJuz,
+                    currentHal: tahfidz.progressHalaman || 1,
+                    stats: tahfidz,
+                    riwayat: tahfidz.riwayat || [],
+                    target: { ziyadahPekan: tahfidz.ziyadahPekan || 4 }
+                });
+            }
+
             // Monogram Initials Fallback
             const initials = studentName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'ST';
 
-            // Trigger client-side real-data enrichment if tahfidzSummary is not yet present
-            if (!s.tahfidzSummary) {
+            // Trigger client-side real-data enrichment if tahfidzSummary is not yet present or needs live hydration
+            if (!s.tahfidzSummary || !s.tahfidzSummary.estimasiKhatamText) {
                 setTimeout(() => {
                     ASNIdentity.enrichTahfidzDataForStudent(studentId, cleanId);
                 }, 100 * (idx + 1));
@@ -1052,27 +1072,27 @@ const ASNIdentity = {
                         </span>
                     </div>
 
-                    <!-- 3 Metrik Box -->
+                    <!-- 3 Metrik Box KPI Terpadu: Capaian Juz Sekarang, Jumlah Juz Disetor, Estimasi Khatam -->
                     <div class="grid grid-cols-3 gap-2 text-center">
-                        <!-- 1. Capaian Juz -->
+                        <!-- 1. Capaian Juz Sekarang -->
                         <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-400 font-medium">Capaian</span>
-                            <span class="text-xs sm:text-sm font-extrabold text-amber-300 mt-0.5" id="kts-juz-${cleanId}">Juz ${currentJuz}</span>
-                            <span class="text-[8px] text-emerald-400 mt-0.5 font-bold" id="kts-percent-${cleanId}">${percent}% Juz</span>
+                            <span class="text-[9px] text-slate-400 font-medium">Capaian Juz Sekarang</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-amber-300 mt-0.5" id="kts-juz-${cleanId}">${outerMetrics.currentJuzText}</span>
+                            <span class="text-[8px] text-emerald-400 mt-0.5 font-bold" id="kts-percent-${cleanId}">${outerMetrics.percentText}</span>
                         </div>
 
-                        <!-- 2. Target Pekanan -->
+                        <!-- 2. Jumlah Juz Disetor -->
                         <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-400 font-medium">Target Pekan</span>
-                            <span class="text-xs sm:text-sm font-extrabold text-white mt-0.5" id="kts-target-${cleanId}">${targetPekan} Hlm</span>
-                            <span class="text-[8px] text-slate-400 mt-0.5">Ziyadah/Muraja'ah</span>
+                            <span class="text-[9px] text-slate-400 font-medium">Jumlah Juz Disetor</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-white mt-0.5" id="kts-juz-disetor-${cleanId}">${outerMetrics.jumlahJuzDisetorText}</span>
+                            <span class="text-[8px] text-slate-400 mt-0.5">Tuntas Disetorkan</span>
                         </div>
 
-                        <!-- 3. Nilai / Setoran Terakhir -->
+                        <!-- 3. Estimasi Khatam -->
                         <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-400 font-medium">Nilai Terakhir</span>
-                            <span class="text-xs sm:text-sm font-extrabold text-emerald-400 mt-0.5 truncate" id="kts-nilai-${cleanId}">${escapeHtml(avgNilai)}</span>
-                            <span class="text-[8px] text-slate-400 mt-0.5 truncate" id="kts-surah-${cleanId}">${escapeHtml(lastSurah)}</span>
+                            <span class="text-[9px] text-slate-400 font-medium">Estimasi Khatam</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-emerald-400 mt-0.5 truncate" id="kts-estimasi-khatam-${cleanId}">${outerMetrics.estimasiKhatamText}</span>
+                            <span class="text-[8px] text-slate-400 mt-0.5 truncate" id="kts-estimasi-sub-${cleanId}">${outerMetrics.estimasiSubText}</span>
                         </div>
                     </div>
 
@@ -1119,21 +1139,43 @@ const ASNIdentity = {
                 const stats = res.stats || {};
                 const target = res.target || {};
                 const currentJuz = stats.progressJuz || 1;
-                const percent = stats.progressPercent || Math.round((currentJuz / 30) * 100);
-                const targetPekan = (target.ziyadahPekan || 10) + (target.murajaahPekan || 10);
-                const avgNilai = stats.rataRataNilai || "Mumtaz (A)";
-                const lastLog = (res.riwayat && res.riwayat.length > 0) ? res.riwayat[0] : null;
+                const currentHal = stats.progressHalaman || 1;
+                const riwayat = res.riwayat || [];
+
+                let metrics = {
+                    currentJuzText: `Juz ${currentJuz}`,
+                    percent: stats.progressPercent || Math.round((currentJuz / 30) * 100),
+                    percentText: `${stats.progressPercent || Math.round((currentJuz / 30) * 100)}% Juz`,
+                    jumlahJuzDisetorText: "1 Juz",
+                    estimasiKhatamText: "September 2029",
+                    estimasiSubText: "Proyeksi 30 Juz"
+                };
+
+                if (typeof calculateTahfidzMetricsHelper === 'function') {
+                    metrics = calculateTahfidzMetricsHelper({
+                        currentJuz: currentJuz,
+                        currentHal: currentHal,
+                        stats: stats,
+                        riwayat: riwayat,
+                        target: target
+                    });
+                }
+
+                const percent = metrics.percent;
 
                 const elJuz = document.getElementById(`kts-juz-${cleanId}`);
-                if (elJuz) elJuz.innerText = `Juz ${currentJuz}`;
+                if (elJuz) elJuz.innerText = metrics.currentJuzText;
                 const elPercent = document.getElementById(`kts-percent-${cleanId}`);
-                if (elPercent) elPercent.innerText = `${percent}% Juz`;
-                const elTarget = document.getElementById(`kts-target-${cleanId}`);
-                if (elTarget) elTarget.innerText = `${targetPekan} Hlm`;
-                const elNilai = document.getElementById(`kts-nilai-${cleanId}`);
-                if (elNilai) elNilai.innerText = avgNilai;
-                const elSurah = document.getElementById(`kts-surah-${cleanId}`);
-                if (elSurah) elSurah.innerText = lastLog ? (lastLog.surah || `Juz ${lastLog.juz}`) : "Aktif";
+                if (elPercent) elPercent.innerText = metrics.percentText;
+                
+                const elDisetor = document.getElementById(`kts-juz-disetor-${cleanId}`);
+                if (elDisetor) elDisetor.innerText = metrics.jumlahJuzDisetorText;
+                
+                const elEstimasi = document.getElementById(`kts-estimasi-khatam-${cleanId}`);
+                if (elEstimasi) elEstimasi.innerText = metrics.estimasiKhatamText;
+                const elEstimasiSub = document.getElementById(`kts-estimasi-sub-${cleanId}`);
+                if (elEstimasiSub) elEstimasiSub.innerText = metrics.estimasiSubText;
+
                 const elBarLabel = document.getElementById(`kts-bar-label-${cleanId}`);
                 if (elBarLabel) elBarLabel.innerText = `Juz ${currentJuz} dari 30 Juz (${percent}%)`;
                 const elBar = document.getElementById(`kts-bar-${cleanId}`);
@@ -1181,12 +1223,15 @@ const ASNIdentity = {
                             if (res.student && res.student.photoUrl) targetSt.photoUrl = res.student.photoUrl;
                             targetSt.tahfidzSummary = {
                                 currentJuz,
+                                progressHalaman: currentHal,
                                 percent,
-                                targetPekan,
-                                avgNilai,
+                                jumlahJuzDisetorText: metrics.jumlahJuzDisetorText,
+                                estimasiKhatamText: metrics.estimasiKhatamText,
+                                estimasiSubText: metrics.estimasiSubText,
+                                avgNilai: stats.rataRataNilai || "Mumtaz",
                                 halaqah: hName || targetSt.halaqah || "Belum Terplot",
                                 muhafiz: mName || targetSt.muhafiz || "Menunggu Jadwal",
-                                lastSetoran: lastLog ? { surah: lastLog.surah, nilai: lastLog.nilai } : null
+                                lastSetoran: (riwayat && riwayat.length > 0) ? { surah: riwayat[0].surah, nilai: riwayat[0].nilai } : null
                             };
                             sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(cached));
                             localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(cached));
