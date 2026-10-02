@@ -2359,7 +2359,38 @@
                     return;
                 }
 
-                adminProgramData = Array.isArray(response.data) ? response.data : [];
+                const rawAdminData = Array.isArray(response.data) ? response.data : [];
+                adminProgramData = rawAdminData.map(p => {
+                    let highlights = p.highlights;
+                    if (typeof highlights === 'string') {
+                        try { highlights = JSON.parse(highlights); } catch(e) { highlights = []; }
+                    }
+                    if (!Array.isArray(highlights)) {
+                        let hJson = p.highlights_json;
+                        if (typeof hJson === 'string') {
+                            try { hJson = JSON.parse(hJson); } catch(e) { hJson = []; }
+                        }
+                        highlights = Array.isArray(hJson) ? hJson : [];
+                    }
+
+                    let detail = p.detail;
+                    if (typeof detail === 'string') {
+                        try { detail = JSON.parse(detail); } catch(e) { detail = null; }
+                    }
+                    if (!detail || typeof detail !== 'object') {
+                        let dJson = p.detail_json;
+                        if (typeof dJson === 'string') {
+                            try { dJson = JSON.parse(dJson); } catch(e) { dJson = null; }
+                        }
+                        detail = (dJson && typeof dJson === 'object') ? dJson : {};
+                    }
+
+                    return {
+                        ...p,
+                        highlights,
+                        detail
+                    };
+                });
 
                 if (hubCount) hubCount.innerText = `${adminProgramData.length} Program`;
                 if (countBadge) countBadge.innerText = `${adminProgramData.length} Program`;
@@ -2981,7 +3012,14 @@
                 document.getElementById('admin-prog-badge').value = existing.badge || "";
                 document.getElementById('admin-prog-name').value = existing.name || "";
                 document.getElementById('admin-prog-desc').value = existing.description || "";
-                document.getElementById('admin-prog-highlights').value = Array.isArray(existing.highlights) ? existing.highlights.join('\n') : "";
+                let hl = existing.highlights;
+                if (typeof hl === 'string') {
+                    try { hl = JSON.parse(hl); } catch(e) { hl = []; }
+                }
+                if (!Array.isArray(hl) && existing.highlights_json) {
+                    try { hl = JSON.parse(existing.highlights_json); } catch(e) { hl = []; }
+                }
+                document.getElementById('admin-prog-highlights').value = Array.isArray(hl) ? hl.join('\n') : "";
                 document.getElementById('admin-prog-image').value = existing.image || "";
 
                 // Cover Preview
@@ -3002,7 +3040,17 @@
                     if (coverStatus) coverStatus.classList.add('hidden');
                 }
 
-                const d = existing.detail || {};
+                let d = existing.detail;
+                if (typeof d === 'string') {
+                    try { d = JSON.parse(d); } catch (e) { d = null; }
+                }
+                if (!d || typeof d !== 'object') {
+                    let dJson = existing.detail_json;
+                    if (typeof dJson === 'string') {
+                        try { dJson = JSON.parse(dJson); } catch (e) { dJson = null; }
+                    }
+                    d = (dJson && typeof dJson === 'object') ? dJson : {};
+                }
                 document.getElementById('admin-prog-tagline').value = d.tagline || "";
                 document.getElementById('admin-prog-summary').value = d.summary || "";
                 document.getElementById('admin-prog-video').value = d.video || "";

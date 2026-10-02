@@ -99,12 +99,38 @@
                     throw new Error("Data program dari server kosong");
                 }
 
-                // Normalize items so highlights and detail are always present
-                const data = rawList.map(prog => ({
-                    ...prog,
-                    highlights: Array.isArray(prog.highlights) ? prog.highlights : (Array.isArray(prog.highlights_json) ? prog.highlights_json : []),
-                    detail: (prog.detail && typeof prog.detail === 'object') ? prog.detail : (prog.detail_json || {})
-                }));
+                // Normalize items so highlights and detail are always present and parsed
+                const data = rawList.map(prog => {
+                    let highlights = prog.highlights;
+                    if (typeof highlights === 'string') {
+                        try { highlights = JSON.parse(highlights); } catch(e) { highlights = []; }
+                    }
+                    if (!Array.isArray(highlights)) {
+                        let hJson = prog.highlights_json;
+                        if (typeof hJson === 'string') {
+                            try { hJson = JSON.parse(hJson); } catch(e) { hJson = []; }
+                        }
+                        highlights = Array.isArray(hJson) ? hJson : [];
+                    }
+
+                    let detail = prog.detail;
+                    if (typeof detail === 'string') {
+                        try { detail = JSON.parse(detail); } catch(e) { detail = null; }
+                    }
+                    if (!detail || typeof detail !== 'object') {
+                        let dJson = prog.detail_json;
+                        if (typeof dJson === 'string') {
+                            try { dJson = JSON.parse(dJson); } catch(e) { dJson = null; }
+                        }
+                        detail = (dJson && typeof dJson === 'object') ? dJson : {};
+                    }
+
+                    return {
+                        ...prog,
+                        highlights,
+                        detail
+                    };
+                });
 
                 // Validate payload contract items (Fail-Closed per item)
                 for (let idx = 0; idx < data.length; idx++) {
@@ -254,9 +280,30 @@
                 const pageEl = document.getElementById(`page-${prog.id}`);
                 if (!pageEl) return;
 
-                const d = prog.detail;
+                let d = prog.detail;
+                if (typeof d === 'string') {
+                    try { d = JSON.parse(d); } catch (e) { d = {}; }
+                }
+                if (!d || typeof d !== 'object') d = {};
+
+                const localFallback = (Array.isArray(PROGRAM_DATA) ? PROGRAM_DATA.find(p => p.id === prog.id) : null) || {};
+                const fbDetail = (localFallback.detail && typeof localFallback.detail === 'object') ? localFallback.detail : {};
+
                 const theme = getProgramUiTheme(prog);
                 const categoryColor = theme.headerCategoryColor;
+
+                const tagline = d.tagline || fbDetail.tagline || '';
+                const summary = d.summary || fbDetail.summary || '';
+                const videoUrl = d.video || fbDetail.video || '';
+                const videoTitle = d.videoTitle || fbDetail.videoTitle || (prog.name ? `Video Profil ${prog.name}` : 'Video Profil Kegiatan');
+                const keunggulanList = (Array.isArray(d.keunggulan) && d.keunggulan.length > 0) ? d.keunggulan : (Array.isArray(fbDetail.keunggulan) ? fbDetail.keunggulan : []);
+                const targetOutputList = (Array.isArray(d.targetOutput) && d.targetOutput.length > 0) ? d.targetOutput : (Array.isArray(fbDetail.targetOutput) ? fbDetail.targetOutput : []);
+                const galleryList = (Array.isArray(d.gallery) && d.gallery.length > 0) ? d.gallery : (Array.isArray(fbDetail.gallery) ? fbDetail.gallery : []);
+                const fasilitasList = (Array.isArray(d.fasilitas) && d.fasilitas.length > 0) ? d.fasilitas : (Array.isArray(fbDetail.fasilitas) ? fbDetail.fasilitas : []);
+                const prosedurData = d.prosedur || fbDetail.prosedur || {};
+                const persyaratanList = (Array.isArray(d.persyaratan) && d.persyaratan.length > 0) ? d.persyaratan : (Array.isArray(fbDetail.persyaratan) ? fbDetail.persyaratan : []);
+                const biayaData = d.biaya || fbDetail.biaya || {};
+                const ctaData = d.cta || fbDetail.cta || {};
 
                 pageEl.innerHTML = `
                     <div class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-8">
@@ -285,17 +332,15 @@
                             </div>
                             <div class="relative z-10 space-y-2.5">
                                 <span class="${theme.pilihanBadgeStyle} text-[10px] font-extrabold px-3 py-1 rounded-full uppercase inline-block shadow">${theme.headerBadge}</span>
-                                <h1 class="text-xl md:text-3xl font-extrabold leading-tight">${prog.name}</h1>
-                                <p class="text-xs md:text-sm text-amber-300 font-semibold italic">
-                                    ${d.tagline}
-                                </p>
+                                <h1 class="text-xl md:text-3xl font-extrabold leading-tight">${escapeHtml(prog.name || '')}</h1>
+                                ${tagline ? `<p class="text-xs md:text-sm text-amber-300 font-semibold italic">${escapeHtml(tagline)}</p>` : ''}
                             </div>
                         </section>
 
                         <!-- B. DESKRIPSI SINGKAT PROGRAM -->
                         <section class="bg-slate-50 dark:bg-[#1c2836] p-5 rounded-2xl border border-slate-100 dark:border-[#253447]">
                             <p class="text-xs md:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                ${d.summary}
+                                ${summary || 'Informasi deskripsi program akan segera diperbarui.'}
                             </p>
                         </section>
 
@@ -305,7 +350,7 @@
                                 <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Video Profil Kegiatan
                             </h3>
                             <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md border border-slate-200 dark:border-[#253447] bg-black">
-                                <iframe class="w-full h-full" src="${(typeof formatYoutubeEmbedUrl === 'function') ? formatYoutubeEmbedUrl(d.video) : d.video}" title="${d.videoTitle}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                                <iframe class="w-full h-full" src="${(typeof formatYoutubeEmbedUrl === 'function') ? formatYoutubeEmbedUrl(videoUrl) : (videoUrl || 'https://www.youtube.com/embed/ZQZqPcAlrk0?rel=0')}" title="${escapeHtml(videoTitle)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                             </div>
                         </section>
 
@@ -315,13 +360,13 @@
                                 <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Keunggulan & Metode Pembelajaran
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                ${(d.keunggulan || []).map(k => `
+                                ${keunggulanList.map(k => `
                                     <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1.5">
                                         <div class="w-9 h-9 ${k.iconBg || 'bg-brand-100 text-brand-700'} rounded-xl flex items-center justify-center text-sm font-bold mb-2">
-                                            <i class="fa-solid ${k.icon}"></i>
+                                            <i class="fa-solid ${k.icon || 'fa-check'}"></i>
                                         </div>
-                                        <h4 class="text-sm md:text-lg font-bold text-slate-800 dark:text-slate-100">${k.title}</h4>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">${k.desc}</p>
+                                        <h4 class="text-sm md:text-lg font-bold text-slate-800 dark:text-slate-100">${escapeHtml(k.title || '')}</h4>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">${k.desc || ''}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -331,10 +376,10 @@
                         <section class="bg-emerald-700 text-white p-5 md:p-6 rounded-3xl shadow-sm space-y-4">
                             <h3 class="text-base font-bold text-center">Target Output Santri</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                                ${(d.targetOutput || []).map(out => `
+                                ${targetOutputList.map(out => `
                                     <div class="flex items-start space-x-3 bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
                                         <i class="fa-solid fa-square-check text-amber-400 mt-0.5 text-base shrink-0"></i>
-                                        <span>${out}</span>
+                                        <span>${escapeHtml(out || '')}</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -346,11 +391,11 @@
                                 <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Galeri Dokumentasi Kegiatan
                             </h3>
                             <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md bg-slate-900">
-                                <div id="${d.gallery && d.gallery[0] ? d.gallery[0].sliderId : 'galeri-1'}" class="w-full h-full relative">
-                                    <img src="${d.gallery && d.gallery[0] ? d.gallery[0].image : ''}" alt="${d.gallery && d.gallery[0] ? d.gallery[0].caption : ''}" class="absolute inset-0 w-full h-full object-cover">
+                                <div id="${galleryList[0]?.sliderId || `galeri-${prog.id}-1`}" class="w-full h-full relative">
+                                    <img src="${galleryList[0]?.image || prog.image || ''}" alt="${escapeHtml(galleryList[0]?.caption || prog.name || 'Dokumentasi Santri')}" class="absolute inset-0 w-full h-full object-cover">
                                 </div>
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4 md:p-6">
-                                    <p class="text-xs md:text-sm font-bold text-white"><i class="fa-solid fa-camera mr-2 text-amber-400"></i> ${d.gallery && d.gallery[0] ? d.gallery[0].caption : 'Dokumentasi Santri'}</p>
+                                    <p class="text-xs md:text-sm font-bold text-white"><i class="fa-solid fa-camera mr-2 text-amber-400"></i> ${escapeHtml(galleryList[0]?.caption || 'Dokumentasi Santri')}</p>
                                 </div>
                             </div>
                         </section>
@@ -361,10 +406,10 @@
                                 <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Fasilitas Santri
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                ${(d.fasilitas || []).map(f => `
+                                ${fasilitasList.map(f => `
                                     <div class="p-3.5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-center space-x-3">
-                                        <i class="${f.icon} ${f.iconColor || 'text-brand-700'} text-lg"></i>
-                                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">${f.text}</span>
+                                        <i class="${f.icon || 'fa-solid fa-check'} ${f.iconColor || 'text-brand-700'} text-lg"></i>
+                                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(f.text || '')}</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -375,15 +420,15 @@
                             <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 text-center">Prosedur Pendaftaran</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                                 <div class="space-y-3">
-                                    ${(d.prosedur?.items || []).map((p, idx) => `
+                                    ${(prosedurData.items || []).map((p, idx) => `
                                         <div class="flex items-start space-x-3">
                                             <i class="fa-solid fa-check text-brand-700 dark:text-emerald-400 font-bold text-sm mt-0.5 shrink-0"></i>
-                                            <p class="text-xs text-slate-700 dark:text-slate-200 ${idx === 0 ? 'font-semibold' : ''}">${p.title ? `${p.step ? `${p.step}. ` : ''}${p.title}: ${p.desc}` : p}</p>
+                                            <p class="text-xs text-slate-700 dark:text-slate-200 ${idx === 0 ? 'font-semibold' : ''}">${p.title ? `${p.step ? `${p.step}. ` : ''}${escapeHtml(p.title)}: ${escapeHtml(p.desc || '')}` : escapeHtml(String(p))}</p>
                                         </div>
                                     `).join('')}
                                 </div>
                                 <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-[#253447] aspect-[4/3]">
-                                    <img src="${d.prosedur?.image}" alt="${d.prosedur?.imageAlt || 'Prosedur PPDB'}" class="w-full h-full object-cover">
+                                    <img src="${prosedurData.image || prog.image}" alt="${escapeHtml(prosedurData.imageAlt || 'Prosedur PPDB')}" class="w-full h-full object-cover">
                                 </div>
                             </div>
                         </section>
@@ -392,14 +437,14 @@
                         <section class="space-y-4">
                             <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 text-center">Persyaratan Pendaftaran</h3>
                             <div class="space-y-3 max-w-2xl mx-auto">
-                                ${(d.persyaratan || []).map(req => `
+                                ${persyaratanList.map(req => `
                                     <div class="flex items-start space-x-4 p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447]">
                                         <div class="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center text-lg shrink-0">
                                             <i class="fa-solid ${req.icon || 'fa-check'}"></i>
                                         </div>
                                         <div>
-                                            <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100">${req.title}</h4>
-                                            <p class="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5">${req.desc}</p>
+                                            <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHtml(req.title || '')}</h4>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5">${escapeHtml(req.desc || '')}</p>
                                         </div>
                                     </div>
                                 `).join('')}
@@ -414,15 +459,15 @@
                                 <div class="bg-white dark:bg-[#1c2836] p-6 rounded-3xl border border-slate-200 dark:border-[#253447] shadow-sm space-y-4 text-center">
                                     <div>
                                         <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Biaya Pendaftaran</h4>
-                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">${d.biaya?.pendaftaran?.nominal}</div>
-                                        ${d.biaya?.pendaftaran?.note ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-1">${d.biaya?.pendaftaran?.note}</p>` : ''}
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">${escapeHtml(biayaData.pendaftaran?.nominal || 'Rp.0')}</div>
+                                        ${biayaData.pendaftaran?.note ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-1">${escapeHtml(biayaData.pendaftaran.note)}</p>` : ''}
                                     </div>
-                                    ${Array.isArray(d.biaya?.pendaftaran?.items) ? `
+                                    ${Array.isArray(biayaData.pendaftaran?.items) && biayaData.pendaftaran.items.length > 0 ? `
                                         <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100 dark:border-[#253447]">
-                                            ${(d.biaya?.pendaftaran?.items || []).map(item => `
+                                            ${biayaData.pendaftaran.items.map(item => `
                                                 <div class="flex items-center space-x-2.5 text-slate-700 dark:text-slate-200">
                                                     <i class="fa-solid fa-check text-emerald-600 dark:text-emerald-400 font-bold"></i>
-                                                    <span>${item}</span>
+                                                    <span>${escapeHtml(item)}</span>
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -433,21 +478,21 @@
                                 <div class="bg-white dark:bg-[#1c2836] p-6 rounded-3xl border border-slate-200 dark:border-[#253447] shadow-sm space-y-4 text-center">
                                     <div>
                                         <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Biaya Syahriyah (Bulanan)</h4>
-                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">${d.biaya?.syahriyah?.nominal}</div>
-                                        ${d.biaya?.syahriyah?.note ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-1">${d.biaya?.syahriyah?.note}</p>` : ''}
+                                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">${escapeHtml(biayaData.syahriyah?.nominal || 'Rp.0')}</div>
+                                        ${biayaData.syahriyah?.note ? `<p class="text-[10px] text-slate-400 dark:text-slate-400 mt-1">${escapeHtml(biayaData.syahriyah.note)}</p>` : ''}
                                     </div>
-                                    ${Array.isArray(d.biaya?.syahriyah?.items) ? `
+                                    ${Array.isArray(biayaData.syahriyah?.items) && biayaData.syahriyah.items.length > 0 ? `
                                         <div class="space-y-2 text-xs text-left pt-3 border-t border-slate-100 dark:border-[#253447]">
-                                            ${(d.biaya?.syahriyah?.items || []).map(item => `
+                                            ${biayaData.syahriyah.items.map(item => `
                                                 <div class="flex items-center space-x-2.5 text-slate-700 dark:text-slate-200">
                                                     <i class="fa-solid fa-check text-emerald-600 dark:text-emerald-400 font-bold"></i>
-                                                    <span>${item}</span>
+                                                    <span>${escapeHtml(item)}</span>
                                                 </div>
                                             `).join('')}
-                                            ${Array.isArray(d.biaya?.syahriyah?.excludedItems) ? d.biaya?.syahriyah?.excludedItems.map(item => `
+                                            ${Array.isArray(biayaData.syahriyah?.excludedItems) ? biayaData.syahriyah.excludedItems.map(item => `
                                                 <div class="flex items-center space-x-2.5 text-slate-400 dark:text-slate-400 line-through">
                                                     <i class="fa-solid fa-xmark text-rose-500 font-bold"></i>
-                                                    <span>${item}</span>
+                                                    <span>${escapeHtml(item)}</span>
                                                 </div>
                                             `).join('') : ''}
                                         </div>
@@ -458,20 +503,18 @@
 
                         <!-- K. CALL TO ACTION (CTA) -->
                         <section class="bg-gradient-to-r ${theme.headerTheme} text-white p-6 md:p-8 rounded-3xl shadow-lg text-center space-y-4">
-                            <h3 class="text-lg md:text-xl font-bold">${d.cta?.title}</h3>
-                            <p class="text-xs text-emerald-100 max-w-md mx-auto leading-relaxed">
-                                ${d.cta?.description}
-                            </p>
+                            <h3 class="text-lg md:text-xl font-bold">${escapeHtml(ctaData.title || 'Pendaftaran Santri Baru Dibuka')}</h3>
+                            ${ctaData.description ? `<p class="text-xs text-emerald-100 max-w-md mx-auto leading-relaxed">${escapeHtml(ctaData.description)}</p>` : ''}
                             <div class="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
                                 <button onclick="switchTab('ppdb')"
                                     class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-brand-dark font-extrabold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2">
                                     <i class="fa-solid fa-file-signature"></i>
                                     <span>Daftar Sekarang ke Form PPDB</span>
                                 </button>
-                                <a href="${d.cta?.waLink}" target="_blank"
-                                    class="w-full sm:w-auto ${d.cta?.waBtnClass || 'bg-emerald-600 text-white'} font-bold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2 border">
+                                <a href="${ctaData.waLink || 'https://wa.me/6281234567890'}" target="_blank"
+                                    class="w-full sm:w-auto ${ctaData.waBtnClass || 'bg-emerald-600 text-white'} font-bold px-6 py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center space-x-2 border">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
-                                    <span>${d.cta?.waText || 'Konsultasi via WA'}</span>
+                                    <span>${escapeHtml(ctaData.waText || 'Konsultasi via WA')}</span>
                                 </a>
                             </div>
                         </section>

@@ -134,15 +134,41 @@
                     return {
                         success: true,
                         status: "success",
-                        data: rows.map(p => ({
-                            id: p.id,
-                            name: p.name,
-                            badge: p.badge,
-                            image: p.image,
-                            description: p.description,
-                            highlights: p.highlights || p.highlights_json || [],
-                            detail: p.detail || p.detail_json || {}
-                        }))
+                        data: rows.map(p => {
+                            let highlights = p.highlights;
+                            if (typeof highlights === 'string') {
+                                try { highlights = JSON.parse(highlights); } catch(e) { highlights = []; }
+                            }
+                            if (!Array.isArray(highlights)) {
+                                let hJson = p.highlights_json;
+                                if (typeof hJson === 'string') {
+                                    try { hJson = JSON.parse(hJson); } catch(e) { hJson = []; }
+                                }
+                                highlights = Array.isArray(hJson) ? hJson : [];
+                            }
+
+                            let detail = p.detail;
+                            if (typeof detail === 'string') {
+                                try { detail = JSON.parse(detail); } catch(e) { detail = null; }
+                            }
+                            if (!detail || typeof detail !== 'object') {
+                                let dJson = p.detail_json;
+                                if (typeof dJson === 'string') {
+                                    try { dJson = JSON.parse(dJson); } catch(e) { dJson = null; }
+                                }
+                                detail = (dJson && typeof dJson === 'object') ? dJson : {};
+                            }
+
+                            return {
+                                id: p.id,
+                                name: p.name,
+                                badge: p.badge,
+                                image: p.image,
+                                description: p.description,
+                                highlights,
+                                detail
+                            };
+                        })
                     };
                 }
 
@@ -154,6 +180,31 @@
                     const rows = await res.json();
                     if (!rows || rows.length === 0) return null;
                     const p = rows[0];
+
+                    let highlights = p.highlights;
+                    if (typeof highlights === 'string') {
+                        try { highlights = JSON.parse(highlights); } catch(e) { highlights = []; }
+                    }
+                    if (!Array.isArray(highlights)) {
+                        let hJson = p.highlights_json;
+                        if (typeof hJson === 'string') {
+                            try { hJson = JSON.parse(hJson); } catch(e) { hJson = []; }
+                        }
+                        highlights = Array.isArray(hJson) ? hJson : [];
+                    }
+
+                    let detail = p.detail;
+                    if (typeof detail === 'string') {
+                        try { detail = JSON.parse(detail); } catch(e) { detail = null; }
+                    }
+                    if (!detail || typeof detail !== 'object') {
+                        let dJson = p.detail_json;
+                        if (typeof dJson === 'string') {
+                            try { dJson = JSON.parse(dJson); } catch(e) { dJson = null; }
+                        }
+                        detail = (dJson && typeof dJson === 'object') ? dJson : {};
+                    }
+
                     return {
                         success: true,
                         status: "success",
@@ -163,8 +214,8 @@
                             badge: p.badge,
                             image: p.image,
                             description: p.description,
-                            highlights: p.highlights || p.highlights_json || [],
-                            detail: p.detail || p.detail_json || {}
+                            highlights,
+                            detail
                         }
                     };
                 }
