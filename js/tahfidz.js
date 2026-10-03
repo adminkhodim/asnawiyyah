@@ -1402,7 +1402,7 @@ function setTahfidzSatuanMode(mode) {
         if (contAyat) contAyat.classList.add('hidden');
         if (contJuz) contJuz.classList.remove('hidden');
 
-        const currentJuz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 1);
+        const currentJuz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 30);
         populateTahfidzJuzRangeDropdowns(currentJuz, currentJuz);
     } else {
         if (btnHal) btnHal.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
@@ -1433,17 +1433,17 @@ function getSurahRangeForJuz(start, end) {
 }
 
 /**
- * Mengisi dropdown rentang Juz (Dari Juz X s/d Juz Y) untuk Mode Per Juz / Tasmi'
+ * Mengisi dropdown rentang Juz (Dari Juz X s/d Juz Y) untuk Mode Per Juz / Tasmi' sesuai urutan kurikulum (30-21, lalu 1-20)
  */
-function populateTahfidzJuzRangeDropdowns(startJuz = 1, endJuz = 1) {
+function populateTahfidzJuzRangeDropdowns(startJuz = 30, endJuz = 30) {
     const selStart = document.getElementById('tahfidz-catat-juz-mulai');
     const selEnd = document.getElementById('tahfidz-catat-juz-sampai');
     if (!selStart || !selEnd) return;
 
     let opts = '';
-    for (let j = 1; j <= 30; j++) {
+    JUZ_CURRICULUM_ORDER.forEach((j) => {
         opts += `<option value="${j}">Juz ${j} (${SURAH_JUZ_REFERENCE[j] || ''})</option>`;
-    }
+    });
     selStart.innerHTML = opts;
     selEnd.innerHTML = opts;
 
@@ -1477,22 +1477,35 @@ function updateTahfidzPresetChipHighlight(count) {
 }
 
 /**
- * Handler saat rentang Juz pada mode Per Juz berubah
+ * Handler saat rentang Juz pada mode Per Juz berubah (Mendukung urutan Kurikulum Pesantren 30-21 & 1-20)
  */
 function onTahfidzJuzRangeChange() {
     const selStart = document.getElementById('tahfidz-catat-juz-mulai');
     const selEnd = document.getElementById('tahfidz-catat-juz-sampai');
     if (!selStart || !selEnd) return;
 
-    let start = Number(selStart.value) || 1;
+    let start = Number(selStart.value) || JUZ_CURRICULUM_ORDER[0];
     let end = Number(selEnd.value) || start;
 
-    if (end < start) {
+    let idxStart = JUZ_CURRICULUM_ORDER.indexOf(start);
+    let idxEnd = JUZ_CURRICULUM_ORDER.indexOf(end);
+    if (idxStart === -1) idxStart = 0;
+    if (idxEnd === -1) idxEnd = idxStart;
+
+    let count = 1;
+    if (idxEnd >= idxStart) {
+        // Mengikuti urutan kurikulum resmi pesantren (30 s/d 21, lalu 1 s/d 20)
+        count = idxEnd - idxStart + 1;
+    } else if (start <= end) {
+        // Fallback jika dipilih secara numerik berurutan
+        count = end - start + 1;
+    } else {
+        // Jika posisi End tidak valid atau mendahului Start, samakan dengan start
         end = start;
         selEnd.value = String(end);
+        count = 1;
     }
 
-    const count = (end - start + 1);
     // Standar mushaf pojok 20 halaman per juz, khusus 30 juz khataman total 604 halaman
     const totalPages = (count === 30) ? 604 : (count * 20);
 
@@ -1540,26 +1553,30 @@ function onTahfidzJuzRangeChange() {
 }
 
 /**
- * Terapkan Pilihan Cepat Kategori Ujian Tasmi' (1, 3, 5, 10, 15, 30 Juz)
+ * Terapkan Pilihan Cepat Kategori Ujian Tasmi' (1, 3, 5, 10, 15, 30 Juz) Sesuai Kurikulum
  */
 function applyTahfidzJuzPreset(presetCount) {
     const selStart = document.getElementById('tahfidz-catat-juz-mulai');
     const selEnd = document.getElementById('tahfidz-catat-juz-sampai');
     if (!selStart || !selEnd) return;
 
-    let start = Number(selStart.value) || 1;
-    if (presetCount === 30) {
-        start = 1;
-        selStart.value = "1";
-    }
+    let start = Number(selStart.value) || JUZ_CURRICULUM_ORDER[0];
+    let idxStart = JUZ_CURRICULUM_ORDER.indexOf(start);
+    if (idxStart === -1) idxStart = 0;
 
-    let end = start + presetCount - 1;
-    if (end > 30) {
-        end = 30;
-        start = Math.max(1, 30 - presetCount + 1);
-        selStart.value = String(start);
+    if (presetCount === 30) {
+        idxStart = 0;
+        selStart.value = String(JUZ_CURRICULUM_ORDER[0]);
+        selEnd.value = String(JUZ_CURRICULUM_ORDER[JUZ_CURRICULUM_ORDER.length - 1]);
+    } else {
+        let idxEnd = idxStart + presetCount - 1;
+        if (idxEnd >= JUZ_CURRICULUM_ORDER.length) {
+            idxEnd = JUZ_CURRICULUM_ORDER.length - 1;
+            idxStart = Math.max(0, JUZ_CURRICULUM_ORDER.length - presetCount);
+            selStart.value = String(JUZ_CURRICULUM_ORDER[idxStart]);
+        }
+        selEnd.value = String(JUZ_CURRICULUM_ORDER[idxEnd]);
     }
-    selEnd.value = String(end);
 
     onTahfidzJuzRangeChange();
 }
