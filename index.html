@@ -8007,7 +8007,7 @@
                     </div>
 
                     <!-- Pilihan Juz & Ringkasan Halaman -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div id="row-tahfidz-catat-juz-single" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                                 Juz <span class="text-rose-500">*</span>
@@ -8029,7 +8029,7 @@
                     </div>
 
                     <!-- Pilihan Mode Satuan Setoran (Halaman vs Per Ayat) -->
-                    <div class="flex items-center justify-between pb-1">
+                    <div id="row-tahfidz-catat-satuan" class="flex items-center justify-between pb-1">
                         <span class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
                             <i class="fa-solid fa-sliders text-emerald-600"></i> Satuan Setoran
                         </span>
@@ -8142,13 +8142,13 @@
                             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1.5">
                                 Pilihan Cepat Kategori Ujian Sekali Duduk:
                             </span>
-                            <div class="flex flex-wrap gap-1.5">
-                                <button type="button" onclick="applyTahfidzJuzPreset(1)" class="px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">1 Juz (20 Hal)</button>
-                                <button type="button" onclick="applyTahfidzJuzPreset(3)" class="px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">3 Juz (60 Hal)</button>
-                                <button type="button" onclick="applyTahfidzJuzPreset(5)" class="px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">5 Juz (100 Hal)</button>
-                                <button type="button" onclick="applyTahfidzJuzPreset(10)" class="px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">10 Juz (200 Hal)</button>
-                                <button type="button" onclick="applyTahfidzJuzPreset(15)" class="px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">15 Juz (300 Hal)</button>
-                                <button type="button" onclick="applyTahfidzJuzPreset(30)" class="px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold rounded-lg text-[10px] transition active:scale-95 shadow-sm">👑 30 Juz (Khataman)</button>
+                            <div class="flex flex-wrap gap-1.5" id="tahfidz-preset-chips">
+                                <button type="button" data-preset="1" onclick="applyTahfidzJuzPreset(1)" class="btn-tahfidz-preset px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">1 Juz (20 Hal)</button>
+                                <button type="button" data-preset="3" onclick="applyTahfidzJuzPreset(3)" class="btn-tahfidz-preset px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">3 Juz (60 Hal)</button>
+                                <button type="button" data-preset="5" onclick="applyTahfidzJuzPreset(5)" class="btn-tahfidz-preset px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">5 Juz (100 Hal)</button>
+                                <button type="button" data-preset="10" onclick="applyTahfidzJuzPreset(10)" class="btn-tahfidz-preset px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">10 Juz (200 Hal)</button>
+                                <button type="button" data-preset="15" onclick="applyTahfidzJuzPreset(15)" class="btn-tahfidz-preset px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs">15 Juz (300 Hal)</button>
+                                <button type="button" data-preset="30" onclick="applyTahfidzJuzPreset(30)" class="btn-tahfidz-preset px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold rounded-lg text-[10px] transition active:scale-95 shadow-sm">👑 30 Juz (Khataman)</button>
                             </div>
                         </div>
 

@@ -1373,6 +1373,7 @@ function setTahfidzSatuanMode(mode) {
     const contHal = document.getElementById('container-mode-halaman');
     const contAyat = document.getElementById('container-mode-ayat');
     const contJuz = document.getElementById('container-mode-juz');
+    const rowJuzSingle = document.getElementById('row-tahfidz-catat-juz-single');
 
     const defaultClass = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600";
     const defaultJuzClass = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-purple-600";
@@ -1382,6 +1383,7 @@ function setTahfidzSatuanMode(mode) {
         if (btnHal) btnHal.className = defaultClass;
         if (btnJuz) btnJuz.className = defaultJuzClass;
 
+        if (rowJuzSingle) rowJuzSingle.classList.remove('hidden');
         if (contHal) contHal.classList.add('hidden');
         if (contJuz) contJuz.classList.add('hidden');
         if (contAyat) contAyat.classList.remove('hidden');
@@ -1395,6 +1397,7 @@ function setTahfidzSatuanMode(mode) {
         if (btnHal) btnHal.className = defaultClass;
         if (btnAyat) btnAyat.className = defaultClass;
 
+        if (rowJuzSingle) rowJuzSingle.classList.add('hidden');
         if (contHal) contHal.classList.add('hidden');
         if (contAyat) contAyat.classList.add('hidden');
         if (contJuz) contJuz.classList.remove('hidden');
@@ -1406,6 +1409,7 @@ function setTahfidzSatuanMode(mode) {
         if (btnAyat) btnAyat.className = defaultClass;
         if (btnJuz) btnJuz.className = defaultJuzClass;
 
+        if (rowJuzSingle) rowJuzSingle.classList.remove('hidden');
         if (contAyat) contAyat.classList.add('hidden');
         if (contJuz) contJuz.classList.add('hidden');
         if (contHal) contHal.classList.remove('hidden');
@@ -1450,6 +1454,29 @@ function populateTahfidzJuzRangeDropdowns(startJuz = 1, endJuz = 1) {
 }
 
 /**
+ * Update highlight chip preset aktif pada Mode Per Juz / Tasmi'
+ */
+function updateTahfidzPresetChipHighlight(count) {
+    const chips = document.querySelectorAll('.btn-tahfidz-preset');
+    chips.forEach(btn => {
+        const p = Number(btn.dataset.preset);
+        if (p === count) {
+            if (p === 30) {
+                btn.className = "btn-tahfidz-preset px-2.5 py-1 bg-gradient-to-r from-purple-700 to-indigo-700 text-white font-extrabold rounded-lg text-[10px] transition active:scale-95 shadow-md ring-2 ring-purple-400/80";
+            } else {
+                btn.className = "btn-tahfidz-preset px-2.5 py-1 bg-purple-600 text-white font-black rounded-lg border border-purple-600 text-[10px] transition active:scale-95 shadow-sm ring-2 ring-purple-400/50";
+            }
+        } else {
+            if (p === 30) {
+                btn.className = "btn-tahfidz-preset px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-[10px] transition active:scale-95 opacity-85 hover:opacity-100 shadow-xs";
+            } else {
+                btn.className = "btn-tahfidz-preset px-2.5 py-1 bg-white dark:bg-[#15202d] hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-700 dark:text-slate-200 hover:text-purple-800 font-bold rounded-lg border border-purple-200 dark:border-purple-800/60 text-[10px] transition active:scale-95 shadow-xs";
+            }
+        }
+    });
+}
+
+/**
  * Handler saat rentang Juz pada mode Per Juz berubah
  */
 function onTahfidzJuzRangeChange() {
@@ -1469,10 +1496,15 @@ function onTahfidzJuzRangeChange() {
     // Standar mushaf pojok 20 halaman per juz, khusus 30 juz khataman total 604 halaman
     const totalPages = (count === 30) ? 604 : (count * 20);
 
+    ASNTahfidz.catatState.juz = start;
     ASNTahfidz.catatState.juzStart = start;
     ASNTahfidz.catatState.juzEnd = end;
     ASNTahfidz.catatState.totalJuz = count;
     ASNTahfidz.catatState.totalHalaman = totalPages;
+
+    // Selaraskan juga dropdown juz utama
+    const selJuz = document.getElementById('tahfidz-catat-juz');
+    if (selJuz) selJuz.value = String(start);
 
     const summaryRange = document.getElementById('tahfidz-juz-range-summary');
     const summarySurah = document.getElementById('tahfidz-juz-surah-summary');
@@ -1503,6 +1535,8 @@ function onTahfidzJuzRangeChange() {
     if (summaryList) {
         summaryList.innerText = start === end ? `Juz ${start} (20 Halaman)` : `Juz ${start} - ${end} (${count} Juz, ${totalPages} Halaman)`;
     }
+
+    updateTahfidzPresetChipHighlight(count);
 }
 
 /**
@@ -1914,20 +1948,35 @@ function setTahfidzCatatTipe(tipe) {
         b.className = defaultBtnClass;
     });
 
+    const rowJuzSingle = document.getElementById('row-tahfidz-catat-juz-single');
+    const rowSatuan = document.getElementById('row-tahfidz-catat-satuan');
+
     if (tipe === 'ZIYADAH' && btnZ) {
         btnZ.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/20';
+        if (rowJuzSingle) rowJuzSingle.classList.remove('hidden');
+        if (rowSatuan) rowSatuan.classList.remove('hidden');
         if (ASNTahfidz.catatState.inputMode === 'JUZ') {
             setTahfidzSatuanMode('HALAMAN');
         }
     } else if (tipe === 'MURAJAAH_SABQI' && btnSabqi) {
         btnSabqi.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-amber-600 text-white border-amber-600 shadow-sm ring-2 ring-amber-500/20';
+        if (rowJuzSingle) rowJuzSingle.classList.remove('hidden');
+        if (rowSatuan) rowSatuan.classList.remove('hidden');
         if (ASNTahfidz.catatState.inputMode === 'JUZ') {
             setTahfidzSatuanMode('HALAMAN');
         }
     } else if (tipe === 'MURAJAAH_MANZIL' && btnManzil) {
         btnManzil.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-sky-600 text-white border-sky-600 shadow-sm ring-2 ring-sky-500/20';
+        if (rowSatuan) rowSatuan.classList.remove('hidden');
+        if (ASNTahfidz.catatState.inputMode === 'JUZ') {
+            if (rowJuzSingle) rowJuzSingle.classList.add('hidden');
+        } else {
+            if (rowJuzSingle) rowJuzSingle.classList.remove('hidden');
+        }
     } else if (tipe === 'TASMI' && btnT) {
         btnT.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-purple-600 text-white border-purple-600 shadow-sm ring-2 ring-purple-500/20';
+        if (rowJuzSingle) rowJuzSingle.classList.add('hidden');
+        if (rowSatuan) rowSatuan.classList.add('hidden');
         setTahfidzSatuanMode('JUZ');
     }
 
@@ -4998,4 +5047,5 @@ window.getSurahRangeForJuz = getSurahRangeForJuz;
 window.populateTahfidzJuzRangeDropdowns = populateTahfidzJuzRangeDropdowns;
 window.onTahfidzJuzRangeChange = onTahfidzJuzRangeChange;
 window.applyTahfidzJuzPreset = applyTahfidzJuzPreset;
+window.updateTahfidzPresetChipHighlight = updateTahfidzPresetChipHighlight;
 
