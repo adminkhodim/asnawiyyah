@@ -131,6 +131,13 @@ const SHEET_TAHFIDZ_CAPAIAN = "Tahfidz_Capaian";
 const SHEET_TAHFIDZ_TARGET = "Tahfidz_Target";
 const SHEET_TAHFIDZ_HALAQAH = "Tahfidz_Halaqah";
 const SHEET_TAHFIDZ_SESI = "Tahfidz_Jadwal_Sesi";
+const SHEET_TAHFIDZ_PRESENSI = "Tahfidz_Presensi";
+
+const HEADERS_TAHFIDZ_PRESENSI = [
+  "presensi_id", "tanggal", "sesi", "halaqah_id", "nama_halaqah",
+  "student_id", "nis", "student_name", "status", "keterangan",
+  "muhafiz", "updated_at"
+];
 
 // Urutan Kurikulum Tahfidz Pesantren (Mulai Juz 30 s/d 21, lalu Juz 1 s/d 20)
 const TAHFIDZ_CURRICULUM_JUZ_ORDER = [
@@ -863,6 +870,21 @@ function initTahfidzSheets(token) {
       existing.push(SHEET_TAHFIDZ_SESI);
     }
 
+    // 4b. Tab: Tahfidz_Presensi (Presensi Kehadiran Halaqah)
+    let sheetPresensi = ss.getSheetByName(SHEET_TAHFIDZ_PRESENSI);
+    if (!sheetPresensi) {
+      sheetPresensi = ss.insertSheet(SHEET_TAHFIDZ_PRESENSI);
+      sheetPresensi.getRange(1, 1, 1, HEADERS_TAHFIDZ_PRESENSI.length).setValues([HEADERS_TAHFIDZ_PRESENSI]);
+      sheetPresensi.getRange(1, 1, 1, HEADERS_TAHFIDZ_PRESENSI.length)
+        .setFontWeight("bold")
+        .setBackground("#059669")
+        .setFontColor("#ffffff");
+      sheetPresensi.setFrozenRows(1);
+      created.push(SHEET_TAHFIDZ_PRESENSI);
+    } else {
+      existing.push(SHEET_TAHFIDZ_PRESENSI);
+    }
+
     // 5. Tab: Roles_Permissions (RBAC Matrix)
     try {
       const rSheet = getOrCreateRolesPermissionsSheet();
@@ -1084,6 +1106,37 @@ function getTahfidzDashboard(token) {
       }
     });
 
+    // 6b. Ambil snapshot presensi hari ini dari sheet Tahfidz_Presensi
+    const todayStr = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
+    const presenceMap = {};
+    try {
+      const presSheet = ss.getSheetByName(SHEET_TAHFIDZ_PRESENSI);
+      if (presSheet && presSheet.getLastRow() > 1) {
+        const presData = presSheet.getDataRange().getValues();
+        const pHeaders = presData[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+        const pTglIdx = pHeaders.indexOf("tanggal");
+        const pIdIdx = pHeaders.indexOf("student_id");
+        const pNisIdx = pHeaders.indexOf("nis");
+        const pStatusIdx = pHeaders.indexOf("status");
+        const pKetIdx = pHeaders.indexOf("keterangan");
+
+        for (let i = 1; i < presData.length; i++) {
+          const row = presData[i];
+          const tgl = pTglIdx !== -1 ? String(row[pTglIdx] || "").trim() : "";
+          if (tgl === todayStr) {
+            const sid = pIdIdx !== -1 ? String(row[pIdIdx] || "").trim() : "";
+            const snis = pNisIdx !== -1 ? String(row[pNisIdx] || "").trim() : "";
+            const st = pStatusIdx !== -1 ? String(row[pStatusIdx] || "HADIR").toUpperCase().trim() : "HADIR";
+            const ket = pKetIdx !== -1 ? String(row[pKetIdx] || "").trim() : "";
+            if (sid) presenceMap[sid] = { status: st, keterangan: ket };
+            if (snis) presenceMap[snis] = { status: st, keterangan: ket };
+          }
+        }
+      }
+    } catch (ePres) {
+      console.warn("[GET TAHFIDZ DASHBOARD PRESENSI WARN]", ePres);
+    }
+
     // 7. Kalkulasi Data Santri Terintegrasi
     let totalJuzAllStudents = 0;
     let khatam30Count = 0;
@@ -1232,7 +1285,9 @@ function getTahfidzDashboard(token) {
           isKhatam: isKhatam30,
           onTrackStatus: onTrack
         },
-        totalSetoran: sLogs.length
+        totalSetoran: sLogs.length,
+        presensiStatus: (presenceMap[sId] || presenceMap[sNis]) ? (presenceMap[sId] || presenceMap[sNis]).status : "HADIR",
+        presensiKeterangan: (presenceMap[sId] || presenceMap[sNis]) ? (presenceMap[sId] || presenceMap[sNis]).keterangan : ""
       };
     });
 
@@ -2446,6 +2501,220 @@ function deleteTahfidzSesi(sesiId, token) {
     return { status: "error", success: false, message: "Sesi tidak ditemukan." };
   } catch (err) {
     return { status: "error", success: false, message: err.message };
+  }
+}
+
+/**
+ * ====================================================================
+ * MANAJEMEN PRESENSI CEPAT HALAQAH SANTRI (SPREADSHEET INTEGRATION)
+ * ====================================================================
+ */
+
+/**
+ * Menyimpan rekap presensi kehadiran halaqah santri ke sheet Tahfidz_Presensi (Upsert per tanggal + sesi + student_id)
+ */
+function saveTahfidzPresensi(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const p = (payload && payload.data) ? payload.data : (payload || {});
+    const tanggal = String(p.tanggal || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd")).trim();
+    const sesi = String(p.sesi || "Pagi (Ba'da Subuh)").trim();
+    const halaqahId = String(p.halaqahId || p.halaqah_id || "").trim();
+    const namaHalaqah = String(p.namaHalaqah || p.nama_halaqah || "").trim();
+    const muhafiz = String(p.muhafiz || (actor ? actor.name : "") || "Ustadz Pembina").trim();
+    const rawRecords = Array.isArray(p.records) ? p.records : [];
+
+    if (rawRecords.length === 0) {
+      throw new Error("Daftar catatan kehadiran santri tidak boleh kosong.");
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) throw new Error("Spreadsheet database tidak ditemukan.");
+
+    const sheet = getOrCreateTahfidzSheet(ss, SHEET_TAHFIDZ_PRESENSI, HEADERS_TAHFIDZ_PRESENSI, "#059669");
+
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    let existingData = [];
+    let colMap = {};
+
+    if (lastRow > 1 && lastCol > 0) {
+      const allRows = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+      const headers = allRows[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+      HEADERS_TAHFIDZ_PRESENSI.forEach(dh => {
+        const clean = dh.toLowerCase().replace(/[\s\-_]+/g, "");
+        colMap[dh] = headers.indexOf(clean);
+      });
+      existingData = allRows.slice(1);
+    } else {
+      HEADERS_TAHFIDZ_PRESENSI.forEach((dh, idx) => {
+        colMap[dh] = idx;
+      });
+    }
+
+    // Peta indeks baris yang sudah ada: tanggal + sesi + student_id -> rowIndex (1-based di sheet)
+    const existingIndexMap = {};
+    for (let i = 0; i < existingData.length; i++) {
+      const row = existingData[i];
+      const rTgl = String(row[colMap["tanggal"]] || "").trim();
+      const rSesi = String(row[colMap["sesi"]] || "").trim();
+      const rId = String(row[colMap["student_id"]] || row[colMap["nis"]] || "").trim();
+      if (rTgl && rSesi && rId) {
+        const key = `${rTgl}_${rSesi}_${rId}`;
+        existingIndexMap[key] = i + 2;
+      }
+    }
+
+    const nowIso = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd'T'HH:mm:ss'Z'");
+    const newRows = [];
+    let updatedCount = 0;
+    let insertedCount = 0;
+
+    for (let j = 0; j < rawRecords.length; j++) {
+      const item = rawRecords[j];
+      const sId = String(item.studentId || item.student_id || item.nis || "").trim();
+      const nis = String(item.nis || sId).trim();
+      const sName = String(item.studentName || item.student_name || item.name || "").trim();
+      const status = String(item.status || "HADIR").toUpperCase().trim();
+      const ket = String(item.keterangan || "").trim();
+      const itemHalId = String(item.halaqahId || item.halaqah_id || halaqahId).trim();
+      const itemHalName = String(item.namaHalaqah || item.nama_halaqah || namaHalaqah).trim();
+
+      const key = `${tanggal}_${sesi}_${sId}`;
+      const existingRowIdx = existingIndexMap[key];
+
+      if (existingRowIdx) {
+        if (colMap["status"] !== -1) sheet.getRange(existingRowIdx, colMap["status"] + 1).setValue(status);
+        if (colMap["keterangan"] !== -1) sheet.getRange(existingRowIdx, colMap["keterangan"] + 1).setValue(ket);
+        if (colMap["updated_at"] !== -1) sheet.getRange(existingRowIdx, colMap["updated_at"] + 1).setValue(nowIso);
+        if (colMap["muhafiz"] !== -1 && muhafiz) sheet.getRange(existingRowIdx, colMap["muhafiz"] + 1).setValue(muhafiz);
+        updatedCount++;
+      } else {
+        const pId = "PRS-" + Utilities.formatDate(new Date(), "GMT+7", "yyMMddHHmmss") + "-" + (j + 1);
+        const rowData = new Array(HEADERS_TAHFIDZ_PRESENSI.length).fill("");
+        rowData[colMap["presensi_id"]] = pId;
+        rowData[colMap["tanggal"]] = tanggal;
+        rowData[colMap["sesi"]] = sesi;
+        rowData[colMap["halaqah_id"]] = itemHalId;
+        rowData[colMap["nama_halaqah"]] = itemHalName;
+        rowData[colMap["student_id"]] = sId;
+        rowData[colMap["nis"]] = nis;
+        rowData[colMap["student_name"]] = sName;
+        rowData[colMap["status"]] = status;
+        rowData[colMap["keterangan"]] = ket;
+        rowData[colMap["muhafiz"]] = muhafiz;
+        rowData[colMap["updated_at"]] = nowIso;
+        newRows.push(rowData);
+        insertedCount++;
+      }
+    }
+
+    if (newRows.length > 0) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, HEADERS_TAHFIDZ_PRESENSI.length).setValues(newRows);
+    }
+
+    return {
+      status: "success",
+      success: true,
+      message: `Presensi berhasil disimpan ke Spreadsheet (${insertedCount} baru, ${updatedCount} diperbarui).`,
+      tanggal: tanggal,
+      sesi: sesi,
+      insertedCount: insertedCount,
+      updatedCount: updatedCount
+    };
+  } catch (err) {
+    console.error("[SAVE TAHFIDZ PRESENSI ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan presensi ke Spreadsheet: " + (err.message || err)
+    };
+  }
+}
+
+/**
+ * Mengambil rekap presensi kehadiran dari sheet Tahfidz_Presensi
+ */
+function getTahfidzPresensi(params, token) {
+  try {
+    if (token) {
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) return { status: "success", success: true, data: [] };
+
+    const sheet = ss.getSheetByName(SHEET_TAHFIDZ_PRESENSI);
+    if (!sheet || sheet.getLastRow() <= 1) {
+      return { status: "success", success: true, data: [] };
+    }
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+    const colMap = {};
+    HEADERS_TAHFIDZ_PRESENSI.forEach(dh => {
+      colMap[dh] = headers.indexOf(dh.toLowerCase().replace(/[\s\-_]+/g, ""));
+    });
+
+    const p = params || {};
+    const filterDate = String(p.tanggal || p.date || "").trim();
+    const filterSesi = String(p.sesi || "").trim();
+    const filterHalaqah = String(p.halaqahId || p.halaqah_id || "").trim();
+
+    const results = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const tgl = String(row[colMap["tanggal"]] || "").trim();
+      const sesi = String(row[colMap["sesi"]] || "").trim();
+      const halId = String(row[colMap["halaqah_id"]] || "").trim();
+
+      if (filterDate && tgl !== filterDate) continue;
+      if (filterSesi && filterSesi !== "ALL" && sesi !== filterSesi) continue;
+      if (filterHalaqah && filterHalaqah !== "ALL" && halId !== filterHalaqah) continue;
+
+      results.push({
+        presensiId: row[colMap["presensi_id"]],
+        tanggal: tgl,
+        sesi: sesi,
+        halaqahId: halId,
+        namaHalaqah: row[colMap["nama_halaqah"]],
+        studentId: row[colMap["student_id"]],
+        nis: row[colMap["nis"]],
+        studentName: row[colMap["student_name"]],
+        status: row[colMap["status"]],
+        keterangan: row[colMap["keterangan"]],
+        muhafiz: row[colMap["muhafiz"]],
+        updatedAt: row[colMap["updated_at"]]
+      });
+    }
+
+    return {
+      status: "success",
+      success: true,
+      data: results
+    };
+  } catch (err) {
+    console.error("[GET TAHFIDZ PRESENSI ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memuat presensi: " + err.message,
+      data: []
+    };
   }
 }
 

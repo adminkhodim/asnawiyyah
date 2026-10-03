@@ -598,6 +598,27 @@ async function loadAdminTahfidzData(forceRefresh = false) {
                 ASNTahfidz.cache = response;
                 if (typeof buildTahfidzHalaqahIndex === 'function') buildTahfidzHalaqahIndex();
 
+                // Sinkronkan status presensi hari ini dari Google Spreadsheet ke cache lokal
+                if (Array.isArray(response.students)) {
+                    const localRecords = getTahfidzPresensiRecords();
+                    let updatedLocal = false;
+                    response.students.forEach(st => {
+                        const sId = st.studentId || st.nis;
+                        if (sId && st.presensiStatus) {
+                            if (!localRecords[sId] || localRecords[sId].status !== st.presensiStatus) {
+                                localRecords[sId] = {
+                                    status: st.presensiStatus,
+                                    keterangan: st.presensiKeterangan || ''
+                                };
+                                updatedLocal = true;
+                            }
+                        }
+                    });
+                    if (updatedLocal) {
+                        saveTahfidzPresensiRecords(localRecords);
+                    }
+                }
+
                 try {
                     const cachePayload = JSON.stringify({
                         data: response,
@@ -5550,12 +5571,17 @@ function setAllTahfidzPresensi(status) {
     }
 }
 
-function saveTahfidzPresensi() {
+async function saveTahfidzPresensi() {
     const btn = document.getElementById('btn-save-tahfidz-presensi');
-    setTahfidzButtonLoading(btn, true, 'Menyimpan Presensi...');
+    setTahfidzButtonLoading(btn, true, 'Menyimpan Presensi ke Spreadsheet...');
 
     try {
+        const halId = ASNTahfidz.presensiState.activeHalaqahId;
+        const halObj = (ASNTahfidz.data?.halaqahs || []).find(h => h.halaqahId === halId || h.namaHalaqah === halId);
+        const students = getStudentsForPresensiHalaqah(halId);
         const currentRecords = ASNTahfidz.presensiState.records || {};
+
+        // 1. Simpan ke local cache terlebih dahulu (responsif instan tanpa jeda)
         saveTahfidzPresensiRecords(currentRecords);
 
         // Update in-memory students
@@ -5572,16 +5598,54 @@ function saveTahfidzPresensi() {
         renderTahfidzStudentTable();
         renderTahfidzSummaryCards(activeHalFilter);
 
-        if (typeof showToast === 'function') {
-            showToast('✅ Presensi kehadiran halaqah berhasil disimpan!');
-        }
+        // 2. Siapkan payload untuk disinkronkan ke Google Spreadsheet (Sheet Tahfidz_Presensi)
+        const recordPayload = students.map(st => {
+            const sId = st.studentId || st.nis;
+            const cur = currentRecords[sId] || { status: 'HADIR', keterangan: '' };
+            return {
+                studentId: sId,
+                nis: st.nis || sId,
+                studentName: st.name || '',
+                status: cur.status || 'HADIR',
+                keterangan: cur.keterangan || '',
+                halaqahId: halId,
+                namaHalaqah: halObj ? halObj.namaHalaqah : 'Halaqah'
+            };
+        });
+
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : (sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken) || localStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken))) || "";
+        const postData = {
+            token: token,
+            payload: {
+                tanggal: ASNTahfidz.presensiState.date || new Date().toISOString().split('T')[0],
+                sesi: ASNTahfidz.presensiState.sesi || "Pagi (Ba'da Subuh)",
+                halaqahId: halId,
+                namaHalaqah: halObj ? halObj.namaHalaqah : 'Halaqah',
+                muhafiz: halObj ? (halObj.muhafiz || '') : '',
+                records: recordPayload
+            }
+        };
 
         closeTahfidzPresensiModal();
+
+        // 3. Kirim ke backend Google Apps Script secara asynchronous
+        const res = await apiPost("saveTahfidzPresensi", postData);
+        if (res && (res.success || res.status === "success")) {
+            if (typeof showToast === 'function') {
+                showToast(`✅ Presensi halaqah berhasil disimpan ke Google Spreadsheet (${res.savedCount || recordPayload.length} santri)!`);
+            }
+        } else {
+            console.warn("Sinkronisasi presensi ke server:", res);
+            if (typeof showToast === 'function') {
+                showToast('⚠️ Presensi tersimpan lokal. Sinkronisasi spreadsheet: ' + ((res && res.message) || 'Tertunda'));
+            }
+        }
     } catch (err) {
         console.error('Error saving tahfidz presensi:', err);
         if (typeof showToast === 'function') {
-            showToast('❌ Gagal menyimpan presensi: ' + err.message);
+            showToast('⚠️ Presensi tersimpan di perangkat lokal, kendala server: ' + err.message);
         }
+        closeTahfidzPresensiModal();
     } finally {
         setTahfidzButtonLoading(btn, false, 'Menyimpan Presensi...', '<i class="fa-solid fa-floppy-disk"></i><span>Simpan Presensi</span>');
     }

@@ -287,6 +287,22 @@ function doPost(e) {
       return createJsonResponse(saveTahfidzPlotting(payload.data || payload, token));
     }
 
+    if (action === "saveTahfidzPresensi" || action === "tahfidz.savePresensi" || action === "auth.tahfidz.savePresensi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "ASATIDZ", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(saveTahfidzPresensi(payload.data || payload, token));
+    }
+
+    if (action === "getTahfidzPresensi" || action === "tahfidz.getPresensi" || action === "auth.tahfidz.getPresensi") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getTahfidzPresensi(payload.data || payload, token));
+    }
+
     if (action === "deleteTahfidzHalaqah" || action === "tahfidz.deleteHalaqah" || action === "auth.tahfidz.deleteHalaqah") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -798,6 +814,11 @@ function doGet(e) {
     if (action === "getTahfidzHalaqahList" || action === "tahfidz.getHalaqah") {
       const token = e.parameter.token || null;
       return createJsonResponse(getTahfidzHalaqahList(token));
+    }
+
+    if (action === "getTahfidzPresensi" || action === "tahfidz.getPresensi") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getTahfidzPresensi(e.parameter, token));
     }
 
     if (action === "getEmployees" || action === "employee.list") {
