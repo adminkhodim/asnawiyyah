@@ -264,6 +264,8 @@
                         const userMaps = mapRows.filter(m => m.wali_id === u.user_id);
                         return {
                             userId: u.user_id,
+                            employeeId: u.employee_id || "",
+                            employee_id: u.employee_id || "",
                             name: u.name,
                             email: u.email || "",
                             phone: u.phone || "",
@@ -495,6 +497,7 @@
                     if (userId) {
                         const userRow = {
                             user_id: userId,
+                            employee_id: user.employeeId || user.employee_id || null,
                             name: user.name || '',
                             email: user.email || null,
                             phone: user.phone || null,
@@ -569,6 +572,58 @@
                         headers,
                         body: JSON.stringify(empRow)
                     });
+
+                    // Sinkronisasi otomatis ke akun login Users jika diminta atau pegawai memiliki email
+                    const shouldSyncUser = payload.createAccount === true || payload.createAccount === 'true' || payload.syncUser === true;
+                    if (shouldSyncUser && empRow.email) {
+                        try {
+                            let targetRole = payload.userRole || '';
+                            if (!targetRole) {
+                                const j = (empRow.jabatan || '').toLowerCase();
+                                if (j.includes('bendahara') || j.includes('keuangan')) targetRole = 'BENDAHARA';
+                                else if (j.includes('tu') || j.includes('tata usaha') || j.includes('administrasi')) targetRole = 'EDITOR';
+                                else if (j.includes('musyrif') || j.includes('pembina') || j.includes('pengasuh')) targetRole = 'PENGASUH';
+                                else if (j.includes('kepala') || j.includes('pimpinan')) targetRole = 'ADMIN';
+                                else targetRole = 'ASATIDZ';
+                            }
+
+                            // Cek apakah akun user untuk pegawai ini sudah ada
+                            const uCheck = await fetch(`${sbUrl}/rest/v1/users?or=(employee_id.eq.${encodeURIComponent(employeeId)},email.eq.${encodeURIComponent(empRow.email)})&select=user_id,role`, {
+                                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                            });
+                            let existingUserId = null;
+                            if (uCheck.ok) {
+                                const existingRows = await uCheck.json();
+                                if (existingRows && existingRows.length > 0) {
+                                    existingUserId = existingRows[0].user_id;
+                                    if (!payload.userRole && existingRows[0].role) {
+                                        targetRole = existingRows[0].role;
+                                    }
+                                }
+                            }
+
+                            const finalUserId = existingUserId || ('USR_' + employeeId.replace(/[^a-zA-Z0-9]/g, ''));
+                            const userStatus = (empRow.status === 'INACTIVE' || empRow.status === 'NONAKTIF' || empRow.status === 'CUTI') ? 'SUSPENDED' : 'ACTIVE';
+
+                            const syncUserRow = {
+                                user_id: finalUserId,
+                                employee_id: employeeId,
+                                name: empRow.nama,
+                                email: empRow.email,
+                                phone: empRow.telepon || null,
+                                role: targetRole,
+                                status: userStatus
+                            };
+
+                            await fetch(`${sbUrl}/rest/v1/users`, {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify(syncUserRow)
+                            });
+                        } catch (uSyncErr) {
+                            console.warn('[USER SYNC FROM PEGAWAI WARN]', uSyncErr);
+                        }
+                    }
                 }
                 else if (action === 'deleteEmployee' || action === 'employee.delete') {
                     const employeeId = payload.employeeId || payload.employee_id;
@@ -577,6 +632,15 @@
                             method: 'DELETE',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
                         });
+                        try {
+                            await fetch(`${sbUrl}/rest/v1/users?employee_id=eq.${encodeURIComponent(employeeId)}`, {
+                                method: 'PATCH',
+                                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: 'SUSPENDED' })
+                            });
+                        } catch (uDelErr) {
+                            console.warn('[USER DEACTIVATE ON PEGAWAI DELETE WARN]', uDelErr);
+                        }
                     }
                 }
 

@@ -15,6 +15,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- [TAB 1] Users (Master Identity Terpadu Phase 2B)
 CREATE TABLE IF NOT EXISTS users (
     user_id VARCHAR(64) PRIMARY KEY, -- USR-xxx / ADM-xxx / WAL-xxx / PGS-xxx
+    employee_id VARCHAR(64), -- Foreign Key ke pegawai(employee_id) jika akun milik pegawai
     email VARCHAR(128) UNIQUE,
     phone VARCHAR(32),
     name VARCHAR(255) NOT NULL,
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(LOWER(email));
 CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_employee_id ON users(employee_id);
 
 -- [TAB 3] Wali_Identities (Legacy Identity Tab / Fallback Storage)
 CREATE TABLE IF NOT EXISTS wali_identities (

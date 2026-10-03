@@ -52,14 +52,44 @@ async function loadAdminEmployeesData() {
             employees = response;
         }
 
-        // Normalisasi data pegawai agar konsisten employeeId, id, nama, gender, dll
+        // Muat daftar users jika belum tersedia untuk pencocokan akun otomatis
+        let userList = (typeof adminUsersList !== 'undefined' && Array.isArray(adminUsersList) && adminUsersList.length > 0) ? adminUsersList : [];
+        if (userList.length === 0 && typeof apiPost === 'function') {
+            try {
+                const uRes = await apiPost("getUsers", { token });
+                if (uRes && (uRes.users || uRes.data)) {
+                    userList = uRes.users || uRes.data;
+                    if (typeof adminUsersList !== 'undefined') {
+                        adminUsersList = userList;
+                    }
+                }
+            } catch (uErr) {
+                console.warn("[LOAD USERS FOR PEGAWAI WARN]", uErr);
+            }
+        }
+
+        // Normalisasi data pegawai & hubungkan status akun pengguna (Users)
         employees = employees.map(p => {
             const rawId = p.employeeId || p.employee_id || p.id || p.nip || ('PEG_' + Math.random().toString(36).substring(2, 9));
+            const empIdStr = String(rawId).trim();
+            const pEmail = (p.email || '').toLowerCase().trim();
+            const pPhone = (p.telepon || p.phone || '').replace(/\D/g, '');
+
+            // Cocokkan dengan akun di tabel Users
+            const matchedUser = userList.find(u => {
+                const uEmpId = String(u.employeeId || u.employee_id || '').trim();
+                const uEmail = (u.email || '').toLowerCase().trim();
+                const uPhone = (u.phone || '').replace(/\D/g, '');
+                return (uEmpId && uEmpId === empIdStr) || 
+                       (pEmail && uEmail && pEmail === uEmail) ||
+                       (pPhone && uPhone && pPhone.length >= 8 && uPhone.endsWith(pPhone.slice(-8)));
+            });
+
             return {
                 ...p,
-                employeeId: String(rawId),
-                employee_id: String(rawId),
-                id: String(rawId),
+                employeeId: empIdStr,
+                employee_id: empIdStr,
+                id: empIdStr,
                 nama: p.nama || p.name || '',
                 nip: p.nip || '',
                 gender: (p.gender || 'L').toUpperCase().startsWith('P') ? 'P' : 'L',
@@ -67,7 +97,11 @@ async function loadAdminEmployeesData() {
                 spesialisasi: p.spesialisasi || '',
                 telepon: p.telepon || p.phone || '',
                 email: p.email || '',
-                status: (p.status || 'ACTIVE').toUpperCase()
+                status: (p.status || 'ACTIVE').toUpperCase(),
+                hasAccount: Boolean(matchedUser),
+                userId: matchedUser ? (matchedUser.userId || matchedUser.user_id) : null,
+                userRole: matchedUser ? matchedUser.role : null,
+                userStatus: matchedUser ? matchedUser.status : null
             };
         });
 
@@ -106,6 +140,32 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+/**
+ * Pemetaan cerdas peran RBAC berdasarkan jabatan kepegawaian
+ */
+function suggestRoleFromJabatan(jabatan) {
+    const j = String(jabatan || '').toLowerCase();
+    if (j.includes('bendahara') || j.includes('keuangan')) return 'BENDAHARA';
+    if (j.includes('tu') || j.includes('tata usaha') || j.includes('administrasi')) return 'EDITOR';
+    if (j.includes('musyrif') || j.includes('pembina') || j.includes('pengasuh')) return 'PENGASUH';
+    if (j.includes('kepala') || j.includes('pimpinan')) return 'ADMIN';
+    return 'ASATIDZ';
+}
+
+/**
+ * Toggle tampilan opsi peran login pengguna di modal pegawai
+ */
+function toggleEmployeeUserSyncUI() {
+    const chk = document.getElementById('input-employee-sync-user');
+    const container = document.getElementById('container-employee-user-role');
+    if (!container) return;
+    if (chk && chk.checked) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
 }
 
 /**
@@ -212,6 +272,19 @@ function renderAdminPegawaiTable() {
             const waClean = (p.telepon || "").replace(/\D/g, "");
             const waLink = waClean ? `https://wa.me/${waClean.startsWith('0') ? '62' + waClean.substring(1) : waClean}` : "";
 
+            // Badge Akun Login Pengguna
+            let accountBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" title="Pegawai belum memiliki akun login">
+                <i class="fa-regular fa-circle text-[8px] text-slate-400"></i> Belum Ada
+            </span>`;
+            if (p.hasAccount) {
+                const isUserActive = (p.userStatus || 'ACTIVE').toUpperCase() === 'ACTIVE';
+                accountBadge = `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold ${isUserActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/60' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-100 dark:border-rose-900/60'}" title="Akun: ${p.userId || '-'} (${p.userRole || 'ASATIDZ'})">
+                    <span class="w-1.5 h-1.5 rounded-full ${isUserActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+                    <span>${escapeHtml(p.userRole || 'ASATIDZ')}</span>
+                </span>`;
+            }
+
             return `
             <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] transition">
                 <td class="px-4 py-3 text-slate-400 font-semibold text-center">${idx + 1}</td>
@@ -239,6 +312,9 @@ function renderAdminPegawaiTable() {
                             <span>${escapeHtml(p.telepon)}</span>
                         </a>
                     ` : `<span class="text-slate-400 text-[11px]">-</span>`}
+                </td>
+                <td class="px-4 py-3 text-center">
+                    ${accountBadge}
                 </td>
                 <td class="px-4 py-3 text-center">
                     <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold ${isAktif ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}">
@@ -269,6 +345,12 @@ function renderAdminPegawaiTable() {
             const waClean = (p.telepon || "").replace(/\D/g, "");
             const waLink = waClean ? `https://wa.me/${waClean.startsWith('0') ? '62' + waClean.substring(1) : waClean}` : "";
 
+            let accountBadgeMobile = `<span class="px-2 py-0.5 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500">Belum Ada Akun</span>`;
+            if (p.hasAccount) {
+                const isUserActive = (p.userStatus || 'ACTIVE').toUpperCase() === 'ACTIVE';
+                accountBadgeMobile = `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold ${isUserActive ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-rose-100 text-rose-800'}">Akun: ${escapeHtml(p.userRole || 'ASATIDZ')}</span>`;
+            }
+
             return `
             <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-3">
                 <div class="flex items-start justify-between gap-3">
@@ -281,9 +363,12 @@ function renderAdminPegawaiTable() {
                             <p class="text-[10px] text-slate-400 font-mono">NIP: ${escapeHtml(p.nip || '-')}</p>
                         </div>
                     </div>
-                    <span class="px-2 py-0.5 rounded text-[9px] font-extrabold ${isAktif ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-200 text-slate-600'}">
-                        ${isAktif ? 'Aktif' : 'Nonaktif'}
-                    </span>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-extrabold ${isAktif ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-200 text-slate-600'}">
+                            ${isAktif ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                        ${accountBadgeMobile}
+                    </div>
                 </div>
 
                 <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-[#1c2836] flex items-center justify-between text-xs">
@@ -344,9 +429,24 @@ function openAdminEmployeeModal(employeeId = null) {
     const emailInput = document.getElementById('input-employee-email');
     const statusSelect = document.getElementById('input-employee-status');
 
+    // Elemen Sinkronisasi Akun Pengguna
+    const syncUserChk = document.getElementById('input-employee-sync-user');
+    const syncUserBadge = document.getElementById('badge-employee-user-status');
+    const userRoleSelect = document.getElementById('input-employee-user-role');
+    const userRoleContainer = document.getElementById('container-employee-user-role');
+
     if (idInput) idInput.value = '';
     if (statusSelect) statusSelect.value = 'ACTIVE';
     if (genderInput) genderInput.value = 'L';
+
+    // Handler otomatisasi pilihan role saat jabatan diubah
+    if (jabatanSelect) {
+        jabatanSelect.onchange = function() {
+            if (userRoleSelect && (!emp || !emp.hasAccount)) {
+                userRoleSelect.value = suggestRoleFromJabatan(jabatanSelect.value);
+            }
+        };
+    }
 
     // Treat 'undefined', 'null', '', or false as no ID (Tambah Baru)
     const cleanId = (employeeId && employeeId !== 'undefined' && employeeId !== 'null') ? String(employeeId).trim() : null;
@@ -401,12 +501,41 @@ function openAdminEmployeeModal(employeeId = null) {
             statusSelect.value = (st === 'INACTIVE' || st === 'NONAKTIF' || st === 'CUTI') ? 'INACTIVE' : 'ACTIVE';
         }
 
+        // Status Akun Pengguna Terkait
+        if (emp.hasAccount) {
+            if (syncUserChk) syncUserChk.checked = true;
+            if (userRoleSelect && emp.userRole) userRoleSelect.value = emp.userRole;
+            if (syncUserBadge) {
+                syncUserBadge.className = "px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0";
+                syncUserBadge.innerText = `🟢 Akun Aktif (${emp.userRole || 'ASATIDZ'})`;
+            }
+            if (userRoleContainer) userRoleContainer.classList.remove('hidden');
+        } else {
+            if (syncUserChk) syncUserChk.checked = false;
+            const suggested = suggestRoleFromJabatan(emp.jabatan);
+            if (userRoleSelect) userRoleSelect.value = suggested;
+            if (syncUserBadge) {
+                syncUserBadge.className = "px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 shrink-0";
+                syncUserBadge.innerText = "⚪ Belum Ada Akun";
+            }
+            if (userRoleContainer) userRoleContainer.classList.add('hidden');
+        }
+
     } else {
         // Mode Tambah Pegawai Baru
         if (modalTitle) modalTitle.innerText = "Tambah Pegawai / Ustadz Baru";
         if (btnSubmit) {
             btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Simpan Pegawai</span>`;
         }
+
+        // Auto-provision aktif untuk kemudahan admin
+        if (syncUserChk) syncUserChk.checked = true;
+        if (userRoleSelect) userRoleSelect.value = 'ASATIDZ';
+        if (syncUserBadge) {
+            syncUserBadge.className = "px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0";
+            syncUserBadge.innerText = "✨ Akun Baru Otomatis";
+        }
+        if (userRoleContainer) userRoleContainer.classList.remove('hidden');
     }
 
     modal.classList.remove('hidden');
@@ -437,8 +566,17 @@ async function saveAdminEmployee(e) {
     const email = document.getElementById('input-employee-email')?.value?.trim() || '';
     const status = document.getElementById('input-employee-status')?.value || 'ACTIVE';
 
+    const syncUser = document.getElementById('input-employee-sync-user')?.checked || false;
+    const userRole = document.getElementById('input-employee-user-role')?.value || 'ASATIDZ';
+
     if (!nama) {
         if (typeof showToast === 'function') showToast("⚠️ Nama lengkap pegawai wajib diisi.");
+        return;
+    }
+
+    if (syncUser && !email) {
+        if (typeof showToast === 'function') showToast("⚠️ Email wajib diisi jika ingin menyinkronkan/membuat akun login pengguna.");
+        document.getElementById('input-employee-email')?.focus();
         return;
     }
 
@@ -454,7 +592,10 @@ async function saveAdminEmployee(e) {
         spesialisasi,
         telepon,
         email,
-        status
+        status,
+        syncUser,
+        createAccount: syncUser,
+        userRole
     };
 
     const btnSubmit = document.getElementById('btn-save-employee');
@@ -584,3 +725,5 @@ window.closeAdminEmployeeModal = closeAdminEmployeeModal;
 window.saveAdminEmployee = saveAdminEmployee;
 window.deleteAdminEmployee = deleteAdminEmployee;
 window.populateTahfidzMuhafizDropdown = populateTahfidzMuhafizDropdown;
+window.toggleEmployeeUserSyncUI = toggleEmployeeUserSyncUI;
+window.suggestRoleFromJabatan = suggestRoleFromJabatan;
