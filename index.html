@@ -6324,7 +6324,36 @@
 
                 <!-- 4 KARTU RINGKASAN MAKRO (RESPONSIF MOBILE & COMPACT) -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-2.5">
-                    <!-- 1. Capaian Ziyadah Pekan Ini (Pengganti Khatam 30 Juz) -->
+                    <!-- 1. Total Santri Aktif (Plotting Halaqah) -->
+                    <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
+                        <div class="space-y-0.5 min-w-0">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">TOTAL SANTRI AKTIF</span>
+                            <div class="flex items-baseline space-x-1">
+                                <span id="tahfidz-stat-total" class="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100">0</span>
+                                <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Santri</span>
+                            </div>
+                            <p class="text-[9px] text-slate-400 truncate">Terplot dalam halaqah</p>
+                        </div>
+                        <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center text-sm md:text-base shrink-0">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+
+                    <!-- 2. Rata-Rata Hafalan -->
+                    <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
+                        <div class="space-y-0.5 min-w-0">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">RATA-RATA HAFALAN</span>
+                            <div id="tahfidz-stat-rata" class="text-lg md:text-xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+                                0.0 <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Juz</span>
+                            </div>
+                            <p class="text-[9px] text-slate-400 truncate">Capaian per santri</p>
+                        </div>
+                        <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-sm md:text-base shrink-0">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. Capaian Ziyadah Pekan Ini -->
                     <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1 relative overflow-hidden">
                         <div class="flex justify-between items-center">
                             <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">CAPAIAN ZIYADAH PEKAN INI</span>
@@ -6347,35 +6376,6 @@
                         </div>
                         <!-- Fallback legacy id -->
                         <span id="tahfidz-stat-khatam" class="hidden">0</span>
-                    </div>
-
-                    <!-- 2. Rata-Rata Hafalan -->
-                    <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
-                        <div class="space-y-0.5 min-w-0">
-                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">RATA-RATA HAFALAN</span>
-                            <div id="tahfidz-stat-rata" class="text-lg md:text-xl font-black text-emerald-600 dark:text-emerald-400 truncate">
-                                0.0 <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Juz</span>
-                            </div>
-                            <p class="text-[9px] text-slate-400 truncate">Capaian per santri</p>
-                        </div>
-                        <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-sm md:text-base shrink-0">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </div>
-                    </div>
-
-                    <!-- 3. Total Santri Aktif (Plotting Halaqah) -->
-                    <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
-                        <div class="space-y-0.5 min-w-0">
-                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">TOTAL SANTRI AKTIF</span>
-                            <div class="flex items-baseline space-x-1">
-                                <span id="tahfidz-stat-total" class="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100">0</span>
-                                <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Santri</span>
-                            </div>
-                            <p class="text-[9px] text-slate-400 truncate">Terplot dalam halaqah</p>
-                        </div>
-                        <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center text-sm md:text-base shrink-0">
-                            <i class="fa-solid fa-users"></i>
-                        </div>
                     </div>
 
                     <!-- 4. Capaian Muroja'ah Pekan Ini -->
