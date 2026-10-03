@@ -1363,41 +1363,171 @@ function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
 }
 
 /**
- * Switch mode satuan setoran: HALAMAN vs AYAT (Tahfidz Anak)
+ * Switch mode satuan setoran: HALAMAN vs AYAT vs JUZ (Tasmi' Multi-Juz / Manzil)
  */
 function setTahfidzSatuanMode(mode) {
     ASNTahfidz.catatState.inputMode = mode;
     const btnHal = document.getElementById('btn-mode-halaman');
     const btnAyat = document.getElementById('btn-mode-ayat');
+    const btnJuz = document.getElementById('btn-mode-juz');
     const contHal = document.getElementById('container-mode-halaman');
     const contAyat = document.getElementById('container-mode-ayat');
+    const contJuz = document.getElementById('container-mode-juz');
+
+    const defaultClass = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600";
+    const defaultJuzClass = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-purple-600";
 
     if (mode === 'AYAT') {
-        if (btnAyat) {
-            btnAyat.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
-        }
-        if (btnHal) {
-            btnHal.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600";
-        }
+        if (btnAyat) btnAyat.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
+        if (btnHal) btnHal.className = defaultClass;
+        if (btnJuz) btnJuz.className = defaultJuzClass;
+
         if (contHal) contHal.classList.add('hidden');
+        if (contJuz) contJuz.classList.add('hidden');
         if (contAyat) contAyat.classList.remove('hidden');
 
         // Populate surah for current juz
         const currentJuz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 30);
         populateTahfidzSurahDropdown(currentJuz, ASNTahfidz.catatState.surahNo);
         onTahfidzAyatChange();
-    } else {
-        if (btnHal) {
-            btnHal.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
-        }
-        if (btnAyat) {
-            btnAyat.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600";
-        }
+    } else if (mode === 'JUZ') {
+        if (btnJuz) btnJuz.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-purple-600 text-white shadow-sm";
+        if (btnHal) btnHal.className = defaultClass;
+        if (btnAyat) btnAyat.className = defaultClass;
+
+        if (contHal) contHal.classList.add('hidden');
         if (contAyat) contAyat.classList.add('hidden');
+        if (contJuz) contJuz.classList.remove('hidden');
+
+        const currentJuz = Number(document.getElementById('tahfidz-catat-juz')?.value || ASNTahfidz.catatState.juz || 1);
+        populateTahfidzJuzRangeDropdowns(currentJuz, currentJuz);
+    } else {
+        if (btnHal) btnHal.className = "px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm";
+        if (btnAyat) btnAyat.className = defaultClass;
+        if (btnJuz) btnJuz.className = defaultJuzClass;
+
+        if (contAyat) contAyat.classList.add('hidden');
+        if (contJuz) contJuz.classList.add('hidden');
         if (contHal) contHal.classList.remove('hidden');
 
         renderTahfidzPageSelector();
     }
+}
+
+/**
+ * Dapatkan rentang surah awal sampai akhir untuk rentang juz
+ */
+function getSurahRangeForJuz(start, end) {
+    if (start === end) {
+        return SURAH_JUZ_REFERENCE[start] || `Juz ${start}`;
+    }
+    const refStart = SURAH_JUZ_REFERENCE[start] || '';
+    const refEnd = SURAH_JUZ_REFERENCE[end] || '';
+    const surahAwal = refStart.split(' - ')[0] || `Juz ${start}`;
+    const surahAkhir = refEnd.includes(' - ') ? refEnd.split(' - ')[1] : (refEnd || `Juz ${end}`);
+    return `${surahAwal} - ${surahAkhir}`;
+}
+
+/**
+ * Mengisi dropdown rentang Juz (Dari Juz X s/d Juz Y) untuk Mode Per Juz / Tasmi'
+ */
+function populateTahfidzJuzRangeDropdowns(startJuz = 1, endJuz = 1) {
+    const selStart = document.getElementById('tahfidz-catat-juz-mulai');
+    const selEnd = document.getElementById('tahfidz-catat-juz-sampai');
+    if (!selStart || !selEnd) return;
+
+    let opts = '';
+    for (let j = 1; j <= 30; j++) {
+        opts += `<option value="${j}">Juz ${j} (${SURAH_JUZ_REFERENCE[j] || ''})</option>`;
+    }
+    selStart.innerHTML = opts;
+    selEnd.innerHTML = opts;
+
+    selStart.value = String(startJuz);
+    selEnd.value = String(endJuz);
+
+    onTahfidzJuzRangeChange();
+}
+
+/**
+ * Handler saat rentang Juz pada mode Per Juz berubah
+ */
+function onTahfidzJuzRangeChange() {
+    const selStart = document.getElementById('tahfidz-catat-juz-mulai');
+    const selEnd = document.getElementById('tahfidz-catat-juz-sampai');
+    if (!selStart || !selEnd) return;
+
+    let start = Number(selStart.value) || 1;
+    let end = Number(selEnd.value) || start;
+
+    if (end < start) {
+        end = start;
+        selEnd.value = String(end);
+    }
+
+    const count = (end - start + 1);
+    // Standar mushaf pojok 20 halaman per juz, khusus 30 juz khataman total 604 halaman
+    const totalPages = (count === 30) ? 604 : (count * 20);
+
+    ASNTahfidz.catatState.juzStart = start;
+    ASNTahfidz.catatState.juzEnd = end;
+    ASNTahfidz.catatState.totalJuz = count;
+    ASNTahfidz.catatState.totalHalaman = totalPages;
+
+    const summaryRange = document.getElementById('tahfidz-juz-range-summary');
+    const summarySurah = document.getElementById('tahfidz-juz-surah-summary');
+    const badgeCount = document.getElementById('tahfidz-juz-count-badge');
+    const badgePages = document.getElementById('tahfidz-juz-pages-badge');
+
+    const surahRange = getSurahRangeForJuz(start, end);
+
+    if (summaryRange) {
+        summaryRange.innerHTML = `<i class="fa-solid fa-book-open text-purple-600 dark:text-purple-400"></i> ${start === end ? `Juz ${start}` : `Juz ${start} s/d Juz ${end}`}`;
+    }
+    if (summarySurah) {
+        summarySurah.innerText = `Surah ${surahRange}`;
+    }
+    if (badgeCount) {
+        badgeCount.innerText = `${count} JUZ PENUH`;
+    }
+    if (badgePages) {
+        badgePages.innerText = `${totalPages} HALAMAN`;
+    }
+
+    // Update global state & ringkasan header
+    const summaryBadge = document.getElementById('tahfidz-page-summary-badge');
+    const summaryList = document.getElementById('tahfidz-page-summary-list');
+    if (summaryBadge) {
+        summaryBadge.innerText = `TERPILIH: ${count} JUZ (${totalPages} HAL)`;
+    }
+    if (summaryList) {
+        summaryList.innerText = start === end ? `Juz ${start} (20 Halaman)` : `Juz ${start} - ${end} (${count} Juz, ${totalPages} Halaman)`;
+    }
+}
+
+/**
+ * Terapkan Pilihan Cepat Kategori Ujian Tasmi' (1, 3, 5, 10, 15, 30 Juz)
+ */
+function applyTahfidzJuzPreset(presetCount) {
+    const selStart = document.getElementById('tahfidz-catat-juz-mulai');
+    const selEnd = document.getElementById('tahfidz-catat-juz-sampai');
+    if (!selStart || !selEnd) return;
+
+    let start = Number(selStart.value) || 1;
+    if (presetCount === 30) {
+        start = 1;
+        selStart.value = "1";
+    }
+
+    let end = start + presetCount - 1;
+    if (end > 30) {
+        end = 30;
+        start = Math.max(1, 30 - presetCount + 1);
+        selStart.value = String(start);
+    }
+    selEnd.value = String(end);
+
+    onTahfidzJuzRangeChange();
 }
 
 /**
@@ -1756,19 +1886,13 @@ function applyTahfidzRecommendation(studentId, tipe) {
             badgeEl.innerText = "Tasmi' Ujian Sekali Duduk";
             badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
         }
-        if (descEl) descEl.innerHTML = '<i class="fa-solid fa-award text-purple-600"></i> <span>Ujian tasmi\' bil ghoib 1 juz penuh</span>';
-        if (posEl) posEl.innerText = `Juz ${ziyadahJuz} (1 Juz Penuh)`;
+        if (descEl) descEl.innerHTML = '<i class="fa-solid fa-award text-purple-600"></i> <span>Ujian tasmi\' bil ghoib sekali duduk (1, 3, 5, 10, 30 Juz)</span>';
+        if (posEl) posEl.innerText = `Juz ${ziyadahJuz}`;
 
         if (selJuz) selJuz.value = String(ziyadahJuz);
         ASNTahfidz.catatState.juz = ziyadahJuz;
-        const fullPages = [];
-        for (let p = 1; p <= 20; p++) fullPages.push(p);
-        ASNTahfidz.catatState.selectedPages = fullPages;
-        if (ASNTahfidz.catatState.inputMode === 'AYAT') {
-            populateTahfidzSurahDropdown(ziyadahJuz);
-        } else {
-            renderTahfidzPageSelector();
-        }
+        setTahfidzSatuanMode('JUZ');
+        populateTahfidzJuzRangeDropdowns(ziyadahJuz, ziyadahJuz);
     }
 }
 
@@ -1792,12 +1916,19 @@ function setTahfidzCatatTipe(tipe) {
 
     if (tipe === 'ZIYADAH' && btnZ) {
         btnZ.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/20';
+        if (ASNTahfidz.catatState.inputMode === 'JUZ') {
+            setTahfidzSatuanMode('HALAMAN');
+        }
     } else if (tipe === 'MURAJAAH_SABQI' && btnSabqi) {
         btnSabqi.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-amber-600 text-white border-amber-600 shadow-sm ring-2 ring-amber-500/20';
+        if (ASNTahfidz.catatState.inputMode === 'JUZ') {
+            setTahfidzSatuanMode('HALAMAN');
+        }
     } else if (tipe === 'MURAJAAH_MANZIL' && btnManzil) {
         btnManzil.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-sky-600 text-white border-sky-600 shadow-sm ring-2 ring-sky-500/20';
     } else if (tipe === 'TASMI' && btnT) {
         btnT.className = 'py-2.5 px-2 rounded-xl border font-bold text-xs flex flex-col items-center justify-center gap-1 transition active:scale-95 bg-purple-600 text-white border-purple-600 shadow-sm ring-2 ring-purple-500/20';
+        setTahfidzSatuanMode('JUZ');
     }
 
     const currentStudentId = document.getElementById('tahfidz-catat-santri')?.value || ASNTahfidz.catatState.studentId;
@@ -1950,6 +2081,15 @@ async function submitTahfidzCatat(e) {
         ASNTahfidz.catatState.selectedPages = calcPages;
         halamanList = calcPages.join(",");
         totalHalaman = calcPages.length;
+    } else if (ASNTahfidz.catatState.inputMode === 'JUZ') {
+        const jStart = Number(document.getElementById('tahfidz-catat-juz-mulai')?.value || ASNTahfidz.catatState.juzStart || juz);
+        const jEnd = Number(document.getElementById('tahfidz-catat-juz-sampai')?.value || ASNTahfidz.catatState.juzEnd || jStart);
+        const countJuz = Math.max(1, jEnd - jStart + 1);
+        totalHalaman = (countJuz === 30) ? 604 : (countJuz * 20);
+        surah = jStart === jEnd 
+            ? `Juz ${jStart} (${SURAH_JUZ_REFERENCE[jStart] || ''})` 
+            : `Juz ${jStart} s/d Juz ${jEnd} (${getSurahRangeForJuz(jStart, jEnd)})`;
+        halamanList = jStart === jEnd ? "1-20" : `1-20 (Juz ${jStart}-${jEnd})`;
     } else {
         const selectedPages = ASNTahfidz.catatState.selectedPages || [1];
         halamanList = selectedPages.join(",");
@@ -1963,6 +2103,12 @@ async function submitTahfidzCatat(e) {
 
     try {
         const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
+        const finalJuzStart = (ASNTahfidz.catatState.inputMode === 'JUZ') ? (ASNTahfidz.catatState.juzStart || juz) : juz;
+        const finalJuzEnd = (ASNTahfidz.catatState.inputMode === 'JUZ') ? (ASNTahfidz.catatState.juzEnd || juz) : juz;
+        const finalCatatan = (ASNTahfidz.catatState.tipe === 'TASMI' && ASNTahfidz.catatState.inputMode === 'JUZ')
+            ? (catatan ? `[Ujian Tasmi' ${ASNTahfidz.catatState.totalJuz || 1} Juz Sekali Duduk] ${catatan}` : `[Ujian Tasmi' ${ASNTahfidz.catatState.totalJuz || 1} Juz Sekali Duduk]`)
+            : catatan;
+
         const payload = {
             token,
             studentId,
@@ -1980,7 +2126,8 @@ async function submitTahfidzCatat(e) {
             sesi,
             tipe: ASNTahfidz.catatState.tipe,
             satuan: ASNTahfidz.catatState.inputMode,
-            juz,
+            juz: finalJuzStart,
+            juz_sampai: finalJuzEnd,
             surah,
             ayatMulai: ayatMulaiVal,
             ayatSampai: ayatSampaiVal,
@@ -1994,7 +2141,7 @@ async function submitTahfidzCatat(e) {
             statusSetoran,
             status_setoran: statusSetoran,
             muhafiz: muhafiz || optMuhafiz || (student?.halaqah?.muhafiz || "Ustadz Pembina"),
-            catatan
+            catatan: finalCatatan
         };
 
         const response = await apiPost("saveTahfidzLog", payload);
@@ -2011,7 +2158,8 @@ async function submitTahfidzCatat(e) {
             const updateStudentData = (st) => {
                 if (!st) return;
                 st.setoranTerakhir = {
-                    juz: juz,
+                    juz: finalJuzStart,
+                    juzSampai: finalJuzEnd,
                     surah: surah,
                     ayatMulai: ayatMulaiVal,
                     ayatSampai: ayatSampaiVal,
@@ -2080,7 +2228,10 @@ async function submitTahfidzCatat(e) {
                         st.progress.onTrackStatus = `Wajib Ulang Manzil (Hlm ${halamanList})`;
                     }
                 } else if (tipeAktif === 'TASMI') {
-                    st.progress.onTrackStatus = statusSetoran === 'LANJUT' ? "Lulus Tasmi'" : "Ulang Tasmi'";
+                    const tasmiCount = ASNTahfidz.catatState.inputMode === 'JUZ' ? (ASNTahfidz.catatState.totalJuz || 1) : 1;
+                    st.progress.onTrackStatus = statusSetoran === 'LANJUT' 
+                        ? (tasmiCount > 1 ? `Lulus Tasmi' ${tasmiCount} Juz` : "Lulus Tasmi'") 
+                        : "Ulang Tasmi'";
                 }
                 st.totalSetoran = (st.totalSetoran || 0) + 1;
             };
@@ -4842,3 +4993,9 @@ window.submitTahfidzBulkTarget = submitTahfidzBulkTarget;
 window.isStudentInHalaqah = isStudentInHalaqah;
 window.populateTahfidzMuhafizSelector = populateTahfidzMuhafizSelector;
 window.renderTahfidzEstimasiKhatam = renderTahfidzEstimasiKhatam;
+window.setTahfidzSatuanMode = setTahfidzSatuanMode;
+window.getSurahRangeForJuz = getSurahRangeForJuz;
+window.populateTahfidzJuzRangeDropdowns = populateTahfidzJuzRangeDropdowns;
+window.onTahfidzJuzRangeChange = onTahfidzJuzRangeChange;
+window.applyTahfidzJuzPreset = applyTahfidzJuzPreset;
+
