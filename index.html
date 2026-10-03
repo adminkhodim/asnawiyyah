@@ -10726,6 +10726,41 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL PROGRAM GALLERY LIGHTBOX ==================== -->
+    <div id="modal-program-gallery-lightbox" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md hidden flex flex-col justify-between p-3 sm:p-5 transition-opacity duration-300 select-none">
+        <!-- Top Controls Bar -->
+        <div class="flex items-center justify-between text-white z-20 px-2 py-1">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span id="lightbox-program-name" class="text-xs md:text-sm font-bold text-white tracking-wide truncate max-w-[200px] sm:max-w-xs md:max-w-md">Dokumentasi Program</span>
+                <span id="lightbox-counter" class="text-[11px] font-semibold bg-white/10 px-2.5 py-0.5 rounded-full text-slate-300">1 / 1</span>
+            </div>
+            <button type="button" onclick="closeProgramGalleryLightbox()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition active:scale-95 cursor-pointer" title="Tutup (Esc)">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Center Image Viewport & Navigation -->
+        <div class="relative flex-1 flex items-center justify-center my-auto p-2 overflow-hidden">
+            <button type="button" id="lightbox-prev-btn" onclick="navigateProgramGalleryLightbox(-1)" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition shadow-lg active:scale-90 z-20 cursor-pointer border border-white/10" title="Sebelumnya">
+                <i class="fa-solid fa-chevron-left text-sm md:text-base"></i>
+            </button>
+            <div class="max-w-4xl max-h-[75vh] w-full h-full flex items-center justify-center relative">
+                <img id="lightbox-img" src="" alt="Dokumentasi Full" class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl transition-transform duration-300">
+            </div>
+            <button type="button" id="lightbox-next-btn" onclick="navigateProgramGalleryLightbox(1)" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition shadow-lg active:scale-90 z-20 cursor-pointer border border-white/10" title="Selanjutnya">
+                <i class="fa-solid fa-chevron-right text-sm md:text-base"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Caption Bar -->
+        <div class="z-20 text-center px-4 py-2 bg-black/60 backdrop-blur-md rounded-2xl max-w-xl mx-auto border border-white/10 w-full mb-1">
+            <p id="lightbox-caption" class="text-xs md:text-sm font-semibold text-white/95 leading-relaxed line-clamp-2">
+                Dokumentasi Kegiatan
+            </p>
+        </div>
+    </div>
+
     <!-- ==================== APPLICATION SCRIPTS & MODULES ==================== -->
     <!-- Service Worker PWA -->
     <script>

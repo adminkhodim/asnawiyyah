@@ -298,7 +298,22 @@
                 const videoTitle = d.videoTitle || fbDetail.videoTitle || (prog.name ? `Video Profil ${prog.name}` : 'Video Profil Kegiatan');
                 const keunggulanList = (Array.isArray(d.keunggulan) && d.keunggulan.length > 0) ? d.keunggulan : (Array.isArray(fbDetail.keunggulan) ? fbDetail.keunggulan : []);
                 const targetOutputList = (Array.isArray(d.targetOutput) && d.targetOutput.length > 0) ? d.targetOutput : (Array.isArray(fbDetail.targetOutput) ? fbDetail.targetOutput : []);
-                const galleryList = (Array.isArray(d.gallery) && d.gallery.length > 0) ? d.gallery : (Array.isArray(fbDetail.gallery) ? fbDetail.gallery : []);
+                let rawGallery = (Array.isArray(d.gallery) && d.gallery.length > 0) ? d.gallery : (Array.isArray(fbDetail.gallery) ? fbDetail.gallery : []);
+                let galleryList = rawGallery
+                    .filter(g => g && ((typeof g.image === 'string' && g.image.trim() !== '') || (typeof g === 'string' && g.trim() !== '')))
+                    .map((g, idx) => {
+                        if (typeof g === 'string') {
+                            return { image: g.trim(), caption: `Dokumentasi #${idx + 1}`, sliderId: `galeri-${prog.id}-${idx + 1}` };
+                        }
+                        return {
+                            image: (g.image || '').trim(),
+                            caption: (g.caption || '').trim() || `Dokumentasi #${idx + 1}`,
+                            sliderId: g.sliderId || `galeri-${prog.id}-${idx + 1}`
+                        };
+                    });
+                if (galleryList.length === 0 && prog.image) {
+                    galleryList = [{ image: prog.image, caption: prog.name, sliderId: `galeri-${prog.id}-1` }];
+                }
                 const fasilitasList = (Array.isArray(d.fasilitas) && d.fasilitas.length > 0) ? d.fasilitas : (Array.isArray(fbDetail.fasilitas) ? fbDetail.fasilitas : []);
                 const prosedurData = d.prosedur || fbDetail.prosedur || {};
                 const persyaratanList = (Array.isArray(d.persyaratan) && d.persyaratan.length > 0) ? d.persyaratan : (Array.isArray(fbDetail.persyaratan) ? fbDetail.persyaratan : []);
@@ -385,19 +400,86 @@
                             </div>
                         </section>
 
-                        <!-- F. GALERI FOTO -->
+                        <!-- F. GALERI FOTO (INTERACTIVE SLIDER & THUMBNAILS) -->
                         <section class="space-y-3">
-                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
-                                <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Galeri Dokumentasi Kegiatan
-                            </h3>
-                            <div class="relative aspect-video rounded-3xl overflow-hidden shadow-md bg-slate-900">
-                                <div id="${galleryList[0]?.sliderId || `galeri-${prog.id}-1`}" class="w-full h-full relative">
-                                    <img src="${galleryList[0]?.image || prog.image || ''}" alt="${escapeHtml(galleryList[0]?.caption || prog.name || 'Dokumentasi Santri')}" class="absolute inset-0 w-full h-full object-cover">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                                    <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Galeri Dokumentasi Kegiatan
+                                </h3>
+                                ${galleryList.length > 1 ? `
+                                    <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
+                                        ${galleryList.length} Foto Tersedia
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <!-- Main Slider Frame -->
+                            <div id="prog-gallery-frame-${prog.id}" class="relative aspect-video rounded-3xl overflow-hidden shadow-md bg-slate-900 group select-none">
+                                <div id="prog-gallery-container-${prog.id}" class="w-full h-full relative">
+                                    ${galleryList.map((g, idx) => `
+                                        <div class="prog-gallery-slide prog-gallery-slide-${prog.id} absolute inset-0 w-full h-full transition-opacity duration-500 ease-in-out cursor-pointer ${idx === 0 ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}"
+                                             data-index="${idx}"
+                                             data-caption="${escapeHtml(g.caption || `Dokumentasi #${idx + 1}`)}"
+                                             data-image="${escapeHtml(g.image || prog.image || '')}"
+                                             onclick="openProgramGalleryLightbox('${prog.id}', ${idx})">
+                                            <img src="${g.image || prog.image || ''}" alt="${escapeHtml(g.caption || prog.name || 'Dokumentasi Santri')}" class="w-full h-full object-cover">
+                                        </div>
+                                    `).join('')}
                                 </div>
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4 md:p-6">
-                                    <p class="text-xs md:text-sm font-bold text-white"><i class="fa-solid fa-camera mr-2 text-amber-400"></i> ${escapeHtml(galleryList[0]?.caption || 'Dokumentasi Santri')}</p>
+
+                                <!-- Floating Counter & Enlarge Button -->
+                                <div class="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                                    ${galleryList.length > 1 ? `
+                                        <div class="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow border border-white/10 flex items-center gap-1">
+                                            <i class="fa-solid fa-images text-amber-400"></i>
+                                            <span id="prog-gallery-counter-${prog.id}">1</span> / ${galleryList.length}
+                                        </div>
+                                    ` : ''}
+                                    <button onclick="openProgramGalleryLightbox('${prog.id}')"
+                                        class="bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow border border-white/10 transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                                        title="Perbesar Layar Penuh">
+                                        <i class="fa-solid fa-expand text-[10px]"></i>
+                                        <span class="hidden sm:inline">Perbesar</span>
+                                    </button>
+                                </div>
+
+                                ${galleryList.length > 1 ? `
+                                    <!-- Prev / Next Navigation Buttons -->
+                                    <button onclick="event.stopPropagation(); changeProgramGallerySlide('${prog.id}', -1)"
+                                        class="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-lg active:scale-90 z-20 cursor-pointer border border-white/10 hover:scale-105"
+                                        aria-label="Foto Sebelumnya">
+                                        <i class="fa-solid fa-chevron-left text-xs md:text-sm"></i>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); changeProgramGallerySlide('${prog.id}', 1)"
+                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-lg active:scale-90 z-20 cursor-pointer border border-white/10 hover:scale-105"
+                                        aria-label="Foto Selanjutnya">
+                                        <i class="fa-solid fa-chevron-right text-xs md:text-sm"></i>
+                                    </button>
+                                ` : ''}
+
+                                <!-- Bottom Gradient & Caption -->
+                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3.5 md:p-5 z-10 pointer-events-none">
+                                    <p id="prog-gallery-caption-${prog.id}" class="text-xs md:text-sm font-bold text-white flex items-center gap-2">
+                                        <i class="fa-solid fa-camera text-amber-400 shrink-0"></i>
+                                        <span class="line-clamp-2">${escapeHtml(galleryList[0]?.caption || 'Dokumentasi Santri')}</span>
+                                    </p>
                                 </div>
                             </div>
+
+                            ${galleryList.length > 1 ? `
+                                <!-- Thumbnail Navigation Strip -->
+                                <div class="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none snap-x" id="prog-gallery-thumbs-${prog.id}">
+                                    ${galleryList.map((g, idx) => `
+                                        <button onclick="setProgramGallerySlide('${prog.id}', ${idx})"
+                                            id="prog-gallery-thumb-${prog.id}-${idx}"
+                                            class="prog-gallery-thumb-${prog.id} relative w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 shrink-0 snap-start cursor-pointer ${idx === 0 ? 'border-amber-400 ring-2 ring-amber-400/40 opacity-100 scale-105 shadow' : 'border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100'}"
+                                            title="${escapeHtml(g.caption || `Foto #${idx + 1}`)}">
+                                            <img src="${g.image || prog.image || ''}" alt="${escapeHtml(g.caption || '')}" class="w-full h-full object-cover">
+                                            <span class="absolute bottom-0.5 right-1 bg-black/75 text-[8px] font-bold text-white px-1 rounded">${idx + 1}</span>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
                         </section>
 
                         <!-- G. FASILITAS -->
@@ -521,6 +603,14 @@
 
                     </div>
                 `;
+
+                if (galleryList.length > 1) {
+                    setTimeout(() => {
+                        if (typeof window.initProgramGalleryTouch === 'function') {
+                            window.initProgramGalleryTouch(prog.id);
+                        }
+                    }, 50);
+                }
             });
         }
 
@@ -529,3 +619,170 @@
             renderProgramPilihanGrid();
             renderAllProgramDetails();
         }
+
+        // ==================== PROGRAM GALLERY CONTROLLER & LIGHTBOX ====================
+        window.programGalleryState = window.programGalleryState || {};
+        let activeLightboxProgId = null;
+        let activeLightboxIndex = 0;
+
+        window.setProgramGallerySlide = function(progId, targetIndex) {
+            const container = document.getElementById(`prog-gallery-container-${progId}`);
+            if (!container) return;
+            const slides = container.querySelectorAll(`.prog-gallery-slide-${progId}`);
+            if (!slides || slides.length === 0) return;
+
+            const total = slides.length;
+            const validIndex = ((targetIndex % total) + total) % total;
+            window.programGalleryState[progId] = validIndex;
+
+            slides.forEach((slide, idx) => {
+                if (idx === validIndex) {
+                    slide.classList.remove('opacity-0', 'pointer-events-none', 'z-0');
+                    slide.classList.add('opacity-100', 'z-10');
+                    const caption = slide.getAttribute('data-caption') || 'Dokumentasi Santri';
+                    const captionEl = document.getElementById(`prog-gallery-caption-${progId}`);
+                    if (captionEl) {
+                        captionEl.innerHTML = `<i class="fa-solid fa-camera text-amber-400 shrink-0"></i> <span class="line-clamp-2">${escapeHtml(caption)}</span>`;
+                    }
+                } else {
+                    slide.classList.remove('opacity-100', 'z-10');
+                    slide.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+                }
+            });
+
+            const counterEl = document.getElementById(`prog-gallery-counter-${progId}`);
+            if (counterEl) counterEl.textContent = `${validIndex + 1}`;
+
+            // Update thumbnails
+            const thumbs = document.querySelectorAll(`.prog-gallery-thumb-${progId}`);
+            thumbs.forEach((thumb, idx) => {
+                if (idx === validIndex) {
+                    thumb.className = `prog-gallery-thumb-${progId} relative w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-14 rounded-xl overflow-hidden border-2 border-amber-400 ring-2 ring-amber-400/40 opacity-100 scale-105 shadow transition-all duration-200 shrink-0 snap-start cursor-pointer`;
+                    thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                } else {
+                    thumb.className = `prog-gallery-thumb-${progId} relative w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-14 rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100 transition-all duration-200 shrink-0 snap-start cursor-pointer`;
+                }
+            });
+        };
+
+        window.changeProgramGallerySlide = function(progId, delta) {
+            const currentIndex = window.programGalleryState[progId] || 0;
+            window.setProgramGallerySlide(progId, currentIndex + delta);
+        };
+
+        window.initProgramGalleryTouch = function(progId) {
+            const frame = document.getElementById(`prog-gallery-frame-${progId}`);
+            if (!frame || frame.dataset.touchInit === "true") return;
+            frame.dataset.touchInit = "true";
+
+            let startX = 0;
+            let startY = 0;
+
+            frame.addEventListener('touchstart', (e) => {
+                if (!e.touches || e.touches.length === 0) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+
+            frame.addEventListener('touchend', (e) => {
+                if (!e.changedTouches || e.changedTouches.length === 0) return;
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+                    if (diffX > 0) {
+                        window.changeProgramGallerySlide(progId, 1);
+                    } else {
+                        window.changeProgramGallerySlide(progId, -1);
+                    }
+                }
+            }, { passive: true });
+        };
+
+        window.openProgramGalleryLightbox = function(progId, targetIdx = null) {
+            const modal = document.getElementById('modal-program-gallery-lightbox');
+            if (!modal) return;
+
+            const prog = (Array.isArray(RUNTIME_PROGRAM_DATA) ? RUNTIME_PROGRAM_DATA.find(p => p.id === progId) : null) ||
+                         (Array.isArray(PROGRAM_DATA) ? PROGRAM_DATA.find(p => p.id === progId) : null);
+            if (!prog) return;
+
+            const d = prog.detail || {};
+            let rawGallery = (Array.isArray(d.gallery) && d.gallery.length > 0) ? d.gallery : (prog.image ? [{ image: prog.image, caption: prog.name }] : []);
+            const galleryList = rawGallery.filter(g => g && (g.image || typeof g === 'string'));
+            if (galleryList.length === 0) return;
+
+            activeLightboxProgId = progId;
+            const currentIdx = (targetIdx !== null) ? targetIdx : (window.programGalleryState[progId] || 0);
+            activeLightboxIndex = Math.max(0, Math.min(currentIdx, galleryList.length - 1));
+
+            updateLightboxView(prog, galleryList);
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        function updateLightboxView(prog, galleryList) {
+            const imgEl = document.getElementById('lightbox-img');
+            const titleEl = document.getElementById('lightbox-program-name');
+            const counterEl = document.getElementById('lightbox-counter');
+            const captionEl = document.getElementById('lightbox-caption');
+            const prevBtn = document.getElementById('lightbox-prev-btn');
+            const nextBtn = document.getElementById('lightbox-next-btn');
+
+            const rawItem = galleryList[activeLightboxIndex] || galleryList[0];
+            const item = typeof rawItem === 'string' ? { image: rawItem, caption: '' } : rawItem;
+
+            if (imgEl && item) imgEl.src = item.image || '';
+            if (titleEl) titleEl.textContent = prog.name || 'Dokumentasi Program';
+            if (counterEl) counterEl.textContent = `${activeLightboxIndex + 1} / ${galleryList.length}`;
+            if (captionEl && item) captionEl.textContent = item.caption || `Dokumentasi #${activeLightboxIndex + 1}`;
+
+            if (galleryList.length <= 1) {
+                if (prevBtn) prevBtn.classList.add('hidden');
+                if (nextBtn) nextBtn.classList.add('hidden');
+            } else {
+                if (prevBtn) prevBtn.classList.remove('hidden');
+                if (nextBtn) nextBtn.classList.remove('hidden');
+            }
+        }
+
+        window.navigateProgramGalleryLightbox = function(delta) {
+            if (!activeLightboxProgId) return;
+            const prog = (Array.isArray(RUNTIME_PROGRAM_DATA) ? RUNTIME_PROGRAM_DATA.find(p => p.id === activeLightboxProgId) : null) ||
+                         (Array.isArray(PROGRAM_DATA) ? PROGRAM_DATA.find(p => p.id === activeLightboxProgId) : null);
+            if (!prog) return;
+
+            const d = prog.detail || {};
+            let rawGallery = (Array.isArray(d.gallery) && d.gallery.length > 0) ? d.gallery : (prog.image ? [{ image: prog.image, caption: prog.name }] : []);
+            const galleryList = rawGallery.filter(g => g && (g.image || typeof g === 'string'));
+            if (galleryList.length <= 1) return;
+
+            activeLightboxIndex = ((activeLightboxIndex + delta + galleryList.length) % galleryList.length);
+            updateLightboxView(prog, galleryList);
+
+            window.setProgramGallerySlide(activeLightboxProgId, activeLightboxIndex);
+        };
+
+        window.closeProgramGalleryLightbox = function() {
+            const modal = document.getElementById('modal-program-gallery-lightbox');
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            activeLightboxProgId = null;
+        };
+
+        // Lightbox keyboard shortcuts (ESC, Left, Right)
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('modal-program-gallery-lightbox');
+            if (!modal || modal.classList.contains('hidden')) return;
+
+            if (e.key === 'Escape') {
+                window.closeProgramGalleryLightbox();
+            } else if (e.key === 'ArrowLeft') {
+                window.navigateProgramGalleryLightbox(-1);
+            } else if (e.key === 'ArrowRight') {
+                window.navigateProgramGalleryLightbox(1);
+            }
+        });
