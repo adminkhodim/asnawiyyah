@@ -60,6 +60,5 @@ jobs:
       - name: 🧪 Execute Automated Security, Session & Integration Test Suites
         run: npm test
 
-      - name: 📢 Report CI Success
-        run: |
-          echo "🎉 CI Pipeline Succeeded: Codebase is verified for production deployment."
+      - name: Report CI Success
+        run: echo "CI Pipeline Succeeded - Codebase is verified for production deployment."
