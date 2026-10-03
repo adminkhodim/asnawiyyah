@@ -10,7 +10,7 @@ on:
       - main
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: '${{ github.workflow }}-${{ github.ref }}'
   cancel-in-progress: true
 
 jobs:
@@ -61,5 +61,5 @@ jobs:
         run: npm test
 
       - name: 📢 Report CI Success
-        if: success()
-        run: echo "🎉 CI Pipeline Succeeded: Codebase is verified for production deployment."
+        run: |
+          echo "🎉 CI Pipeline Succeeded: Codebase is verified for production deployment."
