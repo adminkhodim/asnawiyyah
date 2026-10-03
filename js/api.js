@@ -248,6 +248,35 @@
                     };
                 }
 
+                // Presensi Kehadiran Halaqah (Fast Read)
+                if (action === "getTahfidzPresensi") {
+                    let url = `${sbUrl}/rest/v1/tahfidz_presensi?select=*&order=tanggal.desc`;
+                    if (params.tanggal) url += `&tanggal=eq.${encodeURIComponent(params.tanggal)}`;
+                    if (params.sesi) url += `&sesi=eq.${encodeURIComponent(params.sesi)}`;
+                    if (params.halaqahId) url += `&halaqah_id=eq.${encodeURIComponent(params.halaqahId)}`;
+                    const res = await fetch(url, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        success: true,
+                        data: rows.map(r => ({
+                            presensiId: r.presensi_id,
+                            tanggal: r.tanggal,
+                            sesi: r.sesi,
+                            halaqahId: r.halaqah_id,
+                            namaHalaqah: r.nama_halaqah,
+                            studentId: r.student_id,
+                            nis: r.nis,
+                            studentName: r.student_name,
+                            status: r.status,
+                            keterangan: r.keterangan,
+                            muhafiz: r.muhafiz,
+                            updatedAt: r.updated_at
+                        }))
+                    };
+                }
+
                 // 8. Manajemen Pengguna Terpadu (Users + Wali Santri Map)
                 if (action === "auth.admin.userList" || action === "admin.users.list" || action === "admin.userList" || action === "getUsers") {
                     const res = await fetch(`${sbUrl}/rest/v1/users?order=created_at.desc`, { headers });
@@ -399,7 +428,8 @@
                 'auth.admin.userList', 'admin.users.list', 'admin.userList', 'getUsers',
                 'getStudents', 'student.list', 'auth.student.list',
                 'getEmployees', 'employee.list', 'auth.employee.list',
-                'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getPengaturan'
+                'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getPengaturan',
+                'getTahfidzPresensi'
             ];
             if (fastReadActions.includes(action)) {
                 try {
@@ -723,6 +753,55 @@
                                 updated_at: new Date().toISOString()
                             })
                         });
+                    }
+                }
+                else if (action === 'saveTahfidzPresensi' || action === 'tahfidz.savePresensi' || action === 'auth.tahfidz.savePresensi') {
+                    const p = payload.payload || payload.data || payload;
+                    const tanggal = p.tanggal || new Date().toISOString().split('T')[0];
+                    const sesi = p.sesi || "Pagi (Ba'da Subuh)";
+                    const halaqahId = p.halaqahId || p.halaqah_id || '';
+                    const namaHalaqah = p.namaHalaqah || p.nama_halaqah || '';
+                    const muhafiz = p.muhafiz || '';
+                    const rawRecords = Array.isArray(p.records) ? p.records : [];
+
+                    for (const item of rawRecords) {
+                        const sId = String(item.studentId || item.student_id || item.nis || '').trim();
+                        const nis = String(item.nis || sId).trim();
+                        const sName = String(item.studentName || item.student_name || item.name || '').trim();
+                        const status = String(item.status || 'HADIR').toUpperCase().trim();
+                        const ket = String(item.keterangan || '').trim();
+                        const itemHalId = String(item.halaqahId || item.halaqah_id || halaqahId).trim();
+                        const itemHalName = String(item.namaHalaqah || item.nama_halaqah || namaHalaqah).trim();
+
+                        if (status === 'HADIR') {
+                            // Exception-based: bersihkan baris udzur di Supabase jika santri berstatus Hadir
+                            await fetch(`${sbUrl}/rest/v1/tahfidz_presensi?tanggal=eq.${encodeURIComponent(tanggal)}&sesi=eq.${encodeURIComponent(sesi)}&student_id=eq.${encodeURIComponent(sId)}`, {
+                                method: 'DELETE',
+                                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                            });
+                        } else {
+                            // Catat santri berhalangan (Sakit, Izin, Pulang) ke Supabase PostgreSQL
+                            const presensiId = item.presensiId || item.presensi_id || ('PRS_' + tanggal.replace(/-/g, '') + '_' + sId.replace(/[^a-zA-Z0-9]/g, ''));
+                            const presRow = {
+                                presensi_id: presensiId,
+                                tanggal: tanggal,
+                                sesi: sesi,
+                                halaqah_id: itemHalId,
+                                nama_halaqah: itemHalName,
+                                student_id: sId,
+                                nis: nis,
+                                student_name: sName,
+                                status: status,
+                                keterangan: ket,
+                                muhafiz: muhafiz,
+                                updated_at: new Date().toISOString()
+                            };
+                            await fetch(`${sbUrl}/rest/v1/tahfidz_presensi`, {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify(presRow)
+                            });
+                        }
                     }
                 }
 
