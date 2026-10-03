@@ -52,6 +52,25 @@ async function loadAdminEmployeesData() {
             employees = response;
         }
 
+        // Normalisasi data pegawai agar konsisten employeeId, id, nama, gender, dll
+        employees = employees.map(p => {
+            const rawId = p.employeeId || p.employee_id || p.id || p.nip || ('PEG_' + Math.random().toString(36).substring(2, 9));
+            return {
+                ...p,
+                employeeId: String(rawId),
+                employee_id: String(rawId),
+                id: String(rawId),
+                nama: p.nama || p.name || '',
+                nip: p.nip || '',
+                gender: (p.gender || 'L').toUpperCase().startsWith('P') ? 'P' : 'L',
+                jabatan: p.jabatan || 'Ustadz / Muhafiz',
+                spesialisasi: p.spesialisasi || '',
+                telepon: p.telepon || p.phone || '',
+                email: p.email || '',
+                status: (p.status || 'ACTIVE').toUpperCase()
+            };
+        });
+
         ASNPegawai.list = employees;
         ASNPegawai.filtered = [...employees];
 
@@ -74,6 +93,19 @@ async function loadAdminEmployeesData() {
         if (loader) loader.classList.add('hidden');
         ASNPegawai.isLoading = false;
     }
+}
+
+/**
+ * Utility escape HTML
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 /**
@@ -174,6 +206,7 @@ function renderAdminPegawaiTable() {
     // 1. Render Desktop Table Rows
     if (tbody) {
         tbody.innerHTML = data.map((p, idx) => {
+            const empId = p.employeeId || p.employee_id || p.id || '';
             const isAktif = (p.status || "ACTIVE").toUpperCase() === "ACTIVE" || (p.status || "").toUpperCase() === "AKTIF";
             const initials = (p.nama || "P").substring(0, 2).toUpperCase();
             const waClean = (p.telepon || "").replace(/\D/g, "");
@@ -214,10 +247,10 @@ function renderAdminPegawaiTable() {
                 </td>
                 <td class="px-4 py-3 text-center">
                     <div class="flex items-center justify-center space-x-1.5">
-                        <button type="button" onclick="openAdminEmployeeModal('${p.employeeId}')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 flex items-center justify-center transition" title="Edit Data">
+                        <button type="button" onclick="openAdminEmployeeModal('${escapeHtml(empId)}')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 flex items-center justify-center transition" title="Edit Data">
                             <i class="fa-solid fa-pen-to-square text-xs"></i>
                         </button>
-                        <button type="button" onclick="deleteAdminEmployee('${p.employeeId}', '${escapeHtml(p.nama)}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 flex items-center justify-center transition" title="Hapus Data">
+                        <button type="button" onclick="deleteAdminEmployee('${escapeHtml(empId)}', '${escapeHtml(p.nama)}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 flex items-center justify-center transition" title="Hapus Data">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </div>
@@ -230,6 +263,7 @@ function renderAdminPegawaiTable() {
     // 2. Render Mobile Cards
     if (mobileList) {
         mobileList.innerHTML = data.map(p => {
+            const empId = p.employeeId || p.employee_id || p.id || '';
             const isAktif = (p.status || "ACTIVE").toUpperCase() === "ACTIVE" || (p.status || "").toUpperCase() === "AKTIF";
             const initials = (p.nama || "P").substring(0, 2).toUpperCase();
             const waClean = (p.telepon || "").replace(/\D/g, "");
@@ -274,10 +308,10 @@ function renderAdminPegawaiTable() {
                     ` : `<span class="text-[11px] text-slate-400">Tidak ada kontak</span>`}
 
                     <div class="flex items-center space-x-1.5">
-                        <button type="button" onclick="openAdminEmployeeModal('${p.employeeId}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center gap-1">
+                        <button type="button" onclick="openAdminEmployeeModal('${escapeHtml(empId)}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center gap-1">
                             <i class="fa-solid fa-pen-to-square"></i> Edit
                         </button>
-                        <button type="button" onclick="deleteAdminEmployee('${p.employeeId}', '${escapeHtml(p.nama)}')" class="p-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs">
+                        <button type="button" onclick="deleteAdminEmployee('${escapeHtml(empId)}', '${escapeHtml(p.nama)}')" class="p-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -295,30 +329,84 @@ function openAdminEmployeeModal(employeeId = null) {
     const modal = document.getElementById('modal-employee-form');
     const form = document.getElementById('form-employee');
     const modalTitle = document.getElementById('modal-employee-title');
+    const btnSubmit = document.getElementById('btn-save-employee');
     if (!modal) return;
 
     if (form) form.reset();
 
-    document.getElementById('input-employee-id').value = '';
-    document.getElementById('input-employee-status').value = 'ACTIVE';
-    document.getElementById('input-employee-gender').value = 'L';
+    const idInput = document.getElementById('input-employee-id');
+    const namaInput = document.getElementById('input-employee-nama');
+    const nipInput = document.getElementById('input-employee-nip');
+    const genderInput = document.getElementById('input-employee-gender');
+    const jabatanSelect = document.getElementById('input-employee-jabatan');
+    const spesialisasiInput = document.getElementById('input-employee-spesialisasi');
+    const teleponInput = document.getElementById('input-employee-telepon');
+    const emailInput = document.getElementById('input-employee-email');
+    const statusSelect = document.getElementById('input-employee-status');
 
-    if (employeeId) {
-        const emp = ASNPegawai.list.find(p => p.employeeId === employeeId);
-        if (emp) {
-            if (modalTitle) modalTitle.innerText = "Edit Data Pegawai / Ustadz";
-            document.getElementById('input-employee-id').value = emp.employeeId || '';
-            document.getElementById('input-employee-nama').value = emp.nama || '';
-            document.getElementById('input-employee-nip').value = emp.nip || '';
-            document.getElementById('input-employee-gender').value = emp.gender || 'L';
-            document.getElementById('input-employee-jabatan').value = emp.jabatan || '';
-            document.getElementById('input-employee-spesialisasi').value = emp.spesialisasi || '';
-            document.getElementById('input-employee-telepon').value = emp.telepon || '';
-            document.getElementById('input-employee-email').value = emp.email || '';
-            document.getElementById('input-employee-status').value = emp.status || 'ACTIVE';
+    if (idInput) idInput.value = '';
+    if (statusSelect) statusSelect.value = 'ACTIVE';
+    if (genderInput) genderInput.value = 'L';
+
+    // Treat 'undefined', 'null', '', or false as no ID (Tambah Baru)
+    const cleanId = (employeeId && employeeId !== 'undefined' && employeeId !== 'null') ? String(employeeId).trim() : null;
+
+    let emp = null;
+    if (cleanId) {
+        emp = (ASNPegawai.list || []).find(p => {
+            const pId = String(p.employeeId || p.employee_id || p.id || '').trim();
+            const pNip = String(p.nip || '').trim();
+            return pId === cleanId || (pNip && pNip === cleanId);
+        });
+    }
+
+    if (emp) {
+        // Mode Edit Data Pegawai
+        if (modalTitle) modalTitle.innerText = "Edit Data Pegawai / Ustadz";
+        if (btnSubmit) {
+            btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Simpan Perubahan</span>`;
         }
+
+        const validEmpId = emp.employeeId || emp.employee_id || emp.id || cleanId;
+        if (idInput) idInput.value = validEmpId;
+        if (namaInput) namaInput.value = emp.nama || emp.name || '';
+        if (nipInput) nipInput.value = emp.nip || '';
+        if (genderInput) genderInput.value = (emp.gender || 'L').toUpperCase().startsWith('P') ? 'P' : 'L';
+
+        // Set Jabatan (tambahkan opsi dinamis bila jabatan custom / belum terdaftar)
+        if (jabatanSelect) {
+            const targetJabatan = emp.jabatan || 'Ustadz / Muhafiz';
+            let foundOption = false;
+            for (let i = 0; i < jabatanSelect.options.length; i++) {
+                if (jabatanSelect.options[i].value.toLowerCase() === targetJabatan.toLowerCase()) {
+                    jabatanSelect.selectedIndex = i;
+                    foundOption = true;
+                    break;
+                }
+            }
+            if (!foundOption) {
+                const opt = document.createElement('option');
+                opt.value = targetJabatan;
+                opt.innerText = targetJabatan;
+                jabatanSelect.appendChild(opt);
+                jabatanSelect.value = targetJabatan;
+            }
+        }
+
+        if (spesialisasiInput) spesialisasiInput.value = emp.spesialisasi || '';
+        if (teleponInput) teleponInput.value = emp.telepon || emp.phone || '';
+        if (emailInput) emailInput.value = emp.email || '';
+        if (statusSelect) {
+            const st = (emp.status || 'ACTIVE').toUpperCase();
+            statusSelect.value = (st === 'INACTIVE' || st === 'NONAKTIF' || st === 'CUTI') ? 'INACTIVE' : 'ACTIVE';
+        }
+
     } else {
+        // Mode Tambah Pegawai Baru
         if (modalTitle) modalTitle.innerText = "Tambah Pegawai / Ustadz Baru";
+        if (btnSubmit) {
+            btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Simpan Pegawai</span>`;
+        }
     }
 
     modal.classList.remove('hidden');
@@ -339,6 +427,7 @@ async function saveAdminEmployee(e) {
     if (e) e.preventDefault();
 
     const employeeId = document.getElementById('input-employee-id')?.value || '';
+    const isEdit = Boolean(employeeId);
     const nama = document.getElementById('input-employee-nama')?.value?.trim() || '';
     const nip = document.getElementById('input-employee-nip')?.value?.trim() || '';
     const gender = document.getElementById('input-employee-gender')?.value || 'L';
@@ -355,7 +444,10 @@ async function saveAdminEmployee(e) {
 
     const payload = {
         employeeId,
+        employee_id: employeeId,
+        id: employeeId,
         nama,
+        name: nama,
         nip,
         gender,
         jabatan,
@@ -377,7 +469,7 @@ async function saveAdminEmployee(e) {
 
         if (res && (res.success || res.status === "success")) {
             if (typeof showToast === 'function') {
-                showToast("✅ Data pegawai berhasil disimpan!");
+                showToast(isEdit ? "✅ Data pegawai berhasil diperbarui!" : "✅ Pegawai baru berhasil ditambahkan!");
             }
             closeAdminEmployeeModal();
             await loadAdminEmployeesData();
@@ -399,7 +491,7 @@ async function saveAdminEmployee(e) {
     } finally {
         if (btnSubmit) {
             btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Pegawai`;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>${isEdit ? 'Simpan Perubahan' : 'Simpan Pegawai'}</span>`;
         }
     }
 }
@@ -408,7 +500,7 @@ async function saveAdminEmployee(e) {
  * Hapus Data Pegawai
  */
 async function deleteAdminEmployee(employeeId, nama) {
-    if (!employeeId) return;
+    if (!employeeId || employeeId === 'undefined' || employeeId === 'null') return;
 
     if (!confirm(`Apakah Anda yakin ingin menghapus data pegawai "${nama || employeeId}"?`)) {
         return;
@@ -416,7 +508,7 @@ async function deleteAdminEmployee(employeeId, nama) {
 
     try {
         const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
-        const res = await apiPost("deleteEmployee", { employeeId, token });
+        const res = await apiPost("deleteEmployee", { employeeId, employee_id: employeeId, token });
 
         if (res && (res.success || res.status === "success")) {
             if (typeof showToast === 'function') {

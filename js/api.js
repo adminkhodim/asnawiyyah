@@ -341,8 +341,10 @@
                         status: "success",
                         data: rows.map(p => ({
                             id: p.employee_id,
+                            employeeId: p.employee_id,
                             employee_id: p.employee_id,
                             nama: p.nama,
+                            name: p.nama,
                             nip: p.nip || "",
                             gender: p.gender || "L",
                             jabatan: p.jabatan || "Pengajar",
