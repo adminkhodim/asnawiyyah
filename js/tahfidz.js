@@ -5321,21 +5321,43 @@ ASNTahfidz.presensiState = {
 function getStudentsForPresensiHalaqah(halaqahIdOrName) {
     const all = ASNTahfidz.data?.students || [];
     if (!halaqahIdOrName || halaqahIdOrName === 'ALL') {
-        const inHal = all.filter(st => isStudentInHalaqah(st));
-        return inHal.length > 0 ? inHal : all;
+        return all.filter(st => isStudentInHalaqah(st));
     }
-    const cleanTarget = String(halaqahIdOrName).trim().toLowerCase();
-    const matched = all.filter(st => {
-        if (!st) return false;
-        const hid = String(st.halaqahId || (st.halaqah && (st.halaqah.halaqahId || st.halaqah.id)) || "").trim().toLowerCase();
-        const hname = String(st.halaqahName || (st.halaqah && (st.halaqah.namaHalaqah || st.halaqah.name)) || (typeof st.halaqah === 'string' ? st.halaqah : "") || "").trim().toLowerCase();
-        return (hid && (hid === cleanTarget || cleanTarget.includes(hid))) || 
-               (hname && (hname === cleanTarget || cleanTarget.includes(hname) || hname.includes(cleanTarget)));
-    });
 
-    if (matched.length > 0) return matched;
-    const inHalStudents = all.filter(st => isStudentInHalaqah(st));
-    return inHalStudents.length > 0 ? inHalStudents : all;
+    const halList = ASNTahfidz.data?.halaqahs || [];
+    const clean = String(halaqahIdOrName).trim().toLowerCase();
+
+    // Temukan objek master halaqah untuk mendapatkan ID dan Nama resminya
+    const refHal = halList.find(h => 
+        h && (
+            String(h.halaqahId || '').trim().toLowerCase() === clean ||
+            String(h.namaHalaqah || '').trim().toLowerCase() === clean
+        )
+    );
+
+    const targetId = refHal ? String(refHal.halaqahId || '').trim().toLowerCase() : clean;
+    const targetName = refHal ? String(refHal.namaHalaqah || '').trim().toLowerCase() : clean;
+
+    return all.filter(st => {
+        if (!st || !isStudentInHalaqah(st)) return false;
+        const sHId = String(st.halaqahId || (st.halaqah && (st.halaqah.halaqahId || st.halaqah.id)) || '').trim().toLowerCase();
+        const sHName = String(st.halaqahName || (st.halaqah && (st.halaqah.namaHalaqah || st.halaqah.name)) || (typeof st.halaqah === 'string' ? st.halaqah : '')).trim().toLowerCase();
+
+        // 1. Cocokkan ID atau Nama Halaqah
+        if (targetId && sHId === targetId) return true;
+        if (targetName && sHName === targetName) return true;
+        if (clean && (sHId === clean || sHName === clean)) return true;
+
+        // 2. Cek apakah studentId/nis terdaftar di halaqah referensi
+        if (refHal && Array.isArray(refHal.studentIds)) {
+            const sid = String(st.studentId || st.nis || '').trim();
+            if (sid && (refHal.studentIds.includes(sid) || refHal.studentIds.includes(String(st.nis || '').trim()))) {
+                return true;
+            }
+        }
+
+        return false;
+    });
 }
 
 function openTahfidzPresensiModal(optionalHalaqahId = null) {
@@ -5346,24 +5368,35 @@ function openTahfidzPresensiModal(optionalHalaqahId = null) {
     }
 
     try {
-        // Tentukan halaqah target
+        const halList = ASNTahfidz.data?.halaqahs || [];
+        const dashboardVal = document.getElementById('tahfidz-filter-halaqah')?.value;
+
+        // 1. Tentukan target halaqah: sinkron otomatis dengan filter yang sedang aktif di Dashboard Mutaba'ah
         let targetHalaqah = optionalHalaqahId;
         if (!targetHalaqah) {
-            const filterVal = document.getElementById('tahfidz-filter-halaqah')?.value;
-            if (filterVal && filterVal !== 'ALL' && filterVal !== 'UNASSIGNED') {
-                targetHalaqah = filterVal;
+            if (dashboardVal && dashboardVal !== 'ALL' && dashboardVal !== 'UNASSIGNED') {
+                targetHalaqah = dashboardVal;
             } else {
                 const asatidzHal = typeof getHalaqahForActiveAsatidz === 'function' ? getHalaqahForActiveAsatidz() : null;
                 if (asatidzHal) {
                     targetHalaqah = asatidzHal.halaqahId || asatidzHal.namaHalaqah;
-                } else {
-                    const halList = ASNTahfidz.data?.halaqahs || [];
-                    if (halList.length > 0) {
-                        targetHalaqah = halList[0].halaqahId || halList[0].namaHalaqah;
-                    }
+                } else if (halList.length > 0) {
+                    targetHalaqah = halList[0].halaqahId || halList[0].namaHalaqah;
                 }
             }
         }
+
+        // Cari objek halaqah yang cocok
+        const matchedHal = halList.find(h => 
+            h && (
+                h.halaqahId === targetHalaqah || 
+                h.namaHalaqah === targetHalaqah ||
+                String(h.halaqahId || '').trim().toLowerCase() === String(targetHalaqah || '').trim().toLowerCase() ||
+                String(h.namaHalaqah || '').trim().toLowerCase() === String(targetHalaqah || '').trim().toLowerCase()
+            )
+        ) || (halList.length > 0 ? halList[0] : null);
+
+        const activeHalVal = matchedHal ? (matchedHal.halaqahId || matchedHal.namaHalaqah) : (targetHalaqah || '');
 
         const todayStr = new Date().toISOString().split('T')[0];
         const dateInput = document.getElementById('tahfidz-presensi-date');
@@ -5373,18 +5406,20 @@ function openTahfidzPresensiModal(optionalHalaqahId = null) {
 
         const halSelect = document.getElementById('tahfidz-presensi-halaqah-select');
         if (halSelect) {
-            const halList = ASNTahfidz.data?.halaqahs || [];
             halSelect.innerHTML = halList.map(h => {
                 const hId = h.halaqahId || h.namaHalaqah;
-                const isSel = (hId === targetHalaqah || h.namaHalaqah === targetHalaqah);
+                const isSel = matchedHal && (h.halaqahId === matchedHal.halaqahId || h.namaHalaqah === matchedHal.namaHalaqah);
                 return `<option value="${escapeHtml(hId)}" ${isSel ? 'selected' : ''}>${escapeHtml(h.namaHalaqah)} (${escapeHtml(h.muhafiz || 'Muhafiz')})</option>`;
             }).join('');
             if (halList.length === 0) {
                 halSelect.innerHTML = `<option value="">Belum ada halaqah</option>`;
             }
+            if (activeHalVal) {
+                halSelect.value = activeHalVal;
+            }
         }
 
-        ASNTahfidz.presensiState.activeHalaqahId = targetHalaqah || (halSelect ? halSelect.value : '');
+        ASNTahfidz.presensiState.activeHalaqahId = (halSelect && halSelect.value) ? halSelect.value : activeHalVal;
         ASNTahfidz.presensiState.date = todayStr;
         ASNTahfidz.presensiState.sesi = document.getElementById('tahfidz-presensi-sesi')?.value || "Pagi (Ba'da Subuh)";
         ASNTahfidz.presensiState.query = '';
