@@ -1081,11 +1081,11 @@ const ASNIdentity = {
                             <span class="text-[8px] text-emerald-400 mt-0.5 font-bold" id="kts-percent-${cleanId}">${outerMetrics.percentText}</span>
                         </div>
 
-                        <!-- 2. Jumlah Juz Disetor -->
+                        <!-- 2. Total Juz Ditempuh -->
                         <div class="p-2.5 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-center">
-                            <span class="text-[9px] text-slate-400 font-medium">Jumlah Juz Disetor</span>
+                            <span class="text-[9px] text-slate-400 font-medium">Total Juz Ditempuh</span>
                             <span class="text-xs sm:text-sm font-extrabold text-white mt-0.5" id="kts-juz-disetor-${cleanId}">${outerMetrics.jumlahJuzDisetorText}</span>
-                            <span class="text-[8px] text-slate-400 mt-0.5">Tuntas Disetorkan</span>
+                            <span class="text-[8px] text-slate-400 mt-0.5">Sesuai Kurikulum</span>
                         </div>
 
                         <!-- 3. Estimasi Khatam -->

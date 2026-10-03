@@ -354,27 +354,10 @@ function calculateTahfidzMetricsHelper(options = {}) {
     const curProg = getCurriculumProgress(currentJuz, currentHal);
     const percent = stats.progressPercent || curProg.percent;
 
-    // 2. Jumlah Juz Disetor
-    let totalHalamanDisetor = 0;
-    const setoranJuzSet = new Set();
+    // 2. Total Juz Kurikulum yang Ditempuh (Opsi 1: Menampilkan total juz yang sudah dilewati sesuai kurikulum)
+    const curriculumJuzIndex = Number(stats.curriculumJuzIndex) || (curProg.rank + 1);
+    const jumlahJuzDisetorText = `${curriculumJuzIndex} Juz`;
     const ziyadahLogs = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH' && r.statusSetoran !== 'ULANG');
-
-    if (riwayat.length > 0) {
-        riwayat.forEach(r => {
-            if (r.juz) setoranJuzSet.add(Number(r.juz));
-            totalHalamanDisetor += Number(r.totalHalaman || 1);
-        });
-    }
-
-    let jumlahJuzDisetorText = "";
-    if (stats.jumlahJuzDisetorText) {
-        jumlahJuzDisetorText = stats.jumlahJuzDisetorText;
-    } else if (setoranJuzSet.size > 0) {
-        jumlahJuzDisetorText = `${setoranJuzSet.size} Juz`;
-    } else {
-        const estJuz = Math.max(1, Math.round((curProg.totalTuntas || 20) / 20));
-        jumlahJuzDisetorText = `${estJuz} Juz`;
-    }
 
     // 3. Estimasi Khatam (Bulan & Tahun)
     let halamanTuntas = stats.totalHalamanTuntas || curProg.totalTuntas;
