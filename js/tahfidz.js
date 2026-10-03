@@ -64,6 +64,44 @@ const ASNTahfidz = {
 
 const TAHFIDZ_CACHE_KEY = 'asnawiyyah_tahfidz_dashboard_cache';
 const TAHFIDZ_CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
+const TAHFIDZ_PRESENSI_STORAGE_KEY = 'asnawiyyah_tahfidz_presensi_cache';
+
+function getTahfidzPresensiRecords() {
+    try {
+        const raw = localStorage.getItem(TAHFIDZ_PRESENSI_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveTahfidzPresensiRecords(records) {
+    try {
+        localStorage.setItem(TAHFIDZ_PRESENSI_STORAGE_KEY, JSON.stringify(records));
+    } catch (e) {
+        console.error('Error saving presensi records:', e);
+    }
+}
+
+function getStudentPresensiStatus(studentOrId) {
+    const id = typeof studentOrId === 'object' ? (studentOrId.studentId || studentOrId.nis) : studentOrId;
+    if (!id) return 'HADIR';
+    const records = getTahfidzPresensiRecords();
+    if (records && records[id]) {
+        return records[id].status || 'HADIR';
+    }
+    if (typeof studentOrId === 'object' && studentOrId.presensiStatus) {
+        return studentOrId.presensiStatus;
+    }
+    return 'HADIR';
+}
+
+function getStudentPresensiData(studentOrId) {
+    const id = typeof studentOrId === 'object' ? (studentOrId.studentId || studentOrId.nis) : studentOrId;
+    if (!id) return null;
+    const records = getTahfidzPresensiRecords();
+    return (records && records[id]) ? records[id] : null;
+}
 
 /**
  * Helper untuk mengatur status loading visual (icon spinner berputar + teks) pada tombol simpan/aksi
@@ -719,6 +757,17 @@ function renderTahfidzSummaryCards(filterHal = null) {
     const elRata = document.getElementById('tahfidz-stat-rata');
     if (elRata) elRata.innerHTML = `${avgJuzStr} <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Juz</span>`;
 
+    // Hitung santri yang berhalangan hadir (Sakit / Izin / Pulang)
+    // agar KPI target pekanan tidak turun akibat ketidakhadiran santri berhalangan
+    let excusedCount = 0;
+    targetStudents.forEach(st => {
+        const pres = getStudentPresensiStatus(st);
+        if (['SAKIT', 'IZIN', 'PULANG'].includes(pres)) {
+            excusedCount++;
+        }
+    });
+    const activeEvaluatedCount = Math.max(0, totalSantri - excusedCount);
+
     // 3. Capaian Ziyadah Pekan Ini (Pengganti Khatam 30 Juz)
     let weeklyZiyadahPages = 0;
     let tuntasZiyadahCount = 0;
@@ -727,13 +776,19 @@ function renderTahfidzSummaryCards(filterHal = null) {
         weeklyZiyadahPages += rZ;
         if (st.rekapPekan?.ziyadah?.isTuntas) tuntasZiyadahCount++;
     });
-    const persenTuntasZiyadah = totalSantri > 0 ? Math.round((tuntasZiyadahCount / totalSantri) * 100) : 0;
+    const effectiveTotalZiyadah = activeEvaluatedCount > 0 ? activeEvaluatedCount : totalSantri;
+    const persenTuntasZiyadah = effectiveTotalZiyadah > 0 ? Math.min(100, Math.round((tuntasZiyadahCount / effectiveTotalZiyadah) * 100)) : 0;
 
     const elZiyadahPages = document.getElementById('tahfidz-stat-ziyadah-pages');
     if (elZiyadahPages) elZiyadahPages.innerText = weeklyZiyadahPages;
 
     const elZiyadahTuntas = document.getElementById('tahfidz-stat-ziyadah-tuntas-santri');
-    if (elZiyadahTuntas) elZiyadahTuntas.innerText = `${persenTuntasZiyadah}%`;
+    if (elZiyadahTuntas) {
+        elZiyadahTuntas.innerText = `${persenTuntasZiyadah}%`;
+        if (excusedCount > 0) {
+            elZiyadahTuntas.title = `${tuntasZiyadahCount} tuntas dari ${effectiveTotalZiyadah} santri aktif (${excusedCount} santri izin/sakit dikecualikan)`;
+        }
+    }
 
     const elZiyadahBarCard = document.getElementById('tahfidz-stat-bar-ziyadah-card');
     if (elZiyadahBarCard) elZiyadahBarCard.style.width = `${Math.min(100, persenTuntasZiyadah)}%`;
@@ -746,13 +801,19 @@ function renderTahfidzSummaryCards(filterHal = null) {
         weeklyMurajaahPages += rM;
         if (st.rekapPekan?.murojaah?.isTuntas) tuntasMurajaahCount++;
     });
-    const persenTuntasMurojaah = totalSantri > 0 ? Math.round((tuntasMurajaahCount / totalSantri) * 100) : 0;
+    const effectiveTotalMurajaah = activeEvaluatedCount > 0 ? activeEvaluatedCount : totalSantri;
+    const persenTuntasMurojaah = effectiveTotalMurajaah > 0 ? Math.min(100, Math.round((tuntasMurajaahCount / effectiveTotalMurajaah) * 100)) : 0;
 
     const elMurajaahPages = document.getElementById('tahfidz-stat-murojaah-pages');
     if (elMurajaahPages) elMurajaahPages.innerText = weeklyMurajaahPages;
 
     const elTuntasMurajaah = document.getElementById('tahfidz-stat-murojaah-tuntas-santri');
-    if (elTuntasMurajaah) elTuntasMurajaah.innerText = `${persenTuntasMurojaah}%`;
+    if (elTuntasMurajaah) {
+        elTuntasMurajaah.innerText = `${persenTuntasMurojaah}%`;
+        if (excusedCount > 0) {
+            elTuntasMurajaah.title = `${tuntasMurajaahCount} tuntas dari ${effectiveTotalMurajaah} santri aktif (${excusedCount} santri izin/sakit dikecualikan)`;
+        }
+    }
 
     // 5. Rasio Aktivitas Ziyadah vs Muroja'ah (Bar Bawah Card 4)
     const totalActivity = weeklyZiyadahPages + weeklyMurajaahPages;
@@ -963,6 +1024,11 @@ function filterTahfidzList() {
             matchStatus = st.progress && st.progress.onTrackStatus && st.progress.onTrackStatus.startsWith('On-Track');
         } else if (status === 'BELUM_SETOR') {
             matchStatus = st.progress && st.progress.onTrackStatus && st.progress.onTrackStatus.includes('Belum Setor');
+        } else if (status === 'SAKIT') {
+            matchStatus = getStudentPresensiStatus(st) === 'SAKIT';
+        } else if (status === 'IZIN_PULANG' || status === 'IZIN') {
+            const p = getStudentPresensiStatus(st);
+            matchStatus = p === 'IZIN' || p === 'PULANG';
         } else if (status === 'ULANG') {
             const isRepeat = (st.setoranTerakhir && (st.setoranTerakhir.statusSetoran === 'ULANG' || st.setoranTerakhir.nilai === 'DHAIF')) ||
                 (st.progress && st.progress.onTrackStatus && st.progress.onTrackStatus.includes('Mengulang'));
@@ -1025,6 +1091,10 @@ function renderTahfidzStudentTable() {
             const onTrackStatus = st.progress?.onTrackStatus || 'Belum Setor';
             const isOnTrack = onTrackStatus.includes('On-Track');
 
+            const presStatus = getStudentPresensiStatus(st);
+            const presData = getStudentPresensiData(st);
+            const isExcused = ['SAKIT', 'IZIN', 'PULANG'].includes(presStatus);
+
             const sabqiHalaman = mur.sabqiHalaman || cap.sabqiHalaman || '';
             const sabqiDisp = sabqiHalaman ? `Hlm ${sabqiHalaman}` : `Juz ${currentJuz}`;
             const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
@@ -1077,7 +1147,7 @@ function renderTahfidzStudentTable() {
                             <div class="flex items-center justify-between px-1 text-[8px] font-bold">
                                 <span class="text-slate-500 dark:text-slate-400">Pekan: <b>${rekapM.realita || 0}/${targetMPekan} Hlm</b></span>
                                 <span class="px-1 py-0.2 rounded text-[7px] ${rekapM.isTuntas ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : ((rekapM.realita || 0) > 0 ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-400')}">
-                                    ${rekapM.isTuntas ? '✅ Tuntas' : ((rekapM.realita || 0) > 0 ? `Kurang ${rekapM.sisaHalaman}` : 'Belum')}
+                                    ${rekapM.isTuntas ? '✅ Tuntas' : ((rekapM.realita || 0) > 0 ? `Kurang ${rekapM.sisaHalaman}` : (isExcused ? 'Dikecualikan' : 'Belum'))}
                                 </span>
                             </div>
                         </div>
@@ -1107,7 +1177,15 @@ function renderTahfidzStudentTable() {
 
                 <!-- 4. STATUS & NILAI -->
                 <td class="px-3.5 py-2.5">
-                    ${last ? `
+                    ${isExcused ? `
+                    <div class="space-y-1">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black ${presStatus === 'SAKIT' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : (presStatus === 'PULANG' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800')}" title="${escapeHtml(presData?.keterangan || presStatus)}">
+                            <i class="fa-solid ${presStatus === 'SAKIT' ? 'fa-notes-medical' : (presStatus === 'PULANG' ? 'fa-house-user' : 'fa-clipboard-user')} text-[8px]"></i>
+                            <span>${presStatus === 'SAKIT' ? '🏥 Sakit (UKS)' : (presStatus === 'PULANG' ? '🏠 Izin Pulang' : '📝 Izin')}</span>
+                        </span>
+                        <p class="text-[9px] text-slate-400 italic truncate max-w-[130px]">${escapeHtml(presData?.keterangan || (presStatus === 'SAKIT' ? 'Istirahat di asrama/UKS' : (presStatus === 'PULANG' ? 'Izin pulang ke rumah' : 'Izin tugas pondok')))}</p>
+                    </div>
+                    ` : (last ? `
                     <div class="space-y-1">
                         <div class="flex items-center gap-1 flex-wrap">
                             <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold ${last.tipe === 'ZIYADAH' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : (last.tipe === 'MURAJAAH_SABQI' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' : (last.tipe === 'MURAJAAH_MANZIL' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300' : (last.tipe === 'TASMI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300')))}">
@@ -1127,7 +1205,7 @@ function renderTahfidzStudentTable() {
                             Nilai: <span class="${isUlang ? 'text-rose-600 font-extrabold' : 'text-emerald-600 font-extrabold'}">${last.nilai === 'MUMTAZ' ? 'A (Mumtaz)' : (last.nilai === 'JAYYID_JIDDAN' ? 'B+ (Jayyid)' : (last.nilai === 'JAYYID' ? 'B (Jayyid)' : 'C (Dha\'if)'))}</span>
                         </div>
                     </div>
-                    ` : `<span class="text-[10px] text-slate-400">-</span>`}
+                    ` : `<span class="text-[10px] text-slate-400">-</span>`)}
                 </td>
 
                 <!-- 5. PROGRESS (0 - 30 JUZ) & ROTASI MUROJA'AH -->
@@ -1141,9 +1219,15 @@ function renderTahfidzStudentTable() {
                             <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%;"></div>
                         </div>
                         <div class="flex items-center justify-between gap-1">
+                            ${isExcused ? `
+                            <span class="inline-block px-1.5 py-0.2 text-[8px] font-bold rounded bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-[#283a4e]" title="Dikecualikan sementara dari target pekanan">
+                                Dikecualikan (${presStatus === 'SAKIT' ? 'Sakit' : (presStatus === 'PULANG' ? 'Pulang' : 'Izin')})
+                            </span>
+                            ` : `
                             <span class="inline-block px-1.5 py-0.2 text-[8px] font-extrabold rounded ${isOnTrack ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-[#1c2836] dark:text-slate-400'}">
                                 ${escapeHtml(onTrackStatus)}
                             </span>
+                            `}
                         </div>
                         <!-- Mini Badge Rotasi Muroja'ah (Sabqi & Manzil) -->
                         <div class="flex items-center gap-1 pt-0.5">
@@ -1198,6 +1282,9 @@ function renderTahfidzStudentTable() {
             const targetM = st.target?.murajaahSesi || 2;
             const isSelected = ASNTahfidz.selectedStudentIds && ASNTahfidz.selectedStudentIds.has(st.studentId);
 
+            const presStatus = getStudentPresensiStatus(st);
+            const isExcused = ['SAKIT', 'IZIN', 'PULANG'].includes(presStatus);
+
             const sabqiHalaman = mur.sabqiHalaman || cap.sabqiHalaman || '';
             const sabqiDisp = sabqiHalaman ? `Hlm ${sabqiHalaman}` : `Juz ${currentJuz}`;
             const manzilJuz = Number(mur.manzilJuz || cap.manzilJuz) || 1;
@@ -1215,7 +1302,7 @@ function renderTahfidzStudentTable() {
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
-                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • <span class="${inHal ? 'text-emerald-600 font-semibold' : 'text-amber-600 dark:text-amber-400 font-semibold'}">${escapeHtml(halaqahName)}</span></p>
+                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • <span class="${inHal ? 'text-emerald-600 font-semibold' : 'text-amber-600 dark:text-amber-400 font-semibold'}">${escapeHtml(halaqahName)}</span> ${isExcused ? `<span class="ml-1 px-1.5 py-0.2 rounded text-[8px] font-black ${presStatus === 'SAKIT' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' : (presStatus === 'PULANG' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300')}">${presStatus === 'SAKIT' ? '🏥 Sakit' : (presStatus === 'PULANG' ? '🏠 Pulang' : '📝 Izin')}</span>` : ''}</p>
                         </div>
                     </div>
                     <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-2.5 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow-sm">
@@ -1235,8 +1322,8 @@ function renderTahfidzStudentTable() {
                     </div>
                     <div class="flex items-center justify-between text-[9px] font-bold px-1 text-slate-500 dark:text-slate-400">
                         <span>Muroja'ah Pekan Ini: <b>${rekapM.realita || 0}/${targetM * 5} Hlm</b></span>
-                        <span class="px-1.5 py-0.2 rounded ${rekapM.isTuntas ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300'}">
-                            ${rekapM.isTuntas ? '✅ Tuntas Target' : ((rekapM.realita || 0) > 0 ? `⚠️ Kurang ${rekapM.sisaHalaman} Hlm` : 'Belum')}
+                        <span class="px-1.5 py-0.2 rounded ${rekapM.isTuntas ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : ((rekapM.realita || 0) > 0 ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300' : (isExcused ? 'bg-slate-100 dark:bg-[#1c2836] text-slate-400' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-400'))}">
+                            ${rekapM.isTuntas ? '✅ Tuntas Target' : ((rekapM.realita || 0) > 0 ? `⚠️ Kurang ${rekapM.sisaHalaman} Hlm` : (isExcused ? 'Dikecualikan' : 'Belum'))}
                         </span>
                     </div>
                 </div>
@@ -1265,7 +1352,7 @@ function renderTahfidzStudentTable() {
                 </div>
 
                 <div class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#253447] text-[10px] text-slate-400">
-                    <span>${last ? `Terakhir: Juz ${last.juz} (${last.tipe === 'MURAJAAH_SABQI' ? 'Sabqi' : (last.tipe === 'MURAJAAH_MANZIL' ? 'Manzil' : (last.tipe === 'ZIYADAH' ? 'Ziyadah' : last.tipe))}) ${isUlang ? '• <span class="text-rose-600 font-extrabold">Wajib Ulang</span>' : ''}` : 'Belum setor'}</span>
+                    <span>${isExcused ? `<b class="text-amber-600 dark:text-amber-400">${presStatus === 'SAKIT' ? '🏥 Sakit' : (presStatus === 'PULANG' ? '🏠 Pulang' : '📝 Izin')}</b> • Dikecualikan target` : (last ? `Terakhir: Juz ${last.juz} (${last.tipe === 'MURAJAAH_SABQI' ? 'Sabqi' : (last.tipe === 'MURAJAAH_MANZIL' ? 'Manzil' : (last.tipe === 'ZIYADAH' ? 'Ziyadah' : last.tipe))}) ${isUlang ? '• <span class="text-rose-600 font-extrabold">Wajib Ulang</span>' : ''}` : 'Belum setor')}</span>
                     <button type="button" onclick="openTahfidzStudentDetail('${st.studentId}')" class="text-emerald-600 font-bold hover:underline">
                         Lihat Mutaba'ah &gt;
                     </button>
@@ -5184,6 +5271,301 @@ async function triggerInitTahfidzSheets() {
     }
 }
 
+/**
+ * ====================================================================
+ * MANAJEMEN PRESENSI CEPAT HALAQAH & PENGECUALIAN TARGET
+ * ====================================================================
+ */
+ASNTahfidz.presensiState = {
+    activeHalaqahId: '',
+    date: new Date().toISOString().split('T')[0],
+    sesi: "Pagi (Ba'da Subuh)",
+    records: {},
+    query: ''
+};
+
+function getStudentsForPresensiHalaqah(halaqahIdOrName) {
+    const all = ASNTahfidz.data?.students || [];
+    if (!halaqahIdOrName || halaqahIdOrName === 'ALL') {
+        return all.filter(st => isStudentInHalaqah(st));
+    }
+    return all.filter(st => {
+        if (!isStudentInHalaqah(st)) return false;
+        return st.halaqah && (
+            st.halaqah.halaqahId === halaqahIdOrName || 
+            st.halaqah.namaHalaqah === halaqahIdOrName
+        );
+    });
+}
+
+function openTahfidzPresensiModal(optionalHalaqahId = null) {
+    const modal = document.getElementById('modal-tahfidz-presensi');
+    if (!modal) return;
+
+    // Tentukan halaqah target
+    let targetHalaqah = optionalHalaqahId;
+    if (!targetHalaqah) {
+        const filterVal = document.getElementById('tahfidz-filter-halaqah')?.value;
+        if (filterVal && filterVal !== 'ALL' && filterVal !== 'UNASSIGNED') {
+            targetHalaqah = filterVal;
+        } else {
+            const asatidzHal = typeof getHalaqahForActiveAsatidz === 'function' ? getHalaqahForActiveAsatidz() : null;
+            if (asatidzHal) {
+                targetHalaqah = asatidzHal.halaqahId || asatidzHal.namaHalaqah;
+            } else {
+                const halList = ASNTahfidz.data?.halaqahs || [];
+                if (halList.length > 0) {
+                    targetHalaqah = halList[0].halaqahId || halList[0].namaHalaqah;
+                }
+            }
+        }
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('tahfidz-presensi-date');
+    if (dateInput) {
+        dateInput.value = todayStr;
+    }
+
+    const halSelect = document.getElementById('tahfidz-presensi-halaqah-select');
+    if (halSelect) {
+        const halList = ASNTahfidz.data?.halaqahs || [];
+        halSelect.innerHTML = halList.map(h => {
+            const hId = h.halaqahId || h.namaHalaqah;
+            const isSel = (hId === targetHalaqah || h.namaHalaqah === targetHalaqah);
+            return `<option value="${escapeHtml(hId)}" ${isSel ? 'selected' : ''}>${escapeHtml(h.namaHalaqah)} (${escapeHtml(h.muhafiz || 'Muhafiz')})</option>`;
+        }).join('');
+        if (halList.length === 0) {
+            halSelect.innerHTML = `<option value="">Belum ada halaqah</option>`;
+        }
+    }
+
+    ASNTahfidz.presensiState.activeHalaqahId = targetHalaqah || (halSelect ? halSelect.value : '');
+    ASNTahfidz.presensiState.date = todayStr;
+    ASNTahfidz.presensiState.sesi = document.getElementById('tahfidz-presensi-sesi')?.value || "Pagi (Ba'da Subuh)";
+    ASNTahfidz.presensiState.query = '';
+
+    const searchInput = document.getElementById('tahfidz-presensi-search');
+    if (searchInput) searchInput.value = '';
+
+    const savedRecords = getTahfidzPresensiRecords();
+    ASNTahfidz.presensiState.records = { ...savedRecords };
+
+    renderTahfidzPresensiList();
+    modal.classList.remove('hidden');
+}
+
+function closeTahfidzPresensiModal() {
+    const modal = document.getElementById('modal-tahfidz-presensi');
+    if (modal) modal.classList.add('hidden');
+}
+
+function onTahfidzPresensiHalaqahChange() {
+    const sel = document.getElementById('tahfidz-presensi-halaqah-select');
+    if (sel) {
+        ASNTahfidz.presensiState.activeHalaqahId = sel.value;
+        renderTahfidzPresensiList();
+    }
+}
+
+function onTahfidzPresensiDateChange() {
+    const d = document.getElementById('tahfidz-presensi-date');
+    if (d) {
+        ASNTahfidz.presensiState.date = d.value;
+    }
+}
+
+function onTahfidzPresensiSesiChange() {
+    const s = document.getElementById('tahfidz-presensi-sesi');
+    if (s) {
+        ASNTahfidz.presensiState.sesi = s.value;
+    }
+}
+
+function filterTahfidzPresensiModalList() {
+    const q = document.getElementById('tahfidz-presensi-search')?.value || '';
+    ASNTahfidz.presensiState.query = q.toLowerCase().trim();
+    renderTahfidzPresensiList();
+}
+
+function renderTahfidzPresensiList() {
+    const container = document.getElementById('tahfidz-presensi-list');
+    const badgeEl = document.getElementById('tahfidz-presensi-target-badge');
+    const summaryText = document.getElementById('tahfidz-presensi-summary-text');
+    if (!container) return;
+
+    const halId = ASNTahfidz.presensiState.activeHalaqahId;
+    const halObj = (ASNTahfidz.data?.halaqahs || []).find(h => h.halaqahId === halId || h.namaHalaqah === halId);
+    const halName = halObj ? halObj.namaHalaqah : 'Halaqah';
+
+    if (badgeEl) {
+        badgeEl.innerText = halName;
+    }
+
+    let students = getStudentsForPresensiHalaqah(halId);
+    const q = ASNTahfidz.presensiState.query;
+    if (q) {
+        students = students.filter(s => (s.name && s.name.toLowerCase().includes(q)) || (s.nis && s.nis.toLowerCase().includes(q)));
+    }
+
+    if (students.length === 0) {
+        container.innerHTML = `
+            <div class="py-8 text-center text-slate-400 space-y-1">
+                <i class="fa-solid fa-user-slash text-2xl mb-1 text-slate-300 dark:text-slate-600"></i>
+                <p class="text-xs font-semibold">Tidak ada santri di halaqah ini.</p>
+                <p class="text-[10px]">Silakan masukkan santri melalui menu Kelola Halaqah.</p>
+            </div>
+        `;
+        if (summaryText) summaryText.innerText = '0 Santri';
+        return;
+    }
+
+    let countH = 0;
+    let countS = 0;
+    let countI = 0;
+    let countP = 0;
+
+    const html = students.map(st => {
+        const sId = st.studentId || st.nis;
+        const currentRec = ASNTahfidz.presensiState.records[sId] || { status: 'HADIR', keterangan: '' };
+        const status = currentRec.status || 'HADIR';
+        const ket = currentRec.keterangan || '';
+
+        if (status === 'HADIR') countH++;
+        else if (status === 'SAKIT') countS++;
+        else if (status === 'IZIN') countI++;
+        else if (status === 'PULANG') countP++;
+
+        const initials = (st.name || 'SN').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+
+        return `
+        <div class="p-2.5 rounded-2xl border ${status === 'HADIR' ? 'border-slate-100 dark:border-[#253447] bg-white dark:bg-[#15202d]' : (status === 'SAKIT' ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20' : (status === 'PULANG' ? 'border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/20' : 'border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20'))} shadow-sm transition space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <!-- Info Santri -->
+                <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#1c2836] text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-200 dark:border-[#283a4e]">
+                        ${initials}
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
+                        <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')}</p>
+                    </div>
+                </div>
+
+                <!-- 4 Quick Attendance Chips -->
+                <div class="flex items-center gap-1 shrink-0">
+                    <button type="button" onclick="setTahfidzStudentPresensi('${sId}', 'HADIR')" class="px-2.5 py-1 rounded-lg text-[10px] font-black transition active:scale-95 ${status === 'HADIR' ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300'}" title="Hadir">
+                        H
+                    </button>
+                    <button type="button" onclick="setTahfidzStudentPresensi('${sId}', 'SAKIT')" class="px-2.5 py-1 rounded-lg text-[10px] font-black transition active:scale-95 ${status === 'SAKIT' ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-400/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300'}" title="Izin Sakit">
+                        S
+                    </button>
+                    <button type="button" onclick="setTahfidzStudentPresensi('${sId}', 'IZIN')" class="px-2.5 py-1 rounded-lg text-[10px] font-black transition active:scale-95 ${status === 'IZIN' ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-400/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300'}" title="Izin Kegiatan / Udzur">
+                        I
+                    </button>
+                    <button type="button" onclick="setTahfidzStudentPresensi('${sId}', 'PULANG')" class="px-2.5 py-1 rounded-lg text-[10px] font-black transition active:scale-95 ${status === 'PULANG' ? 'bg-purple-600 text-white shadow-sm ring-2 ring-purple-400/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300'}" title="Izin Pulang ke Rumah">
+                        P
+                    </button>
+                </div>
+            </div>
+
+            <!-- Keterangan Input jika bukan Hadir -->
+            ${status !== 'HADIR' ? `
+            <div class="pt-1 border-t border-dashed ${status === 'SAKIT' ? 'border-amber-200 dark:border-amber-900/60' : (status === 'PULANG' ? 'border-purple-200 dark:border-purple-900/60' : 'border-blue-200 dark:border-blue-900/60')} flex items-center gap-1.5">
+                <i class="fa-solid fa-pen text-[9px] ${status === 'SAKIT' ? 'text-amber-500' : (status === 'PULANG' ? 'text-purple-500' : 'text-blue-500')} ml-1"></i>
+                <input type="text" value="${escapeHtml(ket)}" oninput="updateTahfidzStudentPresensiKet('${sId}', this.value)" placeholder="${status === 'SAKIT' ? 'Catatan sakit: cth. Demam di UKS / Asrama...' : (status === 'PULANG' ? 'Catatan pulang: cth. Izin keluarga s.d. Ahad...' : 'Catatan izin: cth. Tugas pengurus pondok...')}" class="w-full px-2 py-0.5 text-[10px] rounded-lg bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#283a4e] text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500">
+            </div>
+            ` : ''}
+        </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+
+    if (summaryText) {
+        summaryText.innerHTML = `
+            <span class="text-emerald-600 font-bold">${countH} Hadir</span>
+            <span class="text-slate-300 dark:text-slate-600">•</span>
+            <span class="text-amber-600 font-bold">${countS} Sakit</span>
+            <span class="text-slate-300 dark:text-slate-600">•</span>
+            <span class="text-blue-600 font-bold">${countI} Izin</span>
+            <span class="text-slate-300 dark:text-slate-600">•</span>
+            <span class="text-purple-600 font-bold">${countP} Pulang</span>
+        `;
+    }
+}
+
+function setTahfidzStudentPresensi(studentId, status) {
+    if (!studentId) return;
+    if (!ASNTahfidz.presensiState.records[studentId]) {
+        ASNTahfidz.presensiState.records[studentId] = { status: 'HADIR', keterangan: '' };
+    }
+    ASNTahfidz.presensiState.records[studentId].status = status;
+    renderTahfidzPresensiList();
+}
+
+function updateTahfidzStudentPresensiKet(studentId, keterangan) {
+    if (!studentId) return;
+    if (!ASNTahfidz.presensiState.records[studentId]) {
+        ASNTahfidz.presensiState.records[studentId] = { status: 'HADIR', keterangan: '' };
+    }
+    ASNTahfidz.presensiState.records[studentId].keterangan = keterangan;
+}
+
+function setAllTahfidzPresensi(status) {
+    const halId = ASNTahfidz.presensiState.activeHalaqahId;
+    const students = getStudentsForPresensiHalaqah(halId);
+    students.forEach(st => {
+        const sId = st.studentId || st.nis;
+        if (!ASNTahfidz.presensiState.records[sId]) {
+            ASNTahfidz.presensiState.records[sId] = { status, keterangan: '' };
+        } else {
+            ASNTahfidz.presensiState.records[sId].status = status;
+        }
+    });
+    renderTahfidzPresensiList();
+    if (typeof showToast === 'function') {
+        showToast(`✅ Semua santri halaqah ditandai ${status === 'HADIR' ? 'Hadir' : status}.`);
+    }
+}
+
+function saveTahfidzPresensi() {
+    const btn = document.getElementById('btn-save-tahfidz-presensi');
+    setTahfidzButtonLoading(btn, true, 'Menyimpan Presensi...');
+
+    try {
+        const currentRecords = ASNTahfidz.presensiState.records || {};
+        saveTahfidzPresensiRecords(currentRecords);
+
+        // Update in-memory students
+        (ASNTahfidz.data?.students || []).forEach(st => {
+            const sId = st.studentId || st.nis;
+            if (currentRecords[sId]) {
+                st.presensiStatus = currentRecords[sId].status;
+                st.presensiKeterangan = currentRecords[sId].keterangan;
+            }
+        });
+
+        // Re-render student table & re-calculate KPI
+        const activeHalFilter = document.getElementById('tahfidz-filter-halaqah')?.value || 'ALL';
+        renderTahfidzStudentTable();
+        renderTahfidzSummaryCards(activeHalFilter);
+
+        if (typeof showToast === 'function') {
+            showToast('✅ Presensi kehadiran halaqah berhasil disimpan!');
+        }
+
+        closeTahfidzPresensiModal();
+    } catch (err) {
+        console.error('Error saving tahfidz presensi:', err);
+        if (typeof showToast === 'function') {
+            showToast('❌ Gagal menyimpan presensi: ' + err.message);
+        }
+    } finally {
+        setTahfidzButtonLoading(btn, false, 'Menyimpan Presensi...', '<i class="fa-solid fa-floppy-disk"></i><span>Simpan Presensi</span>');
+    }
+}
+
 // Auto-export to global window
 window.ASNTahfidz = ASNTahfidz;
 window.loadAdminTahfidzData = loadAdminTahfidzData;
@@ -5264,5 +5646,20 @@ window.applyTahfidzJuzPreset = applyTahfidzJuzPreset;
 window.updateTahfidzPresetChipHighlight = updateTahfidzPresetChipHighlight;
 window.applyTahfidzRolePermissions = applyTahfidzRolePermissions;
 window.getHalaqahForActiveAsatidz = getHalaqahForActiveAsatidz;
+
+// Presensi Halaqah Functions
+window.openTahfidzPresensiModal = openTahfidzPresensiModal;
+window.closeTahfidzPresensiModal = closeTahfidzPresensiModal;
+window.onTahfidzPresensiHalaqahChange = onTahfidzPresensiHalaqahChange;
+window.onTahfidzPresensiDateChange = onTahfidzPresensiDateChange;
+window.onTahfidzPresensiSesiChange = onTahfidzPresensiSesiChange;
+window.filterTahfidzPresensiModalList = filterTahfidzPresensiModalList;
+window.renderTahfidzPresensiList = renderTahfidzPresensiList;
+window.setTahfidzStudentPresensi = setTahfidzStudentPresensi;
+window.updateTahfidzStudentPresensiKet = updateTahfidzStudentPresensiKet;
+window.setAllTahfidzPresensi = setAllTahfidzPresensi;
+window.saveTahfidzPresensi = saveTahfidzPresensi;
+window.getStudentPresensiStatus = getStudentPresensiStatus;
+window.getStudentPresensiData = getStudentPresensiData;
 
 

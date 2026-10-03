@@ -6419,6 +6419,8 @@
                             <option value="ALL">Semua Status</option>
                             <option value="ON_TRACK">On-Track</option>
                             <option value="BELUM_SETOR">Belum Setor</option>
+                            <option value="SAKIT">🏥 Izin Sakit</option>
+                            <option value="IZIN_PULANG">🏠 Izin Pulang / Izin</option>
                         </select>
                         <select id="tahfidz-filter-kategori" onchange="filterTahfidzList()" class="hidden lg:inline-block px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 transition">
                             <option value="ALL">Semua Kategori</option>
@@ -6448,7 +6450,13 @@
                         <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-book-quran text-emerald-600 mr-2"></i> Mutaba'ah Hafalan Santri
                         </h3>
-                        <span id="admin-tahfidz-count" class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-lg">0 Santri</span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="openTahfidzPresensiModal()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800/60 active:scale-95 transition" title="Buka Presensi Kehadiran Halaqah">
+                                <i class="fa-solid fa-clipboard-user text-xs"></i>
+                                <span>Presensi Halaqah</span>
+                            </button>
+                            <span id="admin-tahfidz-count" class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-lg">0 Santri</span>
+                        </div>
                     </div>
 
                     <!-- DESKTOP TABLE -->
@@ -9946,6 +9954,95 @@
                     <button type="button" id="btn-save-tahfidz-plotting" onclick="submitTahfidzPlotting()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
                         <i class="fa-solid fa-floppy-disk"></i>
                         <span>Simpan Plotting Santri</span>
+                    </button>
+                </div>
+            </div>
+    </div>
+
+    <!-- ==================== MODAL PRESENSI CEPAT HALAQAH ==================== -->
+    <div id="modal-tahfidz-presensi" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 flex items-center justify-center font-bold text-sm shadow-sm">
+                        <i class="fa-solid fa-clipboard-user"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <span>Presensi Kehadiran Halaqah</span>
+                            <span id="tahfidz-presensi-target-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Halaqah Aktif</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-400">Pencatatan kehadiran cepat santri per sesi pertemuan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTahfidzPresensiModal()" class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4 sm:p-5 overflow-y-auto space-y-3.5 custom-scrollbar flex-1">
+                <!-- Baris Filter Presensi: Halaqah, Tanggal, Sesi & Aksi Cepat -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-200/80 dark:border-[#283a4e]">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Kelompok Halaqah</label>
+                        <select id="tahfidz-presensi-halaqah-select" onchange="onTahfidzPresensiHalaqahChange()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal Pertemuan</label>
+                        <input type="date" id="tahfidz-presensi-date" onchange="onTahfidzPresensiDateChange()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sesi Waktu</label>
+                        <select id="tahfidz-presensi-sesi" onchange="onTahfidzPresensiSesiChange()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-white dark:bg-[#15202d] text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="Pagi (Ba'da Subuh)">Pagi (Ba'da Subuh)</option>
+                            <option value="Sore (Ba'da Ashar)">Sore (Ba'da Ashar)</option>
+                            <option value="Malam (Ba'da Maghrib/Isya)">Malam (Ba'da Maghrib/Isya)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Info Pengecualian KPI Banner & Shortcut Semua Hadir -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 text-xs">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-amber-600 dark:text-amber-400 shrink-0"></i>
+                        <span class="text-[11px] leading-snug">
+                            Santri yang berstatus <b>Sakit (S)</b>, <b>Izin (I)</b>, atau <b>Pulang (P)</b> otomatis <b>dikecualikan sementara</b> dari denominator target pekanan agar KPI halaqah tidak turun.
+                        </span>
+                    </div>
+                    <button type="button" onclick="setAllTahfidzPresensi('HADIR')" class="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 dark:bg-[#15202d] dark:hover:bg-emerald-950/60 dark:text-emerald-300 font-bold text-[11px] rounded-lg border border-emerald-300 dark:border-emerald-800 shadow-sm shrink-0 flex items-center gap-1 active:scale-95 transition" title="Tandai semua santri di halaqah ini Hadir">
+                        <i class="fa-solid fa-check-double text-[10px]"></i>
+                        <span>Semua Hadir</span>
+                    </button>
+                </div>
+
+                <!-- Search Filter Mini -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="tahfidz-presensi-search" oninput="filterTahfidzPresensiModalList()" placeholder="Cari santri halaqah..." class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#283a4e] bg-slate-50 dark:bg-[#1c2836] text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <!-- Daftar Santri Presensi Container -->
+                <div id="tahfidz-presensi-list" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <div id="tahfidz-presensi-summary-text" class="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                    <span>Memuat santri...</span>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button type="button" onclick="closeTahfidzPresensiModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="button" id="btn-save-tahfidz-presensi" onclick="saveTahfidzPresensi()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Presensi</span>
                     </button>
                 </div>
             </div>
