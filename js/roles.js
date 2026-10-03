@@ -1729,6 +1729,15 @@
             activeTag.innerText = profile.shortName;
             activeTag.className = `px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${profile.badgeBg}`;
         }
+
+        // 10. Perbarui hak akses & filter modul Tahfidz jika aktif
+        if (typeof applyTahfidzRolePermissions === 'function') {
+            applyTahfidzRolePermissions();
+        }
+        if (roleKey === 'ASATIDZ') {
+            if (typeof populateTahfidzFilters === 'function') populateTahfidzFilters();
+            if (typeof filterTahfidzList === 'function') filterTahfidzList();
+        }
     }
 
     /**

@@ -6303,15 +6303,15 @@
                             <i id="btn-refresh-tahfidz-icon" class="fa-solid fa-arrows-rotate text-xs"></i>
                             <span class="hidden sm:inline">Refresh</span>
                         </button>
-                        <button type="button" onclick="exportTahfidzDataXLSX()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Ekspor Data Excel (.xlsx)">
+                        <button type="button" onclick="exportTahfidzDataXLSX()" class="tahfidz-admin-action px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Ekspor Data Excel (.xlsx)">
                             <i class="fa-solid fa-file-excel text-emerald-600 text-xs"></i>
                             <span class="hidden sm:inline">Excel</span>
                         </button>
-                        <button type="button" onclick="exportTahfidzDataCSV()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Ekspor Data CSV">
+                        <button type="button" onclick="exportTahfidzDataCSV()" class="tahfidz-admin-action px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Ekspor Data CSV">
                             <i class="fa-solid fa-file-export text-xs"></i>
                             <span class="hidden sm:inline">CSV</span>
                         </button>
-                        <button type="button" onclick="printTahfidzRekap()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Cetak Rekapitulasi">
+                        <button type="button" onclick="printTahfidzRekap()" class="tahfidz-admin-action px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1 border border-slate-200 dark:border-[#283a4e] active:scale-95" title="Cetak Rekapitulasi">
                             <i class="fa-solid fa-print text-xs"></i>
                             <span class="hidden sm:inline">Cetak</span>
                         </button>
@@ -6324,21 +6324,29 @@
 
                 <!-- 4 KARTU RINGKASAN MAKRO (RESPONSIF MOBILE & COMPACT) -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-2.5">
-                    <!-- 1. Khatam 30 Juz -->
-                    <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between relative overflow-hidden">
-                        <div class="space-y-0.5 min-w-0">
-                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">KHATAM 30 JUZ</span>
-                            <div class="flex items-baseline space-x-1">
-                                <span id="tahfidz-stat-khatam" class="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100">0</span>
-                                <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Santri</span>
+                    <!-- 1. Capaian Ziyadah Pekan Ini (Pengganti Khatam 30 Juz) -->
+                    <div class="bg-white dark:bg-[#15202d] p-2.5 md:p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1 relative overflow-hidden">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">CAPAIAN ZIYADAH PEKAN INI</span>
+                            <span class="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-[9px] shrink-0">
+                                <i class="fa-solid fa-book-open"></i>
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between text-[9px] md:text-[10px] font-bold">
+                            <div class="flex items-baseline gap-1 min-w-0">
+                                <span id="tahfidz-stat-ziyadah-pages" class="text-base md:text-lg font-black text-emerald-600 dark:text-emerald-400">0</span>
+                                <span class="text-slate-400 font-normal text-[9px]">Hlm Disetor</span>
                             </div>
-                            <p class="text-[9px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold truncate">
-                                <i class="fa-solid fa-check-circle text-[8px]"></i> Ujian Bil-Ghaib
-                            </p>
+                            <span class="flex items-center gap-1 text-emerald-600 truncate" id="tahfidz-stat-text-ziyadah-card">
+                                <span id="tahfidz-stat-ziyadah-tuntas-santri" class="font-black text-xs">0%</span>
+                                <span class="text-[9px] font-normal text-slate-400">Tuntas</span>
+                            </span>
                         </div>
-                        <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center text-sm md:text-base shrink-0">
-                            <i class="fa-solid fa-award"></i>
+                        <div class="w-full bg-slate-100 dark:bg-[#1c2836] h-1.5 rounded-full overflow-hidden flex mt-0.5">
+                            <div id="tahfidz-stat-bar-ziyadah-card" class="bg-gradient-to-r from-teal-500 to-emerald-500 h-full transition-all duration-500" style="width: 0%;"></div>
                         </div>
+                        <!-- Fallback legacy id -->
+                        <span id="tahfidz-stat-khatam" class="hidden">0</span>
                     </div>
 
                     <!-- 2. Rata-Rata Hafalan -->

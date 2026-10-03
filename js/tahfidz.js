@@ -496,9 +496,10 @@ async function loadAdminTahfidzData(forceRefresh = false) {
             ASNTahfidz.data = cached;
             if (typeof buildTahfidzHalaqahIndex === 'function') buildTahfidzHalaqahIndex();
 
-            renderTahfidzSummaryCards();
             populateTahfidzFilters();
             filterTahfidzList();
+            renderTahfidzSummaryCards();
+            applyTahfidzRolePermissions();
             updateHubTahfidzBadge();
             renderTahfidzHalaqahCards();
             populatePlottingHalaqahSelector();
@@ -557,9 +558,10 @@ async function loadAdminTahfidzData(forceRefresh = false) {
                     console.warn("Gagal menyimpan cache Tahfidz:", e);
                 }
 
-                renderTahfidzSummaryCards();
                 populateTahfidzFilters();
                 filterTahfidzList();
+                renderTahfidzSummaryCards();
+                applyTahfidzRolePermissions();
                 updateHubTahfidzBadge();
                 renderTahfidzHalaqahCards();
                 populatePlottingHalaqahSelector();
@@ -591,53 +593,189 @@ async function loadAdminTahfidzData(forceRefresh = false) {
 }
 
 /**
- * Render 4 Kartu Ringkasan Atas (Screenshot 1)
+ * Mencari kelompok halaqah yang diampu oleh Akun Asatidz yang sedang login
  */
-function renderTahfidzSummaryCards() {
-    const sum = ASNTahfidz.data.summary || {};
+function getHalaqahForActiveAsatidz() {
+    const activeRole = String((typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                              sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                              sessionStorage.getItem('asnawiyyah_admin_role') || '').toUpperCase();
+    if (activeRole !== 'ASATIDZ') return null;
 
-    const elKhatam = document.getElementById('tahfidz-stat-khatam');
-    if (elKhatam) elKhatam.innerText = sum.khatam30Juz || 0;
+    let user = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser) || null;
+    if (!user) {
+        try {
+            const raw = sessionStorage.getItem('asnawiyyah_admin_data') || localStorage.getItem('asnawiyyah_admin_data');
+            if (raw) user = JSON.parse(raw);
+        } catch (e) {}
+    }
+    if (!user) return null;
 
-    const elRata = document.getElementById('tahfidz-stat-rata');
-    if (elRata) elRata.innerText = sum.rataRataHafalan || "0.0 Juz / Santri";
+    const halaqahs = ASNTahfidz.data?.halaqahs || [];
+    if (!Array.isArray(halaqahs) || halaqahs.length === 0) return null;
 
-    const elTotal = document.getElementById('tahfidz-stat-total');
-    if (elTotal) {
-        let count = 0;
-        if (Array.isArray(ASNTahfidz.data?.students) && ASNTahfidz.data.students.length > 0) {
-            count = ASNTahfidz.data.students.filter(st => {
-                const statusClean = String(st.status || "Aktif").trim().toLowerCase();
-                const isAktif = statusClean === "aktif" || statusClean === "active" || statusClean === "";
-                return isAktif && isStudentInHalaqah(st);
-            }).length;
-        } else if (typeof sum.totalSantriHalaqah === 'number') {
-            count = sum.totalSantriHalaqah;
-        }
-        elTotal.innerText = count;
+    const uName = String(user.name || '').trim().toLowerCase();
+    const uEmail = String(user.email || '').trim().toLowerCase();
+    const uNip = String(user.nip || '').trim().toLowerCase();
+    const cleanUName = uName.replace(/^(ustadz|ustadzah|ust\.|ustd\.|kyai|nyai|gus|ning)\s+/i, '').trim();
+
+    // 1. Prioritas 1: Kecocokan persis pada muhafiz, email, atau NIP
+    for (const h of halaqahs) {
+        const m = String(h.muhafiz || '').trim().toLowerCase();
+        const cleanM = m.replace(/^(ustadz|ustadzah|ust\.|ustd\.|kyai|nyai|gus|ning)\s+/i, '').trim();
+        const hemail = String(h.email || h.muhafizEmail || '').trim().toLowerCase();
+        const hNip = String(h.nip || h.muhafizNip || '').trim().toLowerCase();
+
+        if (uNip && hNip && uNip === hNip) return h;
+        if (uEmail && hemail && uEmail === hemail) return h;
+        if (cleanUName && cleanM && cleanUName === cleanM) return h;
+        if (uName && m && uName === m) return h;
     }
 
-    const elZiyadahBar = document.getElementById('tahfidz-stat-bar-ziyadah');
-    const elZiyadahText = document.getElementById('tahfidz-stat-text-ziyadah');
-    const elMurajaahText = document.getElementById('tahfidz-stat-text-murajaah');
+    // 2. Prioritas 2: Substring / Partial Name match pada nama Muhafiz atau Nama Halaqah
+    if (cleanUName && cleanUName.length >= 3) {
+        for (const h of halaqahs) {
+            const m = String(h.muhafiz || '').trim().toLowerCase();
+            const hName = String(h.namaHalaqah || '').trim().toLowerCase();
+            const cleanM = m.replace(/^(ustadz|ustadzah|ust\.|ustd\.|kyai|nyai|gus|ning)\s+/i, '').trim();
 
-    const akt = sum.aktivitasPekanIni || { ziyadahPercent: 100, murajaahPercent: 0 };
-    if (elZiyadahBar) elZiyadahBar.style.width = `${akt.ziyadahPercent || 100}%`;
-    if (elZiyadahText) elZiyadahText.innerText = `Ziyadah ( ${akt.ziyadahPercent || 100}% )`;
-    if (elMurajaahText) elMurajaahText.innerText = `Muraja'ah ( ${akt.murajaahPercent || 0}% )`;
+            if (cleanM && (cleanM.includes(cleanUName) || cleanUName.includes(cleanM))) return h;
+            if (hName.includes(cleanUName)) return h;
+        }
+    }
+
+    // 3. Fallback: jika login sebagai ASATIDZ dan ada daftar halaqah, gunakan halaqah pertama
+    return halaqahs[0] || null;
+}
+
+/**
+ * Kontrol Visibilitas Tombol Tahfidz Berdasarkan Peran Pengguna (RBAC)
+ * Menyembunyikan tombol ekspor (Excel, CSV, Cetak, +Catat Setoran) & manajerial (Kelola Halaqah, Jadwal & Sesi, Target Massal) untuk Akun Asatidz
+ */
+function applyTahfidzRolePermissions() {
+    const activeRole = String((typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                              sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                              sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN').toUpperCase();
+    const isPengasuh = activeRole === 'PENGASUH' || (typeof ASNTahfidz !== 'undefined' && ASNTahfidz.viewerRole === 'pengasuh');
+    const isAsatidz = activeRole === 'ASATIDZ';
+    const hideAdminActions = isPengasuh || isAsatidz;
+
+    document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
+        if (hideAdminActions) {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+        } else {
+            el.classList.remove('hidden');
+            el.style.display = '';
+        }
+    });
+}
+
+/**
+ * Render 4 Kartu Ringkasan Atas secara Dinamis Sesuai Filter Halaqah (Screenshot 1)
+ * 1. Capaian Ziyadah Pekan Ini (Hlm Disetor & % Tuntas Ziyadah)
+ * 2. Rata-Rata Hafalan (Juz / Santri)
+ * 3. Total Santri Aktif (Terplot dalam halaqah terpilih)
+ * 4. Capaian Muroja'ah Pekan Ini (Hlm Disetor & % Tuntas Muroja'ah)
+ */
+function renderTahfidzSummaryCards(filterHal = null) {
+    if (filterHal === null || filterHal === undefined) {
+        filterHal = document.getElementById('tahfidz-filter-halaqah')?.value || 'ALL';
+    }
+
+    const allStudents = ASNTahfidz.data?.students || [];
+    let targetStudents = [];
+
+    if (filterHal === 'ALL') {
+        targetStudents = allStudents.filter(st => isStudentInHalaqah(st));
+        if (targetStudents.length === 0) targetStudents = allStudents;
+    } else if (filterHal === 'UNASSIGNED') {
+        targetStudents = allStudents.filter(st => !isStudentInHalaqah(st));
+    } else {
+        targetStudents = allStudents.filter(st => {
+            const inHal = isStudentInHalaqah(st);
+            return inHal && st.halaqah && (
+                st.halaqah.namaHalaqah === filterHal || 
+                st.halaqah.halaqahId === filterHal
+            );
+        });
+    }
+
+    const totalSantri = targetStudents.length;
+
+    // 1. Total Santri Aktif
+    const elTotal = document.getElementById('tahfidz-stat-total');
+    if (elTotal) elTotal.innerText = totalSantri;
+
+    // 2. Rata-Rata Hafalan Santri
+    let totalJuz = 0;
+    let khatamCount = 0;
+    targetStudents.forEach(st => {
+        const p = st.progress;
+        const jzComp = p ? ((p.curriculumRank - 1) + (p.currentHalaman >= 20 ? 1 : (p.currentHalaman / 20))) : 0;
+        totalJuz += jzComp;
+        if (p && p.isKhatam) khatamCount++;
+    });
+    const avgJuzStr = totalSantri > 0 ? (totalJuz / totalSantri).toFixed(1) : "0.0";
+    const elRata = document.getElementById('tahfidz-stat-rata');
+    if (elRata) elRata.innerHTML = `${avgJuzStr} <span class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">Juz</span>`;
+
+    // 3. Capaian Ziyadah Pekan Ini (Pengganti Khatam 30 Juz)
+    let weeklyZiyadahPages = 0;
+    let tuntasZiyadahCount = 0;
+    targetStudents.forEach(st => {
+        const rZ = Number(st.rekapPekan?.ziyadah?.realita || 0);
+        weeklyZiyadahPages += rZ;
+        if (st.rekapPekan?.ziyadah?.isTuntas) tuntasZiyadahCount++;
+    });
+    const persenTuntasZiyadah = totalSantri > 0 ? Math.round((tuntasZiyadahCount / totalSantri) * 100) : 0;
+
+    const elZiyadahPages = document.getElementById('tahfidz-stat-ziyadah-pages');
+    if (elZiyadahPages) elZiyadahPages.innerText = weeklyZiyadahPages;
+
+    const elZiyadahTuntas = document.getElementById('tahfidz-stat-ziyadah-tuntas-santri');
+    if (elZiyadahTuntas) elZiyadahTuntas.innerText = `${persenTuntasZiyadah}%`;
+
+    const elZiyadahBarCard = document.getElementById('tahfidz-stat-bar-ziyadah-card');
+    if (elZiyadahBarCard) elZiyadahBarCard.style.width = `${Math.min(100, persenTuntasZiyadah)}%`;
+
+    // 4. Capaian Muroja'ah Pekan Ini
+    let weeklyMurajaahPages = 0;
+    let tuntasMurajaahCount = 0;
+    targetStudents.forEach(st => {
+        const rM = Number(st.rekapPekan?.murojaah?.realita || 0);
+        weeklyMurajaahPages += rM;
+        if (st.rekapPekan?.murojaah?.isTuntas) tuntasMurajaahCount++;
+    });
+    const persenTuntasMurojaah = totalSantri > 0 ? Math.round((tuntasMurajaahCount / totalSantri) * 100) : 0;
 
     const elMurajaahPages = document.getElementById('tahfidz-stat-murojaah-pages');
-    if (elMurajaahPages) {
-        elMurajaahPages.innerText = typeof akt.weeklyMurajaahPages === 'number' ? akt.weeklyMurajaahPages : (sum.weeklyMurajaahPages || 0);
-    }
-    const elTuntasSantri = document.getElementById('tahfidz-stat-murojaah-tuntas-santri');
-    if (elTuntasSantri) {
-        elTuntasSantri.innerText = `${typeof akt.persenTuntasMurojaah === 'number' ? akt.persenTuntasMurojaah : 0}%`;
-    }
+    if (elMurajaahPages) elMurajaahPages.innerText = weeklyMurajaahPages;
+
+    const elTuntasMurajaah = document.getElementById('tahfidz-stat-murojaah-tuntas-santri');
+    if (elTuntasMurajaah) elTuntasMurajaah.innerText = `${persenTuntasMurojaah}%`;
+
+    // 5. Rasio Aktivitas Ziyadah vs Muroja'ah (Bar Bawah Card 4)
+    const totalActivity = weeklyZiyadahPages + weeklyMurajaahPages;
+    const ziyadahPercent = totalActivity > 0 ? Math.round((weeklyZiyadahPages / totalActivity) * 100) : 50;
+    const murajaahPercent = 100 - ziyadahPercent;
+
+    const elZiyadahBar = document.getElementById('tahfidz-stat-bar-ziyadah');
+    if (elZiyadahBar) elZiyadahBar.style.width = `${ziyadahPercent}%`;
+
+    const elZiyadahText = document.getElementById('tahfidz-stat-text-ziyadah');
+    if (elZiyadahText) elZiyadahText.innerText = `Ziyadah ( ${ziyadahPercent}% )`;
+
+    const elMurajaahText = document.getElementById('tahfidz-stat-text-murajaah');
+    if (elMurajaahText) elMurajaahText.innerText = `Muraja'ah ( ${murajaahPercent}% )`;
+
+    // Fallback legacy element
+    const elKhatam = document.getElementById('tahfidz-stat-khatam');
+    if (elKhatam) elKhatam.innerText = khatamCount;
 }
 
 /**
  * Isi dropdown filter kategori, halaqah, muhafiz
+ * Otomatis memilih halaqah bimbingan jika user adalah Akun Asatidz
  */
 function populateTahfidzFilters() {
     const selKat = document.getElementById('tahfidz-filter-kategori');
@@ -667,7 +805,12 @@ function populateTahfidzFilters() {
         });
         optHtml += `<option value="UNASSIGNED">Belum Masuk Halaqah</option>`;
         selHal.innerHTML = optHtml;
-        if (currentVal && Array.from(selHal.options).some(o => o.value === currentVal)) {
+
+        // Auto-select otomatis untuk Akun Asatidz
+        const asatidzHalaqah = getHalaqahForActiveAsatidz();
+        if (asatidzHalaqah && (!currentVal || currentVal === 'ALL' || !Array.from(selHal.options).some(o => o.value === currentVal))) {
+            selHal.value = asatidzHalaqah.namaHalaqah;
+        } else if (currentVal && Array.from(selHal.options).some(o => o.value === currentVal)) {
             selHal.value = currentVal;
         }
     }
@@ -830,6 +973,8 @@ function filterTahfidzList() {
     });
 
     renderTahfidzStudentTable();
+    renderTahfidzSummaryCards(hal);
+    applyTahfidzRolePermissions();
 }
 
 /**
@@ -5065,4 +5210,7 @@ window.populateTahfidzJuzRangeDropdowns = populateTahfidzJuzRangeDropdowns;
 window.onTahfidzJuzRangeChange = onTahfidzJuzRangeChange;
 window.applyTahfidzJuzPreset = applyTahfidzJuzPreset;
 window.updateTahfidzPresetChipHighlight = updateTahfidzPresetChipHighlight;
+window.applyTahfidzRolePermissions = applyTahfidzRolePermissions;
+window.getHalaqahForActiveAsatidz = getHalaqahForActiveAsatidz;
+
 

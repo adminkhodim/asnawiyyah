@@ -152,10 +152,18 @@
                 if (typeof loadAdminTahfidzData === 'function') {
                     loadAdminTahfidzData();
                 }
-                const isPengasuh = typeof ASNTahfidz !== 'undefined' && ASNTahfidz.viewerRole === 'pengasuh';
-                document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
-                    el.style.display = isPengasuh ? 'none' : '';
-                });
+                if (typeof applyTahfidzRolePermissions === 'function') {
+                    applyTahfidzRolePermissions();
+                } else {
+                    const activeRole = String((typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                                              sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                                              sessionStorage.getItem('asnawiyyah_admin_role') || '').toUpperCase();
+                    const isPengasuh = activeRole === 'PENGASUH' || (typeof ASNTahfidz !== 'undefined' && ASNTahfidz.viewerRole === 'pengasuh');
+                    const isAsatidz = activeRole === 'ASATIDZ';
+                    document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
+                        el.style.display = (isPengasuh || isAsatidz) ? 'none' : '';
+                    });
+                }
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');
                 loadAdminNotifikasi();
