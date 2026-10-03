@@ -5708,7 +5708,12 @@ async function saveTahfidzPresensi() {
         const res = await apiPost("saveTahfidzPresensi", postData);
         if (res && (res.success || res.status === "success")) {
             if (typeof showToast === 'function') {
-                showToast(`✅ Presensi halaqah berhasil disimpan ke Google Spreadsheet (${res.savedCount || recordPayload.length} santri)!`);
+                const countUdzur = typeof res.savedCount === 'number' ? res.savedCount : recordPayload.filter(r => r.status !== 'HADIR').length;
+                if (countUdzur > 0) {
+                    showToast(`✅ Presensi halaqah tersimpan (${countUdzur} catatan udzur dicatat di Spreadsheet).`);
+                } else {
+                    showToast(`✅ Presensi halaqah tersimpan. Semua santri hadir!`);
+                }
             }
         } else {
             console.warn("Sinkronisasi presensi ke server:", res);

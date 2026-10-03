@@ -8268,6 +8268,7 @@ function saveTahfidzPresensi(payload, token) {
 
     const nowIso = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd'T'HH:mm:ss'Z'");
     const newRows = [];
+    const rowsToDelete = [];
     let updatedCount = 0;
     let insertedCount = 0;
 
@@ -8284,44 +8285,74 @@ function saveTahfidzPresensi(payload, token) {
       const key = `${tanggal}_${sesi}_${sId}`;
       const existingRowIdx = existingIndexMap[key];
 
-      if (existingRowIdx) {
-        if (colMap["status"] !== -1) sheet.getRange(existingRowIdx, colMap["status"] + 1).setValue(status);
-        if (colMap["keterangan"] !== -1) sheet.getRange(existingRowIdx, colMap["keterangan"] + 1).setValue(ket);
-        if (colMap["updated_at"] !== -1) sheet.getRange(existingRowIdx, colMap["updated_at"] + 1).setValue(nowIso);
-        if (colMap["muhafiz"] !== -1 && muhafiz) sheet.getRange(existingRowIdx, colMap["muhafiz"] + 1).setValue(muhafiz);
-        updatedCount++;
+      if (status === "HADIR") {
+        // Exception-based: Santri Hadir tidak perlu dicatat barisnya di sheet (hemat kapasitas 95%).
+        // Jika sebelumnya ada baris udzur (misal Sakit/Izin lalu diralat jadi Hadir), hapus barisnya.
+        if (existingRowIdx) {
+          rowsToDelete.push(existingRowIdx);
+        }
       } else {
-        const pId = "PRS-" + Utilities.formatDate(new Date(), "GMT+7", "yyMMddHHmmss") + "-" + (j + 1);
-        const rowData = new Array(HEADERS_TAHFIDZ_PRESENSI.length).fill("");
-        rowData[colMap["presensi_id"]] = pId;
-        rowData[colMap["tanggal"]] = tanggal;
-        rowData[colMap["sesi"]] = sesi;
-        rowData[colMap["halaqah_id"]] = itemHalId;
-        rowData[colMap["nama_halaqah"]] = itemHalName;
-        rowData[colMap["student_id"]] = sId;
-        rowData[colMap["nis"]] = nis;
-        rowData[colMap["student_name"]] = sName;
-        rowData[colMap["status"]] = status;
-        rowData[colMap["keterangan"]] = ket;
-        rowData[colMap["muhafiz"]] = muhafiz;
-        rowData[colMap["updated_at"]] = nowIso;
-        newRows.push(rowData);
-        insertedCount++;
+        // Status selain HADIR (SAKIT, IZIN, PULANG): Simpan catatan udzur ke Spreadsheet
+        if (existingRowIdx) {
+          if (colMap["status"] !== -1) sheet.getRange(existingRowIdx, colMap["status"] + 1).setValue(status);
+          if (colMap["keterangan"] !== -1) sheet.getRange(existingRowIdx, colMap["keterangan"] + 1).setValue(ket);
+          if (colMap["updated_at"] !== -1) sheet.getRange(existingRowIdx, colMap["updated_at"] + 1).setValue(nowIso);
+          if (colMap["muhafiz"] !== -1 && muhafiz) sheet.getRange(existingRowIdx, colMap["muhafiz"] + 1).setValue(muhafiz);
+          updatedCount++;
+        } else {
+          const pId = "PRS-" + Utilities.formatDate(new Date(), "GMT+7", "yyMMddHHmmss") + "-" + (j + 1);
+          const rowData = new Array(HEADERS_TAHFIDZ_PRESENSI.length).fill("");
+          rowData[colMap["presensi_id"]] = pId;
+          rowData[colMap["tanggal"]] = tanggal;
+          rowData[colMap["sesi"]] = sesi;
+          rowData[colMap["halaqah_id"]] = itemHalId;
+          rowData[colMap["nama_halaqah"]] = itemHalName;
+          rowData[colMap["student_id"]] = sId;
+          rowData[colMap["nis"]] = nis;
+          rowData[colMap["student_name"]] = sName;
+          rowData[colMap["status"]] = status;
+          rowData[colMap["keterangan"]] = ket;
+          rowData[colMap["muhafiz"]] = muhafiz;
+          rowData[colMap["updated_at"]] = nowIso;
+          newRows.push(rowData);
+          insertedCount++;
+        }
       }
     }
 
+    // 1. Masukkan baris baru untuk santri udzur (Sakit/Izin/Pulang)
     if (newRows.length > 0) {
       sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, HEADERS_TAHFIDZ_PRESENSI.length).setValues(newRows);
+    }
+
+    // 2. Hapus baris catatan udzur yang diralat kembali menjadi Hadir (urutkan dari baris terbesar ke terkecil)
+    let deletedCount = 0;
+    if (rowsToDelete.length > 0) {
+      const uniqueRows = Array.from(new Set(rowsToDelete)).sort((a, b) => b - a);
+      for (let k = 0; k < uniqueRows.length; k++) {
+        sheet.deleteRow(uniqueRows[k]);
+        deletedCount++;
+      }
+    }
+
+    const savedCount = insertedCount + updatedCount;
+    let infoMsg = `Presensi berhasil disimpan ke Spreadsheet.`;
+    if (savedCount > 0) {
+      infoMsg = `Presensi berhasil disimpan (${savedCount} santri berhalangan dicatat di Spreadsheet).`;
+    } else {
+      infoMsg = `Presensi berhasil disimpan. Semua santri halaqah hadir (bebas udzur).`;
     }
 
     return {
       status: "success",
       success: true,
-      message: `Presensi berhasil disimpan ke Spreadsheet (${insertedCount} baru, ${updatedCount} diperbarui).`,
+      message: infoMsg,
       tanggal: tanggal,
       sesi: sesi,
+      savedCount: savedCount,
       insertedCount: insertedCount,
-      updatedCount: updatedCount
+      updatedCount: updatedCount,
+      deletedCount: deletedCount
     };
   } catch (err) {
     console.error("[SAVE TAHFIDZ PRESENSI ERROR]", err);
