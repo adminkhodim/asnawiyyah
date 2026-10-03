@@ -4164,7 +4164,7 @@ function onSelectPlottingHalaqah(halaqahId) {
         return;
     }
 
-    // Ambil daftar studentIds yang sudah ada di halaqah ini (gabungkan halaqah.studentIds dan st.halaqah secara tangguh)
+    // Ambil daftar studentIds yang sudah ada di halaqah ini secara akurat
     const idSet = new Set();
     if (Array.isArray(halaqah.studentIds)) {
         halaqah.studentIds.forEach(id => {
@@ -4172,19 +4172,21 @@ function onSelectPlottingHalaqah(halaqahId) {
             if (clean) idSet.add(clean);
         });
     }
+
+    // Cocokkan santri yang terdata memiliki halaqahId atau namaHalaqah yang persis sama
     if (Array.isArray(ASNTahfidz.data.students)) {
         ASNTahfidz.data.students.forEach(st => {
             const hId = String(st.halaqah?.halaqahId || '').trim().toLowerCase();
             const hName = String(st.halaqah?.namaHalaqah || '').trim().toLowerCase();
             const targetHId = String(halaqah.halaqahId || '').trim().toLowerCase();
             const targetHName = String(halaqah.namaHalaqah || '').trim().toLowerCase();
-            const targetMuh = String(halaqah.muhafiz || '').trim().toLowerCase();
 
-            if ((targetHId && hId === targetHId) || (targetHName && hName === targetHName) || (targetMuh && hName && hName.includes(targetMuh))) {
-                const sId = String(st.studentId || '').trim();
-                const sNis = String(st.nis || '').trim();
+            const matchHId = Boolean(targetHId && hId && hId === targetHId);
+            const matchHName = Boolean(targetHName && hName && hName === targetHName);
+
+            if (matchHId || matchHName) {
+                const sId = String(st.studentId || st.nis || st.id || '').trim();
                 if (sId) idSet.add(sId);
-                if (sNis) idSet.add(sNis);
             }
         });
     }
@@ -4209,13 +4211,16 @@ function renderTahfidzPlottingLists() {
     const enrolledCountBadge = document.getElementById('tab2-plotting-enrolled-count') || document.getElementById('tahfidz-plotting-enrolled-count');
 
     const allStudents = ASNTahfidz.data.students || [];
-    const currentEnrolledIds = new Set(ASNTahfidz.activePlottingStudentIds.map(s => String(s).trim().toLowerCase()));
+    const currentEnrolledIds = new Set((ASNTahfidz.activePlottingStudentIds || []).map(s => String(s).trim().toLowerCase()));
 
-    // Pisahkan enrolled vs available (case-insensitive & tangguh terhadap sId maupun NIS)
+    // Pisahkan enrolled vs available (case-insensitive & tangguh terhadap sId, NIS, dan id)
     const enrolledStudents = allStudents.filter(st => {
         const sId = String(st.studentId || "").trim().toLowerCase();
         const sNis = String(st.nis || "").trim().toLowerCase();
-        return (sId && currentEnrolledIds.has(sId)) || (sNis && currentEnrolledIds.has(sNis));
+        const sIdNum = String(st.id || "").trim().toLowerCase();
+        return (sId && currentEnrolledIds.has(sId)) || 
+               (sNis && currentEnrolledIds.has(sNis)) ||
+               (sIdNum && currentEnrolledIds.has(sIdNum));
     });
 
     const searchInp = document.getElementById('tab2-plotting-search') || document.getElementById('tahfidz-plotting-search');
@@ -4227,7 +4232,10 @@ function renderTahfidzPlottingLists() {
     const availableStudents = allStudents.filter(st => {
         const sId = String(st.studentId || "").trim().toLowerCase();
         const sNis = String(st.nis || "").trim().toLowerCase();
-        const isAlreadyEnrolled = (sId && currentEnrolledIds.has(sId)) || (sNis && currentEnrolledIds.has(sNis));
+        const sIdNum = String(st.id || "").trim().toLowerCase();
+        const isAlreadyEnrolled = (sId && currentEnrolledIds.has(sId)) || 
+                                  (sNis && currentEnrolledIds.has(sNis)) || 
+                                  (sIdNum && currentEnrolledIds.has(sIdNum));
         if (isAlreadyEnrolled) return false;
 
         const matchSearch = !searchQuery ||
@@ -4255,7 +4263,7 @@ function renderTahfidzPlottingLists() {
             `;
         } else {
             enrolledContainer.innerHTML = enrolledStudents.map(st => {
-                const sId = st.studentId || st.nis;
+                const sId = st.studentId || st.nis || st.id;
                 const initials = (st.name || "S").substring(0, 2).toUpperCase();
                 return `
                 <div class="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#15202d] border border-slate-200/80 dark:border-[#283a4e] text-xs">
@@ -4268,7 +4276,7 @@ function renderTahfidzPlottingLists() {
                             <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • ${escapeHtml(st.program || 'Tahfidz')}</p>
                         </div>
                     </div>
-                    <button type="button" onclick="removeStudentFromPlotting('${sId}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold text-[10px] transition shrink-0 flex items-center gap-1">
+                    <button type="button" onclick="removeStudentFromPlotting('${escapeHtml(String(sId))}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold text-[10px] transition shrink-0 flex items-center gap-1 active:scale-95" title="Keluarkan santri dari halaqah ini">
                         <i class="fa-solid fa-user-minus"></i>
                         <span>Keluarkan</span>
                     </button>
@@ -4288,7 +4296,7 @@ function renderTahfidzPlottingLists() {
             `;
         } else {
             availableContainer.innerHTML = availableStudents.map(st => {
-                const sId = st.studentId || st.nis;
+                const sId = st.studentId || st.nis || st.id;
                 const initials = (st.name || "S").substring(0, 2).toUpperCase();
                 const curHal = st.halaqah && st.halaqah.namaHalaqah ? st.halaqah.namaHalaqah : null;
                 return `
@@ -4305,7 +4313,7 @@ function renderTahfidzPlottingLists() {
                             </p>
                         </div>
                     </div>
-                    <button type="button" onclick="addStudentToPlotting('${sId}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-[10px] transition shrink-0 flex items-center gap-1">
+                    <button type="button" onclick="addStudentToPlotting('${escapeHtml(String(sId))}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-[10px] transition shrink-0 flex items-center gap-1 active:scale-95" title="Masukkan santri ke halaqah ini">
                         <i class="fa-solid fa-user-plus"></i>
                         <span>+ Masukkan</span>
                     </button>
@@ -4330,21 +4338,55 @@ function addStudentToPlotting(studentId) {
     const cleanId = String(studentId || "").trim();
     if (!cleanId) return;
 
-    if (!ASNTahfidz.activePlottingStudentIds.includes(cleanId)) {
-        ASNTahfidz.activePlottingStudentIds.push(cleanId);
+    const allStudents = ASNTahfidz.data.students || [];
+    const st = allStudents.find(s => 
+        String(s.studentId || '').trim().toLowerCase() === cleanId.toLowerCase() ||
+        String(s.nis || '').trim().toLowerCase() === cleanId.toLowerCase() ||
+        String(s.id || '').trim().toLowerCase() === cleanId.toLowerCase()
+    );
+    const primaryId = st ? (st.studentId || st.nis || cleanId) : cleanId;
+
+    if (!ASNTahfidz.activePlottingStudentIds.some(id => String(id).trim().toLowerCase() === primaryId.toLowerCase())) {
+        ASNTahfidz.activePlottingStudentIds.push(primaryId);
         renderTahfidzPlottingLists();
+        if (typeof showToast === 'function') {
+            showToast(`➕ ${st?.name || 'Santri'} ditambahkan ke daftar halaqah.`);
+        }
     }
 }
 
 /**
  * Keluarkan santri dari list halaqah
+ * Menghapus seluruh varian ID santri (studentId, nis, id) dari antrean plotting
  */
 function removeStudentFromPlotting(studentId) {
-    const cleanId = String(studentId || "").trim();
+    const cleanId = String(studentId || "").trim().toLowerCase();
     if (!cleanId) return;
 
-    ASNTahfidz.activePlottingStudentIds = ASNTahfidz.activePlottingStudentIds.filter(id => id !== cleanId);
+    const allStudents = ASNTahfidz.data.students || [];
+    const st = allStudents.find(s => 
+        String(s.studentId || '').trim().toLowerCase() === cleanId ||
+        String(s.nis || '').trim().toLowerCase() === cleanId ||
+        String(s.id || '').trim().toLowerCase() === cleanId
+    );
+
+    // Kumpulkan seluruh ID yang berkaitan dengan santri ini agar tidak ada sisa pencocokan
+    const idsToRemove = new Set([cleanId]);
+    if (st) {
+        if (st.studentId) idsToRemove.add(String(st.studentId).trim().toLowerCase());
+        if (st.nis) idsToRemove.add(String(st.nis).trim().toLowerCase());
+        if (st.id) idsToRemove.add(String(st.id).trim().toLowerCase());
+    }
+
+    ASNTahfidz.activePlottingStudentIds = (ASNTahfidz.activePlottingStudentIds || []).filter(id => {
+        const idLower = String(id || '').trim().toLowerCase();
+        return !idsToRemove.has(idLower);
+    });
+
     renderTahfidzPlottingLists();
+    if (typeof showToast === 'function') {
+        showToast(`🗑️ ${st?.name || 'Santri'} dikeluarkan dari halaqah. Klik "Simpan Perubahan" untuk menyimpan.`);
+    }
 }
 
 /**
@@ -4360,7 +4402,9 @@ async function submitTahfidzPlotting() {
     const halaqahId = halaqah.halaqahId;
     const studentIds = (ASNTahfidz.activePlottingStudentIds || []).map(s => String(s).trim()).filter(Boolean);
 
-    const btnSubmit = document.getElementById('tab2-btn-save-plotting') || document.getElementById('btn-save-tahfidz-plotting');
+    const btnSubmit = document.getElementById('tab2-btn-save-plotting') || 
+                      document.getElementById('btn-save-tahfidz-plotting') || 
+                      document.querySelector('button[onclick="saveAllHalaqahChanges()"]');
     setTahfidzButtonLoading(btnSubmit, true, "Menyimpan Plotting...");
 
     try {
@@ -4775,6 +4819,14 @@ async function deleteTahfidzSesiConfirm(sesiId, namaSesi) {
  * Simpan semua perubahan di footer modal halaqah
  */
 async function saveAllHalaqahChanges() {
+    const activeTab = ASNTahfidz.halaqahActiveTab || 1;
+    if (activeTab === 2) {
+        // Jika sedang berada di Tab 2 (Plotting Santri), simpan plotting santri ke database
+        await submitTahfidzPlotting();
+        closeTahfidzHalaqahModal();
+        return;
+    }
+
     if (typeof showToast === 'function') showToast("⏳ Menyimpan seluruh perubahan & menyinkronkan data...");
     await loadAdminTahfidzData(true);
     if (typeof showToast === 'function') showToast("✅ Data halaqah, plotting & sesi berhasil disinkronkan.");
