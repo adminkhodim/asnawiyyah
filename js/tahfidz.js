@@ -5321,15 +5321,21 @@ ASNTahfidz.presensiState = {
 function getStudentsForPresensiHalaqah(halaqahIdOrName) {
     const all = ASNTahfidz.data?.students || [];
     if (!halaqahIdOrName || halaqahIdOrName === 'ALL') {
-        return all.filter(st => isStudentInHalaqah(st));
+        const inHal = all.filter(st => isStudentInHalaqah(st));
+        return inHal.length > 0 ? inHal : all;
     }
-    return all.filter(st => {
-        if (!isStudentInHalaqah(st)) return false;
-        return st.halaqah && (
-            st.halaqah.halaqahId === halaqahIdOrName || 
-            st.halaqah.namaHalaqah === halaqahIdOrName
-        );
+    const cleanTarget = String(halaqahIdOrName).trim().toLowerCase();
+    const matched = all.filter(st => {
+        if (!st) return false;
+        const hid = String(st.halaqahId || (st.halaqah && (st.halaqah.halaqahId || st.halaqah.id)) || "").trim().toLowerCase();
+        const hname = String(st.halaqahName || (st.halaqah && (st.halaqah.namaHalaqah || st.halaqah.name)) || (typeof st.halaqah === 'string' ? st.halaqah : "") || "").trim().toLowerCase();
+        return (hid && (hid === cleanTarget || cleanTarget.includes(hid))) || 
+               (hname && (hname === cleanTarget || cleanTarget.includes(hname) || hname.includes(cleanTarget)));
     });
+
+    if (matched.length > 0) return matched;
+    const inHalStudents = all.filter(st => isStudentInHalaqah(st));
+    return inHalStudents.length > 0 ? inHalStudents : all;
 }
 
 function openTahfidzPresensiModal(optionalHalaqahId = null) {
@@ -5578,7 +5584,7 @@ async function saveTahfidzPresensi() {
     try {
         const halId = ASNTahfidz.presensiState.activeHalaqahId;
         const halObj = (ASNTahfidz.data?.halaqahs || []).find(h => h.halaqahId === halId || h.namaHalaqah === halId);
-        const students = getStudentsForPresensiHalaqah(halId);
+        let students = getStudentsForPresensiHalaqah(halId);
         const currentRecords = ASNTahfidz.presensiState.records || {};
 
         // 1. Simpan ke local cache terlebih dahulu (responsif instan tanpa jeda)
@@ -5599,7 +5605,21 @@ async function saveTahfidzPresensi() {
         renderTahfidzSummaryCards(activeHalFilter);
 
         // 2. Siapkan payload untuk disinkronkan ke Google Spreadsheet (Sheet Tahfidz_Presensi)
-        const recordPayload = students.map(st => {
+        if (students.length === 0 && Object.keys(currentRecords).length > 0) {
+            const all = ASNTahfidz.data?.students || [];
+            students = all.filter(st => {
+                const sId = st.studentId || st.nis;
+                return currentRecords[sId] !== undefined;
+            });
+        }
+        if (students.length === 0) {
+            students = (ASNTahfidz.data?.students || []).filter(st => isStudentInHalaqah(st));
+        }
+        if (students.length === 0) {
+            students = ASNTahfidz.data?.students || [];
+        }
+
+        let recordPayload = students.map(st => {
             const sId = st.studentId || st.nis;
             const cur = currentRecords[sId] || { status: 'HADIR', keterangan: '' };
             return {
@@ -5608,14 +5628,35 @@ async function saveTahfidzPresensi() {
                 studentName: st.name || '',
                 status: cur.status || 'HADIR',
                 keterangan: cur.keterangan || '',
-                halaqahId: halId,
-                namaHalaqah: halObj ? halObj.namaHalaqah : 'Halaqah'
+                halaqahId: halId || (st.halaqah?.halaqahId || ''),
+                namaHalaqah: halObj ? halObj.namaHalaqah : (st.halaqah?.namaHalaqah || 'Halaqah')
             };
         });
+
+        if (recordPayload.length === 0 && Object.keys(currentRecords).length > 0) {
+            recordPayload = Object.entries(currentRecords).map(([sId, cur]) => {
+                const st = (ASNTahfidz.data?.students || []).find(s => (s.studentId || s.nis) === sId);
+                return {
+                    studentId: sId,
+                    nis: st ? (st.nis || sId) : sId,
+                    studentName: st ? (st.name || '') : 'Santri',
+                    status: (cur && cur.status) || 'HADIR',
+                    keterangan: (cur && cur.keterangan) || '',
+                    halaqahId: halId,
+                    namaHalaqah: halObj ? halObj.namaHalaqah : 'Halaqah'
+                };
+            });
+        }
 
         const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : (sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken) || localStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken))) || "";
         const postData = {
             token: token,
+            tanggal: ASNTahfidz.presensiState.date || new Date().toISOString().split('T')[0],
+            sesi: ASNTahfidz.presensiState.sesi || "Pagi (Ba'da Subuh)",
+            halaqahId: halId,
+            namaHalaqah: halObj ? halObj.namaHalaqah : 'Halaqah',
+            muhafiz: halObj ? (halObj.muhafiz || '') : '',
+            records: recordPayload,
             payload: {
                 tanggal: ASNTahfidz.presensiState.date || new Date().toISOString().split('T')[0],
                 sesi: ASNTahfidz.presensiState.sesi || "Pagi (Ba'da Subuh)",

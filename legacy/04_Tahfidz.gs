@@ -2525,13 +2525,13 @@ function saveTahfidzPresensi(payload, token) {
       }
     }
 
-    const p = (payload && payload.data) ? payload.data : (payload || {});
-    const tanggal = String(p.tanggal || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd")).trim();
-    const sesi = String(p.sesi || "Pagi (Ba'da Subuh)").trim();
-    const halaqahId = String(p.halaqahId || p.halaqah_id || "").trim();
-    const namaHalaqah = String(p.namaHalaqah || p.nama_halaqah || "").trim();
-    const muhafiz = String(p.muhafiz || (actor ? actor.name : "") || "Ustadz Pembina").trim();
-    const rawRecords = Array.isArray(p.records) ? p.records : [];
+    const p = (payload && payload.payload) ? payload.payload : ((payload && payload.data) ? payload.data : (payload || {}));
+    const tanggal = String(p.tanggal || payload.tanggal || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd")).trim();
+    const sesi = String(p.sesi || payload.sesi || "Pagi (Ba'da Subuh)").trim();
+    const halaqahId = String(p.halaqahId || p.halaqah_id || payload.halaqahId || payload.halaqah_id || "").trim();
+    const namaHalaqah = String(p.namaHalaqah || p.nama_halaqah || payload.namaHalaqah || payload.nama_halaqah || "").trim();
+    const muhafiz = String(p.muhafiz || payload.muhafiz || (actor ? actor.name : "") || "Ustadz Pembina").trim();
+    const rawRecords = Array.isArray(p.records) ? p.records : (Array.isArray(payload.records) ? payload.records : []);
 
     if (rawRecords.length === 0) {
       throw new Error("Daftar catatan kehadiran santri tidak boleh kosong.");
