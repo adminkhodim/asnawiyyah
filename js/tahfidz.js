@@ -62,6 +62,19 @@ const ASNTahfidz = {
     detailFilterTipe: "ALL"
 };
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+if (typeof window !== 'undefined' && typeof window.escapeHtml !== 'function') {
+    window.escapeHtml = escapeHtml;
+}
+
 const TAHFIDZ_CACHE_KEY = 'asnawiyyah_tahfidz_dashboard_cache';
 const TAHFIDZ_CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
 const TAHFIDZ_PRESENSI_STORAGE_KEY = 'asnawiyyah_tahfidz_presensi_cache';
@@ -5300,58 +5313,66 @@ function getStudentsForPresensiHalaqah(halaqahIdOrName) {
 
 function openTahfidzPresensiModal(optionalHalaqahId = null) {
     const modal = document.getElementById('modal-tahfidz-presensi');
-    if (!modal) return;
+    if (!modal) {
+        console.error('Modal presensi tahfidz (#modal-tahfidz-presensi) tidak ditemukan di DOM');
+        return;
+    }
 
-    // Tentukan halaqah target
-    let targetHalaqah = optionalHalaqahId;
-    if (!targetHalaqah) {
-        const filterVal = document.getElementById('tahfidz-filter-halaqah')?.value;
-        if (filterVal && filterVal !== 'ALL' && filterVal !== 'UNASSIGNED') {
-            targetHalaqah = filterVal;
-        } else {
-            const asatidzHal = typeof getHalaqahForActiveAsatidz === 'function' ? getHalaqahForActiveAsatidz() : null;
-            if (asatidzHal) {
-                targetHalaqah = asatidzHal.halaqahId || asatidzHal.namaHalaqah;
+    try {
+        // Tentukan halaqah target
+        let targetHalaqah = optionalHalaqahId;
+        if (!targetHalaqah) {
+            const filterVal = document.getElementById('tahfidz-filter-halaqah')?.value;
+            if (filterVal && filterVal !== 'ALL' && filterVal !== 'UNASSIGNED') {
+                targetHalaqah = filterVal;
             } else {
-                const halList = ASNTahfidz.data?.halaqahs || [];
-                if (halList.length > 0) {
-                    targetHalaqah = halList[0].halaqahId || halList[0].namaHalaqah;
+                const asatidzHal = typeof getHalaqahForActiveAsatidz === 'function' ? getHalaqahForActiveAsatidz() : null;
+                if (asatidzHal) {
+                    targetHalaqah = asatidzHal.halaqahId || asatidzHal.namaHalaqah;
+                } else {
+                    const halList = ASNTahfidz.data?.halaqahs || [];
+                    if (halList.length > 0) {
+                        targetHalaqah = halList[0].halaqahId || halList[0].namaHalaqah;
+                    }
                 }
             }
         }
-    }
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('tahfidz-presensi-date');
-    if (dateInput) {
-        dateInput.value = todayStr;
-    }
-
-    const halSelect = document.getElementById('tahfidz-presensi-halaqah-select');
-    if (halSelect) {
-        const halList = ASNTahfidz.data?.halaqahs || [];
-        halSelect.innerHTML = halList.map(h => {
-            const hId = h.halaqahId || h.namaHalaqah;
-            const isSel = (hId === targetHalaqah || h.namaHalaqah === targetHalaqah);
-            return `<option value="${escapeHtml(hId)}" ${isSel ? 'selected' : ''}>${escapeHtml(h.namaHalaqah)} (${escapeHtml(h.muhafiz || 'Muhafiz')})</option>`;
-        }).join('');
-        if (halList.length === 0) {
-            halSelect.innerHTML = `<option value="">Belum ada halaqah</option>`;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('tahfidz-presensi-date');
+        if (dateInput) {
+            dateInput.value = todayStr;
         }
+
+        const halSelect = document.getElementById('tahfidz-presensi-halaqah-select');
+        if (halSelect) {
+            const halList = ASNTahfidz.data?.halaqahs || [];
+            halSelect.innerHTML = halList.map(h => {
+                const hId = h.halaqahId || h.namaHalaqah;
+                const isSel = (hId === targetHalaqah || h.namaHalaqah === targetHalaqah);
+                return `<option value="${escapeHtml(hId)}" ${isSel ? 'selected' : ''}>${escapeHtml(h.namaHalaqah)} (${escapeHtml(h.muhafiz || 'Muhafiz')})</option>`;
+            }).join('');
+            if (halList.length === 0) {
+                halSelect.innerHTML = `<option value="">Belum ada halaqah</option>`;
+            }
+        }
+
+        ASNTahfidz.presensiState.activeHalaqahId = targetHalaqah || (halSelect ? halSelect.value : '');
+        ASNTahfidz.presensiState.date = todayStr;
+        ASNTahfidz.presensiState.sesi = document.getElementById('tahfidz-presensi-sesi')?.value || "Pagi (Ba'da Subuh)";
+        ASNTahfidz.presensiState.query = '';
+
+        const searchInput = document.getElementById('tahfidz-presensi-search');
+        if (searchInput) searchInput.value = '';
+
+        const savedRecords = getTahfidzPresensiRecords();
+        ASNTahfidz.presensiState.records = { ...savedRecords };
+
+        renderTahfidzPresensiList();
+    } catch (err) {
+        console.error('Error saat mempersiapkan presensi halaqah:', err);
     }
 
-    ASNTahfidz.presensiState.activeHalaqahId = targetHalaqah || (halSelect ? halSelect.value : '');
-    ASNTahfidz.presensiState.date = todayStr;
-    ASNTahfidz.presensiState.sesi = document.getElementById('tahfidz-presensi-sesi')?.value || "Pagi (Ba'da Subuh)";
-    ASNTahfidz.presensiState.query = '';
-
-    const searchInput = document.getElementById('tahfidz-presensi-search');
-    if (searchInput) searchInput.value = '';
-
-    const savedRecords = getTahfidzPresensiRecords();
-    ASNTahfidz.presensiState.records = { ...savedRecords };
-
-    renderTahfidzPresensiList();
     modal.classList.remove('hidden');
 }
 
