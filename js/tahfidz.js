@@ -2718,9 +2718,11 @@ function switchTahfidzDetailTab(tabIndex) {
     const tab1Btn = document.getElementById('btn-detail-tab-1');
     const tab2Btn = document.getElementById('btn-detail-tab-2');
     const tab3Btn = document.getElementById('btn-detail-tab-3');
+    const tab4Btn = document.getElementById('btn-detail-tab-4');
     const panel1 = document.getElementById('panel-detail-tab-1');
     const panel2 = document.getElementById('panel-detail-tab-2');
     const panel3 = document.getElementById('panel-detail-tab-3');
+    const panel4 = document.getElementById('panel-detail-tab-4');
 
     const activeClasses = "px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-700 text-white shadow-sm transition flex items-center gap-1.5 shrink-0";
     const inactiveClasses = "px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition flex items-center gap-1.5 shrink-0";
@@ -2728,13 +2730,17 @@ function switchTahfidzDetailTab(tabIndex) {
     if (tab1Btn) tab1Btn.className = (tabIndex === 1) ? activeClasses : inactiveClasses;
     if (tab2Btn) tab2Btn.className = (tabIndex === 2) ? activeClasses : inactiveClasses;
     if (tab3Btn) tab3Btn.className = (tabIndex === 3) ? activeClasses : inactiveClasses;
+    if (tab4Btn) tab4Btn.className = (tabIndex === 4) ? activeClasses : inactiveClasses;
 
     if (panel1) panel1.classList.toggle('hidden', tabIndex !== 1);
     if (panel2) panel2.classList.toggle('hidden', tabIndex !== 2);
     if (panel3) panel3.classList.toggle('hidden', tabIndex !== 3);
+    if (panel4) panel4.classList.toggle('hidden', tabIndex !== 4);
 
     if (tabIndex === 3) {
         renderTahfidzEstimasiKhatam();
+    } else if (tabIndex === 4) {
+        renderTahfidzStudentPresensiTab();
     }
 }
 
@@ -3275,6 +3281,9 @@ function renderTahfidzStudentDetailView() {
 
     // Hitung dan siapkan data Tab Estimasi Waktu Khatam
     renderTahfidzEstimasiKhatam();
+
+    // Hitung dan siapkan data Tab Presensi & Udzur
+    renderTahfidzStudentPresensiTab();
 }
 
 /**
@@ -3325,6 +3334,175 @@ function setTahfidzRiwayatView(mode) {
     }
 }
 window.setTahfidzRiwayatView = setTahfidzRiwayatView;
+
+/**
+ * Render Tab 4: Riwayat Presensi & Catatan Udzur Santri (Screenshot 5 / Modal Detail)
+ */
+function renderTahfidzStudentPresensiTab() {
+    const res = ASNTahfidz.activeStudentDetail;
+    if (!res) return;
+
+    const st = res.student || {};
+    let riwayatPresensi = Array.isArray(res.riwayatPresensi) ? [...res.riwayatPresensi] : [];
+
+    // Fallback: Jika di respons backend belum ada riwayatPresensi (misal cache/offline), cek dari cache lokal
+    if (riwayatPresensi.length === 0) {
+        try {
+            const rawCache = localStorage.getItem('asn_tahfidz_presensi_cache') || localStorage.getItem('Tahfidz_Presensi');
+            if (rawCache) {
+                const parsed = JSON.parse(rawCache);
+                const list = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.data) ? parsed.data : []);
+                const sId = String(st.studentId || st.student_id || '').trim();
+                const sNis = String(st.nis || '').trim();
+                const matched = list.filter(item => {
+                    const iId = String(item.studentId || item.student_id || '').trim();
+                    const iNis = String(item.nis || '').trim();
+                    return (iId && (iId === sId || iId === sNis)) || (iNis && (iNis === sId || iNis === sNis));
+                });
+                if (matched.length > 0) riwayatPresensi = matched;
+            }
+        } catch (e) {
+            console.warn("[renderTahfidzStudentPresensiTab] Fallback cache reading error:", e);
+        }
+    }
+
+    // Urutkan dari yang terbaru
+    riwayatPresensi.sort((a, b) => new Date(b.tanggal || b.updatedAt || 0) - new Date(a.tanggal || a.updatedAt || 0));
+
+    // 1. Status Kehadiran Hari Ini
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayFormatted = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+
+    const elTodayBadge = document.getElementById('tahfidz-presensi-status-today-badge');
+    const elTodayDate = document.getElementById('tahfidz-presensi-today-date');
+    const elTodayNotes = document.getElementById('tahfidz-presensi-today-notes');
+
+    if (elTodayDate) {
+        elTodayDate.innerText = todayFormatted;
+    }
+
+    const todayRecord = riwayatPresensi.find(r => {
+        const rTgl = String(r.tanggal || '').split('T')[0];
+        return rTgl === todayStr;
+    });
+
+    if (todayRecord) {
+        const stUp = String(todayRecord.status || 'HADIR').toUpperCase();
+        let badgeBg = "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border-rose-300 dark:border-rose-800";
+        let iconHtml = '<i class="fa-solid fa-bed-pulse text-rose-600 dark:text-rose-400"></i>';
+        let label = "Sakit";
+
+        if (stUp === 'IZIN') {
+            badgeBg = "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-300 dark:border-amber-800";
+            iconHtml = '<i class="fa-solid fa-envelope-open-text text-amber-600 dark:text-amber-400"></i>';
+            label = "Izin";
+        } else if (stUp === 'PULANG') {
+            badgeBg = "bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300 border-orange-300 dark:border-orange-800";
+            iconHtml = '<i class="fa-solid fa-house-chimney text-orange-600 dark:text-orange-400"></i>';
+            label = "Pulang ke Rumah";
+        }
+
+        if (elTodayBadge) {
+            elTodayBadge.className = `px-3 py-1 rounded-full text-xs font-black inline-flex items-center gap-1.5 border ${badgeBg}`;
+            elTodayBadge.innerHTML = `${iconHtml} <span>${label} (${escapeHtml(todayRecord.sesi || 'Sesi')})</span>`;
+        }
+        if (elTodayNotes) {
+            elTodayNotes.innerHTML = `<span class="font-bold text-slate-700 dark:text-slate-300">Catatan:</span> ${escapeHtml(todayRecord.keterangan || 'Tidak ada catatan tambahan')}`;
+        }
+    } else {
+        // Santri Hadir (karena exception-based logging hanya mencatat udzur)
+        if (elTodayBadge) {
+            elTodayBadge.className = "px-3 py-1 rounded-full text-xs font-black inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
+            elTodayBadge.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400"></i> Hadir Istiqomah';
+        }
+        if (elTodayNotes) {
+            elTodayNotes.innerText = "Alhamdulillah, santri hadir halaqah hari ini tanpa catatan udzur";
+        }
+    }
+
+    // 2. Tiga Stat Metrik
+    const totalUdzur = riwayatPresensi.length;
+    const totalSakit = riwayatPresensi.filter(r => (r.status || '').toUpperCase() === 'SAKIT').length;
+    const totalIzin = riwayatPresensi.filter(r => ['IZIN', 'PULANG'].includes((r.status || '').toUpperCase())).length;
+
+    const elTotalUdzur = document.getElementById('tahfidz-presensi-stat-total-udzur');
+    const elTotalSakit = document.getElementById('tahfidz-presensi-stat-sakit');
+    const elTotalIzin = document.getElementById('tahfidz-presensi-stat-izin');
+    const elLogCountBadge = document.getElementById('tahfidz-presensi-log-count-badge');
+
+    if (elTotalUdzur) elTotalUdzur.innerText = `${totalUdzur}`;
+    if (elTotalSakit) elTotalSakit.innerText = `${totalSakit}`;
+    if (elTotalIzin) elTotalIzin.innerText = `${totalIzin}`;
+    if (elLogCountBadge) elLogCountBadge.innerText = `${totalUdzur} Catatan`;
+
+    // 3. Render Daftar Timeline Riwayat Udzur
+    const elListContainer = document.getElementById('tahfidz-presensi-log-list');
+    if (!elListContainer) return;
+
+    if (riwayatPresensi.length === 0) {
+        elListContainer.innerHTML = `
+            <div class="py-8 px-4 text-center bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-dashed border-emerald-300 dark:border-emerald-800/60 space-y-2">
+                <div class="w-12 h-12 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-xl shadow-sm">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h5 class="text-xs font-black text-emerald-900 dark:text-emerald-200">Kehadiran Istiqomah 100%</h5>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                    Alhamdulillah, belum ada catatan udzur / ketidakhadiran (Sakit, Izin, Pulang) pada akun santri ini. Pertahankan terus kedisiplinan dan istiqomah mengaji!
+                </p>
+            </div>
+        `;
+    } else {
+        elListContainer.innerHTML = riwayatPresensi.map(r => {
+            const stUp = String(r.status || 'HADIR').toUpperCase();
+            let statusBadge = '';
+            if (stUp === 'SAKIT') {
+                statusBadge = '<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-900 flex items-center gap-1"><i class="fa-solid fa-bed-pulse text-[9px]"></i> SAKIT</span>';
+            } else if (stUp === 'IZIN') {
+                statusBadge = '<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-900 flex items-center gap-1"><i class="fa-solid fa-envelope-open-text text-[9px]"></i> IZIN</span>';
+            } else if (stUp === 'PULANG') {
+                statusBadge = '<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border border-orange-200 dark:border-orange-900 flex items-center gap-1"><i class="fa-solid fa-house-chimney text-[9px]"></i> PULANG</span>';
+            } else {
+                statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">${escapeHtml(stUp)}</span>`;
+            }
+
+            let dateLabel = r.tanggal || '-';
+            try {
+                if (r.tanggal && !isNaN(new Date(r.tanggal).getTime())) {
+                    dateLabel = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+                }
+            } catch (e) {}
+
+            return `
+                <div class="p-3 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm space-y-2 hover:border-slate-300 dark:hover:border-slate-600 transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            ${statusBadge}
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100">${escapeHtml(dateLabel)}</span>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-[#283a4e]">
+                            <i class="fa-regular fa-clock text-[9px] mr-1 text-slate-400"></i>Sesi ${escapeHtml(r.sesi || 'Pagi')}
+                        </span>
+                    </div>
+
+                    <div class="p-2 rounded-xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200/60 dark:border-[#283a4e] text-xs text-slate-700 dark:text-slate-300">
+                        <span class="font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase block mb-0.5">Keterangan / Alasan Udzur:</span>
+                        <p class="italic leading-relaxed">${escapeHtml(r.keterangan || 'Tidak ada catatan tambahan')}</p>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                        <span class="flex items-center gap-1">
+                            <i class="fa-solid fa-chalkboard-user text-emerald-600"></i>
+                            Pencatat: <b class="text-slate-600 dark:text-slate-300 font-semibold">${escapeHtml(r.muhafiz || 'Muhafiz')}</b>
+                        </span>
+                        <span>${r.namaHalaqah ? escapeHtml(r.namaHalaqah) : ''}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+}
+window.renderTahfidzStudentPresensiTab = renderTahfidzStudentPresensiTab;
 
 // ====================================================================
 // 4. MODAL: TARGET CAPAIAN SANTRI (Screenshot 3)

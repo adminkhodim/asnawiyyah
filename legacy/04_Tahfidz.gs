@@ -1707,6 +1707,42 @@ function getTahfidzStudentDetail(studentId, token) {
     // Urutkan riwayat dari yang terbaru
     riwayat.sort((a, b) => new Date(b.tanggal || b.createdAt) - new Date(a.tanggal || a.createdAt));
 
+    // 3b. Ambil Riwayat Presensi Santri (dari sheet Tahfidz_Presensi)
+    const riwayatPresensi = [];
+    const presSheet = ss.getSheetByName(SHEET_TAHFIDZ_PRESENSI);
+    if (presSheet && presSheet.getLastRow() > 1) {
+      const presData = presSheet.getDataRange().getValues();
+      const pHeaders = presData[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+      const pColMap = {};
+      HEADERS_TAHFIDZ_PRESENSI.forEach(dh => {
+        pColMap[dh] = pHeaders.indexOf(dh.toLowerCase().replace(/[\s\-_]+/g, ""));
+      });
+
+      for (let i = 1; i < presData.length; i++) {
+        const pr = presData[i];
+        const sId = String(pr[pColMap["student_id"]] || "").trim();
+        const sNis = String(pr[pColMap["nis"]] || "").trim();
+
+        if (sId === cleanId || sNis === student.nis || sId === student.studentId) {
+          riwayatPresensi.push({
+            presensiId: String(pr[pColMap["presensi_id"]] || "").trim(),
+            tanggal: normalizeDateString(pr[pColMap["tanggal"]]),
+            sesi: String(pr[pColMap["sesi"]] || "Pagi").trim(),
+            halaqahId: String(pr[pColMap["halaqah_id"]] || "").trim(),
+            namaHalaqah: String(pr[pColMap["nama_halaqah"]] || "").trim(),
+            studentId: sId,
+            nis: sNis,
+            studentName: String(pr[pColMap["student_name"]] || "").trim(),
+            status: String(pr[pColMap["status"]] || "HADIR").trim().toUpperCase(),
+            keterangan: String(pr[pColMap["keterangan"]] || "").trim(),
+            muhafiz: String(pr[pColMap["muhafiz"]] || "").trim(),
+            updatedAt: String(pr[pColMap["updated_at"]] || "")
+          });
+        }
+      }
+      riwayatPresensi.sort((a, b) => new Date(b.tanggal || b.updatedAt) - new Date(a.tanggal || a.updatedAt));
+    }
+
     // 4. Hitung Capaian Saat Ini & Rata-rata Nilai Berdasarkan Urutan Kurikulum
     let maxRank = -1;
     let currentJuz = 30;
@@ -1909,7 +1945,8 @@ function getTahfidzStudentDetail(studentId, token) {
           status: bulanPercent >= 100 ? "Target Bulan Tercapai" : (bulanPercent > 0 ? `${bulanPercent}% Capaian` : "0% Capaian")
         }
       },
-      riwayat: riwayat
+      riwayat: riwayat,
+      riwayatPresensi: riwayatPresensi
     };
 
   } catch (err) {
