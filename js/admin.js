@@ -4699,7 +4699,7 @@
                     ? `<img src="${photoUrl}" alt="${safeName}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-[#253447] shadow-sm shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=059669&color=fff'">`
                     : `<div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">${(user.name || 'U').charAt(0).toUpperCase()}</div>`;
 
-                // Santri Terhubung
+                // Santri / Pegawai Terhubung
                 let linkedHtml = '';
                 if (role === 'WALI_SANTRI') {
                     const students = user.linkedStudents || [];
@@ -4713,6 +4713,11 @@
                     } else {
                         linkedHtml = `<span class="text-[10px] text-slate-400 italic">Belum terhubung</span>`;
                     }
+                } else if (user.employeeId || user.employee_id) {
+                    const empId = user.employeeId || user.employee_id;
+                    linkedHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40" title="Tertaut ke Data Pegawai: ${empId}">
+                        <i class="fa-solid fa-user-tie text-[9px] text-indigo-600 mr-1"></i>Pegawai: ${escapeUserHtml(empId)}
+                    </span>`;
                 } else {
                     linkedHtml = `<span class="text-[10px] text-slate-400">-</span>`;
                 }
@@ -4868,6 +4873,8 @@
                     if (studentNisInput) studentNisInput.value = linked ? (linked.nis || '') : '';
                     if (relationshipSelect) relationshipSelect.value = linked ? (linked.relationship || 'GUARDIAN') : 'GUARDIAN';
 
+                    const linkedEmpId = user.employeeId || user.employee_id || '';
+                    populatePegawaiDropdownInUserModal(linkedEmpId);
                     handleUserFormRoleChange(user.role || 'WALI_SANTRI');
                 }
             } else {
@@ -4875,6 +4882,7 @@
                 if (idInput) idInput.value = '';
                 if (roleSelect) roleSelect.value = 'WALI_SANTRI';
                 if (statusSelect) statusSelect.value = 'ACTIVE';
+                populatePegawaiDropdownInUserModal('');
                 handleUserFormRoleChange('WALI_SANTRI');
             }
 
@@ -4890,15 +4898,124 @@
         }
 
         /**
-         * Penyesuaian form saat pilihan role berubah (tampilkan/sembunyikan input santri)
+         * Mengisi pilihan dropdown pegawai di modal Tambah/Edit Pengguna
+         */
+        async function populatePegawaiDropdownInUserModal(selectedId = '') {
+            const selectEl = document.getElementById('admin-user-form-employee-id');
+            const badgeEl = document.getElementById('badge-admin-user-pegawai-link');
+            if (!selectEl) return;
+
+            let employees = (window.ASNPegawai && Array.isArray(window.ASNPegawai.list)) ? window.ASNPegawai.list : [];
+            if (employees.length === 0 && typeof window.loadAdminEmployeesData === 'function') {
+                try {
+                    await window.loadAdminEmployeesData();
+                    employees = (window.ASNPegawai && Array.isArray(window.ASNPegawai.list)) ? window.ASNPegawai.list : [];
+                } catch (e) {
+                    console.warn('[LOAD EMPLOYEES FOR USER MODAL WARN]', e);
+                }
+            }
+
+            let optHtml = '<option value="">-- Tidak Ditautkan / Pilih Pegawai --</option>';
+            let foundMatch = null;
+
+            employees.forEach(p => {
+                const empId = p.id || p.employee_id || '';
+                const isSelected = selectedId && (String(selectedId) === String(empId));
+                if (isSelected) foundMatch = p;
+                const statusTag = (p.status && p.status !== 'ACTIVE' && p.status !== 'AKTIF') ? ` [${p.status}]` : '';
+                optHtml += `<option value="${escapeUserHtml(empId)}" ${isSelected ? 'selected' : ''}>${escapeUserHtml(p.nama)} (${escapeUserHtml(p.jabatan || 'Pegawai')}) - ${escapeUserHtml(empId)}${statusTag}</option>`;
+            });
+
+            selectEl.innerHTML = optHtml;
+            if (selectedId) selectEl.value = selectedId;
+
+            if (badgeEl) {
+                if (foundMatch) {
+                    badgeEl.innerText = `Terhubung: ${foundMatch.nama}`;
+                    badgeEl.className = 'text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800';
+                } else if (selectedId) {
+                    badgeEl.innerText = `ID: ${selectedId}`;
+                    badgeEl.className = 'text-[10px] font-bold text-indigo-600 dark:text-indigo-400';
+                } else {
+                    badgeEl.innerText = 'Pilih Pegawai';
+                    badgeEl.className = 'text-[10px] font-bold text-slate-400 dark:text-slate-500';
+                }
+            }
+        }
+
+        /**
+         * Auto-populate form saat admin memilih pegawai dari dropdown
+         */
+        function handleSelectPegawaiForUser(employeeId) {
+            const badgeEl = document.getElementById('badge-admin-user-pegawai-link');
+            const nameInput = document.getElementById('admin-user-form-name');
+            const emailInput = document.getElementById('admin-user-form-email');
+            const phoneInput = document.getElementById('admin-user-form-phone');
+            const roleSelect = document.getElementById('admin-user-form-role');
+
+            if (!employeeId) {
+                if (badgeEl) {
+                    badgeEl.innerText = 'Pilih Pegawai';
+                    badgeEl.className = 'text-[10px] font-bold text-slate-400 dark:text-slate-500';
+                }
+                return;
+            }
+
+            const employees = (window.ASNPegawai && Array.isArray(window.ASNPegawai.list)) ? window.ASNPegawai.list : [];
+            const emp = employees.find(p => String(p.id || p.employee_id) === String(employeeId));
+
+            if (emp) {
+                if (badgeEl) {
+                    badgeEl.innerText = `Terhubung: ${emp.nama}`;
+                    badgeEl.className = 'text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800';
+                }
+
+                if (nameInput) {
+                    if (!nameInput.value || nameInput.value.trim() === '') {
+                        nameInput.value = emp.nama || '';
+                    }
+                }
+                if (emailInput && emp.email && (!emailInput.value || emailInput.value.trim() === '')) {
+                    emailInput.value = emp.email;
+                }
+                if (phoneInput && (!phoneInput.value || phoneInput.value.trim() === '')) {
+                    const phoneVal = emp.telepon || emp.no_hp || emp.phone || '';
+                    if (phoneVal) phoneInput.value = phoneVal;
+                }
+                if (roleSelect && typeof window.suggestRoleFromJabatan === 'function') {
+                    const suggested = window.suggestRoleFromJabatan(emp.jabatan);
+                    if (suggested && (roleSelect.value === 'WALI_SANTRI' || !roleSelect.value)) {
+                        roleSelect.value = suggested;
+                        handleUserFormRoleChange(suggested);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Penyesuaian form saat pilihan role berubah (tampilkan/sembunyikan input santri / pegawai)
          */
         function handleUserFormRoleChange(role) {
             const waliExtra = document.getElementById('admin-user-wali-extra');
-            if (!waliExtra) return;
+            const pegawaiExtra = document.getElementById('admin-user-pegawai-extra');
+
+            const isEmployeeRole = ['ASATIDZ', 'PENGASUH', 'BENDAHARA', 'PENGURUS', 'EDITOR', 'ADMIN', 'SUPER_ADMIN'].includes(role);
+
             if (role === 'WALI_SANTRI') {
-                waliExtra.classList.remove('hidden');
+                if (waliExtra) waliExtra.classList.remove('hidden');
+                if (pegawaiExtra) pegawaiExtra.classList.add('hidden');
+            } else if (isEmployeeRole) {
+                if (waliExtra) waliExtra.classList.add('hidden');
+                if (pegawaiExtra) {
+                    pegawaiExtra.classList.remove('hidden');
+                    const sel = document.getElementById('admin-user-form-employee-id');
+                    if (sel && sel.options.length <= 1) {
+                        populatePegawaiDropdownInUserModal(sel.value || '');
+                    }
+                }
             } else {
-                waliExtra.classList.add('hidden');
+                if (waliExtra) waliExtra.classList.add('hidden');
+                if (pegawaiExtra) pegawaiExtra.classList.add('hidden');
             }
         }
 
@@ -4922,6 +5039,7 @@
             const status = (document.getElementById('admin-user-form-status')?.value || 'ACTIVE').trim();
             const studentNis = (document.getElementById('admin-user-form-student-nis')?.value || '').trim();
             const relationship = (document.getElementById('admin-user-form-relationship')?.value || 'GUARDIAN').trim();
+            const employeeId = (document.getElementById('admin-user-form-employee-id')?.value || '').trim();
 
             const payload = {
                 userId: id,
@@ -4931,7 +5049,9 @@
                 phone: phone,
                 status: status,
                 studentNis: studentNis,
-                relationship: relationship
+                relationship: relationship,
+                employeeId: employeeId,
+                employee_id: employeeId
             };
 
             try {
@@ -4955,6 +5075,9 @@
                     }
                     closeAdminUserModal();
                     await loadAdminUsersData();
+                    if (typeof window.loadAdminEmployeesData === 'function') {
+                        window.loadAdminEmployeesData().catch(err => console.warn('[REFRESH EMPLOYEES WARN]', err));
+                    }
                 } else {
                     const msg = (response && response.message) || 'Gagal menyimpan data pengguna.';
                     if (typeof showToast === 'function') showToast('❌ ' + msg);
@@ -5155,3 +5278,10 @@
         window.closeOnlineUsersModal = closeOnlineUsersModal;
         window.refreshOnlineUsersModal = refreshOnlineUsersModal;
         window.filterOnlineUsersModalList = filterOnlineUsersModalList;
+        window.openAdminUserModal = openAdminUserModal;
+        window.closeAdminUserModal = closeAdminUserModal;
+        window.handleUserFormRoleChange = handleUserFormRoleChange;
+        window.handleSelectPegawaiForUser = handleSelectPegawaiForUser;
+        window.populatePegawaiDropdownInUserModal = populatePegawaiDropdownInUserModal;
+        window.handleAdminUserSubmit = handleAdminUserSubmit;
+

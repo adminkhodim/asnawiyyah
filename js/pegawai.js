@@ -716,6 +716,300 @@ function populateTahfidzMuhafizDropdown() {
     if (currentVal) sel.value = currentVal;
 }
 
+/**
+ * ============================================================================
+ * TAHAP 3: WIZARD SINKRONISASI MASAL AKUN PEGAWAI (DATA LAMA)
+ * ============================================================================
+ */
+let syncCandidatesList = [];
+
+/**
+ * Buka modal wizard sinkronisasi masal akun pegawai
+ */
+async function openPegawaiAccountSyncWizard() {
+    const modal = document.getElementById('modal-pegawai-sync-wizard');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+
+    const totalEl = document.getElementById('sync-stat-total');
+    const hasAccEl = document.getElementById('sync-stat-has-account');
+    const needSyncEl = document.getElementById('sync-stat-need-sync');
+    const candidateListEl = document.getElementById('sync-wizard-candidate-list');
+    const countEl = document.getElementById('sync-wizard-candidate-count');
+    const progressBox = document.getElementById('sync-wizard-progress-box');
+    const btnExecute = document.getElementById('btn-execute-mass-sync');
+
+    if (progressBox) progressBox.classList.add('hidden');
+    if (btnExecute) {
+        btnExecute.disabled = false;
+        btnExecute.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>Mulai Sinkronisasi Masal</span>`;
+        btnExecute.className = "px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 active:scale-95";
+    }
+
+    if (candidateListEl) {
+        candidateListEl.innerHTML = `
+            <div class="py-8 text-center text-xs text-slate-400 space-y-2">
+                <i class="fa-solid fa-spinner fa-spin text-xl text-emerald-600"></i>
+                <p>Memindai dan mencocokkan data pegawai dengan akun pengguna...</p>
+            </div>
+        `;
+    }
+
+    // Pastikan data pegawai terbaru
+    let employees = ASNPegawai.list || [];
+    if (employees.length === 0) {
+        await loadAdminEmployeesData();
+        employees = ASNPegawai.list || [];
+    }
+
+    // Ambil daftar users terbaru
+    let users = [];
+    const config = window.ASNAWIYYAH_CONFIG || {};
+    if (config.supabaseUrl && config.supabaseKey) {
+        try {
+            const res = await fetch(`${config.supabaseUrl}/rest/v1/users?select=user_id,employee_id,email,role,status`, {
+                headers: { 'apikey': config.supabaseKey, 'Authorization': `Bearer ${config.supabaseKey}` }
+            });
+            if (res.ok) users = await res.json();
+        } catch (e) {
+            console.warn('[SYNC WIZARD SUPABASE FETCH WARN]', e);
+        }
+    }
+    if (users.length === 0 && typeof adminUsersList !== 'undefined' && adminUsersList.length > 0) {
+        users = adminUsersList;
+    }
+
+    // Buat map user berdasarkan employee_id dan email
+    const userByEmpId = new Map();
+    const userByEmail = new Map();
+    users.forEach(u => {
+        const eId = u.employee_id || u.employeeId;
+        if (eId) userByEmpId.set(String(eId).toLowerCase(), u);
+        if (u.email) userByEmail.set(String(u.email).toLowerCase(), u);
+    });
+
+    let countTotal = employees.length;
+    let countHasAccount = 0;
+    syncCandidatesList = [];
+
+    employees.forEach(emp => {
+        const empId = String(emp.employeeId || emp.employee_id || emp.id || '').trim();
+        const empEmail = String(emp.email || '').trim().toLowerCase();
+
+        const matchUser = (empId && userByEmpId.get(empId.toLowerCase())) ||
+                          (empEmail && userByEmail.get(empEmail)) || null;
+
+        if (matchUser) {
+            countHasAccount++;
+            emp.hasAccount = true;
+            emp.userRole = matchUser.role || 'ASATIDZ';
+        } else {
+            emp.hasAccount = false;
+            const suggestedRole = suggestRoleFromJabatan(emp.jabatan);
+            // Siapkan email default jika pegawai belum memiliki email
+            const fallbackEmail = empEmail || (emp.nip ? `${emp.nip.replace(/[^a-zA-Z0-9]/g, '')}@asnawiyyah.sch.id` : `${empId.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')}@asnawiyyah.sch.id`);
+
+            syncCandidatesList.push({
+                employee: emp,
+                empId: empId,
+                targetRole: suggestedRole,
+                email: fallbackEmail,
+                hasOriginalEmail: !!empEmail
+            });
+        }
+    });
+
+    const countNeedSync = syncCandidatesList.length;
+
+    if (totalEl) totalEl.innerText = countTotal;
+    if (hasAccEl) hasAccEl.innerText = countHasAccount;
+    if (needSyncEl) needSyncEl.innerText = countNeedSync;
+    if (countEl) countEl.innerText = `${countNeedSync} Pegawai`;
+
+    if (candidateListEl) {
+        if (syncCandidatesList.length === 0) {
+            candidateListEl.innerHTML = `
+                <div class="py-8 text-center space-y-2">
+                    <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Semua Pegawai Sudah Memiliki Akun!</h4>
+                    <p class="text-[10px] text-slate-400">Seluruh data pegawai (${countTotal} orang) telah tersinkronisasi 100% dengan akun pengguna aplikasi.</p>
+                </div>
+            `;
+            if (btnExecute) btnExecute.disabled = true;
+        } else {
+            candidateListEl.innerHTML = syncCandidatesList.map((item, idx) => {
+                const emp = item.employee;
+                return `
+                    <div id="sync-candidate-card-${idx}" class="p-2.5 bg-slate-50 dark:bg-[#1c2836] rounded-xl border border-slate-200/80 dark:border-[#253447] flex items-center justify-between gap-2.5 transition">
+                        <div class="min-w-0 flex items-center space-x-2.5">
+                            <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-xs shrink-0">
+                                ${(emp.nama || 'P').charAt(0).toUpperCase()}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <h5 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(emp.nama || '-')}</h5>
+                                    <span class="text-[9px] font-semibold text-slate-400">${item.empId}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                    <span class="truncate">${escapeHtml(emp.jabatan || 'Pegawai')}</span>
+                                    <span>•</span>
+                                    <span class="font-mono ${item.hasOriginalEmail ? 'text-slate-600 dark:text-slate-300' : 'text-amber-600 dark:text-amber-400'}">${escapeHtml(item.email)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                Role: ${item.targetRole}
+                            </span>
+                            <span id="sync-candidate-status-${idx}" class="text-[10px] font-bold text-slate-400">Siap</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
+/**
+ * Tutup modal wizard sinkronisasi
+ */
+function closePegawaiAccountSyncWizard() {
+    const modal = document.getElementById('modal-pegawai-sync-wizard');
+    if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Eksekusi Sinkronisasi Masal ke Cloud Database Supabase & Users
+ */
+async function executePegawaiMassSync() {
+    if (!syncCandidatesList || syncCandidatesList.length === 0) {
+        if (typeof showToast === 'function') showToast("Semua pegawai sudah memiliki akun login.");
+        return;
+    }
+
+    const btn = document.getElementById('btn-execute-mass-sync');
+    const progressBox = document.getElementById('sync-wizard-progress-box');
+    const progressBar = document.getElementById('sync-wizard-progress-bar');
+    const progressPct = document.getElementById('sync-wizard-progress-pct');
+    const progressLog = document.getElementById('sync-wizard-progress-log');
+    const progressTitle = document.getElementById('sync-wizard-progress-title');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Menyinkronkan...</span>`;
+    }
+
+    if (progressBox) progressBox.classList.remove('hidden');
+
+    const total = syncCandidatesList.length;
+    let successCount = 0;
+    let failCount = 0;
+
+    const config = window.ASNAWIYYAH_CONFIG || {};
+    const sbUrl = config.supabaseUrl;
+    const sbKey = config.supabaseKey;
+
+    for (let i = 0; i < total; i++) {
+        const item = syncCandidatesList[i];
+        const emp = item.employee;
+        const candidateCard = document.getElementById(`sync-candidate-card-${i}`);
+        const candidateStatus = document.getElementById(`sync-candidate-status-${i}`);
+
+        const pct = Math.round(((i + 1) / total) * 100);
+        if (progressBar) progressBar.style.width = `${pct}%`;
+        if (progressPct) progressPct.innerText = `${pct}%`;
+        if (progressLog) progressLog.innerText = `Menyinkronkan (${i + 1}/${total}): ${emp.nama}...`;
+
+        if (candidateStatus) {
+            candidateStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-emerald-600"></i>`;
+        }
+
+        try {
+            const finalUserId = 'USR_' + item.empId.replace(/[^a-zA-Z0-9]/g, '');
+            const empStatus = (emp.status || 'ACTIVE').toUpperCase();
+            const userStatus = (empStatus === 'INACTIVE' || empStatus === 'NONAKTIF' || empStatus === 'CUTI') ? 'SUSPENDED' : 'ACTIVE';
+
+            const userRow = {
+                user_id: finalUserId,
+                employee_id: item.empId,
+                name: emp.nama || '',
+                email: item.email || null,
+                phone: emp.telepon || emp.phone || emp.no_hp || null,
+                role: item.targetRole || 'ASATIDZ',
+                status: userStatus
+            };
+
+            // Simpan langsung ke Supabase Cloud DB jika config tersedia
+            if (sbUrl && sbKey) {
+                const res = await fetch(`${sbUrl}/rest/v1/users`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': sbKey,
+                        'Authorization': `Bearer ${sbKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates,return=representation'
+                    },
+                    body: JSON.stringify(userRow)
+                });
+                if (!res.ok) {
+                    console.warn('[MASS SYNC ROW WARN]', await res.text());
+                }
+            } else if (typeof window.syncToSupabaseOnWrite === 'function') {
+                await window.syncToSupabaseOnWrite('auth.admin.userSave', { user: userRow });
+            }
+
+            // Tandai sukses pada card
+            if (candidateStatus) {
+                candidateStatus.innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-check mr-1"></i>Tersinkron</span>`;
+            }
+            if (candidateCard) {
+                candidateCard.classList.remove('bg-slate-50', 'dark:bg-[#1c2836]');
+                candidateCard.classList.add('bg-emerald-50/60', 'dark:bg-emerald-950/30', 'border-emerald-200');
+            }
+            successCount++;
+        } catch (err) {
+            console.error(`[SYNC ERROR ${item.empId}]`, err);
+            if (candidateStatus) {
+                candidateStatus.innerHTML = `<span class="text-rose-500 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Gagal</span>`;
+            }
+            failCount++;
+        }
+
+        // Sedikit jeda agar UI responsif dan animasi progress bar mulus
+        await new Promise(r => setTimeout(r, 60));
+    }
+
+    if (progressTitle) {
+        progressTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Sinkronisasi Selesai!`;
+    }
+    if (progressLog) {
+        progressLog.innerText = `Selesai: ${successCount} akun berhasil disinkronkan${failCount > 0 ? `, ${failCount} gagal` : ''}.`;
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(`🎉 Berhasil menyinkronkan ${successCount} akun pegawai!`);
+    }
+
+    // Refresh data di kedua modul (Pegawai & Users)
+    try {
+        await loadAdminEmployeesData();
+        if (typeof window.loadAdminUsersData === 'function') {
+            await window.loadAdminUsersData();
+        }
+    } catch (e) {
+        console.warn('[RELOAD AFTER MASS SYNC WARN]', e);
+    }
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-check"></i><span>Sinkronisasi Selesai</span>`;
+        btn.className = "px-5 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2";
+    }
+}
+
 // Pasang ke window object
 window.loadAdminEmployeesData = loadAdminEmployeesData;
 window.filterAdminPegawaiList = filterAdminPegawaiList;
@@ -727,3 +1021,7 @@ window.deleteAdminEmployee = deleteAdminEmployee;
 window.populateTahfidzMuhafizDropdown = populateTahfidzMuhafizDropdown;
 window.toggleEmployeeUserSyncUI = toggleEmployeeUserSyncUI;
 window.suggestRoleFromJabatan = suggestRoleFromJabatan;
+window.openPegawaiAccountSyncWizard = openPegawaiAccountSyncWizard;
+window.closePegawaiAccountSyncWizard = closePegawaiAccountSyncWizard;
+window.executePegawaiMassSync = executePegawaiMassSync;
+
