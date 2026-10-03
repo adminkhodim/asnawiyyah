@@ -5846,7 +5846,23 @@ function getTahfidzCurriculumRank_(juz) {
 function getTahfidzCurriculumTotalTuntas_(juz, hal) {
   var rank = getTahfidzCurriculumRank_(juz);
   var h = Math.min(20, Math.max(1, Number(hal) || 1));
-  return rank * 20 + h;
+  return rank * 20 + parseTahfidzLatestPage_(hal);
+}
+
+function parseTahfidzLatestPage_(halVal) {
+  if (halVal === null || halVal === undefined || halVal === "") return 1;
+  if (typeof halVal === "number" && !isNaN(halVal)) {
+    return Math.min(20, Math.max(1, Math.round(halVal)));
+  }
+  var str = String(halVal).trim();
+  var matches = str.match(/\d+/g);
+  if (!matches || matches.length === 0) return 1;
+  var max = 1;
+  for (var i = 0; i < matches.length; i++) {
+    var n = Number(matches[i]);
+    if (!isNaN(n) && n > max) max = n;
+  }
+  return Math.min(20, Math.max(1, max));
 }
 
 /**
@@ -6185,7 +6201,7 @@ function syncTahfidzCapaianSheet_(ss) {
         if (l.tipe === "ZIYADAH" && l.statusSetoran !== "ULANG") {
           const j = Number(l.juz) || 30;
           const r = getTahfidzCurriculumRank_(j);
-          const h = Number(String(l.halamanList || 1).replace(/\D/g, "")) || 1;
+          const h = parseTahfidzLatestPage_(l.halamanList);
           if (r > maxRank || (r === maxRank && (!bestZiyadah || h > bestZiyadah.halaman))) {
             maxRank = r;
             bestZiyadah = { juz: j, halaman: h, log: l };
@@ -6203,7 +6219,7 @@ function syncTahfidzCapaianSheet_(ss) {
         const lastZiyadah = logs.find(l => l.tipe === "ZIYADAH");
         if (lastZiyadah) {
           juzAktif = lastZiyadah.juz || 30;
-          halTerakhir = Number(String(lastZiyadah.halamanList || 1).replace(/\D/g, "")) || 1;
+          halTerakhir = parseTahfidzLatestPage_(lastZiyadah.halamanList);
           totalTuntas = getTahfidzCurriculumTotalTuntas_(juzAktif, halTerakhir);
           statusTerakhir = lastZiyadah.statusSetoran || (lastZiyadah.nilai === "DHAIF" ? "ULANG" : "LANJUT");
           if (!muhafizPembina && lastZiyadah.muhafiz) muhafizPembina = lastZiyadah.muhafiz;
@@ -6221,7 +6237,7 @@ function syncTahfidzCapaianSheet_(ss) {
       const lastManzil = logs.find(l => l.tipe === "MURAJAAH_MANZIL");
       if (lastManzil) {
         manzilJuz = lastManzil.juz || 1;
-        manzilHal = Number(String(lastManzil.halamanList).replace(/\D/g, "")) || 1;
+        manzilHal = parseTahfidzLatestPage_(lastManzil.halamanList);
         if (!muhafizPembina && lastManzil.muhafiz) muhafizPembina = lastManzil.muhafiz;
       }
 
@@ -6854,7 +6870,7 @@ function getTahfidzDashboard(token) {
           hasZiyadah = true;
           const j = Number(lg.juz) || 30;
           const r = getTahfidzCurriculumRank_(j);
-          const h = Number(String(lg.halamanList || 1).replace(/\D/g, "")) || 1;
+          const h = parseTahfidzLatestPage_(lg.halamanList);
           if (r > maxRank || (r === maxRank && h > currentHal)) {
             maxRank = r;
             currentJuz = j;
@@ -6866,7 +6882,7 @@ function getTahfidzDashboard(token) {
       if (!hasZiyadah) {
         if (latestLog && latestLog.juz) {
           currentJuz = Number(latestLog.juz) || 30;
-          currentHal = Number(String(latestLog.halamanList || 1).replace(/\D/g, "")) || 1;
+          currentHal = parseTahfidzLatestPage_(latestLog.halamanList);
           maxRank = getTahfidzCurriculumRank_(currentJuz);
         } else {
           currentJuz = 30;
@@ -7445,7 +7461,7 @@ function getTahfidzStudentDetail(studentId, token) {
       if (r.tipe === "ZIYADAH" && r.statusSetoran !== "ULANG") {
         const j = Number(r.juz) || 30;
         const rk = getTahfidzCurriculumRank_(j);
-        const h = Number(String(r.halamanList || 1).replace(/\D/g, "")) || 1;
+        const h = parseTahfidzLatestPage_(r.halamanList);
         if (rk > maxRank || (rk === maxRank && h > currentHal)) {
           maxRank = rk;
           currentJuz = j;
@@ -7461,7 +7477,7 @@ function getTahfidzStudentDetail(studentId, token) {
     if (maxRank === -1) {
       if (riwayat.length > 0 && riwayat[0].juz) {
         currentJuz = Number(riwayat[0].juz) || 30;
-        currentHal = Number(String(riwayat[0].halamanList || 1).replace(/\D/g, "")) || 1;
+        currentHal = parseTahfidzLatestPage_(riwayat[0].halamanList);
         maxRank = getTahfidzCurriculumRank_(currentJuz);
       } else {
         currentJuz = 30;

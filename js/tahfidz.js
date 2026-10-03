@@ -313,11 +313,26 @@ function getJuzCurriculumIndex(juz) {
 }
 
 /**
+ * Helper untuk mem-parsing halaman terakhir santri secara aman (mencegah overflow akibat format "1, 2, 3..20")
+ */
+function parseTahfidzLatestPage(halVal) {
+    if (halVal === null || halVal === undefined || halVal === '') return 1;
+    if (typeof halVal === 'number' && !isNaN(halVal)) {
+        return Math.min(20, Math.max(1, Math.round(halVal)));
+    }
+    const str = String(halVal).trim();
+    const matches = str.match(/\d+/g);
+    if (!matches || matches.length === 0) return 1;
+    const max = Math.max(...matches.map(n => Number(n)).filter(n => !isNaN(n)));
+    return Math.min(20, Math.max(1, max));
+}
+
+/**
  * Menghitung capaian kumulatif tuntas (halaman) & persentase berbasis kurikulum
  */
 function getCurriculumProgress(juz, hal) {
     const r = getJuzCurriculumIndex(juz);
-    const h = Math.min(20, Math.max(1, Number(hal) || 1));
+    const h = parseTahfidzLatestPage(hal);
     const totalTuntas = r * 20 + h;
     const percent = Math.min(100, Math.max(1, Math.round((totalTuntas / 600) * 100)));
     return { rank: r, totalTuntas, percent };
@@ -369,7 +384,7 @@ function calculateTahfidzMetricsHelper(options = {}) {
         ziyadahLogs.forEach(log => {
             const j = Number(log.juz || 30);
             const rk = getJuzCurriculumIndex(j);
-            const h = parseInt(String(log.halamanList || '1').replace(/\D+/g, '')) || 1;
+            const h = parseTahfidzLatestPage(log.halamanList);
             if (rk > maxRankZiyadah || (rk === maxRankZiyadah && h > maxHlmZiyadah)) {
                 maxRankZiyadah = rk;
                 maxHlmZiyadah = h;
@@ -2759,7 +2774,7 @@ function renderTahfidzEstimasiKhatam() {
     // 1. Hitung total halaman yang sudah tuntas (Max 600 halaman Mushaf Pojok) berbasis kurikulum (30-21 lalu 1-20)
     const progressJuz = Number(stats.progressJuz || st.progress?.currentJuz || 30);
     const lastHalamanRaw = String(st.setoranTerakhir?.halaman || stats.progressHalaman || '1');
-    const lastHalamanNum = parseInt(lastHalamanRaw.replace(/\D+/g, '')) || 1;
+    const lastHalamanNum = parseTahfidzLatestPage(lastHalamanRaw);
 
     let halamanTuntas = stats.totalHalamanTuntas || getCurriculumProgress(progressJuz, lastHalamanNum).totalTuntas;
 
@@ -2771,7 +2786,7 @@ function renderTahfidzEstimasiKhatam() {
         ziyadahLogs.forEach(log => {
             const j = Number(log.juz || 30);
             const rk = getJuzCurriculumIndex(j);
-            const h = parseInt(String(log.halamanList || '1').replace(/\D+/g, '')) || 1;
+            const h = parseTahfidzLatestPage(log.halamanList);
             if (rk > maxRankZiyadah || (rk === maxRankZiyadah && h > maxHlmZiyadah)) {
                 maxRankZiyadah = rk;
                 maxHlmZiyadah = h;
