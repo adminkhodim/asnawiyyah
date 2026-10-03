@@ -997,7 +997,7 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "ASATIDZ"]);
       } catch (authErr) {
         return createJsonResponse({ status: "error", message: authErr.message });
       }
@@ -7270,7 +7270,7 @@ function deleteTahfidzLog(logId, token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "ASATIDZ"]);
       } catch (authErr) {
         verifySessionToken(token);
       }
@@ -7290,6 +7290,11 @@ function deleteTahfidzLog(logId, token) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][idIdx] || "").trim() === cleanLogId) {
         sheet.deleteRow(i + 1);
+        try {
+          syncTahfidzCapaianSheet_(ss);
+        } catch (syncErr) {
+          console.warn("[DELETE LOG SYNC ERROR]", syncErr);
+        }
         return {
           status: "success",
           success: true,

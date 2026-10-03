@@ -3291,19 +3291,24 @@ async function deleteTahfidzLogEntry(logId) {
     if (!confirm("Apakah Anda yakin ingin menghapus catatan setoran ini?")) return;
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
+        const token = (typeof ASNIdentity !== 'undefined' && ASNIdentity.getSessionToken ? ASNIdentity.getSessionToken() : '') ||
+                      (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : '') ||
+                      sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken) ||
+                      sessionStorage.getItem("asnawiyyah_admin_token") || "";
         const res = await apiPost("deleteTahfidzLog", { token, logId });
         if (res && (res.success || res.status === "success")) {
-            if (typeof showToast === 'function') showToast("Catatan setoran berhasil dihapus.");
+            if (typeof showToast === 'function') showToast(res.message || "Catatan setoran berhasil dihapus.");
             if (ASNTahfidz.activeStudentDetail?.student?.studentId) {
                 openTahfidzStudentDetail(ASNTahfidz.activeStudentDetail.student.studentId);
             }
             loadAdminTahfidzData(true);
         } else {
-            if (typeof showToast === 'function') showToast("❌ Gagal menghapus catatan.");
+            const errorMsg = (res && res.message) ? ("❌ " + res.message) : "❌ Gagal menghapus catatan.";
+            if (typeof showToast === 'function') showToast(errorMsg);
         }
     } catch (e) {
         console.error(e);
+        if (typeof showToast === 'function') showToast("❌ Gagal menghapus catatan: " + (e.message || "Koneksi bermasalah"));
     }
 }
 
