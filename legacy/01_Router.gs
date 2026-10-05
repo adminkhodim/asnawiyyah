@@ -604,6 +604,56 @@ function doPost(e) {
       return createJsonResponse(toggleStatusUnitKegiatan(kegiatanId, newStatus));
     }
 
+    
+    // ========================================================
+    // JADWAL KEGIATAN SANTRI API ROUTER (POST)
+    // ========================================================
+    if (action === "getJadwalKegiatan") {
+      return createJsonResponse(getJadwalKegiatanData());
+    }
+
+    if (action === "saveJadwalKegiatan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGURUS"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(simpanJadwalKegiatan(payload.data || payload));
+    }
+
+    if (action === "deleteJadwalKegiatan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGURUS"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      const jadwalId = payload.id || (payload.data && payload.data.id);
+      if (!jadwalId) {
+        return createJsonResponse({ status: "error", message: "ID Jadwal wajib diisi" });
+      }
+      return createJsonResponse(hapusJadwalKegiatan(jadwalId));
+    }
+
+    if (action === "toggleJadwalKegiatan") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGURUS"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      const jadwalId = payload.id || (payload.data && payload.data.id);
+      const newStatus = payload.newStatus || (payload.data && payload.data.newStatus);
+      if (!jadwalId || !newStatus) {
+        return createJsonResponse({ status: "error", message: "ID Jadwal dan status wajib diisi" });
+      }
+      return createJsonResponse(toggleStatusJadwalKegiatan(jadwalId, newStatus));
+    }
+
     if (action === "alumni.getTestimonials") {
       return createJsonResponse(getAlumniTestimonials());
     }
@@ -785,6 +835,13 @@ function doGet(e) {
         getUnitKegiatanData()
       );
     }
+
+    if (action === "getJadwalKegiatan") {
+      return createJsonResponse(
+        getJadwalKegiatanData()
+      );
+    }
+
 
     if (action === "getStudents" || action === "student.list") {
       const token = e.parameter.token || null;
