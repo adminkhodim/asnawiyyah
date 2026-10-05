@@ -1260,7 +1260,9 @@ function toggleStatusUnitKegiatan(kegiatanId, newStatus) {
 // 1. Ambil Data Jadwal Kegiatan (Auto-Create & Seeding 25 Agenda Awal jika Sheet Belum Ada)
 function getJadwalKegiatanData() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = (typeof getDatabaseSpreadsheet === "function" ? getDatabaseSpreadsheet() : null) || SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { status: "error", message: "Spreadsheet database tidak ditemukan", data: [] };
+
     let sheet = ss.getSheetByName(JADWAL_KEGIATAN_SHEET_NAME);
 
     if (!sheet) {
@@ -1332,12 +1334,15 @@ function getJadwalKegiatanData() {
 // 2. Tambah / Edit Jadwal Kegiatan
 function simpanJadwalKegiatan(formData) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = (typeof getDatabaseSpreadsheet === "function" ? getDatabaseSpreadsheet() : null) || SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { success: false, status: "error", message: "Spreadsheet database tidak ditemukan" };
+
     let sheet = ss.getSheetByName(JADWAL_KEGIATAN_SHEET_NAME);
     if (!sheet) {
       getJadwalKegiatanData();
       sheet = ss.getSheetByName(JADWAL_KEGIATAN_SHEET_NAME);
     }
+    if (!sheet) return { success: false, status: "error", message: "Sheet Jadwal Kegiatan gagal diinisialisasi" };
 
     const data = sheet.getDataRange().getValues();
     var rowIndex = -1;
@@ -1345,7 +1350,7 @@ function simpanJadwalKegiatan(formData) {
 
     if (targetId) {
       for (var i = 1; i < data.length; i++) {
-        if (String(data[i][0]) === String(targetId)) {
+        if (String(data[i][0]).trim() === String(targetId).trim()) {
           rowIndex = i + 1;
           break;
         }
@@ -1367,7 +1372,7 @@ function simpanJadwalKegiatan(formData) {
       ]]);
       return { success: true, status: "success", message: "Jadwal kegiatan berhasil diperbarui", id: targetId };
     } else {
-      var newId = "JDW_" + (tipe.toUpperCase()) + "_" + new Date().getTime();
+      var newId = targetId || ("JDW_" + (tipe.toUpperCase()) + "_" + new Date().getTime());
       sheet.appendRow([
         newId, tipe, waktu, kegiatan, deskripsi, badge, urutan, status, timestamp
       ]);
@@ -1381,15 +1386,17 @@ function simpanJadwalKegiatan(formData) {
 // 3. Hapus Jadwal Kegiatan
 function hapusJadwalKegiatan(jadwalId) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = (typeof getDatabaseSpreadsheet === "function" ? getDatabaseSpreadsheet() : null) || SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { success: false, status: "error", message: "Spreadsheet database tidak ditemukan" };
+
     const sheet = ss.getSheetByName(JADWAL_KEGIATAN_SHEET_NAME);
     if (!sheet) return { success: false, status: "error", message: "Sheet Jadwal Kegiatan tidak ditemukan" };
 
     const data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(jadwalId)) {
+      if (String(data[i][0]).trim() === String(jadwalId).trim()) {
         sheet.deleteRow(i + 1);
-        return { success: true, status: "success", message: "Jadwal kegiatan berhasil dihapus" };
+        return { success: true, status: "success", message: "Jadwal kegiatan berhasil dihapus", id: jadwalId };
       }
     }
     return { success: false, status: "error", message: "ID Jadwal Kegiatan tidak ditemukan" };
@@ -1401,15 +1408,18 @@ function hapusJadwalKegiatan(jadwalId) {
 // 4. Toggle Status Jadwal Kegiatan
 function toggleStatusJadwalKegiatan(jadwalId, newStatus) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = (typeof getDatabaseSpreadsheet === "function" ? getDatabaseSpreadsheet() : null) || SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { success: false, status: "error", message: "Spreadsheet database tidak ditemukan" };
+
     const sheet = ss.getSheetByName(JADWAL_KEGIATAN_SHEET_NAME);
     if (!sheet) return { success: false, status: "error", message: "Sheet Jadwal Kegiatan tidak ditemukan" };
 
     const data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(jadwalId)) {
+      if (String(data[i][0]).trim() === String(jadwalId).trim()) {
         sheet.getRange(i + 1, 8).setValue(newStatus);
-        return { success: true, status: "success", message: "Status Jadwal Kegiatan diubah ke: " + newStatus };
+        sheet.getRange(i + 1, 9).setValue(new Date().toISOString());
+        return { success: true, status: "success", message: "Status Jadwal Kegiatan diubah ke: " + newStatus, id: jadwalId, newStatus: newStatus };
       }
     }
     return { success: false, status: "error", message: "ID Jadwal Kegiatan tidak ditemukan" };

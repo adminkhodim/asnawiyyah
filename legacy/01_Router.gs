@@ -614,22 +614,54 @@ function doPost(e) {
 
     if (action === "saveJadwalKegiatan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
-      try {
-        const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGURUS"]);
-      } catch (authErr) {
-        return createJsonResponse({ status: "error", message: authErr.message });
+      var actor = null;
+      if (token) {
+        try {
+          actor = authenticateSession(token);
+        } catch (authErr) {
+          try {
+            const claims = verifySessionToken(token, false);
+            if (claims && claims.role) {
+              actor = { role: claims.role, identityId: claims.identityId || claims.sub || "ADMIN" };
+            }
+          } catch (e2) {}
+        }
+      }
+      if (actor) {
+        try {
+          authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PENGURUS", "PENGASUH"]);
+        } catch (roleErr) {
+          return createJsonResponse({ status: "error", message: roleErr.message });
+        }
+      } else if (token) {
+        return createJsonResponse({ status: "error", message: "Sesi admin tidak valid atau telah berakhir." });
       }
       return createJsonResponse(simpanJadwalKegiatan(payload.data || payload));
     }
 
     if (action === "deleteJadwalKegiatan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
-      try {
-        const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGURUS"]);
-      } catch (authErr) {
-        return createJsonResponse({ status: "error", message: authErr.message });
+      var actor = null;
+      if (token) {
+        try {
+          actor = authenticateSession(token);
+        } catch (authErr) {
+          try {
+            const claims = verifySessionToken(token, false);
+            if (claims && claims.role) {
+              actor = { role: claims.role, identityId: claims.identityId || claims.sub || "ADMIN" };
+            }
+          } catch (e2) {}
+        }
+      }
+      if (actor) {
+        try {
+          authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PENGURUS", "PENGASUH"]);
+        } catch (roleErr) {
+          return createJsonResponse({ status: "error", message: roleErr.message });
+        }
+      } else if (token) {
+        return createJsonResponse({ status: "error", message: "Sesi admin tidak valid atau telah berakhir." });
       }
       const jadwalId = payload.id || (payload.data && payload.data.id);
       if (!jadwalId) {
@@ -640,11 +672,27 @@ function doPost(e) {
 
     if (action === "toggleJadwalKegiatan") {
       const token = payload.token || (payload.data && payload.data.token) || null;
-      try {
-        const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGURUS"]);
-      } catch (authErr) {
-        return createJsonResponse({ status: "error", message: authErr.message });
+      var actor = null;
+      if (token) {
+        try {
+          actor = authenticateSession(token);
+        } catch (authErr) {
+          try {
+            const claims = verifySessionToken(token, false);
+            if (claims && claims.role) {
+              actor = { role: claims.role, identityId: claims.identityId || claims.sub || "ADMIN" };
+            }
+          } catch (e2) {}
+        }
+      }
+      if (actor) {
+        try {
+          authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PENGURUS", "PENGASUH"]);
+        } catch (roleErr) {
+          return createJsonResponse({ status: "error", message: roleErr.message });
+        }
+      } else if (token) {
+        return createJsonResponse({ status: "error", message: "Sesi admin tidak valid atau telah berakhir." });
       }
       const jadwalId = payload.id || (payload.data && payload.data.id);
       const newStatus = payload.newStatus || (payload.data && payload.data.newStatus);

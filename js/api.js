@@ -463,7 +463,11 @@
             const endpoint = getApiUrl();
             if (!endpoint) throw new Error("API URL belum dikonfigurasi.");
 
-            const adminToken = (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+            const adminToken = (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : null) ||
+                (typeof window !== "undefined" && typeof window.getAdminSessionToken === "function" ? window.getAdminSessionToken() : null) ||
+                (typeof sessionStorage !== "undefined" && (sessionStorage.getItem("asnawiyyah_admin_token") || sessionStorage.getItem("asnawiyyah_pengasuh_token"))) ||
+                (typeof localStorage !== "undefined" && (localStorage.getItem("asnawiyyah_admin_token") || localStorage.getItem("asnawiyyah_pengasuh_token"))) ||
+                "";
             const bodyPayload = { action, ...payload };
             if (adminToken && !bodyPayload.token) {
                 bodyPayload.token = adminToken;
@@ -482,8 +486,10 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
 
-            // Dual-Write Sync ke Supabase Cloud DB jika write action sukses
-            if (result && (result.success || result.status === "success")) {
+            // Dual-Write Sync ke Supabase Cloud DB:
+            // Selalu jalankan sinkronisasi Supabase untuk aksi tulis Jadwal Kegiatan & CMS agar data langsung tersimpan di Cloud DB
+            const isJadwalWrite = action === 'saveJadwalKegiatan' || action === 'toggleJadwalKegiatan' || action === 'deleteJadwalKegiatan';
+            if (isJadwalWrite || (result && (result.success || result.status === "success"))) {
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             }
 
@@ -1017,7 +1023,7 @@
                     }
                 }
                 else if (action === 'saveJadwalKegiatan') {
-                    const jId = payload.id || ('JDW_' + Date.now());
+                    const jId = payload.id || (response && response.id) || ('JDW_' + Date.now());
                     const jRow = {
                         id: jId,
                         tipe: (payload.tipe || 'harian').toLowerCase(),
@@ -1029,11 +1035,15 @@
                         status: payload.status || 'Aktif',
                         timestamp: new Date().toISOString()
                     };
-                    await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan`, {
+                    const sbRes = await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan`, {
                         method: 'POST',
                         headers,
                         body: JSON.stringify(jRow)
                     });
+                    if (!sbRes.ok) {
+                        const errTxt = await sbRes.text();
+                        console.warn('[SUPABASE JADWAL SAVE ERROR]', sbRes.status, errTxt);
+                    }
                 }
                 else if (action === 'toggleJadwalKegiatan') {
                     const jId = payload.id;

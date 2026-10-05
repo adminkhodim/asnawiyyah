@@ -2827,7 +2827,12 @@
                 }
 
                 if (isApiConfigured()) {
-                    await apiPost("saveJadwalKegiatan", payload);
+                    const token = getAdminSessionToken();
+                    const serverPayload = { ...payload, token };
+                    const apiRes = await apiPost("saveJadwalKegiatan", serverPayload);
+                    if (apiRes && apiRes.status === "error" && !apiRes.success) {
+                        console.warn("[JADWAL SAVE SERVER WARNING]", apiRes.message);
+                    }
                 }
             } catch (err) {
                 console.warn("Gagal menyimpan jadwal ke server:", err);
@@ -2852,7 +2857,8 @@
                 }
 
                 if (isApiConfigured()) {
-                    await apiPost("toggleJadwalKegiatan", { id, newStatus });
+                    const token = getAdminSessionToken();
+                    await apiPost("toggleJadwalKegiatan", { id, newStatus, token });
                 }
             } catch (err) {
                 if (typeof showToast === 'function') showToast("❌ Gagal mengubah status: " + err.message);
@@ -2875,7 +2881,8 @@
                 if (typeof showToast === 'function') showToast("✅ Agenda jadwal berhasil dihapus.");
 
                 if (isApiConfigured()) {
-                    await apiPost("deleteJadwalKegiatan", { id });
+                    const token = getAdminSessionToken();
+                    await apiPost("deleteJadwalKegiatan", { id, token });
                 }
             } catch (err) {
                 if (typeof showToast === 'function') showToast("❌ Gagal menghapus: " + err.message);
@@ -2889,7 +2896,11 @@
         let adminProgramSearchQuery = "";
 
         function getAdminSessionToken() {
-            return sessionStorage.getItem("asnawiyyah_admin_token") || localStorage.getItem("asnawiyyah_admin_token") || "";
+            return (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem("asnawiyyah_admin_token") || sessionStorage.getItem("asnawiyyah_pengasuh_token"))) ||
+                   (typeof localStorage !== 'undefined' && (localStorage.getItem("asnawiyyah_admin_token") || localStorage.getItem("asnawiyyah_pengasuh_token"))) || "";
+        }
+        if (typeof window !== 'undefined') {
+            window.getAdminSessionToken = getAdminSessionToken;
         }
 
         function getAdminSessionRole() {
