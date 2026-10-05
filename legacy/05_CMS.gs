@@ -358,7 +358,7 @@ function simpanBerita(formData) {
       0 // Views awal
     ]);
 
-    return { success: true, message: "Berita berhasil dipublikasikan!", data: { news_id: identities.newsId, slug: identities.slug } };
+    return { success: true, message: "Berita berhasil dipublikasikan!", data: { news_id: identities.newsId, slug: identities.slug }, url: fileUrl, fileUrl: fileUrl };
   } catch (error) {
     return { success: false, message: error.toString() };
   } finally {
@@ -448,7 +448,7 @@ function updateBerita(formData) {
     // Array to update: D to I (Judul, Kategori, Penulis, Gambar_URL, Ringkasan, Isi)
     sheet.getRange(targetRow, 4, 1, 6).setValues([[judul, kategori, penulis, fileUrl, ringkasan, isi]]);
 
-    return { success: true, message: "Berita berhasil diperbarui!" };
+    return { success: true, message: "Berita berhasil diperbarui!", url: fileUrl, fileUrl: fileUrl };
   } catch (error) {
     return { success: false, message: error.toString() };
   } finally {

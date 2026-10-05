@@ -860,6 +860,7 @@
         // ==================== DASHBOARD ADMIN: MANAJEMEN BERITA ====================
         let adminNewsRawImage = null; // HTMLImageElement
         let adminNewsCroppedBase64 = null; // Base64 string foto 16:9 yang siap dikirim
+        let adminNewsExistingGambar = ''; // Menyimpan URL foto lama saat edit berita
         let adminNewsCropState = {
             zoom: 1,
             panX: 0,
@@ -1287,6 +1288,7 @@
         function clearAdminNewsPhoto() {
             adminNewsRawImage = null;
             adminNewsCroppedBase64 = null;
+            adminNewsExistingGambar = '';
             const fileInput = document.getElementById('admin-news-file');
             if (fileInput) fileInput.value = "";
 
@@ -1550,6 +1552,7 @@
                     penulis: document.getElementById('admin-news-penulis').value.trim(),
                     ringkasan: document.getElementById('admin-news-ringkasan').value.trim(),
                     isi: isiKonten,
+                    gambarLama: adminNewsExistingGambar || '',
                     file: fileData
                 };
 
@@ -1605,6 +1608,7 @@
             // Foto Berita
             clearAdminNewsPhoto();
             if (news.gambar && news.gambar.trim() !== '') {
+                adminNewsExistingGambar = news.gambar;
                 const previewImg = document.getElementById('admin-news-preview-img');
                 const placeholder = document.getElementById('admin-news-preview-placeholder');
                 const sizeBadge = document.getElementById('admin-news-size-badge');

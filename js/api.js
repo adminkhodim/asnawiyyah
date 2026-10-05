@@ -869,7 +869,17 @@
                     const d = payload.data || payload;
                     const newsId = (response && (response.newsId || response.news_id)) || d.news_id || d.id || ('NEWS_' + Date.now());
                     const slugVal = d.slug || (d.judul ? d.judul.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : ('berita-' + Date.now()));
-                    let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || d.gambar || d.gambar_url || d.gambarLama || '';
+                    
+                    let fileBase64 = '';
+                    if (d.file) {
+                        if (typeof d.file === 'string' && d.file.length > 50) {
+                            fileBase64 = d.file.startsWith('data:') ? d.file : `data:image/webp;base64,${d.file}`;
+                        } else if (d.file && typeof d.file === 'object' && d.file.base64) {
+                            fileBase64 = `data:${d.file.mimeType || 'image/webp'};base64,${d.file.base64}`;
+                        }
+                    }
+
+                    let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || fileBase64 || d.gambar || d.gambar_url || d.gambarLama || '';
                     
                     // Jika cover gambar kosong atau link placeholder kopi lama, auto-ekstrak gambar dari isi berita
                     if ((!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) && d.isi) {
@@ -894,9 +904,11 @@
                         foto_url: imgUrl,
                         penulis: d.penulis || 'Admin',
                         status: d.status || 'Publish',
-                        views: Number(d.views) || 0,
-                        created_at: new Date().toISOString()
+                        views: Number(d.views) || 0
                     };
+                    if (action === 'saveBerita' || !d.news_id) {
+                        newsRow.created_at = new Date().toISOString();
+                    }
                     await fetch(`${sbUrl}/rest/v1/berita`, {
                         method: 'POST',
                         headers,
