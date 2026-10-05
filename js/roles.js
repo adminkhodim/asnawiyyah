@@ -200,6 +200,7 @@
                 { key: 'banner.manage', label: 'Manajemen Banner Slider', desc: 'Izin mengubah banner promosi & kegiatan beranda' },
                 { key: 'program.manage', label: 'Manajemen Program Pesantren (CMS)', desc: 'Izin mengelola, mengedit, dan mempublikasikan Program Pesantren' },
                 { key: 'galeri.manage', label: 'Manajemen Galeri Foto', desc: 'Izin mengunggah album dokumentasi kegiatan santri' },
+                { key: 'jadwal.manage', label: 'Manajemen Jadwal Kegiatan', desc: 'Izin mengelola agenda rutinitas santri (harian, mingguan, bulanan, tahunan)' },
                 { key: 'notifikasi.broadcast', label: 'Broadcast Pesan & Notifikasi', desc: 'Izin mengirim notifikasi pengumuman ke akun santri/wali' }
             ]
         },
@@ -243,10 +244,10 @@
     const DEFAULT_ROLE_PERMISSIONS_MAP = {
         'SUPER_ADMIN': ['*'],
         'ADMIN': [
-            'santri.view', 'santri.create', 'santri.edit', 'santri.export', 'unit.manage',
+            'santri.view', 'santri.create', 'santri.edit', 'santri.export', 'unit.manage', 'jadwal.manage',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah', 'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
-            'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
+            'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config'
         ],
         'ASATIDZ': [
@@ -259,12 +260,12 @@
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'notifikasi.broadcast'
         ],
         'PENGURUS': [
-            'presensi.view', 'presensi.entry', 'unit.manage', 'ppdb.manage',
+            'presensi.view', 'presensi.entry', 'unit.manage', 'jadwal.manage', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
             'santri.view', 'tahfidz.view', 'presensi.view',
-            'unit.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
+            'unit.manage', 'jadwal.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view'
@@ -286,6 +287,9 @@
                         state[r] = parsed[r].filter(k => validKeys.has(k));
                         if ((r === 'ADMIN' || r === 'ASATIDZ') && !state[r].includes('tahfidz.halaqah')) {
                             state[r].push('tahfidz.halaqah');
+                        }
+                        if ((r === 'ADMIN' || r === 'PENGURUS' || r === 'PENGASUH') && !state[r].includes('jadwal.manage')) {
+                            state[r].push('jadwal.manage');
                         }
                     }
                 }
@@ -366,6 +370,21 @@
             module: 'Unit Kegiatan (UKS)',
             icon: 'fa-futbol',
             desc: 'Organisasi santri, ekstrakurikuler, dan kegiatan asrama.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'read',
+                PENGURUS: 'full',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'read'
+            }
+        },
+        {
+            category: 'Kesiswaan & Akademik',
+            module: 'Jadwal Kegiatan Santri',
+            icon: 'fa-calendar-check',
+            desc: 'Pengaturan agenda rutinitas santri (harian, mingguan, bulanan, tahunan).',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
