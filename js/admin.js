@@ -804,7 +804,7 @@
         }
 
         // Helper kompresi gambar client-side sebelum upload ke Google Drive
-        function compressImageFile(file, maxWidth = 1200, quality = 0.82) {
+        function compressImageFile(file, maxWidth = 1600, quality = 0.90) {
             return new Promise((resolve, reject) => {
                 if (!file || !file.type.startsWith('image/')) {
                     return resolve(readFileAsBase64(file));
@@ -826,6 +826,8 @@
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(img, 0, 0, width, height);
 
                         let mimeType = 'image/webp';
@@ -1151,12 +1153,12 @@
             ctx.drawImage(adminNewsRawImage, drawX, drawY, drawWidth, drawHeight);
         }
 
-        // Iterative compression function - super ringan & tajam untuk web modern (maks targetMaxKB, menjaga rasio asli tanpa melar)
-        async function compressCanvasToMax250KB(sourceCanvas, targetMaxKB = 150) {
+        // Iterative compression function - seimbang antara kualitas tajam & ringan untuk web modern (maks targetMaxKB, menjaga rasio asli tanpa melar)
+        async function compressCanvasToMax250KB(sourceCanvas, targetMaxKB = 250) {
             const exportCanvas = document.createElement('canvas');
             let width = sourceCanvas.width || 800;
             let height = sourceCanvas.height || 600;
-            const maxSide = 1200;
+            const maxSide = 1600;
             if (width > maxSide || height > maxSide) {
                 if (width > height) {
                     height = Math.round((height * maxSide) / width);
@@ -1177,7 +1179,7 @@
             const maxChars = targetMaxKB * 1024 * 1.37;
 
             let format = 'image/webp';
-            let quality = 0.82;
+            let quality = 0.90;
             let base64 = exportCanvas.toDataURL(format, quality);
 
             // Fallback to jpeg if browser doesn't export webp
@@ -1186,25 +1188,25 @@
                 base64 = exportCanvas.toDataURL(format, quality);
             }
 
-            // Quality loop
-            while (base64.length > maxChars && quality > 0.40) {
-                quality -= 0.08;
+            // Quality loop — langkah kecil untuk menjaga detail tetap tajam
+            while (base64.length > maxChars && quality > 0.55) {
+                quality -= 0.04;
                 base64 = exportCanvas.toDataURL(format, quality);
             }
 
             // If still above target, scale down dimension while strictly preserving aspect ratio
             if (base64.length > maxChars) {
-                const scaleFactor = 0.8;
-                exportCanvas.width = Math.max(100, Math.round(width * scaleFactor));
-                exportCanvas.height = Math.max(100, Math.round(height * scaleFactor));
+                const scaleFactor = 0.85;
+                exportCanvas.width = Math.max(200, Math.round(width * scaleFactor));
+                exportCanvas.height = Math.max(200, Math.round(height * scaleFactor));
                 const ctx2 = exportCanvas.getContext('2d');
                 ctx2.imageSmoothingEnabled = true;
                 ctx2.imageSmoothingQuality = 'high';
                 ctx2.drawImage(sourceCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
-                quality = 0.78;
+                quality = 0.82;
                 base64 = exportCanvas.toDataURL(format, quality);
-                while (base64.length > maxChars && quality > 0.35) {
-                    quality -= 0.08;
+                while (base64.length > maxChars && quality > 0.50) {
+                    quality -= 0.04;
                     base64 = exportCanvas.toDataURL(format, quality);
                 }
             }
@@ -1217,10 +1219,10 @@
             if (!canvas || !adminNewsRawImage) return;
 
             try {
-                // Render at high-res 16:9 offscreen (1200x675)
+                // Render at high-res 16:9 offscreen (1600x900)
                 const hiResCanvas = document.createElement('canvas');
-                hiResCanvas.width = 1200;
-                hiResCanvas.height = 675;
+                hiResCanvas.width = 1600;
+                hiResCanvas.height = 900;
                 const hiCtx = hiResCanvas.getContext('2d');
                 hiCtx.imageSmoothingEnabled = true;
                 hiCtx.imageSmoothingQuality = 'high';
@@ -1250,8 +1252,8 @@
 
                 hiCtx.drawImage(adminNewsRawImage, drawX, drawY, drawWidth, drawHeight);
 
-                // Compress with optimal target 150 KB
-                const compressedBase64 = await compressCanvasToMax250KB(hiResCanvas, 150);
+                // Compress with optimal target 250 KB — kualitas seimbang
+                const compressedBase64 = await compressCanvasToMax250KB(hiResCanvas, 250);
                 adminNewsCroppedBase64 = compressedBase64;
 
                 const sizeKB = Math.round(compressedBase64.length * 0.75 / 1024);
@@ -1407,10 +1409,10 @@
                 cropY = Math.round((rawH - minSide) / 2);
             } // 'original' uses full uncropped image
 
-            // Scale to max side 900 for fast loading & super crisp rendering
+            // Scale to max side 1200 for sharp detail & fast loading
             let targetW = cropW;
             let targetH = cropH;
-            const maxDim = 900;
+            const maxDim = 1200;
             if (targetW > maxDim || targetH > maxDim) {
                 if (targetW > targetH) {
                     targetH = Math.round((targetH * maxDim) / targetW);
@@ -1429,7 +1431,7 @@
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(adminNewsInlineRawImage, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
 
-            const compressed = await compressCanvasToMax250KB(canvas, 100);
+            const compressed = await compressCanvasToMax250KB(canvas, 150);
             adminNewsInlineSelectedBase64 = compressed;
 
             const previewImg = document.getElementById('admin-news-inline-preview-img');
@@ -1783,7 +1785,7 @@
             try {
                 let fileData = null;
                 if (file) {
-                    fileData = await compressImageFile(file, 1200, 0.82);
+                    fileData = await compressImageFile(file, 1600, 0.90);
                 }
 
                 const tipeAksi = document.getElementById('admin-banner-tipe-aksi').value;
@@ -4735,7 +4737,7 @@
             try {
                 let fileData = null;
                 if (file && typeof compressImageFile === 'function') {
-                    fileData = await compressImageFile(file, 1200, 0.82);
+                    fileData = await compressImageFile(file, 1600, 0.90);
                 }
 
                 const token = getAdminSessionToken();
@@ -5290,7 +5292,7 @@
                 // STEP 1: Upload Foto ke Google Drive jika ada file baru
                 if (selectedStudentPhotoFile) {
                     if (btnText) btnText.innerText = "Mengunggah Foto...";
-                    const compressed = await compressImageFile(selectedStudentPhotoFile, 800, 0.85);
+                    const compressed = await compressImageFile(selectedStudentPhotoFile, 800, 0.90);
 
                     const uploadRes = await apiPost("uploadStudentPhoto", {
                         token,
