@@ -306,6 +306,22 @@ CREATE TABLE IF NOT EXISTS unit_kegiatan (
     timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- [TAB 19.1] Jadwal_Kegiatan (Jadwal Rutinitas & Agenda Santri)
+CREATE TABLE IF NOT EXISTS jadwal_kegiatan (
+    id VARCHAR(64) PRIMARY KEY, -- JDW_xxx
+    tipe VARCHAR(32) NOT NULL CHECK (tipe IN ('harian', 'mingguan', 'bulanan', 'tahunan')),
+    waktu VARCHAR(128) NOT NULL,
+    kegiatan VARCHAR(255) NOT NULL,
+    deskripsi TEXT,
+    badge VARCHAR(64),
+    urutan INTEGER DEFAULT 1,
+    status VARCHAR(32) DEFAULT 'Aktif' CHECK (status IN ('Aktif', 'Nonaktif')),
+    timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_jadwal_tipe_urutan ON jadwal_kegiatan(tipe, urutan ASC);
+CREATE INDEX IF NOT EXISTS idx_jadwal_status ON jadwal_kegiatan(status);
+
 -- [TAB 20] Banner (Hero Slider Beranda)
 CREATE TABLE IF NOT EXISTS banner (
     id_banner VARCHAR(64) PRIMARY KEY, -- BAN-xxx
@@ -446,6 +462,7 @@ ALTER TABLE notifikasi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pendaftar_ppdb ENABLE ROW LEVEL SECURITY;
 ALTER TABLE galeri ENABLE ROW LEVEL SECURITY;
 ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jadwal_kegiatan ENABLE ROW LEVEL SECURITY;
 
 -- Publik read-only untuk portal landing page
 CREATE POLICY "Public Read Active Berita" ON berita FOR SELECT USING (status = 'Publish');
@@ -453,3 +470,6 @@ CREATE POLICY "Public Read Active Banner" ON banner FOR SELECT USING (status = '
 CREATE POLICY "Public Read Active Notifikasi" ON notifikasi FOR SELECT USING (status = 'Aktif');
 CREATE POLICY "Public Read Active Galeri" ON galeri FOR SELECT USING (status = 'Aktif');
 CREATE POLICY "Public Read Published Programs" ON programs FOR SELECT USING (status = 'published');
+CREATE POLICY "Public Read Active Jadwal Kegiatan" ON jadwal_kegiatan FOR SELECT USING (true);
+CREATE POLICY "Full Access Jadwal Kegiatan" ON jadwal_kegiatan FOR ALL USING (true) WITH CHECK (true);
+
