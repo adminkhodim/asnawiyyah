@@ -10937,9 +10937,9 @@
 
             <!-- Workspace Crop Canvas -->
             <div class="p-4 flex flex-col items-center justify-center bg-slate-900 select-none overflow-hidden relative">
-                <div class="w-full max-w-[500px] aspect-video relative overflow-hidden rounded-xl border-2 border-dashed border-emerald-500/80 shadow-2xl bg-black cursor-grab active:cursor-grabbing flex items-center justify-center"
+                <div class="w-full max-w-[500px] aspect-video relative overflow-hidden rounded-xl border-2 border-dashed border-emerald-500/80 shadow-2xl bg-black cursor-grab active:cursor-grabbing flex items-center justify-center touch-none"
                     id="admin-news-crop-viewport">
-                    <canvas id="admin-news-crop-canvas" class="max-w-none origin-center"></canvas>
+                    <canvas id="admin-news-crop-canvas" class="w-full h-full block touch-none select-none"></canvas>
                     <div class="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-white/20">
                         <div class="border-b border-r border-white/15"></div>
                         <div class="border-b border-r border-white/15"></div>
@@ -10959,7 +10959,7 @@
                 <!-- Controls: Zoom & Rotate/Reset -->
                 <div class="w-full max-w-[500px] mt-4 flex items-center gap-3 px-1 text-slate-300">
                     <i class="fa-solid fa-magnifying-glass-minus text-xs text-slate-400"></i>
-                    <input type="range" id="admin-news-crop-zoom" min="1" max="3" step="0.05" value="1"
+                    <input type="range" id="admin-news-crop-zoom" min="0.5" max="3" step="0.02" value="1"
                         class="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg">
                     <i class="fa-solid fa-magnifying-glass-plus text-xs text-slate-400"></i>
                     <button type="button" onclick="resetAdminNewsCropPosition()"

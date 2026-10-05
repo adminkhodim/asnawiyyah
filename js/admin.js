@@ -968,7 +968,33 @@
             adminNewsCropState.panY = 0;
             const zoomSlider = document.getElementById('admin-news-crop-zoom');
             if (zoomSlider) zoomSlider.value = "1";
+            clampAdminNewsPan();
             drawAdminNewsCropCanvas();
+        }
+
+        function clampAdminNewsPan() {
+            if (!adminNewsRawImage) return;
+            const canvas = document.getElementById('admin-news-crop-canvas');
+            if (!canvas) return;
+
+            const baseScale = Math.max(canvas.width / adminNewsRawImage.width, canvas.height / adminNewsRawImage.height);
+            const scale = baseScale * (adminNewsCropState.zoom || 1);
+            const drawWidth = adminNewsRawImage.width * scale;
+            const drawHeight = adminNewsRawImage.height * scale;
+
+            if (drawWidth > canvas.width) {
+                const maxPanX = (drawWidth - canvas.width) / 2;
+                adminNewsCropState.panX = Math.min(maxPanX, Math.max(-maxPanX, adminNewsCropState.panX));
+            } else {
+                adminNewsCropState.panX = 0;
+            }
+
+            if (drawHeight > canvas.height) {
+                const maxPanY = (drawHeight - canvas.height) / 2;
+                adminNewsCropState.panY = Math.min(maxPanY, Math.max(-maxPanY, adminNewsCropState.panY));
+            } else {
+                adminNewsCropState.panY = 0;
+            }
         }
 
         function initAdminNewsCropCanvas() {
@@ -985,6 +1011,7 @@
                 zoomSlider._bound = true;
                 zoomSlider.addEventListener('input', function() {
                     adminNewsCropState.zoom = parseFloat(this.value) || 1;
+                    clampAdminNewsPan();
                     drawAdminNewsCropCanvas();
                 });
             }
@@ -993,16 +1020,27 @@
             if (!viewport._dragBound) {
                 viewport._dragBound = true;
 
+                let initialPinchDistance = 0;
+                let initialPinchZoom = 1;
+
                 const onPointerDown = (clientX, clientY) => {
                     adminNewsCropState.isDragging = true;
-                    adminNewsCropState.startX = clientX - adminNewsCropState.panX;
-                    adminNewsCropState.startY = clientY - adminNewsCropState.panY;
+                    adminNewsCropState.lastClientX = clientX;
+                    adminNewsCropState.lastClientY = clientY;
                 };
 
                 const onPointerMove = (clientX, clientY) => {
                     if (!adminNewsCropState.isDragging) return;
-                    adminNewsCropState.panX = clientX - adminNewsCropState.startX;
-                    adminNewsCropState.panY = clientY - adminNewsCropState.startY;
+                    const rect = canvas.getBoundingClientRect();
+                    const scaleFactorX = canvas.width / (rect.width || 1);
+                    const scaleFactorY = canvas.height / (rect.height || 1);
+                    const dx = (clientX - adminNewsCropState.lastClientX) * scaleFactorX;
+                    const dy = (clientY - adminNewsCropState.lastClientY) * scaleFactorY;
+                    adminNewsCropState.panX += dx;
+                    adminNewsCropState.panY += dy;
+                    adminNewsCropState.lastClientX = clientX;
+                    adminNewsCropState.lastClientY = clientY;
+                    clampAdminNewsPan();
                     drawAdminNewsCropCanvas();
                 };
 
@@ -1017,18 +1055,55 @@
                 viewport.addEventListener('touchstart', e => {
                     if (e.touches.length === 1) {
                         onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+                    } else if (e.touches.length === 2) {
+                        adminNewsCropState.isDragging = false;
+                        initialPinchDistance = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        initialPinchZoom = adminNewsCropState.zoom || 1;
                     }
                 }, { passive: true });
 
                 window.addEventListener('touchmove', e => {
                     if (adminNewsCropState.isDragging && e.touches.length === 1) {
                         onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+                    } else if (e.touches.length === 2 && initialPinchDistance > 0) {
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        const factor = dist / initialPinchDistance;
+                        let newZoom = Math.min(3, Math.max(0.5, initialPinchZoom * factor));
+                        adminNewsCropState.zoom = Math.round(newZoom * 100) / 100;
+                        if (zoomSlider) zoomSlider.value = adminNewsCropState.zoom;
+                        clampAdminNewsPan();
+                        drawAdminNewsCropCanvas();
                     }
                 }, { passive: true });
 
-                window.addEventListener('touchend', onPointerUp);
+                window.addEventListener('touchend', e => {
+                    if (e.touches.length === 0) {
+                        onPointerUp();
+                        initialPinchDistance = 0;
+                    } else if (e.touches.length === 1) {
+                        initialPinchDistance = 0;
+                        onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                });
+
+                viewport.addEventListener('wheel', e => {
+                    e.preventDefault();
+                    const zoomDelta = e.deltaY < 0 ? 0.05 : -0.05;
+                    let newZoom = Math.min(3, Math.max(0.5, (adminNewsCropState.zoom || 1) + zoomDelta));
+                    adminNewsCropState.zoom = Math.round(newZoom * 100) / 100;
+                    if (zoomSlider) zoomSlider.value = adminNewsCropState.zoom;
+                    clampAdminNewsPan();
+                    drawAdminNewsCropCanvas();
+                }, { passive: false });
             }
 
+            clampAdminNewsPan();
             drawAdminNewsCropCanvas();
         }
 
@@ -1038,12 +1113,29 @@
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            clampAdminNewsPan();
+
+            // Background
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             // Compute minimum scale to cover 16:9 area
             const baseScale = Math.max(canvas.width / adminNewsRawImage.width, canvas.height / adminNewsRawImage.height);
             const scale = baseScale * (adminNewsCropState.zoom || 1);
 
             const drawWidth = adminNewsRawImage.width * scale;
             const drawHeight = adminNewsRawImage.height * scale;
+
+            // If zoomed out, draw aesthetic blurred backdrop to prevent empty gaps
+            if (drawWidth < canvas.width || drawHeight < canvas.height) {
+                ctx.save();
+                ctx.filter = 'blur(16px) brightness(0.4)';
+                const bgScale = Math.max(canvas.width / adminNewsRawImage.width, canvas.height / adminNewsRawImage.height);
+                const bgW = adminNewsRawImage.width * bgScale;
+                const bgH = adminNewsRawImage.height * bgScale;
+                ctx.drawImage(adminNewsRawImage, (canvas.width - bgW) / 2, (canvas.height - bgH) / 2, bgW, bgH);
+                ctx.restore();
+            }
 
             // Center image plus user pan offset
             const drawX = (canvas.width - drawWidth) / 2 + adminNewsCropState.panX;
@@ -1115,11 +1207,26 @@
                 hiCtx.imageSmoothingEnabled = true;
                 hiCtx.imageSmoothingQuality = 'high';
 
-                const ratio = 1200 / canvas.width;
+                // Background
+                hiCtx.fillStyle = '#0f172a';
+                hiCtx.fillRect(0, 0, hiResCanvas.width, hiResCanvas.height);
+
+                const ratio = hiResCanvas.width / canvas.width;
                 const baseScale = Math.max(hiResCanvas.width / adminNewsRawImage.width, hiResCanvas.height / adminNewsRawImage.height);
                 const scale = baseScale * (adminNewsCropState.zoom || 1);
                 const drawWidth = adminNewsRawImage.width * scale;
                 const drawHeight = adminNewsRawImage.height * scale;
+
+                if (drawWidth < hiResCanvas.width || drawHeight < hiResCanvas.height) {
+                    hiCtx.save();
+                    hiCtx.filter = 'blur(24px) brightness(0.4)';
+                    const bgScale = Math.max(hiResCanvas.width / adminNewsRawImage.width, hiResCanvas.height / adminNewsRawImage.height);
+                    const bgW = adminNewsRawImage.width * bgScale;
+                    const bgH = adminNewsRawImage.height * bgScale;
+                    hiCtx.drawImage(adminNewsRawImage, (hiResCanvas.width - bgW) / 2, (hiResCanvas.height - bgH) / 2, bgW, bgH);
+                    hiCtx.restore();
+                }
+
                 const drawX = (hiResCanvas.width - drawWidth) / 2 + (adminNewsCropState.panX * ratio);
                 const drawY = (hiResCanvas.height - drawHeight) / 2 + (adminNewsCropState.panY * ratio);
 
