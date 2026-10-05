@@ -867,8 +867,9 @@
                 // ==================== 5. BERITA & KABAR PESANTREN ====================
                 else if (action === 'saveBerita' || action === 'updateBerita') {
                     const d = payload.data || payload;
-                    const newsId = (response && (response.newsId || response.news_id)) || d.news_id || d.id || ('NEWS_' + Date.now());
-                    const slugVal = d.slug || (d.judul ? d.judul.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : ('berita-' + Date.now()));
+                    const respData = (response && response.data) || {};
+                    const newsId = (response && (response.newsId || response.news_id)) || respData.news_id || respData.newsId || d.news_id || d.id || ('NWS_' + Date.now());
+                    const slugVal = (response && response.slug) || respData.slug || d.slug || (d.judul ? d.judul.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : ('berita-' + Date.now()));
                     
                     let fileBase64 = '';
                     if (d.file) {
@@ -879,7 +880,7 @@
                         }
                     }
 
-                    let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || fileBase64 || d.gambar || d.gambar_url || d.gambarLama || '';
+                    let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || respData.url || fileBase64 || d.gambar || d.gambar_url || d.gambarLama || '';
                     
                     // Jika cover gambar kosong atau link placeholder kopi lama, auto-ekstrak gambar dari isi berita
                     if ((!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) && d.isi) {
@@ -892,10 +893,18 @@
                         imgUrl = 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop';
                     }
 
+                    // Format tanggal seragam dengan Google Sheets (DD/MM/YYYY HH:mm:ss)
+                    let tglVal = (response && response.tanggal) || respData.tanggal || d.tanggal;
+                    if (!tglVal) {
+                        const now = new Date();
+                        const pad = n => String(n).padStart(2, '0');
+                        tglVal = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                    }
+
                     const newsRow = {
                         news_id: newsId,
                         slug: slugVal,
-                        tanggal: d.tanggal || new Date().toISOString().split('T')[0],
+                        tanggal: tglVal,
                         judul: d.judul || 'Kabar Pesantren',
                         kategori: d.kategori || 'Kabar',
                         ringkasan: d.ringkasan || null,

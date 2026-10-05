@@ -9000,7 +9000,16 @@ function simpanBerita(formData) {
       0 // Views awal
     ]);
 
-    return { success: true, message: "Berita berhasil dipublikasikan!", data: { news_id: identities.newsId, slug: identities.slug }, url: fileUrl, fileUrl: fileUrl };
+    return {
+      success: true,
+      message: "Berita berhasil dipublikasikan!",
+      data: { news_id: identities.newsId, slug: identities.slug },
+      news_id: identities.newsId,
+      newsId: identities.newsId,
+      slug: identities.slug,
+      url: fileUrl,
+      fileUrl: fileUrl
+    };
   } catch (error) {
     return { success: false, message: error.toString() };
   } finally {
