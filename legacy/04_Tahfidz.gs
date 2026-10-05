@@ -1226,14 +1226,42 @@ function getTahfidzDashboard(token) {
       };
 
       // Halaqah
-      const halaqah = studentHalaqahMap[sId] || studentHalaqahMap[sNis] || {
-        halaqahId: "",
-        namaHalaqah: st.program || "Tahfidz Dewasa",
-        kategori: st.program || "Tahfidz Dewasa",
-        muhafiz: "Pembina Tahfidz"
-      };
+      let halaqah = studentHalaqahMap[sId] || studentHalaqahMap[sNis];
+      let isInHalaqah = !!halaqah;
 
-      const isInHalaqah = !!(studentHalaqahMap[sId] || studentHalaqahMap[sNis]);
+      if (!halaqah && st.halaqah && typeof st.halaqah === 'string' && st.halaqah.trim() !== '' && st.halaqah.trim().toLowerCase() !== 'belum masuk halaqah') {
+        const hClean = st.halaqah.trim();
+        const matched = halaqahList.find(h => 
+          (h.namaHalaqah && h.namaHalaqah.toLowerCase() === hClean.toLowerCase()) ||
+          (h.halaqahId && h.halaqahId.toLowerCase() === hClean.toLowerCase())
+        );
+        if (matched) {
+          halaqah = {
+            halaqahId: matched.halaqahId,
+            namaHalaqah: matched.namaHalaqah,
+            muhafiz: matched.muhafiz || st.muhafiz || "Pembina Tahfidz",
+            kategori: matched.targetKurikulum || st.program || "Tahfidz"
+          };
+          isInHalaqah = true;
+        } else {
+          halaqah = {
+            halaqahId: "",
+            namaHalaqah: hClean,
+            muhafiz: st.muhafiz || "Pembina Tahfidz",
+            kategori: st.program || "Tahfidz"
+          };
+          isInHalaqah = true;
+        }
+      }
+
+      if (!halaqah) {
+        halaqah = {
+          halaqahId: "",
+          namaHalaqah: st.program || "Tahfidz Dewasa",
+          kategori: st.program || "Tahfidz Dewasa",
+          muhafiz: st.muhafiz || "Pembina Tahfidz"
+        };
+      }
 
       return {
         studentId: sId,

@@ -964,13 +964,13 @@ function buildTahfidzHalaqahIndex() {
  */
 function isStudentInHalaqah(st) {
     if (!st) return false;
-    if (typeof st.isInHalaqah === 'boolean') {
-        if (st.isInHalaqah) return true;
+    if (typeof st.isInHalaqah === 'boolean' && st.isInHalaqah) {
+        return true;
     }
 
     // 1. Cek properti halaqahId pada santri
-    const hid = String(st.halaqahId || (st.halaqah && st.halaqah.halaqahId) || "").trim();
-    if (hid !== "" && hid !== "0" && hid !== "undefined") {
+    const hid = String(st.halaqahId || (typeof st.halaqah === 'object' ? st.halaqah?.halaqahId : '') || "").trim();
+    if (hid !== "" && hid !== "0" && hid !== "undefined" && hid !== "null") {
         return true;
     }
 
@@ -978,14 +978,25 @@ function isStudentInHalaqah(st) {
         buildTahfidzHalaqahIndex();
     }
 
-    // 2. Cek apakah nama halaqah valid
-    const hname = (st.halaqah?.namaHalaqah || st.halaqahName || "").trim().toLowerCase();
-    if (hname && hname !== "belum masuk halaqah") {
-        if (ASNTahfidz._halaqahNameSet.size === 0 || ASNTahfidz._halaqahNameSet.has(hname)) {
+    // 2. Cek apakah nama halaqah valid (baik saat st.halaqah berupa objek maupun string)
+    const rawHName = typeof st.halaqah === 'object' 
+        ? (st.halaqah?.namaHalaqah || st.halaqah?.nama || '') 
+        : String(st.halaqah || '');
+    const hname = (rawHName || st.halaqahName || st.initialHalaqah || "").trim().toLowerCase();
+    
+    if (hname && hname !== "belum masuk halaqah" && hname !== "unassigned") {
+        if (!ASNTahfidz._halaqahNameSet || ASNTahfidz._halaqahNameSet.size === 0 || ASNTahfidz._halaqahNameSet.has(hname)) {
             return true;
         }
-        if (hid && ASNTahfidz._halaqahIdSet.has(hid.toLowerCase())) {
+        if (hid && ASNTahfidz._halaqahIdSet && ASNTahfidz._halaqahIdSet.has(hid.toLowerCase())) {
             return true;
+        }
+        if (Array.isArray(ASNTahfidz.data?.halaqahs)) {
+            const exists = ASNTahfidz.data.halaqahs.some(h => 
+                (h.namaHalaqah && h.namaHalaqah.toLowerCase() === hname) ||
+                (h.halaqahId && String(h.halaqahId).toLowerCase() === hname)
+            );
+            if (exists) return true;
         }
     }
 
@@ -995,9 +1006,9 @@ function isStudentInHalaqah(st) {
     const sName = String(st.name || "").trim().toLowerCase();
 
     return Boolean(
-        (sId && ASNTahfidz._halaqahMemberSet.has(sId)) ||
-        (sNis && ASNTahfidz._halaqahMemberSet.has(sNis)) ||
-        (sName && ASNTahfidz._halaqahMemberSet.has(sName))
+        (sId && ASNTahfidz._halaqahMemberSet && ASNTahfidz._halaqahMemberSet.has(sId)) ||
+        (sNis && ASNTahfidz._halaqahMemberSet && ASNTahfidz._halaqahMemberSet.has(sNis)) ||
+        (sName && ASNTahfidz._halaqahMemberSet && ASNTahfidz._halaqahMemberSet.has(sName))
     );
 }
 
@@ -1012,39 +1023,59 @@ function filterTahfidzList() {
     const status = document.getElementById('tahfidz-filter-status')?.value || 'ALL';
 
     const all = ASNTahfidz.data.students || [];
+    const anyInHalaqah = all.some(s => isStudentInHalaqah(s));
 
     ASNTahfidz.filteredStudents = all.filter(st => {
         // Query search
+        const stHalaqahName = typeof st.halaqah === 'object' ? (st.halaqah?.namaHalaqah || '') : String(st.halaqah || '');
         const matchQ = !q ||
             (st.name && st.name.toLowerCase().includes(q)) ||
-            (st.nis && st.nis.toLowerCase().includes(q)) ||
-            (st.halaqah && st.halaqah.namaHalaqah && st.halaqah.namaHalaqah.toLowerCase().includes(q));
+            (st.nis && String(st.nis).toLowerCase().includes(q)) ||
+            (stHalaqahName && stHalaqahName.toLowerCase().includes(q));
 
         // Kategori
         const matchKat = (kat === 'Semua Kategori' || kat === 'ALL') ||
             (st.program && st.program.toLowerCase() === kat.toLowerCase()) ||
-            (st.halaqah && st.halaqah.kategori && st.halaqah.kategori.toLowerCase() === kat.toLowerCase());
+            (st.halaqah && typeof st.halaqah === 'object' && st.halaqah.kategori && st.halaqah.kategori.toLowerCase() === kat.toLowerCase());
 
         // Halaqah Filter:
-        // Filter "Semua Halaqah" (ALL) HANYA menampilkan santri yang sudah dimasukkan ke kelompok halaqah
         const inHalaqah = isStudentInHalaqah(st);
         let matchHal = false;
 
         if (hal === 'ALL') {
-            matchHal = inHalaqah;
+            matchHal = anyInHalaqah ? inHalaqah : true;
         } else if (hal === 'UNASSIGNED') {
             matchHal = !inHalaqah;
         } else {
-            matchHal = inHalaqah && st.halaqah && (
-                st.halaqah.namaHalaqah === hal || 
-                st.halaqah.halaqahId === hal
-            );
+            const hId = (typeof st.halaqah === 'object' ? (st.halaqah?.halaqahId || '') : String(st.halaqahId || '')).toLowerCase();
+            const hName = (typeof st.halaqah === 'object' ? (st.halaqah?.namaHalaqah || '') : String(st.halaqah || st.halaqahName || st.initialHalaqah || '')).toLowerCase();
+            const targetLower = String(hal).toLowerCase();
+
+            let directMatch = (hName && hName === targetLower) || (hId && hId === targetLower);
+
+            if (!directMatch && Array.isArray(ASNTahfidz.data?.halaqahs)) {
+                const targetHal = ASNTahfidz.data.halaqahs.find(h => 
+                    (h.halaqahId && String(h.halaqahId).toLowerCase() === targetLower) ||
+                    (h.namaHalaqah && h.namaHalaqah.toLowerCase() === targetLower)
+                );
+                if (targetHal && Array.isArray(targetHal.studentIds)) {
+                    const sid = String(st.studentId || st.nis || '').trim().toLowerCase();
+                    const snis = String(st.nis || '').trim().toLowerCase();
+                    directMatch = targetHal.studentIds.some(x => {
+                        const clean = String(x || '').trim().toLowerCase();
+                        return clean === sid || clean === snis;
+                    });
+                }
+            }
+
+            matchHal = directMatch;
         }
 
         // Muhafiz
+        const stMuhafiz = typeof st.halaqah === 'object' ? (st.halaqah?.muhafiz || '') : String(st.muhafiz || '');
         const matchMuh = (muh === 'Semua Muhafiz' || muh === 'ALL') ||
-            (st.halaqah && st.halaqah.muhafiz && st.halaqah.muhafiz.includes(muh)) ||
-            (st.setoranTerakhir && st.setoranTerakhir.muhafiz && st.setoranTerakhir.muhafiz.includes(muh));
+            (stMuhafiz && stMuhafiz.toLowerCase().includes(muh.toLowerCase())) ||
+            (st.setoranTerakhir && st.setoranTerakhir.muhafiz && st.setoranTerakhir.muhafiz.toLowerCase().includes(muh.toLowerCase()));
 
         // Status On-Track / Mengulang / Target Muroja'ah Mingguan
         let matchStatus = true;
@@ -4371,7 +4402,11 @@ function openPlottingSantri(halaqahId) {
         currentIds = [...halaqah.studentIds];
     } else if (Array.isArray(ASNTahfidz.data.students)) {
         currentIds = ASNTahfidz.data.students
-            .filter(st => st.halaqah && (st.halaqah.halaqahId === halaqahId || st.halaqah.namaHalaqah === halaqah.namaHalaqah))
+            .filter(st => {
+                const sHId = (typeof st.halaqah === 'object' ? st.halaqah?.halaqahId : st.halaqahId) || '';
+                const sHName = (typeof st.halaqah === 'object' ? st.halaqah?.namaHalaqah : (st.halaqah || st.halaqahName || st.initialHalaqah)) || '';
+                return (sHId && sHId === halaqahId) || (sHName && (sHName === halaqah.namaHalaqah || sHName === halaqah.muhafiz));
+            })
             .map(st => st.studentId || st.nis);
     }
     ASNTahfidz.activePlottingStudentIds = currentIds.map(id => String(id).trim()).filter(Boolean);
@@ -4478,13 +4513,14 @@ function onSelectPlottingHalaqah(halaqahId) {
     // Cocokkan santri yang terdata memiliki halaqahId atau namaHalaqah yang persis sama
     if (Array.isArray(ASNTahfidz.data.students)) {
         ASNTahfidz.data.students.forEach(st => {
-            const hId = String(st.halaqah?.halaqahId || '').trim().toLowerCase();
-            const hName = String(st.halaqah?.namaHalaqah || '').trim().toLowerCase();
+            const hId = String((typeof st.halaqah === 'object' ? st.halaqah?.halaqahId : st.halaqahId) || '').trim().toLowerCase();
+            const hName = String((typeof st.halaqah === 'object' ? st.halaqah?.namaHalaqah : (st.halaqah || st.halaqahName || st.initialHalaqah)) || '').trim().toLowerCase();
             const targetHId = String(halaqah.halaqahId || '').trim().toLowerCase();
             const targetHName = String(halaqah.namaHalaqah || '').trim().toLowerCase();
+            const targetHMuh = String(halaqah.muhafiz || '').trim().toLowerCase();
 
             const matchHId = Boolean(targetHId && hId && hId === targetHId);
-            const matchHName = Boolean(targetHName && hName && hName === targetHName);
+            const matchHName = Boolean((targetHName && hName && hName === targetHName) || (targetHMuh && hName && hName === targetHMuh));
 
             if (matchHId || matchHName) {
                 const sId = String(st.studentId || st.nis || st.id || '').trim();
