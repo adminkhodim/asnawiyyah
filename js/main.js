@@ -1530,6 +1530,8 @@
                 console.warn('updateNotifBadge error:', e);
             }
         }
+        
+        let _isNotifFetching = false;
 
         async function loadNotifikasi() {
             // 1. Render immediate cached data (Stale-While-Revalidate)
