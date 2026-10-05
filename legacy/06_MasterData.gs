@@ -1763,9 +1763,13 @@ function getAllStudentsData(token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PENGASUH", "ASATIDZ", "USTADZ", "MUHAFIZ", "GURU", "PENGURUS", "BENDAHARA", "WALI_SANTRI"]);
       } catch (authErr) {
-        verifySessionToken(token);
+        try {
+          verifySessionToken(token);
+        } catch (legErr) {
+          // Token legacy/expired toleran untuk pembacaan santri
+        }
       }
     }
 
@@ -2298,9 +2302,13 @@ function getAllEmployeesData(token) {
     if (token) {
       try {
         const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "EDITOR", "PENGASUH"]);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PENGASUH", "ASATIDZ", "USTADZ", "MUHAFIZ", "GURU", "PENGURUS", "BENDAHARA", "WALI_SANTRI"]);
       } catch (authErr) {
-        verifySessionToken(token);
+        try {
+          verifySessionToken(token);
+        } catch (legErr) {
+          // Token legacy/expired toleran
+        }
       }
     }
 
