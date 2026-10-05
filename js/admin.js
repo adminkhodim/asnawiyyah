@@ -867,6 +867,8 @@
             startY: 0
         };
         let adminNewsInlineSelectedBase64 = null;
+        let adminNewsInlineRawImage = null;
+        let adminNewsInlineCurrentRatio = 'original'; // 'original' | '16:9' | '4:3' | '1:1'
 
         function renderAdminNewsList() {
             const container = document.getElementById('admin-news-list');
@@ -1149,11 +1151,21 @@
             ctx.drawImage(adminNewsRawImage, drawX, drawY, drawWidth, drawHeight);
         }
 
-        // Iterative compression function - super ringan & tajam untuk web modern (maks 150 KB, optimal ~70-100 KB)
+        // Iterative compression function - super ringan & tajam untuk web modern (maks targetMaxKB, menjaga rasio asli tanpa melar)
         async function compressCanvasToMax250KB(sourceCanvas, targetMaxKB = 150) {
             const exportCanvas = document.createElement('canvas');
-            let width = 1200;
-            let height = 675;
+            let width = sourceCanvas.width || 800;
+            let height = sourceCanvas.height || 600;
+            const maxSide = 1200;
+            if (width > maxSide || height > maxSide) {
+                if (width > height) {
+                    height = Math.round((height * maxSide) / width);
+                    width = maxSide;
+                } else {
+                    width = Math.round((width * maxSide) / height);
+                    height = maxSide;
+                }
+            }
             exportCanvas.width = width;
             exportCanvas.height = height;
             const ctx = exportCanvas.getContext('2d');
@@ -1180,14 +1192,15 @@
                 base64 = exportCanvas.toDataURL(format, quality);
             }
 
-            // If still above target, scale down dimension to 960x540
+            // If still above target, scale down dimension while strictly preserving aspect ratio
             if (base64.length > maxChars) {
-                exportCanvas.width = 960;
-                exportCanvas.height = 540;
+                const scaleFactor = 0.8;
+                exportCanvas.width = Math.max(100, Math.round(width * scaleFactor));
+                exportCanvas.height = Math.max(100, Math.round(height * scaleFactor));
                 const ctx2 = exportCanvas.getContext('2d');
                 ctx2.imageSmoothingEnabled = true;
                 ctx2.imageSmoothingQuality = 'high';
-                ctx2.drawImage(sourceCanvas, 0, 0, 960, 540);
+                ctx2.drawImage(sourceCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
                 quality = 0.78;
                 base64 = exportCanvas.toDataURL(format, quality);
                 while (base64.length > maxChars && quality > 0.35) {
@@ -1293,16 +1306,21 @@
 
         // ---------- MODAL SISIPKAN GAMBAR DI TENGAH BERITA ----------
         function openAdminNewsInlineImageModal() {
+            adminNewsInlineRawImage = null;
             adminNewsInlineSelectedBase64 = null;
+            adminNewsInlineCurrentRatio = 'original';
             const modal = document.getElementById('modal-admin-news-inline-img');
             const content = document.getElementById('modal-admin-news-inline-content');
             const fileInput = document.getElementById('admin-news-inline-input');
             const captionInput = document.getElementById('admin-news-inline-caption');
             const previewWrap = document.getElementById('admin-news-inline-preview-wrap');
+            const cropOptions = document.getElementById('admin-news-inline-crop-options');
 
             if (fileInput) fileInput.value = "";
             if (captionInput) captionInput.value = "";
             if (previewWrap) previewWrap.classList.add('hidden');
+            if (cropOptions) cropOptions.classList.add('hidden');
+            updateAdminNewsInlineCropRatioUI();
 
             if (!modal || !content) return;
             modal.classList.remove('hidden');
@@ -1322,6 +1340,111 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
+        function updateAdminNewsInlineCropRatioUI() {
+            const ratios = ['original', '16-9', '4-3', '1-1'];
+            ratios.forEach(r => {
+                const btn = document.getElementById(`btn-crop-inline-${r}`);
+                if (!btn) return;
+                const activeKey = adminNewsInlineCurrentRatio === '16:9' ? '16-9' : (adminNewsInlineCurrentRatio === '4:3' ? '4-3' : (adminNewsInlineCurrentRatio === '1:1' ? '1-1' : 'original'));
+                if (r === activeKey) {
+                    btn.className = "px-2.5 py-1.5 text-[11px] font-bold rounded-lg border transition text-center bg-emerald-600 text-white border-emerald-600 shadow-xs";
+                } else {
+                    btn.className = "px-2.5 py-1.5 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center";
+                }
+            });
+        }
+
+        async function setAdminNewsInlineCropRatio(ratio) {
+            adminNewsInlineCurrentRatio = ratio;
+            updateAdminNewsInlineCropRatioUI();
+            if (adminNewsInlineRawImage) {
+                await processAdminNewsInlineImage();
+            }
+        }
+
+        async function processAdminNewsInlineImage() {
+            if (!adminNewsInlineRawImage) return;
+
+            const rawW = adminNewsInlineRawImage.width;
+            const rawH = adminNewsInlineRawImage.height;
+
+            let cropX = 0;
+            let cropY = 0;
+            let cropW = rawW;
+            let cropH = rawH;
+
+            if (adminNewsInlineCurrentRatio === '16:9') {
+                const targetAspect = 16 / 9;
+                if (rawW / rawH > targetAspect) {
+                    cropH = rawH;
+                    cropW = Math.round(rawH * targetAspect);
+                    cropX = Math.round((rawW - cropW) / 2);
+                    cropY = 0;
+                } else {
+                    cropW = rawW;
+                    cropH = Math.round(rawW / targetAspect);
+                    cropX = 0;
+                    cropY = Math.round((rawH - cropH) / 2);
+                }
+            } else if (adminNewsInlineCurrentRatio === '4:3') {
+                const targetAspect = 4 / 3;
+                if (rawW / rawH > targetAspect) {
+                    cropH = rawH;
+                    cropW = Math.round(rawH * targetAspect);
+                    cropX = Math.round((rawW - cropW) / 2);
+                    cropY = 0;
+                } else {
+                    cropW = rawW;
+                    cropH = Math.round(rawW / targetAspect);
+                    cropX = 0;
+                    cropY = Math.round((rawH - cropH) / 2);
+                }
+            } else if (adminNewsInlineCurrentRatio === '1:1') {
+                const minSide = Math.min(rawW, rawH);
+                cropW = minSide;
+                cropH = minSide;
+                cropX = Math.round((rawW - minSide) / 2);
+                cropY = Math.round((rawH - minSide) / 2);
+            } // 'original' uses full uncropped image
+
+            // Scale to max side 900 for fast loading & super crisp rendering
+            let targetW = cropW;
+            let targetH = cropH;
+            const maxDim = 900;
+            if (targetW > maxDim || targetH > maxDim) {
+                if (targetW > targetH) {
+                    targetH = Math.round((targetH * maxDim) / targetW);
+                    targetW = maxDim;
+                } else {
+                    targetW = Math.round((targetW * maxDim) / targetH);
+                    targetH = maxDim;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(adminNewsInlineRawImage, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+            const compressed = await compressCanvasToMax250KB(canvas, 100);
+            adminNewsInlineSelectedBase64 = compressed;
+
+            const previewImg = document.getElementById('admin-news-inline-preview-img');
+            const previewWrap = document.getElementById('admin-news-inline-preview-wrap');
+            const sizeBadge = document.getElementById('admin-news-inline-size-badge');
+
+            if (previewImg) previewImg.src = compressed;
+            if (previewWrap) previewWrap.classList.remove('hidden');
+            const sizeKB = Math.round(compressed.length * 0.75 / 1024);
+            const ratioName = adminNewsInlineCurrentRatio === 'original' ? 'Asli (Bebas)' : (adminNewsInlineCurrentRatio === '16:9' ? '16:9 Landscape' : (adminNewsInlineCurrentRatio === '4:3' ? '4:3 Standar' : '1:1 Kotak'));
+            if (sizeBadge) {
+                sizeBadge.innerHTML = `<span class="font-semibold text-slate-700 dark:text-slate-200">Dimensi: ${targetW} × ${targetH} px</span> • Rasio: <span class="text-emerald-600 dark:text-emerald-400 font-semibold">${ratioName}</span> • Ukuran: <span class="font-semibold">${sizeKB} KB</span>`;
+            }
+        }
+
         function handleAdminNewsInlineFileSelect(input) {
             const file = input.files && input.files[0];
             if (!file) return;
@@ -1330,35 +1453,10 @@
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = async function() {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width;
-                    let h = img.height;
-                    const maxDim = 800; // Optimal untuk inline article images
-                    if (w > maxDim || h > maxDim) {
-                        if (w > h) {
-                            h = Math.round((h * maxDim) / w);
-                            w = maxDim;
-                        } else {
-                            w = Math.round((w * maxDim) / h);
-                            h = maxDim;
-                        }
-                    }
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-
-                    const compressed = await compressCanvasToMax250KB(canvas, 100);
-                    adminNewsInlineSelectedBase64 = compressed;
-
-                    const previewImg = document.getElementById('admin-news-inline-preview-img');
-                    const previewWrap = document.getElementById('admin-news-inline-preview-wrap');
-                    const sizeBadge = document.getElementById('admin-news-inline-size-badge');
-
-                    if (previewImg) previewImg.src = compressed;
-                    if (previewWrap) previewWrap.classList.remove('hidden');
-                    const sizeKB = Math.round(compressed.length * 0.75 / 1024);
-                    if (sizeBadge) sizeBadge.innerText = `Ukuran foto terkompres: ${sizeKB} KB (Ringan & Cepat)`;
+                    adminNewsInlineRawImage = img;
+                    const cropOptions = document.getElementById('admin-news-inline-crop-options');
+                    if (cropOptions) cropOptions.classList.remove('hidden');
+                    await processAdminNewsInlineImage();
                 };
                 img.src = e.target.result;
             };
@@ -1373,7 +1471,7 @@
 
             const caption = (document.getElementById('admin-news-inline-caption').value || '').trim();
             const captionHtml = caption ? `<figcaption class="text-xs text-slate-500 dark:text-slate-400 mt-2 italic font-medium">${escapeHtml(caption)}</figcaption>` : '';
-            const figureHtml = `<figure class="my-4 text-center select-none block clear-both"><img src="${adminNewsInlineSelectedBase64}" alt="${escapeHtml(caption || 'Foto Berita')}" class="w-full max-w-lg mx-auto rounded-2xl shadow-md border border-slate-200 dark:border-slate-700">${captionHtml}</figure><p><br></p>`;
+            const figureHtml = `<figure class="my-4 text-center select-none block clear-both"><img src="${adminNewsInlineSelectedBase64}" alt="${escapeHtml(caption || 'Foto Berita')}" class="max-w-full h-auto mx-auto rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 object-contain inline-block" style="max-height: 520px;">${captionHtml}</figure><p><br></p>`;
 
             const editor = document.getElementById('admin-news-editor');
             if (editor) {
@@ -1386,7 +1484,7 @@
             }
 
             closeAdminNewsInlineImageModal();
-            showToast("✅ Foto sisipan berhasil ditambahkan ke tulisan berita!");
+            showToast("✅ Foto sisipan berhasil ditambahkan dengan proporsi rapi!");
         }
 
         // ---------- SUBMIT FORM BERITA ----------
@@ -6131,3 +6229,10 @@
         window.submitAdminJadwalKegiatan = submitAdminJadwalKegiatan;
         window.toggleAdminJadwalKegiatanStatus = toggleAdminJadwalKegiatanStatus;
         window.deleteAdminJadwalKegiatan = deleteAdminJadwalKegiatan;
+
+        // Admin News Inline Image Modal exports
+        window.openAdminNewsInlineImageModal = openAdminNewsInlineImageModal;
+        window.closeAdminNewsInlineImageModal = closeAdminNewsInlineImageModal;
+        window.handleAdminNewsInlineFileSelect = handleAdminNewsInlineFileSelect;
+        window.setAdminNewsInlineCropRatio = setAdminNewsInlineCropRatio;
+        window.confirmInsertInlineImageToEditor = confirmInsertInlineImageToEditor;

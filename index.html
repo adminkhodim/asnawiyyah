@@ -72,6 +72,16 @@
             } catch (e) {}
         })();
     </script>
+    <style>
+        /* Mencegah gambar sisipan dan artikel berita melar / terdistorsi */
+        #admin-news-editor img,
+        .news-rich-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            object-fit: contain !important;
+            display: inline-block;
+        }
+    </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 dark:bg-[#0b131e] dark:text-slate-100 antialiased min-h-screen flex flex-col font-sans transition-colors duration-200">
@@ -10906,13 +10916,38 @@
                         class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-950 dark:file:text-emerald-300">
                 </div>
 
+                <!-- Pilihan Potong / Aspek Rasio (Crop) -->
+                <div id="admin-news-inline-crop-options" class="hidden">
+                    <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                        Pilihan Potong / Rasio Foto:
+                    </label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button type="button" onclick="setAdminNewsInlineCropRatio('original')" id="btn-crop-inline-original"
+                            class="px-2 py-1.5 text-[11px] font-bold rounded-lg border transition text-center bg-emerald-600 text-white border-emerald-600 shadow-xs" title="Ukuran & Proporsi Asli Foto (Bebas / Tanpa Potong)">
+                            <i class="fa-solid fa-expand text-[10px] block mb-0.5"></i> Asli Bebas
+                        </button>
+                        <button type="button" onclick="setAdminNewsInlineCropRatio('16:9')" id="btn-crop-inline-16-9"
+                            class="px-2 py-1.5 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center" title="Potong Rasio Lebar 16:9">
+                            <i class="fa-solid fa-tv text-[10px] block mb-0.5"></i> 16:9
+                        </button>
+                        <button type="button" onclick="setAdminNewsInlineCropRatio('4:3')" id="btn-crop-inline-4-3"
+                            class="px-2 py-1.5 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center" title="Potong Rasio Standar 4:3">
+                            <i class="fa-regular fa-image text-[10px] block mb-0.5"></i> 4:3
+                        </button>
+                        <button type="button" onclick="setAdminNewsInlineCropRatio('1:1')" id="btn-crop-inline-1-1"
+                            class="px-2 py-1.5 text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center" title="Potong Rasio Persegi 1:1">
+                            <i class="fa-regular fa-square text-[10px] block mb-0.5"></i> 1:1 Kotak
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Preview Area -->
                 <div id="admin-news-inline-preview-wrap" class="hidden">
                     <p class="font-bold text-slate-700 dark:text-slate-200 mb-1">Pratinjau Foto Sisipan:</p>
-                    <div class="max-h-48 overflow-hidden rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-900 flex items-center justify-center">
-                        <img id="admin-news-inline-preview-img" src="" alt="Pratinjau" class="max-h-48 object-contain">
+                    <div class="max-h-56 overflow-hidden rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-900 flex items-center justify-center p-2">
+                        <img id="admin-news-inline-preview-img" src="" alt="Pratinjau" class="max-h-52 w-auto max-w-full object-contain rounded-lg">
                     </div>
-                    <span id="admin-news-inline-size-badge" class="inline-block mt-1 text-[10px] text-slate-400"></span>
+                    <div id="admin-news-inline-size-badge" class="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400"></div>
                 </div>
 
                 <div>
