@@ -1817,6 +1817,17 @@
                                     class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Unit (UKS)</span>
                             </button>
 
+                            <!-- 10.1 Jadwal Kegiatan Santri -->
+                            <button type="button" data-admin-module="jadwal-kegiatan" onclick="openAdminModuleFromControlCenter('jadwal-kegiatan')"
+                                class="flex flex-col items-center group transition active:scale-95 text-center">
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                </div>
+                                <span
+                                    class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Jadwal</span>
+                            </button>
+
                             <!-- 11. Profil & Lembaga -->
                             <button type="button" data-admin-module="profil-lembaga" onclick="openAdminModuleFromControlCenter('profil-lembaga')"
                                 class="flex flex-col items-center group transition active:scale-95 text-center">
@@ -2263,166 +2274,11 @@
                         <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center">
                             <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Rutinitas Santri Harian
                         </h3>
-                        <span class="text-[10px] text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full font-bold">24
-                            Jam</span>
+                        <span id="jadwal-harian-count" class="text-[10px] text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full font-bold">24 Jam</span>
                     </div>
 
-                    <div class="space-y-2.5 border-l-2 border-brand-100 dark:border-emerald-800 pl-4 ml-2">
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">03.30
-                                    – 04.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Bangun Pagi & Qiyamul Lail</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Shalat Tahajud, Hajat, Witir, & Persiapan Shalat
-                                    Subuh.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">04.30
-                                    – 05.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Shalat Subuh Berjamaah & Zikir Pagi
-                                </h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Shalat Subuh di Masjid Utama, dilanjutkan
-                                    Pembacaan Zikir Ratib Pagi.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-amber-50/50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/40">
-                                <span
-                                    class="text-[10px] font-extrabold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-lg">05.30
-                                    – 07.00 WIB</span>
-                                <h4 class="text-xs font-bold text-amber-900 dark:text-amber-300 mt-1">Halaqah Hafalan Al-Qur'an (Pagi)</h4>
-                                <p class="text-[11px] text-amber-800/80 dark:text-amber-400/80">Setoran Hafalan Baru (Sabaq) & Bimbingan
-                                    Talaqqi bersama Asatidz.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">07.00
-                                    – 08.00 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Makan Pagi & Persiapan KBM</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Sarapan, MCK, dan persiapan masuk kelas
-                                    formal/madrasah.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">08.00
-                                    – 11.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Kegiatan Belajar Mengajar (KBM)</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Pelajaran Sekolah Formal / Pengajian Kitab Diniyah
-                                    secara terstruktur.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">11.30
-                                    – 12.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Shalat Dzuhur & Makan Siang</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Shalat Dzuhur Berjamaah dilanjutkan makan siang
-                                    santri.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">12.30
-                                    – 15.00 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Istirahat Siang (Qailulah)</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Tidur siang sunnah & Pendalaman materi hafalan
-                                    mandiri.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">15.00
-                                    – 17.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Shalat Ashar & Muraja'ah Sore</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Shalat Ashar Berjamaah, Muraja'ah Hafalan Pekanan,
-                                    & Olahraga ringan.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-amber-50/50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/40">
-                                <span
-                                    class="text-[10px] font-extrabold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-lg">17.30
-                                    – 19.30 WIB</span>
-                                <h4 class="text-xs font-bold text-amber-900 dark:text-amber-300 mt-1">Maghrib, Ratib, & Kajian Kitab</h4>
-                                <p class="text-[11px] text-amber-800/80 dark:text-amber-400/80">Shalat Maghrib Berjamaah, Pembacaan Ratib
-                                    Al-Haddad, & Pengajian Kitab Kuning.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-brand-600 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3 rounded-2xl border border-slate-100 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">19.30
-                                    – 21.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Shalat Isya, Makan Malam & Belajar
-                                    Mandiri</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Shalat Isya Berjamaah, Makan Malam, & Belajar
-                                    Mandiri terpadu di asrama.</p>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div
-                                class="absolute -left-[21px] top-1 w-3 h-3 bg-slate-400 rounded-full border-2 border-white dark:border-[#15202d]">
-                            </div>
-                            <div class="bg-slate-100 dark:bg-[#253447] p-3 rounded-2xl border border-slate-200 dark:border-[#253447]">
-                                <span
-                                    class="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-lg">21.30
-                                    – 03.30 WIB</span>
-                                <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1">Istirahat Malam (Jam Wajib Tidur)</h4>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Seluruh fasilitas penerangan umum dimatikan untuk
-                                    pengkondisian istirahat santri.</p>
-                            </div>
-                        </div>
+                    <div id="public-jadwal-harian-list" class="space-y-2.5 border-l-2 border-brand-100 dark:border-emerald-800 pl-4 ml-2">
+                        <!-- Dimuat secara dinamis oleh renderPublicJadwalKegiatan() -->
                     </div>
                 </div>
 
@@ -2432,62 +2288,8 @@
                         <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Agenda Mingguan Pesantren
                     </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-brand-800">Senin & Kamis</span>
-                                <span
-                                    class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Sunnah</span>
-                            </div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Puasa Sunnah & Buka Bersama</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pelaksanaan Puasa Sunnah Senin-Kamis dilanjutkan doa &
-                                buka puasa bersama santri di aula.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-amber-700">Selasa Kliwon</span>
-                                <span
-                                    class="text-[9px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Rutin</span>
-                            </div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Pengajian Akbar Ihya 'Ulumuddin</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kajian rutin Seloso Kliwon pengajian kitab Ihya
-                                'Ulumuddin bersama Pengasuh Utama.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-emerald-800">Jumat (Sayyidul Ayyam)</span>
-                                <span
-                                    class="text-[9px] bg-brand-100 text-brand-800 font-bold px-2 py-0.5 rounded-full">Utama</span>
-                            </div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Ro'an Kebersihan & Al-Kahfi</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kerja bakti lingkungan (Ro'an), pembacaan Surat
-                                Al-Kahfi, Yasin & Tahlil, serta Shalat Jumat Berjamaah.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-blue-800">Sabtu</span>
-                                <span
-                                    class="text-[9px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">Ekstrakurikuler</span>
-                            </div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Muhadharah & Seni Hadroh</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Latihan public speaking 3 bahasa (Muhadharah), seni
-                                rebana/hadroh, & keahlian IT santri.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1 md:col-span-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-purple-800">Ahad</span>
-                                <span
-                                    class="text-[9px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">Sambang
-                                    Wali</span>
-                            </div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Kunjungan Wali Santri & Olahraga</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pagi hari olahraga bersama & kegiatan jalan sehat,
-                                dilanjutkan waktu kunjungan resmi wali santri.</p>
-                        </div>
+                    <div id="public-jadwal-mingguan-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Dimuat secara dinamis oleh renderPublicJadwalKegiatan() -->
                     </div>
                 </div>
 
@@ -2497,58 +2299,8 @@
                         <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Agenda Bulanan Santri
                     </h3>
 
-                    <div class="space-y-3">
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-start space-x-3.5">
-                            <div
-                                class="w-10 h-10 bg-brand-100 text-brand-700 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0">
-                                P-1
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Pekan Ke-1: Sema'an Al-Qur'an Bil-Ghaib
-                                </h4>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Khataman Al-Qur'an hafalan santri secara
-                                    bergantian dalam satu hari di majlis utama.</p>
-                            </div>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-start space-x-3.5">
-                            <div
-                                class="w-10 h-10 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0">
-                                P-2
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Pekan Ke-2: Ujian Hafalan Bulanan
-                                    (Munaqasyah)</h4>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Evaluasi ketercapaian target hafalan baru &
-                                    kualitas tajwid santri langsung di depan Dewan Penguji.</p>
-                            </div>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-start space-x-3.5">
-                            <div
-                                class="w-10 h-10 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0">
-                                P-3
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Pekan Ke-3: Majlis Ta'lim & Silaturahmi
-                                    Wali Santri</h4>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Pengajian rutin bulanan khusus orang
-                                    tua/wali santri bersama jajaran Pengasuh Pesantren.</p>
-                            </div>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-start space-x-3.5">
-                            <div
-                                class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0">
-                                P-4
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Pekan Ke-4: Santunan Yatim & Bakti Sosial
-                                </h4>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Kegiatan kepedulian sosial santri berbagi
-                                    kepada anak yatim & warga sekitar lingkungan pesantren.</p>
-                            </div>
-                        </div>
+                    <div id="public-jadwal-bulanan-list" class="space-y-3">
+                        <!-- Dimuat secara dinamis oleh renderPublicJadwalKegiatan() -->
                     </div>
                 </div>
 
@@ -2558,52 +2310,8 @@
                         <span class="w-1.5 h-4 bg-brand-600 rounded-full mr-2"></span> Calendar Event Tahunan Pesantren
                     </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <span
-                                class="text-[10px] font-extrabold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">Bulan
-                                Muharram</span>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Peringatan Tahun Baru Islam & Santunan
-                            </h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Peringatan 1 Muharram 1448 H, pawai obor santri, dan
-                                santunan akbar anak yatim.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <span
-                                class="text-[10px] font-extrabold text-brand-700 bg-brand-100 px-2 py-0.5 rounded-md">Bulan
-                                Rabiul Awal</span>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Peringatan Maulid Nabi Muhammad SAW</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pembacaan Kitab Simtuddurar / Barzanji bersama habaib
-                                dan alim ulama Demak.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <span
-                                class="text-[10px] font-extrabold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">Rajab
-                                & Sya'ban</span>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Wisuda Tahfidz & Haul Pesantren</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Ujian Imtihan Akhirussanah, Wisuda Khotmil Qur'an, &
-                                Peringatan Haul Masyayikh PPTQ Asnawiyyah.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1">
-                            <span
-                                class="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Bulan
-                                Ramadhan</span>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Karantina Tahfidz & Pasaran Kitab</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Program percepatan hafalan Ramadhan & pengajian
-                                pasaran kitab kuning kilatan.</p>
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1 md:col-span-2">
-                            <span
-                                class="text-[10px] font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">Bulan
-                                Syawal</span>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">Libur Idul Fitri & Halal Bihalal</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Masa perpulangan libur Idul Fitri santri dan
-                                silaturahmi Halal Bihalal Keluarga Besar PPTQ Asnawiyyah.</p>
-                        </div>
+                    <div id="public-jadwal-tahunan-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Dimuat secara dinamis oleh renderPublicJadwalKegiatan() -->
                     </div>
                 </div>
 
@@ -4550,6 +4258,12 @@
                             <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Unit Kegiatan (UKS)</span>
                         </button>
                     </li>
+                    <li>
+                        <button onclick="showAdminView('jadwal-kegiatan')" data-view="jadwal-kegiatan" class="admin-nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative" title="Manajemen Jadwal Kegiatan">
+                            <i class="fa-solid fa-calendar-check w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Jadwal Kegiatan</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
             
@@ -4982,6 +4696,25 @@
                                 class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-teal-700 transition">
                                 Unit Kegiatan Santri</h4>
                             <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola UKS, divisi, jadwal & foto kegiatan.</p>
+                        </div>
+                    </div>
+
+                    <!-- 5.1 Tombol Icon Grid: Manajemen Jadwal Kegiatan Santri -->
+                    <div data-role-module="jadwal-kegiatan" onclick="showAdminView('jadwal-kegiatan')"
+                        class="bg-white hover:bg-emerald-50/60 p-4 md:p-5 rounded-2xl border border-slate-100 hover:border-emerald-300 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                        <div class="flex justify-between items-start">
+                            <div
+                                class="w-12 h-12 bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <span id="admin-hub-jadwal-kegiatan-count"
+                                class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">25 Agenda</span>
+                        </div>
+                        <div>
+                            <h4
+                                class="text-xs md:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition">
+                                Jadwal Kegiatan</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">Kelola rutinitas harian, mingguan, bulanan & tahunan.</p>
                         </div>
                     </div>
 
@@ -6749,6 +6482,60 @@
                         <p>Belum ada data unit kegiatan.</p>
                     </div>
                 </section>
+            </div>
+
+            <!-- ================= VIEW: MODUL MANAJEMEN JADWAL KEGIATAN SANTRI ================= -->
+            <div id="admin-view-jadwal-kegiatan" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shadow-sm">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block">Dashboard Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Jadwal Kegiatan Santri</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="loadJadwalKegiatan()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                        <button type="button" onclick="openAdminJadwalKegiatanModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Tambah Agenda</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Tab & Search Bar -->
+                <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <!-- Sub-tab Filter Chips -->
+                        <div class="flex p-1 bg-slate-100 dark:bg-[#1c2836] rounded-xl gap-1 overflow-x-auto custom-scrollbar">
+                            <button type="button" onclick="setAdminJadwalFilter('all')" id="admin-jdw-tab-all" class="admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-[#253447] text-emerald-800 dark:text-emerald-300 shadow-sm transition shrink-0">Semua (<span id="admin-jdw-count-all">0</span>)</button>
+                            <button type="button" onclick="setAdminJadwalFilter('harian')" id="admin-jdw-tab-harian" class="admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 transition shrink-0">Harian (<span id="admin-jdw-count-harian">0</span>)</button>
+                            <button type="button" onclick="setAdminJadwalFilter('mingguan')" id="admin-jdw-tab-mingguan" class="admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 transition shrink-0">Mingguan (<span id="admin-jdw-count-mingguan">0</span>)</button>
+                            <button type="button" onclick="setAdminJadwalFilter('bulanan')" id="admin-jdw-tab-bulanan" class="admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 transition shrink-0">Bulanan (<span id="admin-jdw-count-bulanan">0</span>)</button>
+                            <button type="button" onclick="setAdminJadwalFilter('tahunan')" id="admin-jdw-tab-tahunan" class="admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 transition shrink-0">Tahunan (<span id="admin-jdw-count-tahunan">0</span>)</button>
+                        </div>
+
+                        <!-- Search Input -->
+                        <div class="relative flex-1 sm:max-w-xs">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="admin-jadwal-search" oninput="filterAdminJadwalKegiatanList()" placeholder="Cari kegiatan atau waktu..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List Agenda Cards / Table Container -->
+                <div id="admin-jadwal-kegiatan-list-container" class="space-y-3">
+                    <!-- Dimuat oleh JavaScript -->
+                </div>
             </div>
 
             <!-- ==================== VIEW 9: MANAJEMEN NOTIFIKASI & POP-UP BERANDA ==================== -->
@@ -11175,6 +10962,84 @@
             <p id="lightbox-caption" class="text-xs md:text-sm font-semibold text-white/95 leading-relaxed line-clamp-2">
                 Dokumentasi Kegiatan
             </p>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL TAMBAH / EDIT JADWAL KEGIATAN ==================== -->
+    <div id="adminJadwalKegiatanModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 hidden transition-opacity duration-300" onclick="if(event.target === this) closeAdminJadwalKegiatanModal()">
+        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all duration-300 scale-95 opacity-0" id="adminJadwalKegiatanContent">
+            <!-- Header Modal -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center text-xs shadow-xs">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <h3 id="admin-jadwal-modal-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Tambah Jadwal Kegiatan</h3>
+                </div>
+                <button type="button" onclick="closeAdminJadwalKegiatanModal()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <form id="adminJadwalKegiatanForm" onsubmit="submitAdminJadwalKegiatan(event)" class="p-5 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                <input type="hidden" id="admin-jdw-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Kategori / Tipe <span class="text-rose-500">*</span></label>
+                        <select id="admin-jdw-tipe" required class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                            <option value="harian">Harian (Rutinitas 24 Jam)</option>
+                            <option value="mingguan">Mingguan (Agenda Pekanan)</option>
+                            <option value="bulanan">Bulanan (Agenda Bulanan)</option>
+                            <option value="tahunan">Tahunan (Calendar Event Tahunan)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Status Publikasi <span class="text-rose-500">*</span></label>
+                        <select id="admin-jdw-status" required class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                            <option value="Aktif">Aktif (Tampil di Publik)</option>
+                            <option value="Nonaktif">Nonaktif (Disembunyikan)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Waktu / Periode / Hari <span class="text-rose-500">*</span></label>
+                    <input type="text" id="admin-jdw-waktu" required placeholder="Contoh: 03.30 – 04.30 WIB atau Setiap Malam Jumat" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Nama Kegiatan <span class="text-rose-500">*</span></label>
+                    <input type="text" id="admin-jdw-kegiatan" required placeholder="Contoh: Qiyamul Lail & Shalat Tahajud" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Deskripsi & Rincian Kegiatan</label>
+                    <textarea id="admin-jdw-deskripsi" rows="3" placeholder="Jelaskan ringkasan atau detail kegiatan santri..." class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Label / Tag Badge (Opsional)</label>
+                        <input type="text" id="admin-jdw-badge" placeholder="Contoh: Sunnah, Rutin, Utama, P-1" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Nomor Urutan Tampil</label>
+                        <input type="number" id="admin-jdw-urutan" value="1" min="1" max="999" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-end space-x-2">
+                    <button type="button" onclick="closeAdminJadwalKegiatanModal()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 rounded-xl transition">Batal</button>
+                    <button type="submit" id="admin-jdw-submit-btn" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition active:scale-95 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i>
+                        <span id="admin-jdw-submit-text">Simpan Jadwal</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

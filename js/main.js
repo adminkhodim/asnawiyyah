@@ -49,6 +49,9 @@
             loadGaleri();
             loadPengaturan();
             loadUnitKegiatan();
+            if (typeof loadJadwalKegiatan === 'function') {
+                loadJadwalKegiatan();
+            }
             if (typeof renderCalendar === 'function') {
                 try {
                     renderCalendar();
@@ -72,10 +75,12 @@
             document.addEventListener('DOMContentLoaded', () => {
                 loadBanners();
                 loadNotifikasi();
+                if (typeof loadJadwalKegiatan === 'function') loadJadwalKegiatan();
             });
         } else {
             loadBanners();
             loadNotifikasi();
+            if (typeof loadJadwalKegiatan === 'function') loadJadwalKegiatan();
         }
 
         function navigateToNews() {
@@ -447,6 +452,10 @@
             } else if (tabId === 'kalender') {
                 if (typeof renderCalendar === 'function') {
                     renderCalendar();
+                }
+            } else if (tabId === 'jadwal-kegiatan') {
+                if (typeof renderPublicJadwalKegiatan === 'function') {
+                    renderPublicJadwalKegiatan();
                 }
             }
 

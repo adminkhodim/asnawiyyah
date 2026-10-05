@@ -128,6 +128,25 @@
                     };
                 }
 
+                if (action === "getJadwalKegiatan") {
+                    const res = await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan?order=urutan.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        data: rows.map(j => ({
+                            id: j.id || j.id_jadwal,
+                            tipe: (j.tipe || 'harian').toLowerCase(),
+                            waktu: j.waktu || '',
+                            kegiatan: j.kegiatan || j.nama || '',
+                            deskripsi: j.deskripsi || '',
+                            badge: j.badge || '',
+                            urutan: Number(j.urutan) || 1,
+                            status: j.status || 'Aktif'
+                        }))
+                    };
+                }
+
                 if (action === "program.listPublished") {
                     const res = await fetch(`${sbUrl}/rest/v1/programs?status=eq.published&order=sort_order.asc`, { headers });
                     if (!res.ok) return null;
@@ -429,7 +448,7 @@
                 'auth.admin.userList', 'admin.users.list', 'admin.userList', 'getUsers',
                 'getStudents', 'student.list', 'auth.student.list',
                 'getEmployees', 'employee.list', 'auth.employee.list',
-                'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getPengaturan',
+                'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getJadwalKegiatan', 'getPengaturan',
                 'getTahfidzPresensi'
             ];
             if (fastReadActions.includes(action)) {
@@ -992,6 +1011,45 @@
                     const uId = payload.id || payload.id_kegiatan;
                     if (uId) {
                         await fetch(`${sbUrl}/rest/v1/unit_kegiatan?id_kegiatan=eq.${encodeURIComponent(uId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+                else if (action === 'saveJadwalKegiatan') {
+                    const jId = payload.id || ('JDW_' + Date.now());
+                    const jRow = {
+                        id: jId,
+                        tipe: (payload.tipe || 'harian').toLowerCase(),
+                        waktu: payload.waktu || '',
+                        kegiatan: payload.kegiatan || payload.nama || '',
+                        deskripsi: payload.deskripsi || '',
+                        badge: payload.badge || '',
+                        urutan: Number(payload.urutan) || 1,
+                        status: payload.status || 'Aktif',
+                        timestamp: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(jRow)
+                    });
+                }
+                else if (action === 'toggleJadwalKegiatan') {
+                    const jId = payload.id;
+                    const newStatus = payload.newStatus || payload.status;
+                    if (jId && newStatus) {
+                        await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan?id=eq.${encodeURIComponent(jId)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+                }
+                else if (action === 'deleteJadwalKegiatan') {
+                    const jId = payload.id;
+                    if (jId) {
+                        await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan?id=eq.${encodeURIComponent(jId)}`, {
                             method: 'DELETE',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
                         });

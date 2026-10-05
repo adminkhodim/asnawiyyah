@@ -102,6 +102,7 @@
             const pengaturanView = document.getElementById('admin-view-pengaturan');
             const profilLembagaView = document.getElementById('admin-view-profil-lembaga');
             const unitKegiatanView = document.getElementById('admin-view-unit-kegiatan');
+            const jadwalKegiatanView = document.getElementById('admin-view-jadwal-kegiatan');
             const notifikasiView = document.getElementById('admin-view-notifikasi');
             const pegawaiView = document.getElementById('admin-view-pegawai');
             const usersView = document.getElementById('admin-view-users');
@@ -120,6 +121,7 @@
             if (pengaturanView) pengaturanView.classList.add('hidden');
             if (profilLembagaView) profilLembagaView.classList.add('hidden');
             if (unitKegiatanView) unitKegiatanView.classList.add('hidden');
+            if (jadwalKegiatanView) jadwalKegiatanView.classList.add('hidden');
             if (notifikasiView) notifikasiView.classList.add('hidden');
             if (pegawaiView) pegawaiView.classList.add('hidden');
             if (usersView) usersView.classList.add('hidden');
@@ -185,6 +187,9 @@
             } else if (viewName === 'unit-kegiatan') {
                 if (unitKegiatanView) unitKegiatanView.classList.remove('hidden');
                 renderAdminUnitKegiatanList();
+            } else if (viewName === 'jadwal-kegiatan') {
+                if (jadwalKegiatanView) jadwalKegiatanView.classList.remove('hidden');
+                loadJadwalKegiatan();
             } else {
                 hubView.classList.remove('hidden');
                 if (typeof applyAdminRoleVisibility === 'function') {
@@ -2402,6 +2407,478 @@
                 if (response && response.success) await loadUnitKegiatan();
             } catch (err) {
                 showToast("❌ Gagal menghapus unit kegiatan: " + err.message);
+            }
+        }
+
+        // ==================== MANAJEMEN JADWAL KEGIATAN SANTRI (CLIENT & ADMIN) ====================
+        let mockJadwalKegiatanData = [
+            // --- HARIAN (11 Agenda) ---
+            { id: "JDW_HARIAN_01", tipe: "harian", waktu: "03.30 – 04.30 WIB", kegiatan: "Bangun Pagi & Qiyamul Lail", deskripsi: "Shalat Tahajud, Hajat, Witir, & Persiapan Shalat Subuh.", badge: "24 Jam", urutan: 1, status: "Aktif" },
+            { id: "JDW_HARIAN_02", tipe: "harian", waktu: "04.30 – 05.30 WIB", kegiatan: "Shalat Subuh Berjamaah & Zikir Pagi", deskripsi: "Shalat Subuh di Masjid Utama, dilanjutkan Pembacaan Zikir Ratib Pagi.", badge: "", urutan: 2, status: "Aktif" },
+            { id: "JDW_HARIAN_03", tipe: "harian", waktu: "05.30 – 07.00 WIB", kegiatan: "Halaqah Hafalan Al-Qur'an (Pagi)", deskripsi: "Setoran Hafalan Baru (Sabaq) & Bimbingan Talaqqi bersama Asatidz.", badge: "Hafalan", urutan: 3, status: "Aktif" },
+            { id: "JDW_HARIAN_04", tipe: "harian", waktu: "07.00 – 08.00 WIB", kegiatan: "Makan Pagi & Persiapan KBM", deskripsi: "Sarapan, MCK, dan persiapan masuk kelas formal/madrasah.", badge: "", urutan: 4, status: "Aktif" },
+            { id: "JDW_HARIAN_05", tipe: "harian", waktu: "08.00 – 11.30 WIB", kegiatan: "Kegiatan Belajar Mengajar (KBM)", deskripsi: "Pelajaran Sekolah Formal / Pengajian Kitab Diniyah secara terstruktur.", badge: "", urutan: 5, status: "Aktif" },
+            { id: "JDW_HARIAN_06", tipe: "harian", waktu: "11.30 – 12.30 WIB", kegiatan: "Shalat Dzuhur & Makan Siang", deskripsi: "Shalat Dzuhur Berjamaah dilanjutkan makan siang santri.", badge: "", urutan: 6, status: "Aktif" },
+            { id: "JDW_HARIAN_07", tipe: "harian", waktu: "12.30 – 15.00 WIB", kegiatan: "Istirahat Siang (Qailulah)", deskripsi: "Tidur siang sunnah & Pendalaman materi hafalan mandiri.", badge: "", urutan: 7, status: "Aktif" },
+            { id: "JDW_HARIAN_08", tipe: "harian", waktu: "15.00 – 17.30 WIB", kegiatan: "Shalat Ashar & Muraja'ah Sore", deskripsi: "Shalat Ashar Berjamaah, Muraja'ah Hafalan Pekanan, & Olahraga ringan.", badge: "", urutan: 8, status: "Aktif" },
+            { id: "JDW_HARIAN_09", tipe: "harian", waktu: "17.30 – 19.30 WIB", kegiatan: "Maghrib, Ratib, & Kajian Kitab", deskripsi: "Shalat Maghrib Berjamaah, Pembacaan Ratib Al-Haddad, & Pengajian Kitab Kuning.", badge: "Kajian", urutan: 9, status: "Aktif" },
+            { id: "JDW_HARIAN_10", tipe: "harian", waktu: "19.30 – 21.30 WIB", kegiatan: "Shalat Isya, Makan Malam & Belajar Mandiri", deskripsi: "Shalat Isya Berjamaah, Makan Malam, & Belajar Mandiri terpadu di asrama.", badge: "", urutan: 10, status: "Aktif" },
+            { id: "JDW_HARIAN_11", tipe: "harian", waktu: "21.30 – 03.30 WIB", kegiatan: "Istirahat Malam (Jam Wajib Tidur)", deskripsi: "Seluruh fasilitas penerangan umum dimatikan untuk pengkondisian istirahat santri.", badge: "Wajib Tidur", urutan: 11, status: "Aktif" },
+
+            // --- MINGGUAN (5 Agenda) ---
+            { id: "JDW_MINGGUAN_01", tipe: "mingguan", waktu: "Senin & Kamis", kegiatan: "Puasa Sunnah & Buka Bersama", deskripsi: "Pelaksanaan Puasa Sunnah Senin-Kamis dilanjutkan doa & buka puasa bersama santri di aula.", badge: "Sunnah", urutan: 1, status: "Aktif" },
+            { id: "JDW_MINGGUAN_02", tipe: "mingguan", waktu: "Selasa Kliwon", kegiatan: "Pengajian Akbar Ihya 'Ulumuddin", deskripsi: "Kajian rutin Seloso Kliwon pengajian kitab Ihya 'Ulumuddin bersama Pengasuh Utama.", badge: "Rutin", urutan: 2, status: "Aktif" },
+            { id: "JDW_MINGGUAN_03", tipe: "mingguan", waktu: "Jumat (Sayyidul Ayyam)", kegiatan: "Ro'an Kebersihan & Al-Kahfi", deskripsi: "Kerja bakti lingkungan (Ro'an), pembacaan Surat Al-Kahfi, Yasin & Tahlil, serta Shalat Jumat Berjamaah.", badge: "Utama", urutan: 3, status: "Aktif" },
+            { id: "JDW_MINGGUAN_04", tipe: "mingguan", waktu: "Sabtu", kegiatan: "Muhadharah & Seni Hadroh", deskripsi: "Latihan public speaking 3 bahasa (Muhadharah), seni rebana/hadroh, & keahlian IT santri.", badge: "Ekstrakurikuler", urutan: 4, status: "Aktif" },
+            { id: "JDW_MINGGUAN_05", tipe: "mingguan", waktu: "Ahad", kegiatan: "Kunjungan Wali Santri & Olahraga", deskripsi: "Pagi hari olahraga bersama & kegiatan jalan sehat, dilanjutkan waktu kunjungan resmi wali santri.", badge: "Sambang Wali", urutan: 5, status: "Aktif" },
+
+            // --- BULANAN (4 Agenda) ---
+            { id: "JDW_BULANAN_01", tipe: "bulanan", waktu: "Pekan Ke-1", kegiatan: "Sema'an Al-Qur'an Bil-Ghaib", deskripsi: "Khataman Al-Qur'an hafalan santri secara bergantian dalam satu hari di majlis utama.", badge: "P-1", urutan: 1, status: "Aktif" },
+            { id: "JDW_BULANAN_02", tipe: "bulanan", waktu: "Pekan Ke-2", kegiatan: "Ujian Hafalan Bulanan (Munaqasyah)", deskripsi: "Evaluasi ketercapaian target hafalan baru & kualitas tajwid santri langsung di depan Dewan Penguji.", badge: "P-2", urutan: 2, status: "Aktif" },
+            { id: "JDW_BULANAN_03", tipe: "bulanan", waktu: "Pekan Ke-3", kegiatan: "Majlis Ta'lim & Silaturahmi Wali Santri", deskripsi: "Pengajian rutin bulanan khusus orang tua/wali santri bersama jajaran Pengasuh Pesantren.", badge: "P-3", urutan: 3, status: "Aktif" },
+            { id: "JDW_BULANAN_04", tipe: "bulanan", waktu: "Pekan Ke-4", kegiatan: "Santunan Yatim & Bakti Sosial", deskripsi: "Kegiatan kepedulian sosial santri berbagi kepada anak yatim & warga sekitar lingkungan pesantren.", badge: "P-4", urutan: 4, status: "Aktif" },
+
+            // --- TAHUNAN (5 Agenda) ---
+            { id: "JDW_TAHUNAN_01", tipe: "tahunan", waktu: "Bulan Muharram", kegiatan: "Peringatan Tahun Baru Islam & Santunan", deskripsi: "Peringatan 1 Muharram 1448 H, pawai obor santri, dan santunan akbar anak yatim.", badge: "Muharram", urutan: 1, status: "Aktif" },
+            { id: "JDW_TAHUNAN_02", tipe: "tahunan", waktu: "Bulan Rabiul Awal", kegiatan: "Peringatan Maulid Nabi Muhammad SAW", deskripsi: "Pembacaan Kitab Simtuddurar / Barzanji bersama habaib dan alim ulama Demak.", badge: "Maulid", urutan: 2, status: "Aktif" },
+            { id: "JDW_TAHUNAN_03", tipe: "tahunan", waktu: "Rajab & Sya'ban", kegiatan: "Wisuda Tahfidz & Haul Pesantren", deskripsi: "Ujian Imtihan Akhirussanah, Wisuda Khotmil Qur'an, & Peringatan Haul Masyayikh PPTQ Asnawiyyah.", badge: "Wisuda", urutan: 3, status: "Aktif" },
+            { id: "JDW_TAHUNAN_04", tipe: "tahunan", waktu: "Bulan Ramadhan", kegiatan: "Karantina Tahfidz & Pasaran Kitab", deskripsi: "Program percepatan hafalan Ramadhan & pengajian pasaran kitab kuning kilatan.", badge: "Ramadhan", urutan: 4, status: "Aktif" },
+            { id: "JDW_TAHUNAN_05", tipe: "tahunan", waktu: "Bulan Syawal", kegiatan: "Libur Idul Fitri & Halal Bihalal", deskripsi: "Masa perpulangan libur Idul Fitri santri dan silaturahmi Halal Bihalal Keluarga Besar PPTQ Asnawiyyah.", badge: "Syawal", urutan: 5, status: "Aktif" }
+        ];
+
+        let currentAdminJadwalFilter = "all";
+
+        async function loadJadwalKegiatan() {
+            try {
+                const cached = localStorage.getItem('asn_cached_jadwal_kegiatan');
+                if (cached) {
+                    try {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            mockJadwalKegiatanData = parsed;
+                        }
+                    } catch (e) {}
+                }
+
+                renderPublicJadwalKegiatan();
+                renderAdminJadwalKegiatanList();
+
+                if (!isApiConfigured()) {
+                    return;
+                }
+
+                const response = await apiGet("getJadwalKegiatan");
+                if (response && response.status === "success" && Array.isArray(response.data) && response.data.length > 0) {
+                    mockJadwalKegiatanData = response.data;
+                    try {
+                        localStorage.setItem('asn_cached_jadwal_kegiatan', JSON.stringify(mockJadwalKegiatanData));
+                    } catch (e) {}
+                    renderPublicJadwalKegiatan();
+                    renderAdminJadwalKegiatanList();
+                }
+            } catch (err) {
+                console.warn("Gagal memuat jadwal kegiatan dari server, menggunakan data lokal:", err);
+                renderPublicJadwalKegiatan();
+                renderAdminJadwalKegiatanList();
+            }
+        }
+
+        function renderPublicJadwalKegiatan() {
+            const harianContainer = document.getElementById('public-jadwal-harian-list');
+            const mingguanContainer = document.getElementById('public-jadwal-mingguan-list');
+            const bulananContainer = document.getElementById('public-jadwal-bulanan-list');
+            const tahunanContainer = document.getElementById('public-jadwal-tahunan-list');
+
+            const activeItems = mockJadwalKegiatanData.filter(j => (j.status || 'Aktif') === 'Aktif');
+
+            // 1. Harian
+            if (harianContainer) {
+                const harianItems = activeItems.filter(j => j.tipe === 'harian').sort((a, b) => (Number(a.urutan) || 0) - (Number(b.urutan) || 0));
+                if (harianItems.length === 0) {
+                    harianContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">Belum ada agenda harian santri.</div>`;
+                } else {
+                    harianContainer.innerHTML = harianItems.map(item => {
+                        const isHighlighted = item.badge && (item.badge.toLowerCase().includes('hafalan') || item.badge.toLowerCase().includes('kajian') || item.badge.toLowerCase().includes('quran'));
+                        return `
+                            <div class="relative group">
+                                <div class="absolute -left-[21px] top-1 w-3 h-3 ${isHighlighted ? 'bg-amber-500' : 'bg-brand-600'} rounded-full border-2 border-white dark:border-[#15202d]"></div>
+                                <div class="${isHighlighted ? 'bg-amber-50/50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/40' : 'bg-slate-50 dark:bg-[#1c2836] border-slate-100 dark:border-[#253447]'} p-3 rounded-2xl border transition hover:shadow-xs">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-extrabold ${isHighlighted ? 'text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40' : 'text-brand-700 dark:text-emerald-400 bg-brand-50 dark:bg-emerald-950/40'} px-2 py-0.5 rounded-lg">${escapeHtml(item.waktu)}</span>
+                                        ${item.badge ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isHighlighted ? 'bg-amber-200/60 text-amber-900 dark:bg-amber-900 dark:text-amber-200' : 'bg-brand-100 dark:bg-brand-900/50 text-brand-800 dark:text-emerald-300'}">${escapeHtml(item.badge)}</span>` : ''}
+                                    </div>
+                                    <h4 class="text-xs font-bold ${isHighlighted ? 'text-amber-900 dark:text-amber-300' : 'text-slate-800 dark:text-slate-100'} mt-1">${escapeHtml(item.kegiatan)}</h4>
+                                    <p class="text-[11px] ${isHighlighted ? 'text-amber-800/80 dark:text-amber-400/80' : 'text-slate-500 dark:text-slate-400'} mt-0.5">${escapeHtml(item.deskripsi || '')}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 2. Mingguan
+            if (mingguanContainer) {
+                const mingguanItems = activeItems.filter(j => j.tipe === 'mingguan').sort((a, b) => (Number(a.urutan) || 0) - (Number(b.urutan) || 0));
+                if (mingguanItems.length === 0) {
+                    mingguanContainer.innerHTML = `<div class="col-span-full p-6 text-center text-slate-400 text-xs">Belum ada agenda mingguan santri.</div>`;
+                } else {
+                    mingguanContainer.innerHTML = mingguanItems.map(item => {
+                        let badgeBg = 'bg-brand-100 text-brand-800 dark:bg-emerald-950/80 dark:text-emerald-300';
+                        if (item.badge && item.badge.toLowerCase().includes('sunnah')) badgeBg = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+                        if (item.badge && item.badge.toLowerCase().includes('rutin')) badgeBg = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+                        if (item.badge && item.badge.toLowerCase().includes('ekstra')) badgeBg = 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+                        if (item.badge && item.badge.toLowerCase().includes('wali')) badgeBg = 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
+
+                        return `
+                            <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1 hover:shadow-xs transition">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-brand-800 dark:text-emerald-400">${escapeHtml(item.waktu)}</span>
+                                    ${item.badge ? `<span class="text-[9px] ${badgeBg} font-bold px-2 py-0.5 rounded-full">${escapeHtml(item.badge)}</span>` : ''}
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">${escapeHtml(item.kegiatan)}</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 3. Bulanan
+            if (bulananContainer) {
+                const bulananItems = activeItems.filter(j => j.tipe === 'bulanan').sort((a, b) => (Number(a.urutan) || 0) - (Number(b.urutan) || 0));
+                if (bulananItems.length === 0) {
+                    bulananContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">Belum ada agenda bulanan santri.</div>`;
+                } else {
+                    const boxColors = [
+                        'bg-brand-100 text-brand-700 dark:bg-emerald-950 dark:text-emerald-300',
+                        'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+                        'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
+                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+                        'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
+                    ];
+
+                    bulananContainer.innerHTML = bulananItems.map((item, idx) => {
+                        const boxColor = boxColors[idx % boxColors.length];
+                        return `
+                            <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-start space-x-3.5 hover:shadow-xs transition">
+                                <div class="w-10 h-10 ${boxColor} rounded-2xl flex items-center justify-center font-bold text-sm shrink-0">
+                                    ${escapeHtml(item.badge || ('P-' + (idx + 1)))}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-bold text-brand-700 dark:text-emerald-400 uppercase tracking-wider">${escapeHtml(item.waktu)}</span>
+                                    </div>
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5">${escapeHtml(item.kegiatan)}</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 4. Tahunan
+            if (tahunanContainer) {
+                const tahunanItems = activeItems.filter(j => j.tipe === 'tahunan').sort((a, b) => (Number(a.urutan) || 0) - (Number(b.urutan) || 0));
+                if (tahunanItems.length === 0) {
+                    tahunanContainer.innerHTML = `<div class="col-span-full p-6 text-center text-slate-400 text-xs">Belum ada agenda tahunan santri.</div>`;
+                } else {
+                    tahunanContainer.innerHTML = tahunanItems.map(item => {
+                        let badgeBg = 'bg-brand-100 text-brand-700 dark:bg-emerald-950/80 dark:text-emerald-300';
+                        if (item.waktu.toLowerCase().includes('muharram')) badgeBg = 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+                        if (item.waktu.toLowerCase().includes('rajab') || item.waktu.toLowerCase().includes('sya')) badgeBg = 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300';
+                        if (item.waktu.toLowerCase().includes('ramadhan')) badgeBg = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+                        if (item.waktu.toLowerCase().includes('syawal')) badgeBg = 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+
+                        return `
+                            <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1 hover:shadow-xs transition">
+                                <span class="inline-block text-[10px] font-extrabold ${badgeBg} px-2 py-0.5 rounded-md">
+                                    ${escapeHtml(item.waktu)}
+                                </span>
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">${escapeHtml(item.kegiatan)}</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        function renderAdminJadwalKegiatanList(itemsToRender = null) {
+            const container = document.getElementById('admin-jadwal-kegiatan-list-container');
+            const hubBadge = document.getElementById('admin-hub-jadwal-kegiatan-count');
+
+            if (hubBadge) {
+                hubBadge.innerText = `${mockJadwalKegiatanData.length} Agenda`;
+            }
+
+            // Update sub-tab counts
+            const countAll = document.getElementById('admin-jdw-count-all');
+            const countHarian = document.getElementById('admin-jdw-count-harian');
+            const countMingguan = document.getElementById('admin-jdw-count-mingguan');
+            const countBulanan = document.getElementById('admin-jdw-count-bulanan');
+            const countTahunan = document.getElementById('admin-jdw-count-tahunan');
+
+            if (countAll) countAll.innerText = mockJadwalKegiatanData.length;
+            if (countHarian) countHarian.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'harian').length;
+            if (countMingguan) countMingguan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'mingguan').length;
+            if (countBulanan) countBulanan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'bulanan').length;
+            if (countTahunan) countTahunan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'tahunan').length;
+
+            if (!container) return;
+
+            const list = itemsToRender || (currentAdminJadwalFilter === 'all' 
+                ? mockJadwalKegiatanData 
+                : mockJadwalKegiatanData.filter(j => j.tipe === currentAdminJadwalFilter));
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-[#15202d] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-[#253447] space-y-2">
+                        <i class="fa-solid fa-calendar-xmark text-3xl text-slate-300 dark:text-slate-600"></i>
+                        <p class="text-xs">Tidak ada data jadwal kegiatan yang sesuai.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const tipeBadges = {
+                'harian': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+                'mingguan': 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
+                'bulanan': 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+                'tahunan': 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+            };
+
+            container.innerHTML = list.map(item => {
+                const isActive = (item.status || 'Aktif') === 'Aktif';
+                const tipeClass = tipeBadges[item.tipe] || 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+                const safeItem = JSON.stringify(item).replace(/'/g, "&#39;");
+
+                return `
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-emerald-300 dark:hover:border-emerald-800/60 transition group">
+                        <div class="space-y-1.5 flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${tipeClass}">${escapeHtml(item.tipe || 'Harian')}</span>
+                                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30">${escapeHtml(item.waktu)}</span>
+                                ${item.badge ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escapeHtml(item.badge)}</span>` : ''}
+                                <span class="text-[10px] text-slate-400 font-medium">Urutan: ${item.urutan || 1}</span>
+                            </div>
+                            <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">${escapeHtml(item.kegiatan)}</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">${escapeHtml(item.deskripsi || '-')}</p>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0 self-end md:self-center pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-[#253447] w-full md:w-auto justify-end">
+                            <button type="button" onclick="toggleAdminJadwalKegiatanStatus('${item.id}', '${isActive ? 'Nonaktif' : 'Aktif'}')" class="text-[10px] px-2.5 py-1.5 rounded-xl font-bold transition flex items-center space-x-1 ${isActive ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}">
+                                <i class="fa-solid ${isActive ? 'fa-toggle-on text-emerald-600 text-xs' : 'fa-toggle-off text-slate-400 text-xs'}"></i>
+                                <span>${isActive ? 'Aktif' : 'Nonaktif'}</span>
+                            </button>
+                            <button type="button" onclick='openAdminJadwalKegiatanModal(${safeItem})' class="text-[10px] px-2.5 py-1.5 rounded-xl font-bold bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 transition flex items-center space-x-1 active:scale-95" title="Edit">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                <span>Edit</span>
+                            </button>
+                            <button type="button" onclick="deleteAdminJadwalKegiatan('${item.id}')" class="text-[10px] px-2.5 py-1.5 rounded-xl font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 transition flex items-center space-x-1 active:scale-95" title="Hapus">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                                <span>Hapus</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setAdminJadwalFilter(filter) {
+            currentAdminJadwalFilter = filter;
+            document.querySelectorAll('.admin-jdw-filter-btn').forEach(btn => {
+                btn.className = "admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 transition shrink-0";
+            });
+            const activeBtn = document.getElementById(`admin-jdw-tab-${filter}`);
+            if (activeBtn) {
+                activeBtn.className = "admin-jdw-filter-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-[#253447] text-emerald-800 dark:text-emerald-300 shadow-sm transition shrink-0";
+            }
+            filterAdminJadwalKegiatanList();
+        }
+
+        function filterAdminJadwalKegiatanList() {
+            const searchInput = document.getElementById('admin-jadwal-search');
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+            let items = currentAdminJadwalFilter === 'all' 
+                ? mockJadwalKegiatanData 
+                : mockJadwalKegiatanData.filter(j => j.tipe === currentAdminJadwalFilter);
+
+            if (query) {
+                items = items.filter(j => 
+                    (j.kegiatan && j.kegiatan.toLowerCase().includes(query)) ||
+                    (j.waktu && j.waktu.toLowerCase().includes(query)) ||
+                    (j.deskripsi && j.deskripsi.toLowerCase().includes(query)) ||
+                    (j.badge && j.badge.toLowerCase().includes(query))
+                );
+            }
+
+            renderAdminJadwalKegiatanList(items);
+        }
+
+        function openAdminJadwalKegiatanModal(item = null) {
+            const modal = document.getElementById('adminJadwalKegiatanModal');
+            const content = document.getElementById('adminJadwalKegiatanContent');
+            const form = document.getElementById('adminJadwalKegiatanForm');
+            const titleEl = document.getElementById('admin-jadwal-modal-title');
+            const submitText = document.getElementById('admin-jdw-submit-text');
+
+            if (!modal || !content || !form) return;
+
+            form.reset();
+
+            if (item) {
+                if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen text-emerald-600 mr-2"></i>Edit Jadwal: ${escapeHtml(item.kegiatan)}`;
+                if (submitText) submitText.innerText = "Perbarui Jadwal";
+                document.getElementById('admin-jdw-id').value = item.id || '';
+                document.getElementById('admin-jdw-tipe').value = item.tipe || 'harian';
+                document.getElementById('admin-jdw-status').value = item.status || 'Aktif';
+                document.getElementById('admin-jdw-waktu').value = item.waktu || '';
+                document.getElementById('admin-jdw-kegiatan').value = item.kegiatan || '';
+                document.getElementById('admin-jdw-deskripsi').value = item.deskripsi || '';
+                document.getElementById('admin-jdw-badge').value = item.badge || '';
+                document.getElementById('admin-jdw-urutan').value = item.urutan || 1;
+            } else {
+                if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-plus-circle text-emerald-600 mr-2"></i>Tambah Jadwal Baru`;
+                if (submitText) submitText.innerText = "Simpan Jadwal";
+                document.getElementById('admin-jdw-id').value = '';
+                document.getElementById('admin-jdw-tipe').value = (currentAdminJadwalFilter !== 'all' ? currentAdminJadwalFilter : 'harian');
+                document.getElementById('admin-jdw-status').value = 'Aktif';
+                document.getElementById('admin-jdw-waktu').value = '';
+                document.getElementById('admin-jdw-kegiatan').value = '';
+                document.getElementById('admin-jdw-deskripsi').value = '';
+                document.getElementById('admin-jdw-badge').value = '';
+                const maxUrutan = mockJadwalKegiatanData.filter(j => j.tipe === (currentAdminJadwalFilter !== 'all' ? currentAdminJadwalFilter : 'harian')).length + 1;
+                document.getElementById('admin-jdw-urutan').value = maxUrutan;
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 30);
+        }
+
+        function closeAdminJadwalKegiatanModal() {
+            const modal = document.getElementById('adminJadwalKegiatanModal');
+            const content = document.getElementById('adminJadwalKegiatanContent');
+            if (modal && content) {
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        async function submitAdminJadwalKegiatan(event) {
+            if (event) event.preventDefault();
+            const id = document.getElementById('admin-jdw-id').value;
+            const tipe = document.getElementById('admin-jdw-tipe').value;
+            const status = document.getElementById('admin-jdw-status').value;
+            const waktu = document.getElementById('admin-jdw-waktu').value.trim();
+            const kegiatan = document.getElementById('admin-jdw-kegiatan').value.trim();
+            const deskripsi = document.getElementById('admin-jdw-deskripsi').value.trim();
+            const badge = document.getElementById('admin-jdw-badge').value.trim();
+            const urutan = Number(document.getElementById('admin-jdw-urutan').value) || 1;
+
+            if (!waktu || !kegiatan) {
+                if (typeof showToast === 'function') showToast("⚠️ Waktu dan nama kegiatan wajib diisi!");
+                return;
+            }
+
+            const isEdit = !!id;
+            const payload = {
+                id: id || ('JDW_' + tipe.toUpperCase() + '_' + Date.now()),
+                tipe,
+                waktu,
+                kegiatan,
+                deskripsi,
+                badge,
+                urutan,
+                status
+            };
+
+            const submitBtn = document.getElementById('admin-jdw-submit-btn');
+            const submitText = document.getElementById('admin-jdw-submit-text');
+            if (submitBtn) submitBtn.disabled = true;
+            if (submitText) submitText.innerText = "Menyimpan...";
+
+            try {
+                if (isEdit) {
+                    const idx = mockJadwalKegiatanData.findIndex(j => j.id === id);
+                    if (idx >= 0) {
+                        mockJadwalKegiatanData[idx] = { ...mockJadwalKegiatanData[idx], ...payload };
+                    }
+                } else {
+                    mockJadwalKegiatanData.push(payload);
+                }
+
+                try {
+                    localStorage.setItem('asn_cached_jadwal_kegiatan', JSON.stringify(mockJadwalKegiatanData));
+                } catch (e) {}
+
+                renderPublicJadwalKegiatan();
+                filterAdminJadwalKegiatanList();
+                closeAdminJadwalKegiatanModal();
+
+                if (typeof showToast === 'function') {
+                    showToast(isEdit ? "✅ Jadwal kegiatan berhasil diperbarui!" : "✅ Jadwal kegiatan baru berhasil ditambahkan!");
+                }
+
+                if (isApiConfigured()) {
+                    await apiPost("saveJadwalKegiatan", payload);
+                }
+            } catch (err) {
+                console.warn("Gagal menyimpan jadwal ke server:", err);
+                if (typeof showToast === 'function') showToast("⚠️ Disimpan secara lokal (offline mode)");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+                if (submitText) submitText.innerText = isEdit ? "Perbarui Jadwal" : "Simpan Jadwal";
+            }
+        }
+
+        async function toggleAdminJadwalKegiatanStatus(id, newStatus) {
+            try {
+                const idx = mockJadwalKegiatanData.findIndex(j => j.id === id);
+                if (idx >= 0) {
+                    mockJadwalKegiatanData[idx].status = newStatus;
+                    try {
+                        localStorage.setItem('asn_cached_jadwal_kegiatan', JSON.stringify(mockJadwalKegiatanData));
+                    } catch (e) {}
+                    renderPublicJadwalKegiatan();
+                    filterAdminJadwalKegiatanList();
+                    if (typeof showToast === 'function') showToast(`Status jadwal diubah ke ${newStatus}`);
+                }
+
+                if (isApiConfigured()) {
+                    await apiPost("toggleJadwalKegiatan", { id, newStatus });
+                }
+            } catch (err) {
+                if (typeof showToast === 'function') showToast("❌ Gagal mengubah status: " + err.message);
+            }
+        }
+
+        async function deleteAdminJadwalKegiatan(id) {
+            const item = mockJadwalKegiatanData.find(j => j.id === id);
+            const nama = item ? item.kegiatan : "jadwal ini";
+            if (!confirm(`Apakah Anda yakin ingin menghapus agenda "${nama}"?`)) return;
+
+            try {
+                mockJadwalKegiatanData = mockJadwalKegiatanData.filter(j => j.id !== id);
+                try {
+                    localStorage.setItem('asn_cached_jadwal_kegiatan', JSON.stringify(mockJadwalKegiatanData));
+                } catch (e) {}
+
+                renderPublicJadwalKegiatan();
+                filterAdminJadwalKegiatanList();
+                if (typeof showToast === 'function') showToast("✅ Agenda jadwal berhasil dihapus.");
+
+                if (isApiConfigured()) {
+                    await apiPost("deleteJadwalKegiatan", { id });
+                }
+            } catch (err) {
+                if (typeof showToast === 'function') showToast("❌ Gagal menghapus: " + err.message);
             }
         }
 
@@ -5624,3 +6101,14 @@
         window.populatePegawaiDropdownInUserModal = populatePegawaiDropdownInUserModal;
         window.handleAdminUserSubmit = handleAdminUserSubmit;
 
+        // Jadwal Kegiatan exports
+        window.loadJadwalKegiatan = loadJadwalKegiatan;
+        window.renderPublicJadwalKegiatan = renderPublicJadwalKegiatan;
+        window.renderAdminJadwalKegiatanList = renderAdminJadwalKegiatanList;
+        window.setAdminJadwalFilter = setAdminJadwalFilter;
+        window.filterAdminJadwalKegiatanList = filterAdminJadwalKegiatanList;
+        window.openAdminJadwalKegiatanModal = openAdminJadwalKegiatanModal;
+        window.closeAdminJadwalKegiatanModal = closeAdminJadwalKegiatanModal;
+        window.submitAdminJadwalKegiatan = submitAdminJadwalKegiatan;
+        window.toggleAdminJadwalKegiatanStatus = toggleAdminJadwalKegiatanStatus;
+        window.deleteAdminJadwalKegiatan = deleteAdminJadwalKegiatan;

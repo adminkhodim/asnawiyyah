@@ -226,6 +226,7 @@
         'ppdb': ['ppdb.manage'],
         'program': ['program.manage'],
         'unit-kegiatan': ['unit.manage'],
+        'jadwal-kegiatan': ['jadwal.manage', 'unit.manage'],
         'users': ['users.manage'],
         'roles': ['roles.manage'],
         'pegawai': ['pegawai.manage'],
