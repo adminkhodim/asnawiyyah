@@ -190,7 +190,8 @@
             } else if (path === '/layanan/portal-ibadah/quran/halaman') {
                 switchTab('quran-page', false);
             } else if (path.startsWith('/berita/')) {
-                const slug = path.split('/berita/')[1];
+                const rawSlug = path.split('/berita/')[1];
+                const slug = rawSlug ? decodeURIComponent(rawSlug.split('/')[0]).trim() : '';
                 if (slug) {
                     bacaBerita(slug, true);
                 }
@@ -204,7 +205,8 @@
         window.addEventListener('popstate', (e) => {
             const path = window.location.pathname.replace(/\/+$/, '') || '/';
             if (path.startsWith('/berita/')) {
-                const slug = path.split('/berita/')[1];
+                const rawSlug = path.split('/berita/')[1];
+                const slug = rawSlug ? decodeURIComponent(rawSlug.split('/')[0]).trim() : '';
                 if (slug) bacaBerita(slug, true);
             } else if (path === '/berita') {
                 switchTab('kabar', false);
@@ -847,9 +849,41 @@
             }
         }
 
+        async function fetchSingleNewsDirectly(idOrSlug) {
+            if (!idOrSlug) return null;
+            try {
+                const sbUrl = (window.ASNAWIYYAH_CONFIG && window.ASNAWIYYAH_CONFIG.supabaseUrl) || "https://tkjhfhyabacbyknwrysh.supabase.co";
+                const sbKey = (window.ASNAWIYYAH_CONFIG && window.ASNAWIYYAH_CONFIG.supabaseKey) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRramhmaHlhYmFjYnlrbndyeXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDk1MDMsImV4cCI6MjEwNjM4NTUwM30.uIeUO_v29ztXFUyDAxb_50ybP62BO0ta_QEzgwWFdlo";
+                const enc = encodeURIComponent(String(idOrSlug).trim());
+                const res = await fetch(`${sbUrl}/rest/v1/berita?or=(slug.eq.${enc},news_id.eq.${enc})&limit=1`, {
+                    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+                });
+                const rows = await res.json();
+                if (Array.isArray(rows) && rows.length > 0) {
+                    return rows[0];
+                }
+            } catch (err) {
+                console.warn("fetchSingleNewsDirectly error:", err);
+            }
+            return null;
+        }
+
         function bacaBerita(id, skipHistory = false) {
-            const news = mockNewsData.find(n => n.news_id === id || n.slug === id);
-            if (!news) return;
+            const cleanId = typeof id === 'string' ? decodeURIComponent(id).trim() : id;
+            let news = (Array.isArray(mockNewsData) ? mockNewsData : []).find(n => n.news_id === cleanId || n.slug === cleanId || n.news_id === id || n.slug === id);
+            if (!news) {
+                // Ambil langsung artikel ini dari Cloud Supabase (<50ms) jika belum dimuat dalam cache lokal
+                fetchSingleNewsDirectly(cleanId || id).then(directNews => {
+                    if (directNews) {
+                        if (!Array.isArray(mockNewsData)) mockNewsData = [];
+                        if (!mockNewsData.find(n => n.news_id === directNews.news_id)) {
+                            mockNewsData.unshift(directNews);
+                        }
+                        bacaBerita(directNews.slug || directNews.news_id, skipHistory);
+                    }
+                }).catch(e => console.warn("Fetch single news direct error:", e));
+                return;
+            }
 
             currentActiveNews = news;
 
