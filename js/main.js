@@ -1643,7 +1643,7 @@
                                         <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${badgeBg}">
                                             ${escapeHtml(item.kategori || 'Pengumuman')}
                                         </span>
-                                        ${item.is_popup ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"><i class="fa-solid fa-star text-[8px] mr-1"></i>Popup Beranda</span>` : ''}
+                                        ${(item.is_popup || item.isPopup) ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"><i class="fa-solid fa-star text-[8px] mr-1"></i>Popup Beranda</span>` : ''}
                                     </div>
                                     <div class="flex items-center space-x-1.5 text-[11px] text-slate-400">
                                         <span>${escapeHtml(item.tanggal || '')}</span>
@@ -1769,29 +1769,39 @@
                 // Cari notifikasi aktif dengan flag is_popup === true
                 const popupNotif = notifikasiList.find(n => 
                     (n.status || 'Aktif') === 'Aktif' && 
-                    (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true') &&
-                    n.gambar && !String(n.gambar).includes('brand-header.png')
+                    (n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === '1' || String(n.is_popup).toLowerCase() === 'true' ||
+                     n.isPopup === true || n.isPopup === 1 || String(n.isPopup) === '1' || String(n.isPopup).toLowerCase() === 'true')
                 );
                 if (!popupNotif) return;
 
-                // Hanya sembunyikan jika user telah MENGEKLIS bahwa pengumuman telah dibaca di halaman Notifikasi
+                // Hanya sembunyikan jika user telah menutup popup di sesi ini atau telah membaca warta
                 const readIds = getReadNotifIds();
-                if (!force && readIds.includes(popupNotif.id)) {
+                const isDismissed = sessionStorage.getItem('asn_dismissed_popup_' + popupNotif.id) === 'true';
+                if (!force && (readIds.includes(popupNotif.id) || isDismissed)) {
                     return;
                 }
 
                 const modal = document.getElementById('homePosterModal');
                 const content = document.getElementById('homePosterContent');
+                const imgWrapper = document.getElementById('home-poster-img-wrapper');
                 const imgEl = document.getElementById('home-poster-img');
+                const textWrapper = document.getElementById('home-poster-text-wrapper');
                 const titleEl = document.getElementById('home-poster-title');
                 const summaryEl = document.getElementById('home-poster-summary');
                 const badgeEl = document.getElementById('home-poster-badge');
 
-                if (titleEl) titleEl.innerText = popupNotif.judul;
-                if (summaryEl) summaryEl.innerText = popupNotif.ringkasan || (popupNotif.isi ? popupNotif.isi.substring(0, 150) : '');
-                if (badgeEl) badgeEl.innerText = popupNotif.kategori || 'Warta Terkini';
-                if (imgEl && popupNotif.gambar) {
-                    imgEl.src = popupNotif.gambar;
+                const hasValidImg = popupNotif.gambar && !String(popupNotif.gambar).includes('brand-header.png') && String(popupNotif.gambar).trim().length > 5;
+
+                if (hasValidImg) {
+                    if (imgEl) imgEl.src = popupNotif.gambar;
+                    if (imgWrapper) imgWrapper.classList.remove('hidden');
+                    if (textWrapper) textWrapper.classList.add('hidden');
+                } else {
+                    if (titleEl) titleEl.innerText = popupNotif.judul;
+                    if (summaryEl) summaryEl.innerText = popupNotif.ringkasan || (popupNotif.isi ? popupNotif.isi.substring(0, 150) : '');
+                    if (badgeEl) badgeEl.innerText = popupNotif.kategori || 'Pengumuman';
+                    if (imgWrapper) imgWrapper.classList.add('hidden');
+                    if (textWrapper) textWrapper.classList.remove('hidden');
                 }
 
                 if (modal && content) {
@@ -1824,10 +1834,15 @@
             }
         }
 
-        function closeHomePoster() {
+        function closeHomePoster(dismissSession = true) {
             const modal = document.getElementById('homePosterModal');
             const content = document.getElementById('homePosterContent');
             if (modal && content) {
+                if (dismissSession && modal.dataset.notifId) {
+                    try {
+                        sessionStorage.setItem('asn_dismissed_popup_' + modal.dataset.notifId, 'true');
+                    } catch (e) {}
+                }
                 content.classList.remove('scale-100', 'opacity-100');
                 content.classList.add('scale-95', 'opacity-0');
                 setTimeout(() => {
@@ -1853,6 +1868,7 @@
             }
         }
 
+        window.loadNotifikasi = loadNotifikasi;
         window.checkHomePosterPopup = checkHomePosterPopup;
         window.closeHomePoster = closeHomePoster;
         window.openNotifFromPoster = openNotifFromPoster;

@@ -71,7 +71,7 @@
                 }
 
                 if (action === "getNotifikasi") {
-                    const res = await fetch(`${sbUrl}/rest/v1/notifikasi?status=eq.Aktif&order=created_at.desc`, { headers });
+                    const res = await fetch(`${sbUrl}/rest/v1/notifikasi?order=created_at.desc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
                     return {
@@ -84,6 +84,7 @@
                             ringkasan: notif.ringkasan,
                             isi: notif.isi,
                             gambar: notif.gambar_url || "",
+                            is_popup: Boolean(notif.is_popup),
                             isPopup: Boolean(notif.is_popup),
                             status: notif.status
                         }))
