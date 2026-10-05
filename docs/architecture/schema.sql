@@ -444,10 +444,7 @@ CREATE INDEX IF NOT EXISTS idx_ppdb_nisn ON pendaftar_ppdb(nisn);
 
 CREATE OR REPLACE VIEW wali_santri_maps AS SELECT * FROM wali_santri_map;
 CREATE OR REPLACE VIEW data_alumni AS SELECT * FROM alumni;
-CREATE OR REPLACE VIEW notofikasi AS SELECT * FROM notifikasi;
 CREATE OR REPLACE VIEW pendaftar AS SELECT * FROM pendaftar_ppdb;
-CREATE OR REPLACE VIEW otp_chache AS SELECT * FROM otp_cache;
-CREATE OR REPLACE VIEW "otp chache" AS SELECT * FROM otp_cache;
 
 -- ============================================================================
 -- 6. ROW LEVEL SECURITY (RLS) POLICIES
