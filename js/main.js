@@ -419,6 +419,10 @@
             } else if (tabId === 'notifikasi') {
                 loadNotifikasi();
             } else if (tabId === 'beranda') {
+                if (typeof renderBerandaNotifikasi === 'function') {
+                    renderBerandaNotifikasi();
+                }
+                updateNotifBadge();
                 checkHomePosterPopup();
             } else if (tabId === 'jadwal-sholat') {
                 if (typeof ASNJadwalSholat !== 'undefined') {
@@ -1542,6 +1546,9 @@
                 } catch (e) {}
             }
             renderNotifikasiList();
+            if (typeof renderBerandaNotifikasi === 'function') {
+                renderBerandaNotifikasi();
+            }
             updateNotifBadge();
             if (notifikasiList.length > 0) {
                 checkHomePosterPopup();
@@ -1568,6 +1575,9 @@
                         localStorage.setItem('asn_cached_notifikasi', JSON.stringify(notifikasiList));
                     } catch (e) {}
                     renderNotifikasiList();
+                    if (typeof renderBerandaNotifikasi === 'function') {
+                        renderBerandaNotifikasi();
+                    }
                     updateNotifBadge();
                     checkHomePosterPopup();
                 }
@@ -1755,6 +1765,87 @@
             }
         }
 
+        // ==================== WIDGET WARTA / PENGUMUMAN BERANDA ====================
+        function renderBerandaNotifikasi() {
+            try {
+                const containerMob = document.getElementById('beranda-warta-card-mobile');
+                const containerDesk = document.getElementById('beranda-warta-card-desktop');
+                
+                const activeNotifs = notifikasiList.filter(n => (n.status || 'Aktif') === 'Aktif');
+                if (activeNotifs.length === 0) {
+                    if (containerMob) containerMob.classList.add('hidden');
+                    if (containerDesk) containerDesk.classList.add('hidden');
+                    return;
+                }
+
+                const topNotif = activeNotifs[0];
+                const snippet = topNotif.ringkasan || (topNotif.isi ? topNotif.isi.replace(/<[^>]*>?/gm, '').substring(0, 100) : '');
+
+                if (containerMob) {
+                    containerMob.classList.remove('hidden');
+                    containerMob.innerHTML = `
+                        <div onclick="openNotifikasiDetail('${topNotif.id}')" class="bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-emerald-500/10 dark:from-amber-950/40 dark:via-rose-950/30 dark:to-emerald-950/30 border border-amber-300/70 dark:border-amber-700/50 p-3 rounded-2xl shadow-sm flex items-center gap-3 cursor-pointer group active:scale-[0.99] transition hover:shadow-md">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm relative">
+                                <i class="fa-solid fa-bullhorn text-sm"></i>
+                                <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
+                                <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="px-2 py-0.5 bg-amber-500/20 text-amber-800 dark:text-amber-300 font-extrabold text-[9px] uppercase rounded tracking-wider">
+                                        ${topNotif.kategori || 'Pengumuman'}
+                                    </span>
+                                    <span class="text-[10px] text-slate-400">${topNotif.tanggal || ''}</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
+                                    ${topNotif.judul}
+                                </h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                                    ${snippet}
+                                </p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:translate-x-0.5 group-hover:text-emerald-600 transition shrink-0"></i>
+                        </div>
+                    `;
+                }
+
+                if (containerDesk) {
+                    containerDesk.classList.remove('hidden');
+                    containerDesk.innerHTML = `
+                        <div onclick="openNotifikasiDetail('${topNotif.id}')" class="bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-emerald-500/10 dark:from-amber-950/40 dark:via-rose-950/30 dark:to-slate-900 border border-amber-300/70 dark:border-amber-700/50 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-4 cursor-pointer group hover:shadow-md transition">
+                            <div class="flex items-center space-x-3.5 min-w-0">
+                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm relative">
+                                    <i class="fa-solid fa-bullhorn text-base"></i>
+                                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping"></span>
+                                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white"></span>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="px-2.5 py-0.5 bg-amber-500/20 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] uppercase rounded-md tracking-wider">
+                                            ${topNotif.kategori || 'Pengumuman'}
+                                        </span>
+                                        <span class="text-xs text-slate-400 font-medium">${topNotif.tanggal || ''}</span>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition truncate mt-0.5">
+                                        ${topNotif.judul}
+                                        <span class="font-normal text-xs text-slate-500 dark:text-slate-400 ml-2 hidden sm:inline">— ${snippet}</span>
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                                    <span>Buka Pengumuman</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.warn('renderBerandaNotifikasi error:', e);
+            }
+        }
+
         // ==================== POPUP POSTER BERANDA ====================
         let homePosterTimer = null;
 
@@ -1774,10 +1865,9 @@
                 );
                 if (!popupNotif) return;
 
-                // Hanya sembunyikan jika user telah menutup popup di sesi ini atau telah membaca warta
-                const readIds = getReadNotifIds();
+                // Hanya sembunyikan jika user telah menutup popup di sesi ini secara eksplisit pada halaman beranda
                 const isDismissed = sessionStorage.getItem('asn_dismissed_popup_' + popupNotif.id) === 'true';
-                if (!force && (readIds.includes(popupNotif.id) || isDismissed)) {
+                if (!force && isDismissed) {
                     return;
                 }
 
@@ -1806,6 +1896,7 @@
 
                 if (modal && content) {
                     modal.dataset.notifId = popupNotif.id;
+                    modal.dataset.isPreview = 'false';
 
                     // Batalkan timer lama jika ada
                     if (homePosterTimer) clearTimeout(homePosterTimer);
@@ -1814,8 +1905,8 @@
                     const splash = document.getElementById('mobile-splash-screen');
                     const isSplashActive = splash && window.getComputedStyle(splash).display !== 'none' && !splash.classList.contains('opacity-0');
                     
-                    // Jika splash masih aktif di mobile, tunggu hingga splash selesai memudar (2200ms)
-                    const displayDelay = isSplashActive ? 2200 : 350;
+                    // Jika splash masih aktif di mobile, tunggu hingga splash selesai memudar (1200ms)
+                    const displayDelay = isSplashActive ? 1200 : 250;
 
                     homePosterTimer = setTimeout(() => {
                         // Pastikan masih di tab Beranda saat timeout selesai
@@ -1838,11 +1929,13 @@
             const modal = document.getElementById('homePosterModal');
             const content = document.getElementById('homePosterContent');
             if (modal && content) {
-                if (dismissSession && modal.dataset.notifId) {
+                const isPreview = modal.dataset.isPreview === 'true';
+                if (dismissSession && !isPreview && modal.dataset.notifId) {
                     try {
                         sessionStorage.setItem('asn_dismissed_popup_' + modal.dataset.notifId, 'true');
                     } catch (e) {}
                 }
+                modal.dataset.isPreview = 'false';
                 content.classList.remove('scale-100', 'opacity-100');
                 content.classList.add('scale-95', 'opacity-0');
                 setTimeout(() => {
@@ -1854,7 +1947,7 @@
         function openNotifFromPoster(id) {
             const modal = document.getElementById('homePosterModal');
             const notifId = id || (modal ? modal.dataset.notifId : null);
-            closeHomePoster(false); // Jangan blokir permanen sesi jika user hanya ingin membaca warta
+            closeHomePoster(false); // Jangan blokir sesi jika user ingin membuka warta
 
             switchTab('notifikasi');
             if (typeof setNotifFilter === 'function') {
@@ -1869,6 +1962,7 @@
         }
 
         window.loadNotifikasi = loadNotifikasi;
+        window.renderBerandaNotifikasi = renderBerandaNotifikasi;
         window.checkHomePosterPopup = checkHomePosterPopup;
         window.closeHomePoster = closeHomePoster;
         window.openNotifFromPoster = openNotifFromPoster;

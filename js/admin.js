@@ -3914,8 +3914,13 @@
 
                 if (response && (response.status === "success" || response.success)) {
                     if (typeof showToast === 'function') showToast(`Status warta berhasil diubah ke ${newStatus}!`);
+                    try {
+                        sessionStorage.removeItem('asn_dismissed_popup_' + item.id);
+                    } catch (e) {}
                     await loadAdminNotifikasi();
                     if (typeof loadNotifikasi === 'function') await loadNotifikasi();
+                    if (typeof renderBerandaNotifikasi === 'function') renderBerandaNotifikasi();
+                    if (typeof updateNotifBadge === 'function') updateNotifBadge();
                 } else {
                     item.status = oldStatus;
                     filterAdminNotifikasiList();
@@ -3995,6 +4000,7 @@
 
                 if (modal && content) {
                     modal.dataset.notifId = item.id;
+                    modal.dataset.isPreview = 'true';
                     modal.classList.remove('hidden');
                     setTimeout(() => {
                         content.classList.remove('scale-95', 'opacity-0');
@@ -4177,6 +4183,12 @@
                     }
                     if (typeof loadNotifikasi === 'function') {
                         await loadNotifikasi();
+                    }
+                    if (typeof renderBerandaNotifikasi === 'function') {
+                        renderBerandaNotifikasi();
+                    }
+                    if (typeof updateNotifBadge === 'function') {
+                        updateNotifBadge();
                     }
                 } else {
                     const msg = (response && response.message) || "Gagal menyimpan notifikasi.";
