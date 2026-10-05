@@ -3919,7 +3919,6 @@
                     } catch (e) {}
                     await loadAdminNotifikasi();
                     if (typeof loadNotifikasi === 'function') await loadNotifikasi();
-                    if (typeof renderBerandaNotifikasi === 'function') renderBerandaNotifikasi();
                     if (typeof updateNotifBadge === 'function') updateNotifBadge();
                 } else {
                     item.status = oldStatus;
@@ -4183,9 +4182,6 @@
                     }
                     if (typeof loadNotifikasi === 'function') {
                         await loadNotifikasi();
-                    }
-                    if (typeof renderBerandaNotifikasi === 'function') {
-                        renderBerandaNotifikasi();
                     }
                     if (typeof updateNotifBadge === 'function') {
                         updateNotifBadge();
