@@ -5,6 +5,12 @@ const TAHFIDZ_STORAGE_KEYS = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.st
         parentToken: 'asnawiyyah_parent_token',
         pengasuhToken: 'asnawiyyah_pengasuh_token'
     };
+// Urutan Kurikulum Tahfidz Pesantren (Mulai Juz 30 s/d 21, lalu Juz 1 s/d 20)
+const TAHFIDZ_CURRICULUM_JUZ_ORDER = [
+    30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+];
 /**
  * ====================================================================
  * MODUL FRONTEND: TAHFIDZ AL-QUR'AN (PPTQ ASNAWIYYAH)
