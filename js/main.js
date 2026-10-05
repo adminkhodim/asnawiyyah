@@ -565,7 +565,19 @@
                 card.onclick = () => bacaBerita(news.news_id || news.slug);
 
                 const defaultNewsImage = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop";
-                const imgSource = (news.gambar && String(news.gambar).trim()) ? news.gambar : defaultNewsImage;
+                let imgSource = (news.gambar && String(news.gambar).trim()) ? news.gambar : '';
+
+                // Jika gambar kosong atau URL kopi lama, cari gambar pertama dari isi berita
+                if ((!imgSource || imgSource.includes('photo-1584286595398-a59f21d313f5')) && news.isi) {
+                    const match = String(news.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+                    if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
+                        imgSource = match[1];
+                    }
+                }
+                if (!imgSource || imgSource.includes('photo-1584286595398-a59f21d313f5')) {
+                    imgSource = defaultNewsImage;
+                }
+
                 const imgHtml = `<img src="${imgSource}" alt="${escapeHtml(news.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null;this.src='${defaultNewsImage}';">`;
 
                 card.innerHTML = `
@@ -628,7 +640,16 @@
                     const item = document.createElement('article');
                     item.className = `flex items-center justify-between gap-3 ${idx < topHeadline.length - 1 ? 'border-b border-slate-100 dark:border-[#253447] pb-4' : ''} cursor-pointer group`;
                     item.onclick = () => bacaBerita(news.news_id || news.slug);
-                    const thumbSrc = news.gambar || defaultThumb;
+                    let thumbSrc = news.gambar || '';
+                    if ((!thumbSrc || thumbSrc.includes('photo-1584286595398-a59f21d313f5')) && news.isi) {
+                        const match = String(news.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+                        if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
+                            thumbSrc = match[1];
+                        }
+                    }
+                    if (!thumbSrc || thumbSrc.includes('photo-1584286595398-a59f21d313f5')) {
+                        thumbSrc = defaultThumb;
+                    }
                     item.innerHTML = `
                         <div class="space-y-1.5 flex-1 min-w-0">
                             <div>
@@ -894,8 +915,18 @@
 
             const imgEl = document.getElementById('detail-news-img');
             const imgContainer = document.getElementById('detail-news-img-container');
-            if (news.gambar && news.gambar.trim() !== '') {
-                imgEl.src = news.gambar;
+            let coverImg = (news.gambar && news.gambar.trim() !== '') ? news.gambar : '';
+
+            // Jika cover kosong atau URL kopi lama, ekstrak dari isi berita
+            if ((!coverImg || coverImg.includes('photo-1584286595398-a59f21d313f5')) && news.isi) {
+                const match = String(news.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
+                    coverImg = match[1];
+                }
+            }
+
+            if (coverImg && !coverImg.includes('photo-1584286595398-a59f21d313f5')) {
+                imgEl.src = coverImg;
                 imgContainer.classList.remove('hidden');
             } else {
                 imgContainer.classList.add('hidden');

@@ -317,6 +317,14 @@ function simpanBerita(formData) {
       cleanIsi = processNewsInlineImages(folder, cleanIsi);
     }
 
+    // 2b. Jika tidak ada file utama diunggah namun ada gambar di dalam artikel, jadikan gambar pertama sebagai cover
+    if (!fileUrl && cleanIsi) {
+      var inlineMatch = cleanIsi.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (inlineMatch && inlineMatch[1] && inlineMatch[1].indexOf('photo-1584286595398-a59f21d313f5') === -1) {
+        fileUrl = inlineMatch[1];
+      }
+    }
+
     // 3. Simpan ke Google Spreadsheet
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) {
@@ -427,6 +435,14 @@ function updateBerita(formData) {
     if (isi && isi.indexOf("data:image/") > -1) {
       if (!folder) folder = DriveApp.getFolderById(FOLDER_ID);
       isi = processNewsInlineImages(folder, isi);
+    }
+
+    // Jika cover kosong atau placeholder kopi lama, gunakan gambar pertama dari artikel
+    if ((!fileUrl || fileUrl.indexOf('photo-1584286595398-a59f21d313f5') > -1) && isi) {
+      var inlineMatch = isi.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (inlineMatch && inlineMatch[1] && inlineMatch[1].indexOf('photo-1584286595398-a59f21d313f5') === -1) {
+        fileUrl = inlineMatch[1];
+      }
     }
 
     // Array to update: D to I (Judul, Kategori, Penulis, Gambar_URL, Ringkasan, Isi)

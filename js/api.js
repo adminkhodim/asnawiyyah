@@ -56,17 +56,27 @@
                     const rows = await res.json();
                     return {
                         status: "success",
-                        data: rows.map(n => ({
-                            news_id: n.news_id,
-                            slug: n.slug,
-                            tanggal: n.tanggal,
-                            judul: n.judul,
-                            kategori: n.kategori,
-                            ringkasan: n.ringkasan,
-                            isi: n.isi,
-                            penulis: n.penulis || "Admin",
-                            gambar: n.gambar_url || n.foto_url || ""
-                        }))
+                        data: rows.map(n => {
+                            let img = n.gambar_url || n.foto_url || "";
+                            // Jika gambar kosong atau URL kopi tidak relevan, ekstrak gambar pertama dari isi artikel
+                            if ((!img || img.includes('photo-1584286595398-a59f21d313f5')) && n.isi) {
+                                const m = String(n.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+                                if (m && m[1] && !m[1].includes('photo-1584286595398-a59f21d313f5')) {
+                                    img = m[1];
+                                }
+                            }
+                            return {
+                                news_id: n.news_id,
+                                slug: n.slug,
+                                tanggal: n.tanggal,
+                                judul: n.judul,
+                                kategori: n.kategori,
+                                ringkasan: n.ringkasan,
+                                isi: n.isi,
+                                penulis: n.penulis || "Admin",
+                                gambar: img || "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop"
+                            };
+                        })
                     };
                 }
 
@@ -859,7 +869,19 @@
                     const d = payload.data || payload;
                     const newsId = (response && (response.newsId || response.news_id)) || d.news_id || d.id || ('NEWS_' + Date.now());
                     const slugVal = d.slug || (d.judul ? d.judul.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : ('berita-' + Date.now()));
-                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || d.gambar || d.gambar_url || d.gambarLama || 'https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1200&auto=format&fit=crop';
+                    let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || d.gambar || d.gambar_url || d.gambarLama || '';
+                    
+                    // Jika cover gambar kosong atau link placeholder kopi lama, auto-ekstrak gambar dari isi berita
+                    if ((!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) && d.isi) {
+                        const inlineMatch = String(d.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+                        if (inlineMatch && inlineMatch[1] && !inlineMatch[1].includes('photo-1584286595398-a59f21d313f5')) {
+                            imgUrl = inlineMatch[1];
+                        }
+                    }
+                    if (!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) {
+                        imgUrl = 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop';
+                    }
+
                     const newsRow = {
                         news_id: newsId,
                         slug: slugVal,
@@ -894,7 +916,7 @@
                 // ==================== 6. BANNER SLIDER ====================
                 else if (action === 'saveBanner') {
                     const bannerId = (response && (response.id || response.id_banner)) || payload.id || payload.id_banner || ('BNR_' + Date.now());
-                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || payload.gambar || payload.gambarUrl || payload.gambarLama || 'https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1200&auto=format&fit=crop';
+                    const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || payload.gambar || payload.gambarUrl || payload.gambarLama || 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=1200&auto=format&fit=crop';
                     const bannerRow = {
                         id_banner: bannerId,
                         nama_banner: payload.nama || payload.nama_banner || 'Banner Asnawiyyah',
@@ -1296,7 +1318,7 @@
                 ringkasan: "Pesantren menyambut hangat silaturahmi tokoh ulama nasional yang memberikan wejangan mendalam bagi para santri...",
                 isi: "Pesantren menyambut hangat silaturahmi tokoh ulama nasional di Aula Utama. Beliau memberikan pengarahan keilmuan kepada seluruh santri agar tetap bersemangat menuntut ilmu di tengah derasnya modernitas global.\n\nBeliau menekankan pentingnya penguasaan literatur klasik sebagai akar moderasi beragama.",
                 penulis: "Kesiswaan",
-                gambar: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=800&auto=format&fit=crop"
+                gambar: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop"
             }
         ];
 
@@ -1313,7 +1335,7 @@
             {
                 id: "BAN_2",
                 nama: "Dokumentasi Sema'an Rutin Bil-Ghaib",
-                gambar: "https://images.unsplash.com/photo-1584286595398-a59f21d313f5?q=80&w=1200&auto=format&fit=crop",
+                gambar: "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop",
                 tipeAksi: "tab",
                 targetAksi: "kabar",
                 urutan: 2,

@@ -1421,6 +1421,14 @@
                     }
                 }
 
+                // Jika foto utama kosong namun ada gambar yang disisipkan di isi berita, gunakan sebagai foto utama
+                if (!fileData && isiKonten) {
+                    const inlineMatch = isiKonten.match(/<img[^>]+src=["']([^"']+)["']/i);
+                    if (inlineMatch && inlineMatch[1]) {
+                        fileData = inlineMatch[1];
+                    }
+                }
+
                 // Normalisasi fileData menjadi object { base64, mimeType, name }
                 if (fileData && typeof fileData === 'string' && fileData.startsWith('data:')) {
                     const parts = fileData.split(',');
