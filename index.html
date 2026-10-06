@@ -4215,50 +4215,55 @@
     <div class="flex h-screen w-full bg-slate-50 dark:bg-[#0b131e] overflow-hidden text-slate-800 dark:text-slate-100 font-sans">
         
         <!-- Sidebar (Desktop Drawer, Hidden on Mobile) -->
-        <aside id="admin-sidebar" class="hidden lg:flex bg-white dark:bg-[#15202d] border-r border-slate-200 dark:border-[#253447] flex-col transition-all duration-300 flex-shrink-0 relative w-64 z-30 h-full shadow-sm">
+        <aside id="admin-sidebar" class="hidden lg:flex flex-col transition-all duration-300 flex-shrink-0 relative w-64 z-30 h-full shadow-lg">
             
             <!-- Toggle Button (Desktop) -->
-            <button id="admin-sidebar-toggle" onclick="toggleAdminSidebar()" class="flex absolute -right-3 top-6 bg-emerald-600 dark:bg-emerald-500 text-white w-6 h-6 rounded-full items-center justify-center shadow-md hover:bg-emerald-700 dark:hover:bg-emerald-600 z-10 transition active:scale-95">
+            <button id="admin-sidebar-toggle" onclick="toggleAdminSidebar()" class="flex absolute -right-3 top-6 bg-white dark:bg-[#1a293b] text-emerald-700 dark:text-emerald-400 w-6 h-6 rounded-full items-center justify-center shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 z-40 transition active:scale-95 border border-slate-200/40 dark:border-slate-700">
                 <i class="fa-solid fa-chevron-left text-xs transition-transform" id="admin-sidebar-icon"></i>
             </button>
 
-            <!-- Brand & Profil Administrator Header -->
-            <div class="p-4 border-b border-slate-100 dark:border-slate-800/80 shrink-0 bg-slate-50/50 dark:bg-[#111a24]/50">
+            <!-- Brand & Profil Administrator Header (Menyatu Mewah dengan Latar Solid) -->
+            <div class="p-4 border-b border-white/10 dark:border-white/5 shrink-0">
+                <div class="sidebar-text mb-3 px-1 flex items-center justify-between">
+                    <span class="text-[11px] font-extrabold tracking-widest text-emerald-100/90 dark:text-emerald-300 uppercase">PPTQ ASNAWIYYAH</span>
+                    <span class="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded font-mono font-bold tracking-wide">ADMIN</span>
+                </div>
+                
                 <div class="flex items-center gap-3 overflow-hidden">
                     <!-- User Avatar with Online Dot -->
                     <div class="relative shrink-0">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-emerald-500/20">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-white/30">
                             <span id="admin-sidebar-avatar-initial">AU</span>
                         </div>
-                        <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-[#15202d] rounded-full shadow-xs" title="Online Active"></span>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-emerald-700 dark:border-[#132232] rounded-full shadow-xs" title="Online Active"></span>
                     </div>
 
                     <!-- User Identity & Role Badge -->
                     <div class="sidebar-text min-w-0 transition-opacity duration-300">
                         <div class="flex items-center gap-1.5">
-                            <h2 id="admin-sidebar-user-name" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">Admin Utama</h2>
-                            <i class="fa-solid fa-circle-check text-[10px] text-emerald-500 shrink-0" title="Terverifikasi"></i>
+                            <h2 id="admin-sidebar-user-name" class="text-xs font-bold text-white truncate leading-tight">Admin Utama</h2>
+                            <i class="fa-solid fa-circle-check text-[10px] text-emerald-300 shrink-0" title="Terverifikasi"></i>
                         </div>
-                        <span id="admin-sidebar-role-badge" class="inline-block mt-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded tracking-wide leading-none border border-emerald-300/40 dark:border-emerald-700/40">
+                        <span id="admin-sidebar-role-badge" class="inline-block mt-0.5 text-[9px] font-semibold text-emerald-100 bg-white/15 px-1.5 py-0.5 rounded tracking-wide leading-none border border-white/20">
                             Super Admin
                         </span>
-                        <div class="text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">PPTQ Asnawiyyah</div>
+                        <div class="text-[9px] text-emerald-200/80 dark:text-slate-400 truncate mt-0.5">ID: EMP-ADM-001</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Menu Navigation (Grouped by Category) -->
-            <div class="flex-1 overflow-y-auto py-3 px-2 custom-scrollbar space-y-4" id="admin-sidebar-menu">
+            <!-- Menu Navigation (Grouped by Category, Pl-3 Pr-0 untuk Flush Protruding Tabs) -->
+            <div class="flex-1 overflow-y-auto py-3 pl-3 pr-0 custom-scrollbar space-y-4" id="admin-sidebar-menu">
 
                 <!-- Grup 1: Ringkasan & Overview -->
                 <div class="admin-menu-group">
-                    <div class="px-2 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 sidebar-text flex items-center gap-1.5">
-                        <i class="fa-solid fa-gauge text-[9px] text-emerald-500/70"></i>
+                    <div class="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 dark:text-slate-400 sidebar-text flex items-center gap-1.5">
+                        <i class="fa-solid fa-gauge text-[9px] text-emerald-300/80"></i>
                         <span>Ringkasan & Overview</span>
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <button onclick="showAdminView('hub')" data-view="hub" class="admin-nav-item active w-full flex items-center px-3 py-2 rounded-xl text-brand-700 bg-brand-50 dark:text-emerald-400 dark:bg-emerald-950/60 font-bold transition group relative" title="Dashboard Utama">
+                            <button onclick="showAdminView('hub')" data-view="hub" class="admin-nav-item active flex items-center px-3.5 py-2.5 font-bold transition group relative" title="Dashboard Utama">
                                 <i class="fa-solid fa-gauge-high w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Dashboard Utama</span>
                             </button>
@@ -4267,51 +4272,51 @@
                 </div>
 
                 <!-- Grup 2: Kesantrian & Tahfidz -->
-                <div class="admin-menu-group pt-1 border-t border-slate-100/80 dark:border-slate-800/60">
-                    <div class="px-2 pt-2 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 sidebar-text flex items-center gap-1.5">
-                        <i class="fa-solid fa-graduation-cap text-[9px] text-emerald-500/70"></i>
+                <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
+                    <div class="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 dark:text-slate-400 sidebar-text flex items-center gap-1.5">
+                        <i class="fa-solid fa-graduation-cap text-[9px] text-emerald-300/80"></i>
                         <span>Kesantrian & Tahfidz</span>
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <button onclick="showAdminView('tahfidz')" data-view="tahfidz" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Tahfidz Al-Qur'an">
-                                <i class="fa-solid fa-book-quran w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('tahfidz')" data-view="tahfidz" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Tahfidz Al-Qur'an">
+                                <i class="fa-solid fa-book-quran w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Tahfidz Qur'an</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('santri')" data-view="santri" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Data Santri">
-                                <i class="fa-solid fa-id-card-clip w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('santri')" data-view="santri" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Data Santri">
+                                <i class="fa-solid fa-id-card-clip w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Santri</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('ppdb')" data-view="ppdb" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Data Pendaftar PPDB">
-                                <i class="fa-solid fa-user-graduate w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('ppdb')" data-view="ppdb" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Data Pendaftar PPDB">
+                                <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pendaftar PPDB</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('unit-kegiatan')" data-view="unit-kegiatan" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Unit Kegiatan Santri">
-                                <i class="fa-solid fa-people-roof w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('unit-kegiatan')" data-view="unit-kegiatan" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Unit Kegiatan Santri">
+                                <i class="fa-solid fa-people-roof w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Unit Kegiatan (UKS)</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('jadwal-kegiatan')" data-view="jadwal-kegiatan" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Manajemen Jadwal Kegiatan">
-                                <i class="fa-solid fa-calendar-check w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('jadwal-kegiatan')" data-view="jadwal-kegiatan" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Manajemen Jadwal Kegiatan">
+                                <i class="fa-solid fa-calendar-check w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Jadwal Kegiatan</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('alumni')" data-view="alumni" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Rekap Data Alumni">
-                                <i class="fa-solid fa-user-graduate w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('alumni')" data-view="alumni" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Rekap Data Alumni">
+                                <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Rekap Alumni</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('program')" data-view="program" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Manajemen Program">
-                                <i class="fa-solid fa-graduation-cap w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('program')" data-view="program" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Manajemen Program">
+                                <i class="fa-solid fa-graduation-cap w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Program</span>
                             </button>
                         </li>
@@ -4319,15 +4324,15 @@
                 </div>
 
                 <!-- Grup 3: Kepegawaian & SDM -->
-                <div class="admin-menu-group pt-1 border-t border-slate-100/80 dark:border-slate-800/60">
-                    <div class="px-2 pt-2 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 sidebar-text flex items-center gap-1.5">
-                        <i class="fa-solid fa-user-tie text-[9px] text-emerald-500/70"></i>
+                <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
+                    <div class="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 dark:text-slate-400 sidebar-text flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-tie text-[9px] text-emerald-300/80"></i>
                         <span>Kepegawaian & SDM</span>
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <button onclick="showAdminView('pegawai')" data-view="pegawai" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Data Pegawai & Asatidz">
-                                <i class="fa-solid fa-user-tie w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('pegawai')" data-view="pegawai" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Data Pegawai & Asatidz">
+                                <i class="fa-solid fa-user-tie w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pegawai</span>
                             </button>
                         </li>
@@ -4335,39 +4340,39 @@
                 </div>
 
                 <!-- Grup 4: Portal & Media Lembaga -->
-                <div class="admin-menu-group pt-1 border-t border-slate-100/80 dark:border-slate-800/60">
-                    <div class="px-2 pt-2 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 sidebar-text flex items-center gap-1.5">
-                        <i class="fa-solid fa-bullhorn text-[9px] text-emerald-500/70"></i>
+                <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
+                    <div class="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 dark:text-slate-400 sidebar-text flex items-center gap-1.5">
+                        <i class="fa-solid fa-bullhorn text-[9px] text-emerald-300/80"></i>
                         <span>Portal & Publikasi</span>
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <button onclick="showAdminView('berita')" data-view="berita" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Manajemen Berita">
-                                <i class="fa-solid fa-newspaper w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('berita')" data-view="berita" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Manajemen Berita">
+                                <i class="fa-solid fa-newspaper w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Berita</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('banner')" data-view="banner" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Banner Slider">
-                                <i class="fa-solid fa-images w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('banner')" data-view="banner" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Banner Slider">
+                                <i class="fa-solid fa-images w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Banner Slider</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('galeri')" data-view="galeri" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Manajemen Galeri">
-                                <i class="fa-solid fa-camera-retro w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('galeri')" data-view="galeri" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Manajemen Galeri">
+                                <i class="fa-solid fa-camera-retro w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Galeri</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('profil-lembaga')" data-view="profil-lembaga" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Profil & Kepengurusan">
-                                <i class="fa-solid fa-building-columns w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('profil-lembaga')" data-view="profil-lembaga" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Profil & Kepengurusan">
+                                <i class="fa-solid fa-building-columns w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Profil & Kepengurusan</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('pengaturan')" data-view="pengaturan" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Tautan & Sosmed">
-                                <i class="fa-solid fa-share-nodes w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('pengaturan')" data-view="pengaturan" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Tautan & Sosmed">
+                                <i class="fa-solid fa-share-nodes w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Tautan & Sosmed</span>
                             </button>
                         </li>
@@ -4375,27 +4380,27 @@
                 </div>
 
                 <!-- Grup 5: Sistem, Akses & Keamanan -->
-                <div class="admin-menu-group pt-1 border-t border-slate-100/80 dark:border-slate-800/60">
-                    <div class="px-2 pt-2 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 sidebar-text flex items-center gap-1.5">
-                        <i class="fa-solid fa-sliders text-[9px] text-emerald-500/70"></i>
+                <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
+                    <div class="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 dark:text-slate-400 sidebar-text flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders text-[9px] text-emerald-300/80"></i>
                         <span>Sistem & Hak Akses</span>
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <button onclick="showAdminView('users')" data-view="users" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Manajemen Pengguna">
-                                <i class="fa-solid fa-users-gear w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('users')" data-view="users" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Manajemen Pengguna">
+                                <i class="fa-solid fa-users-gear w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Pengguna</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('roles')" data-view="roles" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Manajemen Peran">
-                                <i class="fa-solid fa-shield-halved w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('roles')" data-view="roles" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Manajemen Peran">
+                                <i class="fa-solid fa-shield-halved w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Manajemen Peran</span>
                             </button>
                         </li>
                         <li>
-                            <button onclick="showAdminView('notifikasi')" data-view="notifikasi" class="admin-nav-item w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-brand-600 font-semibold transition group relative dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400" title="Notifikasi Broadcast">
-                                <i class="fa-solid fa-bell w-5 text-center text-sm group-hover:text-brand-600 transition-colors"></i>
+                            <button onclick="showAdminView('notifikasi')" data-view="notifikasi" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Notifikasi Broadcast">
+                                <i class="fa-solid fa-bell w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Notifikasi Broadcast</span>
                             </button>
                         </li>
@@ -4405,13 +4410,13 @@
             </div>
             
             <!-- Bottom Footer (Session Status & Logout) -->
-            <div class="p-3 border-t border-slate-100 dark:border-slate-800/80 shrink-0 bg-slate-50/40 dark:bg-[#111a24]/40">
-                <button onclick="logoutAdmin()" class="w-full flex items-center justify-center px-3 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 rounded-xl transition overflow-hidden border border-rose-200/50 dark:border-rose-900/40 font-bold text-xs group" title="Keluar dari Panel Admin">
-                    <i class="fa-solid fa-right-from-bracket text-sm shrink-0 group-hover:-translate-x-0.5 transition-transform"></i>
-                    <span class="ml-2 sidebar-text whitespace-nowrap transition-opacity duration-300">Keluar Sistem</span>
+            <div class="p-3 border-t border-white/10 dark:border-white/5 shrink-0 bg-black/10 dark:bg-black/20">
+                <button onclick="logoutAdmin()" class="w-full flex items-center justify-center px-3 py-2.5 bg-white/15 hover:bg-rose-600 text-white rounded-xl transition overflow-hidden border border-white/20 font-bold text-xs group active:scale-98" title="Keluar dari Panel Admin">
+                    <i class="fa-solid fa-power-off text-sm shrink-0 group-hover:-translate-x-0.5 transition-transform"></i>
+                    <span class="ml-2 sidebar-text whitespace-nowrap transition-opacity duration-300">LOGOUT</span>
                 </button>
                 <div class="sidebar-text text-center mt-2 transition-opacity duration-300">
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">PPTQ Asnawiyyah v2.0</span>
+                    <span class="text-[10px] text-white/60 font-medium">© 2026 PPTQ Asnawiyyah</span>
                 </div>
             </div>
         </aside>

@@ -191,11 +191,9 @@
 
             document.querySelectorAll('.admin-nav-item').forEach(btn => {
                 if (btn.dataset.view === viewName) {
-                    btn.classList.add('active', 'text-brand-700', 'bg-brand-50', 'dark:text-emerald-400', 'dark:bg-emerald-950/60', 'font-bold');
-                    btn.classList.remove('text-slate-500', 'dark:text-slate-400', 'font-semibold');
+                    btn.classList.add('active');
                 } else {
-                    btn.classList.remove('active', 'text-brand-700', 'bg-brand-50', 'dark:text-emerald-400', 'dark:bg-emerald-950/60', 'font-bold');
-                    btn.classList.add('text-slate-500', 'dark:text-slate-400', 'font-semibold');
+                    btn.classList.remove('active');
                 }
             });
             
