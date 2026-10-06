@@ -1261,10 +1261,10 @@
             noticeIconClass: 'fa-crown text-emerald-400',
             noticeBadgeClass: 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/30',
             kpis: [
-                { id: 'kpi-sa-sessions', label: 'Kehadiran Pengguna', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_sessions', sub: 'Sesi Aktif Real-time', chipText: '● Live Online', action: "openOnlineUsersModal()" },
-                { id: 'kpi-sa-users', label: 'Total Pengguna Sistem', icon: 'fa-users-gear', color: 'indigo', valueKey: 'sa_users', sub: '25 Akun • 7 Peran', chipText: 'Terverifikasi', action: "showAdminView('users')" },
-                { id: 'kpi-sa-db', label: 'Infrastruktur Cloud DB', icon: 'fa-database', color: 'rose', valueKey: 'sa_cloud_db', sub: 'PostgreSQL Singapore', chipText: '⚡ Optimal', action: "showAdminView('pengaturan')" },
-                { id: 'kpi-sa-pwa', label: 'Kesehatan Web & PWA', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_pwa', sub: 'Service Worker Aktif', chipText: '98.5% Efektif', action: "showAdminView('pengaturan')" }
+                { id: 'kpi-sa-sessions', label: 'Total Kehadiran', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_sessions', sub: 'Belum Presensi', chipText: '● Wajib Check-In', action: "openAdminCameraPresensi()" },
+                { id: 'kpi-sa-users', label: 'Jam Kerja Efektif', icon: 'fa-clock', color: 'indigo', valueKey: 'sa_users', sub: 'Check-In Terverifikasi', chipText: '⏳ 12 Menit Tersisa', action: "showAdminView('jadwal-kegiatan')" },
+                { id: 'kpi-sa-db', label: 'Sisa Cuti Tahunan', icon: 'fa-calendar-xmark', color: 'rose', valueKey: 'sa_cloud_db', sub: 'Dari kuota 14 hari', chipText: 'Ajukan Cuti →', action: "showAdminView('tahfidz')" },
+                { id: 'kpi-sa-pwa', label: 'Total Lembur / Shift', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_pwa', sub: '+2.5 Jam minggu ini', chipText: '98.5% Efektif', action: "showAdminView('tahfidz')" }
             ]
         },
         'ADMIN': {
@@ -1284,10 +1284,10 @@
             noticeIconClass: 'fa-shield-halved text-brand-600 dark:text-brand-400',
             noticeBadgeClass: 'bg-brand-200/70 text-brand-800 dark:bg-brand-900 dark:text-brand-200',
             kpis: [
-                { label: 'Total Kehadiran Santri', icon: 'fa-user-check', color: 'emerald', valueKey: 'santri', sub: 'Santri Mukim Terdata', chipText: '● 98.5% Hadir' },
-                { label: 'Setoran Tahfidz Qur\'an', icon: 'fa-book-quran', color: 'indigo', valueKey: 'tahfidz_tpq', sub: 'Target 30 Juz Terpantau', chipText: '⏳ Sesi Berjalan' },
-                { label: 'Presensi & Dispensasi', icon: 'fa-calendar-check', color: 'rose', valueKey: 'presensi', sub: 'Live QR Code Presensi', chipText: 'Buka Izin →' },
-                { label: 'Pendaftar PPDB Baru', icon: 'fa-bolt', color: 'amber', valueKey: 'ppdb', sub: 'Calon Santri Terdaftar', chipText: 'Siap Seleksi' }
+                { label: 'Total Kehadiran', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_sessions', sub: 'Belum Presensi', chipText: '● Wajib Check-In', action: "openAdminCameraPresensi()" },
+                { label: 'Jam Kerja Efektif', icon: 'fa-clock', color: 'indigo', valueKey: 'sa_users', sub: 'Check-In Terverifikasi', chipText: '⏳ 12 Menit Tersisa', action: "showAdminView('jadwal-kegiatan')" },
+                { label: 'Sisa Cuti Tahunan', icon: 'fa-calendar-xmark', color: 'rose', valueKey: 'sa_cloud_db', sub: 'Dari kuota 14 hari', chipText: 'Ajukan Cuti →', action: "showAdminView('tahfidz')" },
+                { label: 'Total Lembur / Shift', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_pwa', sub: '+2.5 Jam minggu ini', chipText: '98.5% Efektif', action: "showAdminView('tahfidz')" }
             ]
         },
         'ASATIDZ': {
@@ -1496,32 +1496,17 @@
      * Dapatkan nilai metrik dinamis untuk KPI
      */
     function getKpiMetricValue(valueKey) {
-        if (valueKey === 'sa_users') {
-            const count = (typeof adminUsersList !== 'undefined' && Array.isArray(adminUsersList) && adminUsersList.length > 0) 
-                ? adminUsersList.length 
-                : 25;
-            return count + ' Akun';
-        }
         if (valueKey === 'sa_sessions') {
-            if (typeof adminUsersList !== 'undefined' && Array.isArray(adminUsersList) && adminUsersList.length > 0) {
-                const onlineCount = adminUsersList.filter(u => {
-                    const status = typeof calculateUserOnlineStatus === 'function' ? calculateUserOnlineStatus(u.last_seen_at) : { isOnline: false };
-                    return status.isOnline;
-                }).length;
-                return `${Math.max(1, onlineCount)} Pengguna Online`;
-            }
-            return '1 Pengguna Online';
+            return '0';
+        }
+        if (valueKey === 'sa_users') {
+            return '08:00 <span class="text-xs font-semibold text-white/90">WIB</span>';
         }
         if (valueKey === 'sa_cloud_db') {
-            return '< 50ms (Optimal)';
+            return '0 <span class="text-xs font-semibold text-white/90">Hari</span>';
         }
         if (valueKey === 'sa_pwa') {
-            if (typeof window !== 'undefined') {
-                const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-                if (isStandalone) return 'Standalone (v19)';
-                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) return 'Optimal (v19)';
-            }
-            return 'Aktif (v19)';
+            return '893 <span class="text-xs font-semibold text-white/90">Jam</span>';
         }
         if (valueKey === 'santri') {
             return (typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList)) ? adminStudentsList.length + ' Santri' : '0 Santri';
@@ -1640,43 +1625,43 @@
         if (kpiGrid && Array.isArray(profile.kpis)) {
             const vibrantGradientMap = {
                 emerald: {
-                    card: 'bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-900/15',
-                    chip: 'bg-emerald-950/40 text-emerald-100 border border-emerald-300/30',
+                    card: 'bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white shadow-lg shadow-emerald-500/20',
+                    chip: 'bg-white text-rose-600 font-black shadow-xs',
                     iconBg: 'bg-white/20 text-white'
                 },
                 indigo: {
-                    card: 'bg-gradient-to-br from-indigo-500 via-blue-600 to-indigo-700 text-white shadow-md shadow-indigo-900/15',
-                    chip: 'bg-indigo-950/40 text-indigo-100 border border-indigo-300/30',
+                    card: 'bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white shadow-lg shadow-indigo-500/20',
+                    chip: 'bg-white/25 text-white font-bold backdrop-blur-xs',
                     iconBg: 'bg-white/20 text-white'
                 },
                 rose: {
-                    card: 'bg-gradient-to-br from-pink-500 via-rose-500 to-rose-600 text-white shadow-md shadow-rose-900/15',
-                    chip: 'bg-rose-950/40 text-rose-100 border border-rose-300/30',
+                    card: 'bg-gradient-to-br from-[#f43f5e] via-[#ec4899] to-[#d946ef] text-white shadow-lg shadow-pink-500/20',
+                    chip: 'text-white font-bold hover:underline',
                     iconBg: 'bg-white/20 text-white'
                 },
                 amber: {
-                    card: 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 text-white shadow-md shadow-amber-900/15',
-                    chip: 'bg-amber-950/40 text-amber-100 border border-amber-300/30',
+                    card: 'bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white shadow-lg shadow-amber-500/20',
+                    chip: 'bg-white text-amber-700 font-black shadow-xs',
                     iconBg: 'bg-white/20 text-white'
                 },
                 cyan: {
                     card: 'bg-gradient-to-br from-cyan-500 via-teal-500 to-blue-600 text-white shadow-md shadow-cyan-900/15',
-                    chip: 'bg-cyan-950/40 text-cyan-100 border border-cyan-300/30',
+                    chip: 'bg-white/20 text-white font-bold',
                     iconBg: 'bg-white/20 text-white'
                 },
                 purple: {
                     card: 'bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-600 text-white shadow-md shadow-purple-900/15',
-                    chip: 'bg-purple-950/40 text-purple-100 border border-purple-300/30',
+                    chip: 'bg-white/20 text-white font-bold',
                     iconBg: 'bg-white/20 text-white'
                 },
                 teal: {
                     card: 'bg-gradient-to-br from-teal-500 via-emerald-600 to-green-600 text-white shadow-md shadow-teal-900/15',
-                    chip: 'bg-teal-950/40 text-teal-100 border border-teal-300/30',
+                    chip: 'bg-white/20 text-white font-bold',
                     iconBg: 'bg-white/20 text-white'
                 },
                 sky: {
                     card: 'bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white shadow-md shadow-sky-900/15',
-                    chip: 'bg-sky-950/40 text-sky-100 border border-sky-300/30',
+                    chip: 'bg-white/20 text-white font-bold',
                     iconBg: 'bg-white/20 text-white'
                 }
             };
@@ -1691,8 +1676,8 @@
                 return `
                     <div ${clickAttr} class="${theme.card} p-4 md:p-5 rounded-2xl md:rounded-3xl flex flex-col justify-between space-y-3 transition-all duration-300 ${hoverClass}">
                         <div class="flex items-start justify-between">
-                            <span class="text-xs font-bold text-white/90 block truncate drop-shadow-2xs">${kpi.label}</span>
-                            <div class="w-8 h-8 rounded-xl ${theme.iconBg} flex items-center justify-center text-sm shrink-0 backdrop-blur-xs shadow-2xs">
+                            <span class="text-xs font-medium text-white/90 block truncate drop-shadow-2xs">${kpi.label}</span>
+                            <div class="w-8 h-8 rounded-full ${theme.iconBg} flex items-center justify-center text-xs shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid ${kpi.icon}"></i>
                             </div>
                         </div>
@@ -1702,9 +1687,9 @@
                                 <span class="text-sm font-bold text-white/80">↑</span>
                             </h4>
                         </div>
-                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1.5 border-t border-white/20">
-                            <span class="truncate font-medium opacity-90">${kpi.sub}</span>
-                            <span class="px-2 py-0.5 rounded-full font-bold ${theme.chip} shrink-0 text-[9px] shadow-2xs">${chipLabel}</span>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1.5">
+                            <span class="truncate font-normal opacity-90">${kpi.sub}</span>
+                            <span class="px-2 py-0.5 rounded-full ${theme.chip} shrink-0 text-[9px]">${chipLabel}</span>
                         </div>
                     </div>
                 `;
@@ -1942,6 +1927,14 @@
             });
             if (clockEl) clockEl.textContent = `${timeStr} WIB`;
             if (topbarClockEl) topbarClockEl.textContent = `${timeStr} WIB`;
+            const liveTimestampEl = document.getElementById('admin-hub-live-timestamp');
+            if (liveTimestampEl) {
+                const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const dayName = days[now.getDay()];
+                const monthName = months[now.getMonth()];
+                liveTimestampEl.textContent = `WIB (UTC+7) • ${dayName}, ${now.getDate()} ${monthName} ${now.getFullYear()} • ${timeStr}`;
+            }
         }
         updateClock();
         if (!superAdminClockTimer) {
