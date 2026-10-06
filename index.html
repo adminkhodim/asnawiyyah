@@ -6950,108 +6950,8 @@
                 </div>
             </div>
 
-            <!-- MODAL DETAIL ALUMNI -->
-            <div id="modal-detail-alumni" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-                <div class="bg-white dark:bg-[#15202d] w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 dark:border-[#253447] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-                    <!-- Modal Header -->
-                    <div class="px-5 py-4 border-b border-slate-100 dark:border-[#253447] flex items-center justify-between bg-slate-50/50 dark:bg-[#1c2836]/50">
-                        <div class="flex items-center space-x-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center text-sm shadow-xs">
-                                <i class="fa-solid fa-id-badge"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Profil Lengkap Alumni</h3>
-                        </div>
-                        <button type="button" onclick="closeAdminAlumniDetail()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#253447] text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center transition active:scale-95">
-                            <i class="fa-solid fa-xmark text-sm"></i>
-                        </button>
-                    </div>
-
-                    <!-- Modal Body -->
-                    <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                        <!-- Profile Header Card -->
-                        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40">
-                            <div id="modal-alumni-avatar-container" class="shrink-0">
-                                <!-- Avatar / Foto -->
-                            </div>
-                            <div class="text-center sm:text-left flex-1 min-w-0 space-y-1">
-                                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                                    <h4 id="modal-alumni-nama" class="text-base font-extrabold text-slate-800 dark:text-slate-100">Nama Alumni</h4>
-                                    <span id="modal-alumni-gender-badge" class="text-[9px] font-black px-2 py-0.5 rounded-md bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-700 dark:text-slate-300">L</span>
-                                </div>
-                                <p id="modal-alumni-program" class="text-xs text-emerald-800 dark:text-emerald-400 font-semibold">Tahfidz Dewasa Putra</p>
-                                <p id="modal-alumni-angkatan" class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Masuk: 2010 • Lulus: 2016</p>
-                            </div>
-                        </div>
-
-                        <!-- Kontak Cepat & Media Sosial -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <a id="modal-alumni-wa-btn" href="#" target="_blank" rel="noopener noreferrer" class="p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-xs">
-                                <i class="fa-brands fa-whatsapp text-sm"></i>
-                                <span id="modal-alumni-wa-text">Hubungi WhatsApp</span>
-                            </a>
-                            <div id="modal-alumni-medsos-box" class="p-3 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-xs flex items-center justify-center space-x-2 text-slate-700 dark:text-slate-200 font-semibold truncate">
-                                <i class="fa-solid fa-hashtag text-slate-400"></i>
-                                <span id="modal-alumni-medsos" class="truncate">-</span>
-                            </div>
-                        </div>
-
-                        <!-- Data Aktivitas & Domisili -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] space-y-1">
-                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Kesibukan & Pekerjaan</span>
-                                <p id="modal-alumni-kesibukan" class="font-bold text-slate-800 dark:text-slate-100">-</p>
-                                <p id="modal-alumni-instansi" class="text-[11px] text-slate-600 dark:text-slate-400">-</p>
-                            </div>
-                            <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] space-y-1">
-                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Izin Publikasi</span>
-                                <p id="modal-alumni-izin" class="font-bold text-emerald-600 dark:text-emerald-400">Ya (Publik)</p>
-                                <p id="modal-alumni-timestamp" class="text-[10px] text-slate-400">Terdaftar: -</p>
-                            </div>
-                        </div>
-
-                        <!-- Alamat Lengkap & Wilayah -->
-                        <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] space-y-2 text-xs">
-                            <div class="flex items-center space-x-2 text-slate-700 dark:text-slate-200 font-bold">
-                                <i class="fa-solid fa-map-location-dot text-emerald-600"></i>
-                                <span>Alamat Domisili</span>
-                            </div>
-                            <p id="modal-alumni-alamat" class="text-slate-600 dark:text-slate-300 leading-relaxed font-normal">-</p>
-                            <div class="pt-1 flex flex-wrap gap-1.5 text-[10px]">
-                                <span id="modal-alumni-kabupaten-badge" class="px-2 py-0.5 rounded-md bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] font-semibold text-slate-700 dark:text-slate-300">-</span>
-                                <span id="modal-alumni-provinsi-badge" class="px-2 py-0.5 rounded-md bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] font-semibold text-slate-700 dark:text-slate-300">-</span>
-                            </div>
-                        </div>
-
-                        <!-- Pin Lokasi Peta & Koordinat GPS -->
-                        <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 text-xs">
-                            <div class="space-y-0.5">
-                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Koordinat GPS</span>
-                                <p id="modal-alumni-koordinat" class="font-mono text-[11px] text-slate-700 dark:text-slate-300">-</p>
-                            </div>
-                            <a id="modal-alumni-maps-btn" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shrink-0 shadow-xs">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                                <span>Buka Maps</span>
-                            </a>
-                        </div>
-
-                        <!-- Pesan & Kesan untuk Pesantren -->
-                        <div class="bg-amber-50/60 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
-                            <span class="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-400 flex items-center space-x-1.5 tracking-wider">
-                                <i class="fa-solid fa-quote-left"></i>
-                                <span>Kesan & Pesan untuk Almamater</span>
-                            </span>
-                            <p id="modal-alumni-kesan" class="text-xs text-slate-700 dark:text-slate-200 italic leading-relaxed">"-"</p>
-                        </div>
-                    </div>
-
-                    <!-- Modal Footer -->
-                    <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-end">
-                        <button type="button" onclick="closeAdminAlumniDetail()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-[#2f425a] text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition">
-                            Tutup
-                        </button>
-                    </div>
-                </div>
             </div>
+        </main>
     </div>
 </div>
 
@@ -7334,6 +7234,109 @@
         <p class="font-bold text-slate-100">© 2026 PPTQ Asnawiyyah. All Rights Reserved.</p>
         <p class="text-emerald-400/80 dark:text-emerald-400/90 mt-1">Pilangwetan, Kebonagung, Demak, Jawa Tengah.</p>
     </footer>
+
+    <!-- ==================== MODAL DETAIL ALUMNI (ADMIN) ==================== -->
+    <div id="modal-detail-alumni" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 dark:border-[#253447] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-[#253447] flex items-center justify-between bg-slate-50/50 dark:bg-[#1c2836]/50">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center text-sm shadow-xs">
+                        <i class="fa-solid fa-id-badge"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Profil Lengkap Alumni</h3>
+                </div>
+                <button type="button" onclick="closeAdminAlumniDetail()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#253447] text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                <!-- Profile Header Card -->
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40">
+                    <div id="modal-alumni-avatar-container" class="shrink-0">
+                        <!-- Avatar / Foto -->
+                    </div>
+                    <div class="text-center sm:text-left flex-1 min-w-0 space-y-1">
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                            <h4 id="modal-alumni-nama" class="text-base font-extrabold text-slate-800 dark:text-slate-100">Nama Alumni</h4>
+                            <span id="modal-alumni-gender-badge" class="text-[9px] font-black px-2 py-0.5 rounded-md bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-700 dark:text-slate-300">L</span>
+                        </div>
+                        <p id="modal-alumni-program" class="text-xs text-emerald-800 dark:text-emerald-400 font-semibold">Tahfidz Dewasa Putra</p>
+                        <p id="modal-alumni-angkatan" class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Masuk: 2010 • Lulus: 2016</p>
+                    </div>
+                </div>
+
+                <!-- Kontak Cepat & Media Sosial -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <a id="modal-alumni-wa-btn" href="#" target="_blank" rel="noopener noreferrer" class="p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-xs">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span id="modal-alumni-wa-text">Hubungi WhatsApp</span>
+                    </a>
+                    <div id="modal-alumni-medsos-box" class="p-3 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-xs flex items-center justify-center space-x-2 text-slate-700 dark:text-slate-200 font-semibold truncate">
+                        <i class="fa-solid fa-hashtag text-slate-400"></i>
+                        <span id="modal-alumni-medsos" class="truncate">-</span>
+                    </div>
+                </div>
+
+                <!-- Data Aktivitas & Domisili -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Kesibukan & Pekerjaan</span>
+                        <p id="modal-alumni-kesibukan" class="font-bold text-slate-800 dark:text-slate-100">-</p>
+                        <p id="modal-alumni-instansi" class="text-[11px] text-slate-600 dark:text-slate-400">-</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Izin Publikasi</span>
+                        <p id="modal-alumni-izin" class="font-bold text-emerald-600 dark:text-emerald-400">Ya (Publik)</p>
+                        <p id="modal-alumni-timestamp" class="text-[10px] text-slate-400">Terdaftar: -</p>
+                    </div>
+                </div>
+
+                <!-- Alamat Lengkap & Wilayah -->
+                <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] space-y-2 text-xs">
+                    <div class="flex items-center space-x-2 text-slate-700 dark:text-slate-200 font-bold">
+                        <i class="fa-solid fa-map-location-dot text-emerald-600"></i>
+                        <span>Alamat Domisili</span>
+                    </div>
+                    <p id="modal-alumni-alamat" class="text-slate-600 dark:text-slate-300 leading-relaxed font-normal">-</p>
+                    <div class="pt-1 flex flex-wrap gap-1.5 text-[10px]">
+                        <span id="modal-alumni-kabupaten-badge" class="px-2 py-0.5 rounded-md bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] font-semibold text-slate-700 dark:text-slate-300">-</span>
+                        <span id="modal-alumni-provinsi-badge" class="px-2 py-0.5 rounded-md bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] font-semibold text-slate-700 dark:text-slate-300">-</span>
+                    </div>
+                </div>
+
+                <!-- Pin Lokasi Peta & Koordinat GPS -->
+                <div class="bg-slate-50 dark:bg-[#1c2836] p-3.5 rounded-xl border border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 text-xs">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Koordinat GPS</span>
+                        <p id="modal-alumni-koordinat" class="font-mono text-[11px] text-slate-700 dark:text-slate-300">-</p>
+                    </div>
+                    <a id="modal-alumni-maps-btn" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shrink-0 shadow-xs">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        <span>Buka Maps</span>
+                    </a>
+                </div>
+
+                <!-- Pesan & Kesan untuk Pesantren -->
+                <div class="bg-amber-50/60 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200/60 dark:border-amber-800/40 space-y-1.5">
+                    <span class="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-400 flex items-center space-x-1.5 tracking-wider">
+                        <i class="fa-solid fa-quote-left"></i>
+                        <span>Kesan & Pesan untuk Almamater</span>
+                    </span>
+                    <p id="modal-alumni-kesan" class="text-xs text-slate-700 dark:text-slate-200 italic leading-relaxed">"-"</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex justify-end">
+                <button type="button" onclick="closeAdminAlumniDetail()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-[#2f425a] text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ==================== MODAL AUTHENTICATION: ADMIN EMAIL OTP (PHASE 2A) ==================== -->
     <div id="modal-auth-admin" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
