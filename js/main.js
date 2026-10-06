@@ -390,13 +390,17 @@
                 }
             }
 
-            // Hide menus for Admin layout
+            // Sembunyikan header publik dan menu navigasi khusus saat membuka Dashboard Admin
+            const mainDesktopHeader = document.getElementById('main-desktop-header');
+            const mainMobileHeader = document.getElementById('main-mobile-header');
             const deskNavMenu = document.getElementById('desk-nav-menu');
             const deskActionMenu = document.getElementById('desk-action-menu');
             const mobileBottomNav = document.getElementById('mobile-bottom-nav');
             const mainFooter = document.querySelector('footer');
 
             if (tabId === 'admin') {
+                if (mainDesktopHeader) mainDesktopHeader.classList.add('hidden');
+                if (mainMobileHeader) mainMobileHeader.classList.add('hidden');
                 if (deskNavMenu) deskNavMenu.classList.add('hidden');
                 if (deskActionMenu) deskActionMenu.classList.add('hidden');
                 if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
@@ -415,6 +419,8 @@
                     }, 100);
                 }
             } else {
+                if (mainDesktopHeader) mainDesktopHeader.classList.remove('hidden');
+                if (mainMobileHeader) mainMobileHeader.classList.remove('hidden');
                 if (deskNavMenu) deskNavMenu.classList.remove('hidden');
                 if (deskActionMenu) deskActionMenu.classList.remove('hidden');
                 if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');

@@ -212,3 +212,10 @@ html.dark .admin-nav-item.active {
   z-index: 26;
 }
 
+/* Proteksi Mutlak: Sembunyikan header publik saat dashboard admin aktif */
+body:has(#page-admin:not(.hidden)) #main-desktop-header,
+body:has(#page-admin:not(.hidden)) #main-mobile-header {
+  display: none !important;
+}
+
+
