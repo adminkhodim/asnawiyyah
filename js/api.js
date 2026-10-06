@@ -473,6 +473,286 @@
                         }))
                     };
                 }
+
+                // 11. Dashboard Tahfidz Al-Qur'an (Fast Read Akselerasi Supabase <350ms)
+                if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard" || action === "auth.tahfidz.dashboard") {
+                    const [stRes, hlRes, lgRes, prRes] = await Promise.all([
+                        fetch(`${sbUrl}/rest/v1/students?order=name.asc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?select=*&order=created_at.asc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_logs?select=*&order=tanggal.desc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_presensi?select=*&order=tanggal.desc`, { headers })
+                    ]);
+                    if (!stRes.ok || !hlRes.ok || !lgRes.ok) return null;
+                    const [rawStudents, rawHalaqahs, rawLogs, rawPresensi] = await Promise.all([
+                        stRes.json(), hlRes.json(), lgRes.json(), prRes.ok ? prRes.json() : []
+                    ]);
+
+                    const getJuzCurriculumIndex = (juz) => {
+                        const j = Number(juz);
+                        if (j >= 21 && j <= 30) return 30 - j;
+                        if (j >= 1 && j <= 20) return 9 + j;
+                        return 0;
+                    };
+
+                    const parseLatestPage = (halVal) => {
+                        if (!halVal) return 1;
+                        const parts = String(halVal).split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0 && n <= 30);
+                        return parts.length > 0 ? Math.max(...parts) : 1;
+                    };
+
+                    const halaqahList = rawHalaqahs.map((h, idx) => {
+                        const stIds = Array.isArray(h.student_ids) 
+                            ? h.student_ids.map(s => String(s).trim()).filter(Boolean)
+                            : (typeof h.student_ids === 'string' ? h.student_ids.split(',').map(s => s.trim()).filter(Boolean) : []);
+                        const hName = h.nama_halaqah || (h.muhafiz ? ('Halaqah ' + h.muhafiz) : ('Halaqah ' + (idx + 1)));
+                        return {
+                            halaqahId: h.halaqah_id,
+                            namaHalaqah: hName,
+                            muhafiz: h.muhafiz || 'Ustadz Pembina',
+                            targetKurikulum: h.target_kurikulum || 'Tahfidz 30 Juz',
+                            studentIds: stIds,
+                            studentCount: stIds.length
+                        };
+                    });
+
+                    const studentHalaqahMap = {};
+                    halaqahList.forEach(h => {
+                        h.studentIds.forEach(id => {
+                            studentHalaqahMap[id] = h;
+                            studentHalaqahMap[id.toLowerCase()] = h;
+                        });
+                    });
+
+                    const logsByStudent = {};
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+                    let weeklyZiyadahCount = 0;
+                    let weeklyMurajaahCount = 0;
+                    let weeklyZiyadahPages = 0;
+                    let weeklyMurajaahPages = 0;
+                    const weeklyZiyadahPagesMap = {};
+                    const weeklyMurajaahPagesMap = {};
+
+                    rawLogs.forEach(l => {
+                        const sId = l.student_id;
+                        const sNis = l.nis;
+                        if (sId) {
+                            if (!logsByStudent[sId]) logsByStudent[sId] = [];
+                            logsByStudent[sId].push(l);
+                        }
+                        if (sNis && sNis !== sId) {
+                            if (!logsByStudent[sNis]) logsByStudent[sNis] = [];
+                            logsByStudent[sNis].push(l);
+                        }
+
+                        const logDate = new Date(l.tanggal || l.created_at);
+                        if (logDate >= oneWeekAgo) {
+                            const th = Number(l.total_halaman) || 1;
+                            if (l.tipe === 'ZIYADAH') {
+                                weeklyZiyadahCount++;
+                                weeklyZiyadahPages += th;
+                                [sId, sNis].filter(Boolean).forEach(k => {
+                                    weeklyZiyadahPagesMap[k] = (weeklyZiyadahPagesMap[k] || 0) + th;
+                                });
+                            } else if (String(l.tipe).includes('MURAJAAH') || l.tipe === 'TASMI') {
+                                weeklyMurajaahCount++;
+                                weeklyMurajaahPages += th;
+                                [sId, sNis].filter(Boolean).forEach(k => {
+                                    weeklyMurajaahPagesMap[k] = (weeklyMurajaahPagesMap[k] || 0) + th;
+                                });
+                            }
+                        }
+                    });
+
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const presenceMap = {};
+                    rawPresensi.forEach(p => {
+                        const tgl = String(p.tanggal || '').split('T')[0];
+                        if (tgl === todayStr) {
+                            const st = String(p.status || 'HADIR').toUpperCase();
+                            const ket = p.keterangan || '';
+                            if (p.student_id) presenceMap[p.student_id] = { status: st, keterangan: ket };
+                            if (p.nis) presenceMap[p.nis] = { status: st, keterangan: ket };
+                        }
+                    });
+
+                    let totalJuzAllStudents = 0;
+                    let khatam30Count = 0;
+                    let santriTuntasMurojaahCount = 0;
+
+                    const enrichedStudents = rawStudents.map(st => {
+                        const sId = st.student_id;
+                        const sNis = st.nis || '';
+                        const sLogs = logsByStudent[sId] || logsByStudent[sNis] || [];
+                        const latestLog = sLogs.length > 0 ? sLogs[0] : null;
+
+                        let maxRank = -1;
+                        let currentJuz = 30;
+                        let currentHal = 1;
+                        let hasZiyadah = false;
+
+                        sLogs.forEach(lg => {
+                            if (lg.tipe === 'ZIYADAH' && lg.status_setoran !== 'ULANG') {
+                                hasZiyadah = true;
+                                const j = Number(lg.juz) || 30;
+                                const r = getJuzCurriculumIndex(j);
+                                const h = parseLatestPage(lg.halaman_list);
+                                if (r > maxRank || (r === maxRank && h > currentHal)) {
+                                    maxRank = r;
+                                    currentJuz = j;
+                                    currentHal = h;
+                                }
+                            }
+                        });
+
+                        if (!hasZiyadah) {
+                            if (latestLog && latestLog.juz) {
+                                currentJuz = Number(latestLog.juz) || 30;
+                                currentHal = parseLatestPage(latestLog.halaman_list);
+                                maxRank = getJuzCurriculumIndex(currentJuz);
+                            } else {
+                                currentJuz = 30;
+                                currentHal = 1;
+                                maxRank = 0;
+                            }
+                        }
+
+                        const totalTuntasPages = Math.min(600, maxRank * 20 + currentHal);
+                        const juzCompleted = maxRank + (currentHal >= 20 ? 1 : (currentHal / 20));
+                        const percent = Math.min(100, Math.max(1, Math.round((totalTuntasPages / 600) * 100)));
+                        const isKhatam30 = totalTuntasPages >= 600 || (maxRank === 29 && currentHal >= 20);
+
+                        if (isKhatam30) khatam30Count++;
+                        totalJuzAllStudents += juzCompleted;
+
+                        let setoranPekanIni = 0;
+                        sLogs.forEach(lg => {
+                            const d = new Date(lg.tanggal || lg.created_at);
+                            if (d >= oneWeekAgo) setoranPekanIni++;
+                        });
+
+                        const onTrack = setoranPekanIni >= 2 ? `On-Track (${setoranPekanIni}x Pekan Ini)` : (setoranPekanIni === 1 ? '1x Setor Pekan Ini' : 'Belum Setor');
+
+                        const halaqah = studentHalaqahMap[sId] || studentHalaqahMap[sNis] || {
+                            halaqahId: '',
+                            namaHalaqah: 'Belum Masuk Halaqah',
+                            muhafiz: 'Ustadz Pembina',
+                            kategori: 'Tahfidz'
+                        };
+                        const isInHalaqah = !!(studentHalaqahMap[sId] || studentHalaqahMap[sNis]);
+
+                        const targetZ = 1;
+                        const targetZPekan = 10;
+                        const targetM = 2;
+                        const targetMPekan = 10;
+                        const rZ = weeklyZiyadahPagesMap[sId] || weeklyZiyadahPagesMap[sNis] || 0;
+                        const rM = weeklyMurajaahPagesMap[sId] || weeklyMurajaahPagesMap[sNis] || 0;
+                        const isTuntasM = rM >= targetMPekan;
+                        if (isTuntasM) santriTuntasMurojaahCount++;
+
+                        return {
+                            studentId: sId,
+                            nis: sNis,
+                            name: st.name || 'Santri',
+                            gender: st.gender || 'L',
+                            photoUrl: st.photo_url || '',
+                            program: st.program || 'Tahfidz',
+                            status: st.status || 'ACTIVE',
+                            halaqah: halaqah,
+                            isInHalaqah: isInHalaqah,
+                            target: {
+                                ziyadahSesi: targetZ,
+                                ziyadahPekan: targetZPekan,
+                                ziyadahBulan: targetZPekan * 4,
+                                murajaahSesi: targetM,
+                                murajaahPekan: targetMPekan,
+                                murajaahBulan: targetMPekan * 4
+                            },
+                            rekapPekan: {
+                                ziyadah: {
+                                    target: targetZPekan,
+                                    realita: rZ,
+                                    isTuntas: rZ >= targetZPekan
+                                },
+                                murojaah: {
+                                    target: targetMPekan,
+                                    realita: rM,
+                                    persen: targetMPekan > 0 ? Math.round((rM / targetMPekan) * 100) : 0,
+                                    isTuntas: isTuntasM,
+                                    sisaHalaman: Math.max(0, targetMPekan - rM),
+                                    statusText: isTuntasM ? "Tuntas Target Muroja'ah" : (rM > 0 ? (`Kurang ${targetMPekan - rM} Hlm`) : "Belum Muroja'ah")
+                                }
+                            },
+                            setoranTerakhir: latestLog ? {
+                                juz: latestLog.juz,
+                                surah: latestLog.surah || `Juz ${latestLog.juz}`,
+                                halaman: latestLog.halaman_list ? `Halaman ${latestLog.halaman_list}` : 'Halaman 1',
+                                totalHalaman: latestLog.total_halaman || 1,
+                                tanggal: String(latestLog.tanggal || '').split('T')[0],
+                                sesi: latestLog.sesi,
+                                tipe: latestLog.tipe,
+                                nilai: latestLog.nilai,
+                                muhafiz: latestLog.muhafiz || halaqah.muhafiz || 'Ustadz Pembina'
+                            } : null,
+                            progress: {
+                                currentJuz: currentJuz,
+                                currentHalaman: currentHal,
+                                curriculumRank: maxRank + 1,
+                                totalHalamanTuntas: totalTuntasPages,
+                                totalJuz: 30,
+                                percent: percent,
+                                isKhatam: isKhatam30,
+                                onTrackStatus: onTrack
+                            },
+                            totalSetoran: sLogs.length,
+                            presensiStatus: (presenceMap[sId] || presenceMap[sNis]) ? (presenceMap[sId] || presenceMap[sNis]).status : 'HADIR',
+                            presensiKeterangan: (presenceMap[sId] || presenceMap[sNis]) ? (presenceMap[sId] || presenceMap[sNis]).keterangan : ''
+                        };
+                    });
+
+                    const halaqahMembers = enrichedStudents.filter(st => st.isInHalaqah);
+                    const activeStudentCount = halaqahMembers.length > 0 ? halaqahMembers.length : (enrichedStudents.length || 1);
+                    let totalJuzHalaqahStudents = 0;
+                    let khatam30HalaqahCount = 0;
+                    halaqahMembers.forEach(st => {
+                        const p = st.progress;
+                        const jzComp = p ? ((p.curriculumRank - 1) + (p.currentHalaman >= 20 ? 1 : (p.currentHalaman / 20))) : 0;
+                        totalJuzHalaqahStudents += jzComp;
+                        if (p && p.isKhatam) khatam30HalaqahCount++;
+                    });
+
+                    const baseTotalJuz = totalJuzHalaqahStudents > 0 ? totalJuzHalaqahStudents : totalJuzAllStudents;
+                    const avgJuz = (baseTotalJuz / activeStudentCount).toFixed(1);
+                    const totalWeeklyActivity = weeklyZiyadahCount + weeklyMurajaahCount;
+                    const ziyadahPercent = totalWeeklyActivity > 0 ? Math.round((weeklyZiyadahCount / totalWeeklyActivity) * 100) : 100;
+                    const murajaahPercent = 100 - ziyadahPercent;
+
+                    const muhafizList = Array.from(new Set(halaqahList.map(h => h.muhafiz).filter(Boolean)));
+
+                    return {
+                        status: 'success',
+                        success: true,
+                        summary: {
+                            khatam30Juz: khatam30HalaqahCount > 0 ? khatam30HalaqahCount : khatam30Count,
+                            rataRataHafalan: `${avgJuz} Juz / Santri`,
+                            totalHafalanJuz: Number(baseTotalJuz.toFixed(1)),
+                            totalSantriHalaqah: halaqahMembers.length,
+                            totalStudents: enrichedStudents.length,
+                            aktivitasPekanIni: {
+                                totalSetoranPekanIni: totalWeeklyActivity,
+                                ziyadahPercent: ziyadahPercent,
+                                murajaahPercent: murajaahPercent,
+                                ziyadahPages: weeklyZiyadahPages,
+                                murajaahPages: weeklyMurajaahPages
+                            }
+                        },
+                        students: enrichedStudents,
+                        halaqahs: halaqahList,
+                        categories: ['Semua Kategori', 'Tahfidz', 'Tahsin', 'Kitab Kuning'],
+                        muhafizList: ['Semua Muhafiz', ...muhafizList]
+                    };
+                }
             } catch (err) {
                 console.warn("[SUPABASE FETCH ERROR]", action, err);
                 return null;
@@ -516,7 +796,8 @@
                 'getStudents', 'student.list', 'auth.student.list',
                 'getEmployees', 'employee.list', 'auth.employee.list',
                 'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getJadwalKegiatan', 'getPengaturan',
-                'getTahfidzPresensi'
+                'getTahfidzPresensi',
+                'getTahfidzDashboard', 'tahfidz.dashboard', 'auth.tahfidz.dashboard'
             ];
             if (fastReadActions.includes(action)) {
                 try {
@@ -867,8 +1148,7 @@
                             method: 'PATCH',
                             headers,
                             body: JSON.stringify({
-                                student_ids: studentIds,
-                                updated_at: new Date().toISOString()
+                                student_ids: studentIds
                             })
                         });
                     }

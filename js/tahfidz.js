@@ -6196,6 +6196,8 @@ async function buildTahfidzFallbackData() {
     try {
         let students = [];
         let employees = [];
+        let rawHalaqahs = [];
+
         if (typeof fetchFromSupabase === 'function') {
             try {
                 const stRes = await fetchFromSupabase('getStudents');
@@ -6205,56 +6207,85 @@ async function buildTahfidzFallbackData() {
                 const empRes = await fetchFromSupabase('getEmployees');
                 if (empRes && Array.isArray(empRes.data)) employees = empRes.data;
             } catch (e) {}
+            try {
+                const sbUrl = window.ASNAWIYYAH_CONFIG?.supabaseUrl;
+                const sbKey = window.ASNAWIYYAH_CONFIG?.supabaseKey;
+                if (sbUrl && sbKey) {
+                    const hRes = await fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?select=*&order=created_at.asc`, {
+                        headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, Accept: 'application/json' }
+                    });
+                    if (hRes.ok) rawHalaqahs = await hRes.json();
+                }
+            } catch (e) {}
         }
 
         const halaqahs = [];
         const muhafizList = [];
-        const muhafizEmployees = employees.filter(e => {
-            const j = (e.jabatan || '').toLowerCase();
-            const s = (e.spesialisasi || '').toLowerCase();
-            return j.includes('muhafiz') || j.includes('ustadz') || j.includes('guru') || s.includes('tahfidz');
-        });
 
-        const activeTeachers = muhafizEmployees.length > 0 ? muhafizEmployees : [
-            { nama: 'Ustadz Faiz', nip: 'PEG-005', email: 'faizahmadd2000@gmail.com' },
-            { nama: 'Ustadz Halim', nip: 'PEG-003', email: 'abdulchalim181@gmail.com' },
-            { nama: 'Ustadz Iqbal', nip: 'PEG-004', email: 'iqbalalahmad0144@gmail.com' },
-            { nama: 'Ustadz Pendi', nip: 'PEG-006', email: 'pendhesuachmad@gmail.com' },
-            { nama: 'Ustadzah Alfi', nip: 'PEG-007', email: 'alfiyaasyafii@gmail.com' },
-            { nama: 'Ustadzah Angelia', nip: 'PEG-011', email: 'angelliatri@gmail.com' },
-            { nama: 'Ustadzah Aya', nip: 'PEG-014', email: 'ainatina18@gmail.com' },
-            { nama: 'Ustadzah Fadhilah', nip: 'PEG-012', email: 'sitifadhilah1209@gmail.com' },
-            { nama: 'Ustadzah Fatim', nip: 'PEG-018', email: 'dyaah71@gmail.com' },
-            { nama: 'Ustadzah Iis', nip: 'PEG-016', email: 'iisfatikhafatikha@gmail.com' },
-            { nama: 'Ustadzah Luthfi', nip: 'PEG-015', email: 'lutfiarahmawati1234@gmail.com' },
-            { nama: 'Ustadzah Mufti', nip: 'PEG-013', email: 'muftitika13@gmail.com' },
-            { nama: 'Ustadzah Muhim', nip: 'PEG-010', email: 'laylimuhimatul@gmail.com' },
-            { nama: 'Ustadzah Shabrina', nip: 'PEG-008', email: 'shabeercantik@gmail.com' },
-            { nama: 'Ustadzah Shofi', nip: 'PEG-009', email: 'sofwatul05@gmail.com' },
-            { nama: 'Ustadzah Yusita', nip: 'PEG-017', email: 'yusitakurnia2511@gmail.com' }
-        ];
-
-        const studentsPerHalaqah = Math.max(1, Math.ceil((students.length || 1) / activeTeachers.length));
-        activeTeachers.forEach((t, idx) => {
-            const hId = 'HLQ-' + (idx < 9 ? '0' + (idx + 1) : (idx + 1));
-            const hName = 'Halaqah ' + t.nama;
-            const startIdx = idx * studentsPerHalaqah;
-            const endIdx = startIdx + studentsPerHalaqah;
-            const assignedStudents = students.slice(startIdx, endIdx);
-            const sIds = assignedStudents.map(s => s.id || s.student_id || s.studentId || s.nis);
-
-            halaqahs.push({
-                halaqahId: hId,
-                namaHalaqah: hName,
-                muhafiz: t.nama,
-                email: t.email || '',
-                nip: t.nip || '',
-                targetKurikulum: 'Tahfidz 30 Juz',
-                studentIds: sIds,
-                studentCount: sIds.length
+        if (Array.isArray(rawHalaqahs) && rawHalaqahs.length > 0) {
+            rawHalaqahs.forEach((h, idx) => {
+                const sIds = Array.isArray(h.student_ids) 
+                    ? h.student_ids.map(s => String(s).trim()).filter(Boolean)
+                    : (typeof h.student_ids === 'string' ? h.student_ids.split(',').map(s => s.trim()).filter(Boolean) : []);
+                const hName = h.nama_halaqah || (h.muhafiz ? ('Halaqah ' + h.muhafiz) : ('Halaqah ' + (idx + 1)));
+                halaqahs.push({
+                    halaqahId: h.halaqah_id,
+                    namaHalaqah: hName,
+                    muhafiz: h.muhafiz || 'Ustadz Pembina',
+                    targetKurikulum: h.target_kurikulum || 'Tahfidz 30 Juz',
+                    studentIds: sIds,
+                    studentCount: sIds.length
+                });
+                if (h.muhafiz && !muhafizList.includes(h.muhafiz)) muhafizList.push(h.muhafiz);
             });
-            muhafizList.push(t.nama);
-        });
+        } else {
+            const muhafizEmployees = employees.filter(e => {
+                const j = (e.jabatan || '').toLowerCase();
+                const s = (e.spesialisasi || '').toLowerCase();
+                return j.includes('muhafiz') || j.includes('ustadz') || j.includes('guru') || s.includes('tahfidz');
+            });
+
+            const activeTeachers = muhafizEmployees.length > 0 ? muhafizEmployees : [
+                { nama: 'Ustadz Faiz', nip: 'PEG-005', email: 'faizahmadd2000@gmail.com' },
+                { nama: 'Ustadz Halim', nip: 'PEG-003', email: 'abdulchalim181@gmail.com' },
+                { nama: 'Ustadz Iqbal', nip: 'PEG-004', email: 'iqbalalahmad0144@gmail.com' },
+                { nama: 'Ustadz Pendi', nip: 'PEG-006', email: 'pendhesuachmad@gmail.com' },
+                { nama: 'Ustadzah Alfi', nip: 'PEG-007', email: 'alfiyaasyafii@gmail.com' },
+                { nama: 'Ustadzah Angelia', nip: 'PEG-011', email: 'angelliatri@gmail.com' },
+                { nama: 'Ustadzah Aya', nip: 'PEG-014', email: 'ainatina18@gmail.com' },
+                { nama: 'Ustadzah Fadhilah', nip: 'PEG-012', email: 'sitifadhilah1209@gmail.com' },
+                { nama: 'Ustadzah Fatim', nip: 'PEG-018', email: 'dyaah71@gmail.com' },
+                { nama: 'Ustadzah Iis', nip: 'PEG-016', email: 'iisfatikhafatikha@gmail.com' },
+                { nama: 'Ustadzah Luthfi', nip: 'PEG-015', email: 'lutfiarahmawati1234@gmail.com' },
+                { nama: 'Ustadzah Mufti', nip: 'PEG-013', email: 'muftitika13@gmail.com' },
+                { nama: 'Ustadzah Muhim', nip: 'PEG-010', email: 'laylimuhimatul@gmail.com' },
+                { nama: 'Ustadzah Shabrina', nip: 'PEG-008', email: 'shabeercantik@gmail.com' },
+                { nama: 'Ustadzah Shofi', nip: 'PEG-009', email: 'sofwatul05@gmail.com' },
+                { nama: 'Ustadzah Yusita', nip: 'PEG-017', email: 'yusitakurnia2511@gmail.com' }
+            ];
+
+            const studentsPerHalaqah = Math.max(1, Math.ceil((students.length || 1) / activeTeachers.length));
+            activeTeachers.forEach((t, idx) => {
+                const hId = 'HLQ-' + (idx < 9 ? '0' + (idx + 1) : (idx + 1));
+                const hName = 'Halaqah ' + t.nama;
+                const startIdx = idx * studentsPerHalaqah;
+                const endIdx = startIdx + studentsPerHalaqah;
+                const assignedStudents = students.slice(startIdx, endIdx);
+                const sIds = assignedStudents.map(s => s.id || s.student_id || s.studentId || s.nis);
+
+                halaqahs.push({
+                    halaqahId: hId,
+                    namaHalaqah: hName,
+                    muhafiz: t.nama,
+                    email: t.email || '',
+                    nip: t.nip || '',
+                    targetKurikulum: 'Tahfidz 30 Juz',
+                    studentIds: sIds,
+                    studentCount: sIds.length
+                });
+                muhafizList.push(t.nama);
+            });
+        }
 
         const enrichedStudents = students.map((s, idx) => {
             const sId = s.id || s.student_id || s.studentId || ('ST-' + (idx + 1));
