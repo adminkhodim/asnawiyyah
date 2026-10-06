@@ -753,6 +753,349 @@
                         muhafizList: ['Semua Muhafiz', ...muhafizList]
                     };
                 }
+
+                // 12. Detail Santri / Mutaba'ah Riwayat & Target (Fast Read Akselerasi Supabase <200ms)
+                if (action === "getTahfidzStudentDetail" || action === "tahfidz.studentDetail" || action === "auth.tahfidz.studentDetail") {
+                    const cleanId = String(params.studentId || params.student_id || params.nis || params.id || "").trim();
+                    if (!cleanId) return null;
+
+                    const [stRes, tgRes, lgRes, prRes, hlRes] = await Promise.all([
+                        fetch(`${sbUrl}/rest/v1/students?or=(student_id.eq.${encodeURIComponent(cleanId)},nis.eq.${encodeURIComponent(cleanId)})`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_target?student_id=eq.${encodeURIComponent(cleanId)}`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_logs?or=(student_id.eq.${encodeURIComponent(cleanId)},nis.eq.${encodeURIComponent(cleanId)})&order=tanggal.desc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_presensi?or=(student_id.eq.${encodeURIComponent(cleanId)},nis.eq.${encodeURIComponent(cleanId)})&order=tanggal.desc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?select=*`, { headers })
+                    ]);
+
+                    if (!stRes.ok) return null;
+                    const rawStudents = await stRes.json();
+                    if (!rawStudents || rawStudents.length === 0) return null;
+                    const student = rawStudents[0];
+
+                    const rawTargets = tgRes.ok ? await tgRes.json() : [];
+                    const rawLogs = lgRes.ok ? await lgRes.json() : [];
+                    const rawPresensi = prRes.ok ? await prRes.json() : [];
+                    const rawHalaqahs = hlRes.ok ? await hlRes.json() : [];
+
+                    // 1. Target Santri
+                    let target = {
+                        ziyadahSesi: 1,
+                        ziyadahPekan: 10,
+                        murajaahSesi: 2,
+                        murajaahPekan: 10
+                    };
+                    if (rawTargets.length > 0) {
+                        const tg = rawTargets[0];
+                        target = {
+                            ziyadahSesi: Number(tg.target_ziyadah_sesi) || 1,
+                            ziyadahPekan: Number(tg.target_ziyadah_pekan) || 10,
+                            murajaahSesi: Number(tg.target_murajaah_sesi) || 2,
+                            murajaahPekan: Number(tg.target_murajaah_pekan) || 10
+                        };
+                    }
+
+                    // 2. Logs Riwayat
+                    const riwayat = rawLogs.map(r => ({
+                        logId: r.log_id,
+                        tanggal: String(r.tanggal || '').split('T')[0],
+                        sesi: r.sesi || "Pagi",
+                        tipe: String(r.tipe || "ZIYADAH").trim().toUpperCase(),
+                        juz: Number(r.juz) || 1,
+                        surah: r.surah || "",
+                        satuan: String(r.satuan || "HALAMAN").trim().toUpperCase(),
+                        ayatMulai: (r.ayat_mulai !== null && r.ayat_mulai !== undefined && r.ayat_mulai !== '') ? Number(r.ayat_mulai) : null,
+                        ayatSampai: (r.ayat_sampai !== null && r.ayat_sampai !== undefined && r.ayat_sampai !== '') ? Number(r.ayat_sampai) : null,
+                        halamanList: String(r.halaman_list || "1").trim(),
+                        totalHalaman: Number(r.total_halaman) || 1,
+                        nilai: String(r.nilai || "MUMTAZ").trim().toUpperCase(),
+                        muhafiz: String(r.muhafiz || "").trim(),
+                        catatan: String(r.catatan || "").trim(),
+                        statusSetoran: String(r.status_setoran || "LANJUT").trim().toUpperCase(),
+                        createdAt: r.created_at || ""
+                    }));
+
+                    // 3. Presensi Riwayat
+                    const riwayatPresensi = rawPresensi.map(pr => ({
+                        presensiId: pr.presensi_id,
+                        tanggal: String(pr.tanggal || '').split('T')[0],
+                        sesi: pr.sesi || "Pagi",
+                        halaqahId: pr.halaqah_id || "",
+                        namaHalaqah: pr.nama_halaqah || "",
+                        studentId: pr.student_id,
+                        nis: pr.nis,
+                        studentName: pr.student_name || student.name,
+                        status: String(pr.status || "HADIR").trim().toUpperCase(),
+                        keterangan: pr.keterangan || "",
+                        muhafiz: pr.muhafiz || "",
+                        updatedAt: pr.updated_at || ""
+                    }));
+
+                    // 4. Kalkulasi Capaian Kurikulum
+                    const getTahfidzCurriculumRank = (juz) => {
+                        const j = Number(juz);
+                        if (j >= 21 && j <= 30) return 30 - j;
+                        if (j >= 1 && j <= 20) return 9 + j;
+                        return 0;
+                    };
+                    const parseTahfidzLatestPage = (halVal) => {
+                        if (!halVal) return 1;
+                        const parts = String(halVal).split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0 && n <= 30);
+                        return parts.length > 0 ? Math.max(...parts) : 1;
+                    };
+
+                    let maxRank = -1;
+                    let currentJuz = 30;
+                    let currentHal = 1;
+                    let totalScorePoints = 0;
+
+                    riwayat.forEach(r => {
+                        if (r.tipe === "ZIYADAH" && r.statusSetoran !== "ULANG") {
+                            const j = Number(r.juz) || 30;
+                            const rk = getTahfidzCurriculumRank(j);
+                            const h = parseTahfidzLatestPage(r.halamanList);
+                            if (rk > maxRank || (rk === maxRank && h > currentHal)) {
+                                maxRank = rk;
+                                currentJuz = j;
+                                currentHal = h;
+                            }
+                        }
+                        if (r.nilai === "MUMTAZ") totalScorePoints += 4;
+                        else if (r.nilai === "JAYYID_JIDDAN") totalScorePoints += 3;
+                        else if (r.nilai === "JAYYID") totalScorePoints += 2;
+                        else totalScorePoints += 1;
+                    });
+
+                    if (maxRank === -1) {
+                        if (riwayat.length > 0 && riwayat[0].juz) {
+                            currentJuz = Number(riwayat[0].juz) || 30;
+                            currentHal = parseTahfidzLatestPage(riwayat[0].halamanList);
+                            maxRank = getTahfidzCurriculumRank(currentJuz);
+                        } else {
+                            currentJuz = 30;
+                            currentHal = 1;
+                            maxRank = 0;
+                        }
+                    }
+
+                    const totalTuntas = Math.min(600, maxRank * 20 + currentHal);
+                    const percent = Math.min(100, Math.max(1, Math.round((totalTuntas / 600) * 100)));
+                    const curriculumJuzIndex = maxRank + 1;
+
+                    let avgNilaiText = "-";
+                    if (riwayat.length > 0) {
+                        const avgScore = totalScorePoints / riwayat.length;
+                        if (avgScore >= 3.5) avgNilaiText = "Mumtaz (A)";
+                        else if (avgScore >= 2.8) avgNilaiText = "Jayyid Jiddan (B+)";
+                        else if (avgScore >= 2.0) avgNilaiText = "Jayyid (B)";
+                        else avgNilaiText = "Dha'if (C)";
+                    }
+
+                    // 5. Kalkulasi 3 Indikator (Harian, Pekanan, Bulanan)
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayDate = new Date();
+                    const startOfWeek = new Date();
+                    startOfWeek.setDate(todayDate.getDate() - 6);
+                    const startOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+
+                    let harianZReal = 0, harianMReal = 0, harianCount = 0;
+                    let pekanZReal = 0, pekanMReal = 0, pekanCount = 0;
+                    let bulanZReal = 0, bulanMReal = 0, bulanCount = 0;
+
+                    riwayat.forEach(r => {
+                        const d = new Date(r.tanggal || r.createdAt);
+                        const hal = r.totalHalaman || 1;
+
+                        if (r.tanggal === todayStr) {
+                            harianCount++;
+                            if (r.tipe === "ZIYADAH") harianZReal += hal;
+                            else harianMReal += hal;
+                        }
+                        if (d >= startOfWeek) {
+                            pekanCount++;
+                            if (r.tipe === "ZIYADAH") pekanZReal += hal;
+                            else pekanMReal += hal;
+                        }
+                        if (d >= startOfMonth) {
+                            bulanCount++;
+                            if (r.tipe === "ZIYADAH") bulanZReal += hal;
+                            else bulanMReal += hal;
+                        }
+                    });
+
+                    const targetPekanTotal = target.ziyadahPekan + target.murajaahPekan;
+                    const realPekanTotal = pekanZReal + pekanMReal;
+                    const pekanPercent = targetPekanTotal > 0 ? Math.min(100, Math.round((realPekanTotal / targetPekanTotal) * 100)) : 0;
+
+                    const targetBulanTotal = (target.ziyadahPekan * 4) + (target.murajaahPekan * 4);
+                    const realBulanTotal = bulanZReal + bulanMReal;
+                    const bulanPercent = targetBulanTotal > 0 ? Math.min(100, Math.round((realBulanTotal / targetBulanTotal) * 100)) : 0;
+
+                    // 6. Pencocokan Halaqah & Muhafiz
+                    let studentHalaqah = "";
+                    let studentMuhafiz = "";
+                    const targetStudentIdLower = String(student.student_id || cleanId).toLowerCase();
+                    const targetNisLower = String(student.nis || "").toLowerCase();
+
+                    for (const h of rawHalaqahs) {
+                        const memberList = Array.isArray(h.student_ids) 
+                            ? h.student_ids.map(s => String(s).trim().toLowerCase())
+                            : (typeof h.student_ids === 'string' ? h.student_ids.split(',').map(s => s.trim().toLowerCase()) : []);
+                        if (memberList.includes(targetStudentIdLower) || (targetNisLower && memberList.includes(targetNisLower))) {
+                            studentHalaqah = h.nama_halaqah || (h.muhafiz ? `Halaqah ${h.muhafiz}` : 'Halaqah Utama');
+                            studentMuhafiz = h.muhafiz || 'Ustadz Pembina';
+                            break;
+                        }
+                    }
+                    if (!studentHalaqah && riwayat.length > 0 && riwayat[0].muhafiz) {
+                        studentMuhafiz = riwayat[0].muhafiz;
+                        studentHalaqah = `Halaqah ${studentMuhafiz}`;
+                    }
+                    if (!studentHalaqah) studentHalaqah = "Belum Terplot";
+                    if (!studentMuhafiz) studentMuhafiz = "Menunggu Jadwal";
+
+                    return {
+                        status: "success",
+                        success: true,
+                        student: {
+                            studentId: student.student_id,
+                            nis: student.nis || "-",
+                            name: student.name || "Santri",
+                            gender: student.gender || "L",
+                            photoUrl: student.photo_url || "",
+                            program: student.program || "Tahfidz",
+                            status: student.status || "ACTIVE",
+                            halaqah: studentHalaqah,
+                            muhafiz: studentMuhafiz
+                        },
+                        halaqah: studentHalaqah,
+                        muhafiz: studentMuhafiz,
+                        stats: {
+                            capaianSaatIni: `Juz ${currentJuz} (${percent}%)`,
+                            targetCapaian: "30 Juz Mutqin",
+                            totalSetoran: `${riwayat.length} Kali`,
+                            rataRataNilai: avgNilaiText,
+                            progressJuz: currentJuz,
+                            progressHalaman: currentHal,
+                            curriculumJuzIndex: curriculumJuzIndex,
+                            totalHalamanTuntas: totalTuntas,
+                            progressMax: 30,
+                            progressPercent: percent
+                        },
+                        target: target,
+                        indikator: {
+                            harian: {
+                                targetText: `${target.ziyadahSesi} Halaman (Z) • ${target.murajaahSesi} Halaman (M)`,
+                                realitaText: `${harianZReal + harianMReal} Halaman (${harianCount}x Setor)`,
+                                ziyadahReal: harianZReal,
+                                murajaahReal: harianMReal,
+                                status: harianCount > 0 ? "Ada Setoran Hari Ini" : "Belum Ada Setoran"
+                            },
+                            pekanan: {
+                                targetText: `${target.ziyadahPekan} Halaman (Z) + ${target.murajaahPekan} Halaman (M)`,
+                                realitaText: `${realPekanTotal} Halaman (${pekanCount}x Setor)`,
+                                percent: pekanPercent,
+                                status: pekanPercent >= 100 ? "Target Pekan Tercapai" : (pekanPercent > 0 ? `${pekanPercent}% Capaian` : "0% Capaian")
+                            },
+                            bulanan: {
+                                targetText: `${target.ziyadahPekan * 4} Halaman (Z) + ${target.murajaahPekan * 4} Halaman (M)`,
+                                realitaText: `${realBulanTotal} Halaman (${bulanCount}x Setor)`,
+                                percent: bulanPercent,
+                                status: bulanPercent >= 100 ? "Target Bulan Tercapai" : (bulanPercent > 0 ? `${bulanPercent}% Capaian` : "0% Capaian")
+                            }
+                        },
+                        riwayat: riwayat,
+                        riwayatPresensi: riwayatPresensi
+                    };
+                }
+
+                // 13. Manajemen Program Pesantren (Admin CMS Fast-Read Supabase <100ms)
+                if (action === "program.list") {
+                    const res = await fetch(`${sbUrl}/rest/v1/programs?order=sort_order.asc,id.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        success: true,
+                        status: "success",
+                        data: rows.map(p => {
+                            let highlights = p.highlights;
+                            if (typeof highlights === 'string') {
+                                try { highlights = JSON.parse(highlights); } catch(e) { highlights = []; }
+                            }
+                            if (!Array.isArray(highlights)) {
+                                let hJson = p.highlights_json;
+                                if (typeof hJson === 'string') {
+                                    try { hJson = JSON.parse(hJson); } catch(e) { hJson = []; }
+                                }
+                                highlights = Array.isArray(hJson) ? hJson : [];
+                            }
+
+                            let detail = p.detail;
+                            if (typeof detail === 'string') {
+                                try { detail = JSON.parse(detail); } catch(e) { detail = null; }
+                            }
+                            if (!detail || typeof detail !== 'object') {
+                                let dJson = p.detail_json;
+                                if (typeof dJson === 'string') {
+                                    try { dJson = JSON.parse(dJson); } catch(e) { dJson = null; }
+                                }
+                                detail = (dJson && typeof dJson === 'object') ? dJson : {};
+                            }
+
+                            return {
+                                ...p,
+                                highlights,
+                                detail
+                            };
+                        })
+                    };
+                }
+
+                // 14. Data Pendaftar PPDB (Admin List & Status Check Cepat <100ms)
+                if (action === "getPPDB") {
+                    const res = await fetch(`${sbUrl}/rest/v1/pendaftar?order=created_at.desc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        success: true,
+                        data: rows.map(p => ({
+                            id: p.id,
+                            tanggalDaftar: p.tanggal_daftar || p.timestamp || (p.created_at ? p.created_at.split('T')[0] : '-'),
+                            nama: p.nama || '',
+                            nisn: p.nisn || '',
+                            wali: p.wali || '',
+                            whatsapp: p.no_wa || p.whatsapp || '',
+                            program: p.program || '',
+                            status: p.status || 'Pending'
+                        }))
+                    };
+                }
+
+                if (action === "checkStatus") {
+                    const nisn = String(params.nisn || params.nisnInput || params.id || "").trim();
+                    if (!nisn) return null;
+                    const res = await fetch(`${sbUrl}/rest/v1/pendaftar?nisn=eq.${encodeURIComponent(nisn)}&limit=1`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    if (!rows || rows.length === 0) {
+                        return {
+                            status: "not_found",
+                            message: "NISN tidak terdaftar"
+                        };
+                    }
+                    const p = rows[0];
+                    return {
+                        status: "success",
+                        data: {
+                            nama: p.nama || '',
+                            nisn: p.nisn || '',
+                            wali: p.wali || '',
+                            program: p.program || '',
+                            status: p.status || 'Pending',
+                            tanggalDaftar: p.tanggal_daftar || p.timestamp || (p.created_at ? p.created_at.split('T')[0] : '-')
+                        }
+                    };
+                }
             } catch (err) {
                 console.warn("[SUPABASE FETCH ERROR]", action, err);
                 return null;
@@ -797,7 +1140,10 @@
                 'getEmployees', 'employee.list', 'auth.employee.list',
                 'getBanner', 'getKabar', 'getNotifikasi', 'getGaleri', 'getUnitKegiatan', 'getJadwalKegiatan', 'getPengaturan',
                 'getTahfidzPresensi',
-                'getTahfidzDashboard', 'tahfidz.dashboard', 'auth.tahfidz.dashboard'
+                'getTahfidzDashboard', 'tahfidz.dashboard', 'auth.tahfidz.dashboard',
+                'getTahfidzStudentDetail', 'tahfidz.studentDetail', 'auth.tahfidz.studentDetail',
+                'program.list',
+                'getPPDB', 'checkStatus'
             ];
             if (fastReadActions.includes(action)) {
                 try {
@@ -825,8 +1171,9 @@
             const isJadwalWrite = action === 'saveJadwalKegiatan' || action === 'toggleJadwalKegiatan' || action === 'deleteJadwalKegiatan';
             const isNewsViewWrite = action === 'recordNewsView';
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
+            const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite) {
+            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -1626,6 +1973,38 @@
                         await fetch(`${sbUrl}/rest/v1/alumni?id=eq.${encodeURIComponent(alumniId)}`, {
                             method: 'DELETE',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+
+                // ==================== 13. PENDAFTARAN PPDB ====================
+                else if (action === 'submitPendaftaran') {
+                    const p = payload.payload || payload.data || payload;
+                    const pRow = {
+                        id: (response && (response.id || response.pendaftarId)) || ('PPDB_' + Date.now()),
+                        nama: p.nama || '',
+                        nisn: String(p.nisn || '').trim(),
+                        wali: p.wali || '',
+                        no_wa: p.whatsapp || p.no_wa || null,
+                        program: p.program || '',
+                        status: 'Pending',
+                        timestamp: new Date().toLocaleString('id-ID'),
+                        created_at: new Date().toISOString()
+                    };
+                    await fetch(`${sbUrl}/rest/v1/pendaftar`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(pRow)
+                    });
+                }
+                else if (action === 'updateStatusPPDB' || action === 'savePPDBStatus' || action === 'savePPDB') {
+                    const nisn = payload.nisn;
+                    const newStatus = payload.status || payload.newStatus;
+                    if (nisn && newStatus) {
+                        await fetch(`${sbUrl}/rest/v1/pendaftar?nisn=eq.${encodeURIComponent(nisn)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
                         });
                     }
                 }
