@@ -263,6 +263,8 @@ function renderAdminPegawaiTable() {
 
     if (emptyState) emptyState.classList.add('hidden');
 
+    const canManagePegawai = typeof window.hasPermission === 'function' ? window.hasPermission('pegawai.manage') : true;
+
     // 1. Render Desktop Table Rows
     if (tbody) {
         tbody.innerHTML = data.map((p, idx) => {
@@ -322,6 +324,7 @@ function renderAdminPegawaiTable() {
                     </span>
                 </td>
                 <td class="px-4 py-3 text-center">
+                    ${canManagePegawai ? `
                     <div class="flex items-center justify-center space-x-1.5">
                         <button type="button" onclick="openAdminEmployeeModal('${escapeHtml(empId)}')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 flex items-center justify-center transition" title="Edit Data">
                             <i class="fa-solid fa-pen-to-square text-xs"></i>
@@ -330,6 +333,7 @@ function renderAdminPegawaiTable() {
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </div>
+                    ` : `<span class="text-xs text-slate-400 italic">Lihat Saja</span>`}
                 </td>
             </tr>
             `;
@@ -392,6 +396,7 @@ function renderAdminPegawaiTable() {
                         </a>
                     ` : `<span class="text-[11px] text-slate-400">Tidak ada kontak</span>`}
 
+                    ${canManagePegawai ? `
                     <div class="flex items-center space-x-1.5">
                         <button type="button" onclick="openAdminEmployeeModal('${escapeHtml(empId)}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center gap-1">
                             <i class="fa-solid fa-pen-to-square"></i> Edit
@@ -400,6 +405,7 @@ function renderAdminPegawaiTable() {
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
+                    ` : ''}
                 </div>
             </div>
             `;
@@ -411,6 +417,13 @@ function renderAdminPegawaiTable() {
  * Buka Modal Form Tambah / Edit Pegawai
  */
 function openAdminEmployeeModal(employeeId = null) {
+    if (typeof window.hasPermission === 'function' && !window.hasPermission('pegawai.manage')) {
+        if (typeof showToast === 'function') {
+            showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk mengelola pegawai.");
+        }
+        return;
+    }
+
     const modal = document.getElementById('modal-employee-form');
     const form = document.getElementById('form-employee');
     const modalTitle = document.getElementById('modal-employee-title');
@@ -642,6 +655,13 @@ async function saveAdminEmployee(e) {
  */
 async function deleteAdminEmployee(employeeId, nama) {
     if (!employeeId || employeeId === 'undefined' || employeeId === 'null') return;
+
+    if (typeof window.hasPermission === 'function' && !window.hasPermission('pegawai.manage')) {
+        if (typeof showToast === 'function') {
+            showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk menghapus data pegawai.");
+        }
+        return;
+    }
 
     if (!confirm(`Apakah Anda yakin ingin menghapus data pegawai "${nama || employeeId}"?`)) {
         return;
@@ -1024,4 +1044,37 @@ window.suggestRoleFromJabatan = suggestRoleFromJabatan;
 window.openPegawaiAccountSyncWizard = openPegawaiAccountSyncWizard;
 window.closePegawaiAccountSyncWizard = closePegawaiAccountSyncWizard;
 window.executePegawaiMassSync = executePegawaiMassSync;
+
+/**
+ * Terapkan Hak Akses Izin Role pada Antarmuka Pegawai
+ */
+function applyPegawaiRolePermissions(roleKey = null) {
+    const canManage = typeof window.hasPermission === 'function' ? window.hasPermission('pegawai.manage', roleKey) : true;
+    
+    // Tombol tambah pegawai di header
+    const addBtn = document.querySelector('button[onclick*="openAdminEmployeeModal()"]');
+    if (addBtn) {
+        if (canManage) {
+            addBtn.classList.remove('hidden');
+            if (addBtn.style.display === 'none') addBtn.style.display = '';
+        } else {
+            addBtn.classList.add('hidden');
+            addBtn.style.display = 'none';
+        }
+    }
+
+    // Tombol sinkronkan akun login
+    const syncBtn = document.querySelector('button[onclick*="openPegawaiAccountSyncWizard"]');
+    if (syncBtn) {
+        if (canManage) {
+            syncBtn.classList.remove('hidden');
+            if (syncBtn.style.display === 'none') syncBtn.style.display = '';
+        } else {
+            syncBtn.classList.add('hidden');
+            syncBtn.style.display = 'none';
+        }
+    }
+}
+window.applyPegawaiRolePermissions = applyPegawaiRolePermissions;
+
 

@@ -748,24 +748,77 @@ function getHalaqahForActiveAsatidz() {
 }
 
 /**
- * Kontrol Visibilitas Tombol Tahfidz Berdasarkan Peran Pengguna (RBAC)
- * Menyembunyikan tombol ekspor (Excel, CSV, Cetak, +Catat Setoran) & manajerial (Kelola Halaqah, Jadwal & Sesi, Target Massal) untuk Akun Asatidz
+ * Kontrol Visibilitas Fitur & Tombol Tahfidz Berdasarkan Konfigurasi Izin (RBAC)
+ * Dikelola secara dinamis melalui Konfigurasi Izin peran
  */
-function applyTahfidzRolePermissions() {
-    const activeRole = String((typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                              sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                              sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN').toUpperCase();
-    const isPengasuh = activeRole === 'PENGASUH' || (typeof ASNTahfidz !== 'undefined' && ASNTahfidz.viewerRole === 'pengasuh');
-    const isAsatidz = activeRole === 'ASATIDZ';
-    const hideAdminActions = isPengasuh || isAsatidz;
+function applyTahfidzRolePermissions(activeRole = null) {
+    if (!activeRole) {
+        activeRole = String((typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                            sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                            sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN').toUpperCase();
+    }
 
-    document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
-        if (hideAdminActions) {
-            el.classList.add('hidden');
-            el.style.display = 'none';
-        } else {
+    const canEntry = typeof hasPermission === 'function' ? hasPermission('tahfidz.entry', activeRole) : true;
+    const canTarget = typeof hasPermission === 'function' ? hasPermission('tahfidz.target', activeRole) : true;
+    const canHalaqah = typeof hasPermission === 'function' ? hasPermission('tahfidz.halaqah', activeRole) : true;
+    const canView = typeof hasPermission === 'function' ? hasPermission('tahfidz.view', activeRole) : true;
+    const canExport = typeof hasPermission === 'function' ? (hasPermission('santri.export', activeRole) || hasPermission('tahfidz.view', activeRole)) : true;
+
+    // 1. Tombol +Catat Setoran (tahfidz.entry)
+    document.querySelectorAll('[onclick*="openTahfidzCatatModal"]').forEach(el => {
+        if (canEntry) {
             el.classList.remove('hidden');
             el.style.display = '';
+        } else {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+        }
+    });
+
+    // 2. Tombol Kelola Halaqah & Jadwal Sesi (tahfidz.halaqah)
+    document.querySelectorAll('[onclick*="openTahfidzHalaqahModal"]').forEach(el => {
+        if (canHalaqah) {
+            el.classList.remove('hidden');
+            el.style.display = '';
+        } else {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+        }
+    });
+
+    // 3. Tombol Atur Target Capaian Massal (tahfidz.target)
+    document.querySelectorAll('[onclick*="openTahfidzBulkTargetModal"]').forEach(el => {
+        if (canTarget) {
+            el.classList.remove('hidden');
+            el.style.display = '';
+        } else {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+        }
+    });
+
+    // 4. Tombol Ekspor Data Excel, CSV, Cetak
+    document.querySelectorAll('[onclick*="exportTahfidzData"], [onclick*="printTahfidzRekap"]').forEach(el => {
+        if (canExport) {
+            el.classList.remove('hidden');
+            el.style.display = '';
+        } else {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+        }
+    });
+
+    // 5. Elemen kelas generik .tahfidz-admin-action
+    document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
+        const oc = el.getAttribute('onclick') || '';
+        if (oc.includes('openTahfidzCatatModal')) {
+            el.style.display = canEntry ? '' : 'none';
+        } else if (oc.includes('openTahfidzHalaqahModal')) {
+            el.style.display = canHalaqah ? '' : 'none';
+        } else if (oc.includes('openTahfidzBulkTargetModal')) {
+            el.style.display = canTarget ? '' : 'none';
+        } else if (oc.includes('export') || oc.includes('print')) {
+            el.style.display = canExport ? '' : 'none';
         }
     });
 }
@@ -2074,6 +2127,15 @@ function onTahfidzAyatChange() {
  * Buka modal catat setoran cepat
  */
 function openTahfidzCatatModal(studentId = null) {
+    if (typeof hasPermission === 'function' && !hasPermission('tahfidz.entry')) {
+        if (typeof showToast === 'function') {
+            showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk entri setoran tahfidz.');
+        } else {
+            alert('Akses Ditolak: Peran Anda tidak memiliki izin untuk entri setoran tahfidz.');
+        }
+        return;
+    }
+
     const modal = document.getElementById('modal-tahfidz-catat');
     if (!modal) return;
 
@@ -3999,6 +4061,15 @@ function clearTahfidzSelectedStudents() {
  * Buka modal atur target massal
  */
 function openTahfidzBulkTargetModal(initialScope = 'ALL') {
+    if (typeof hasPermission === 'function' && !hasPermission('tahfidz.target')) {
+        if (typeof showToast === 'function') {
+            showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk mengatur target capaian santri.');
+        } else {
+            alert('Akses Ditolak: Peran Anda tidak memiliki izin untuk mengatur target capaian santri.');
+        }
+        return;
+    }
+
     const modal = document.getElementById('modal-tahfidz-target-bulk');
     if (!modal) return;
 
@@ -4297,6 +4368,15 @@ ASNTahfidz.activePlottingStudentIds = [];
  * @param {number} defaultTab Tab awal yang dibuka (1 = Halaqah, 2 = Plotting, 3 = Matriks, 4 = Jadwal Sesi)
  */
 function openTahfidzHalaqahModal(defaultTab = 1) {
+    if (typeof hasPermission === 'function' && !hasPermission('tahfidz.halaqah')) {
+        if (typeof showToast === 'function') {
+            showToast('Akses Ditolak: Peran Anda tidak memiliki izin untuk mengelola halaqah.');
+        } else {
+            alert('Akses Ditolak: Peran Anda tidak memiliki izin untuk mengelola halaqah.');
+        }
+        return;
+    }
+
     const modal = document.getElementById('modal-tahfidz-halaqah');
     if (!modal) return;
 

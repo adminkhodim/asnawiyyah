@@ -2373,8 +2373,8 @@ function saveRolePermissionsBackend(roleKey, newPermissions, token) {
       return { success: false, message: "Format permissions harus berupa array." };
     }
 
-    // Role SUPER_ADMIN selalu retain ["*"] untuk menjamin tidak terkunci
-    if (roleKey === "SUPER_ADMIN" && !newPermissions.includes("*")) {
+    // Role SUPER_ADMIN default ["*"] jika konfigurasi izin kosong
+    if (roleKey === "SUPER_ADMIN" && newPermissions.length === 0) {
       newPermissions = ["*"];
     }
 
@@ -2921,10 +2921,11 @@ function authorizeRole(actor, allowedRoles = []) {
   if (!actor || !actor.role) {
     throw new AuthorizationError("Authentication required.");
   }
-  if (!allowedRoles.includes(actor.role)) {
-    throw new AuthorizationError(`Role '${actor.role}' is forbidden from accessing this resource.`);
+  const role = String(actor.role).toUpperCase();
+  if (role === "SUPER_ADMIN" || allowedRoles.includes(actor.role) || allowedRoles.includes(role)) {
+    return true;
   }
-  return true;
+  throw new AuthorizationError(`Role '${actor.role}' is forbidden from accessing this resource.`);
 }
 
 /**

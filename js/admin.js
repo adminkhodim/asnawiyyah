@@ -207,6 +207,11 @@
                 }
             }
 
+            // Sinkronkan visibilitas tombol & aksi berdasarkan konfigurasi izin
+            if (typeof applyAllRolePermissionsUI === 'function') {
+                applyAllRolePermissionsUI();
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -3025,6 +3030,9 @@
         }
 
         function isUserAdminRole() {
+            if (typeof window.hasPermission === 'function') {
+                return window.hasPermission('program.manage');
+            }
             const r = getAdminSessionRole();
             return r === "ADMIN" || r === "SUPER_ADMIN" || r === "PENGASUH" || r === "ADMINISTRATOR";
         }
@@ -5002,6 +5010,9 @@
 
             if (emptyState) emptyState.classList.add('hidden');
 
+            const canEdit = typeof window.hasPermission === 'function' ? window.hasPermission('santri.edit') : true;
+            const canDelete = typeof window.hasPermission === 'function' ? window.hasPermission('santri.delete') : true;
+
             // Render Desktop Table
             if (tbody) {
                 tbody.innerHTML = filteredAdminStudentsData.map((s, index) => {
@@ -5045,12 +5056,17 @@
                             <td class="py-3 px-3 text-center">${statusBadge}</td>
                             <td class="py-3 px-3 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
+                                    ${canEdit ? `
                                     <button type="button" onclick='openAdminStudentModal(${studentJson})' class="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded-lg flex items-center justify-center transition active:scale-95" title="Edit Santri">
                                         <i class="fa-solid fa-pen text-xs"></i>
                                     </button>
+                                    ` : ''}
+                                    ${canDelete ? `
                                     <button type="button" onclick="openAdminStudentDeleteModal('${escapeHtml(id)}', '${escapeHtml(name)}')" class="w-7 h-7 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg flex items-center justify-center transition active:scale-95" title="Hapus Santri">
                                         <i class="fa-solid fa-trash text-xs"></i>
                                     </button>
+                                    ` : ''}
+                                    ${!canEdit && !canDelete ? `<span class="text-[10px] text-slate-400 italic">Lihat Saja</span>` : ''}
                                 </div>
                             </td>
                         </tr>
@@ -5115,14 +5131,19 @@
                             </div>
 
                             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#253447]">
+                                ${canEdit ? `
                                 <button type="button" onclick='openAdminStudentModal(${studentJson})' class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
                                     <i class="fa-solid fa-pen text-xs"></i>
                                     <span>Edit</span>
                                 </button>
+                                ` : ''}
+                                ${canDelete ? `
                                 <button type="button" onclick="openAdminStudentDeleteModal('${escapeHtml(id)}', '${escapeHtml(name)}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
                                     <i class="fa-solid fa-trash text-xs"></i>
                                     <span>Hapus</span>
                                 </button>
+                                ` : ''}
+                                ${!canEdit && !canDelete ? `<span class="text-[10px] text-slate-400 italic">Lihat Saja</span>` : ''}
                             </div>
                         </div>
                     `;
@@ -5134,6 +5155,19 @@
          * Buka Modal Tambah / Edit Santri
          */
         function openAdminStudentModal(student = null) {
+            if (student && typeof window.hasPermission === 'function' && !window.hasPermission('santri.edit')) {
+                if (typeof showToast === 'function') {
+                    showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk mengedit data santri.");
+                }
+                return;
+            }
+            if (!student && typeof window.hasPermission === 'function' && !window.hasPermission('santri.create')) {
+                if (typeof showToast === 'function') {
+                    showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk menambah data santri.");
+                }
+                return;
+            }
+
             const modal = document.getElementById('modal-admin-student');
             const titleEl = document.getElementById('modal-admin-student-title');
             const submitText = document.getElementById('admin-student-submit-text');
@@ -5365,6 +5399,13 @@
          * Buka Modal Konfirmasi Hapus Santri
          */
         function openAdminStudentDeleteModal(studentId, studentName) {
+            if (typeof window.hasPermission === 'function' && !window.hasPermission('santri.delete')) {
+                if (typeof showToast === 'function') {
+                    showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk menghapus data santri.");
+                }
+                return;
+            }
+
             pendingDeleteStudentId = studentId;
             const desc = document.getElementById('modal-admin-student-delete-desc');
             if (desc) {
@@ -5605,6 +5646,8 @@
 
             if (emptyEl) emptyEl.classList.add('hidden');
 
+            const canManageUsers = typeof window.hasPermission === 'function' ? window.hasPermission('users.manage') : true;
+
             tbody.innerHTML = filtered.map(user => {
                 const safeUserId = String(user.userId || user.identityId || '').replace(/'/g, "\\'");
                 const safeName = escapeUserHtml(user.name || 'Pengguna');
@@ -5716,6 +5759,7 @@
                         <td class="p-3.5 max-w-xs">${linkedHtml}</td>
                         <td class="p-3.5 text-center whitespace-nowrap">${statusBadge}</td>
                         <td class="p-3.5 text-right whitespace-nowrap">
+                            ${canManageUsers ? `
                             <div class="flex items-center justify-end space-x-1.5">
                                 <button type="button" onclick="openAdminUserModal('${safeUserId}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition active:scale-95" title="Edit Akun">
                                     <i class="fa-solid fa-pen-to-square text-[11px] mr-1"></i>Edit
@@ -5724,6 +5768,7 @@
                                     <i class="fa-solid ${isActive ? 'fa-user-slash' : 'fa-user-check'} text-[11px]"></i>
                                 </button>
                             </div>
+                            ` : `<span class="text-xs text-slate-400 italic">Lihat Saja</span>`}
                         </td>
                     </tr>
                 `;
@@ -5763,6 +5808,13 @@
          * Buka modal form tambah / edit pengguna
          */
         function openAdminUserModal(userId) {
+            if (typeof window.hasPermission === 'function' && !window.hasPermission('users.manage')) {
+                if (typeof showToast === 'function') {
+                    showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk mengelola data pengguna.");
+                }
+                return;
+            }
+
             const modal = document.getElementById('modal-admin-user-form');
             const titleEl = document.getElementById('modal-admin-user-title');
             const form = document.getElementById('adminUserForm');
@@ -6037,6 +6089,14 @@
          */
         async function toggleAdminUserStatus(userId, currentStatus) {
             if (!userId) return;
+
+            if (typeof window.hasPermission === 'function' && !window.hasPermission('users.manage')) {
+                if (typeof showToast === 'function') {
+                    showToast("⛔ Akses ditolak: Anda tidak memiliki izin untuk mengubah status pengguna.");
+                }
+                return;
+            }
+
             const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
             const actionText = newStatus === 'ACTIVE' ? 'mengaktifkan' : 'menonaktifkan';
 
@@ -6242,3 +6302,45 @@
         window.handleAdminNewsInlineFileSelect = handleAdminNewsInlineFileSelect;
         window.setAdminNewsInlineCropRatio = setAdminNewsInlineCropRatio;
         window.confirmInsertInlineImageToEditor = confirmInsertInlineImageToEditor;
+
+        /**
+         * Terapkan Hak Akses Izin Role pada Antarmuka Master Data Santri
+         */
+        function applySantriRolePermissions(roleKey = null) {
+            const canCreate = typeof window.hasPermission === 'function' ? window.hasPermission('santri.create', roleKey) : true;
+            
+            // Tombol Tambah Santri di header modul
+            const addBtn = document.querySelector('button[onclick*="openAdminStudentModal()"]');
+            if (addBtn) {
+                if (canCreate) {
+                    addBtn.classList.remove('hidden');
+                    if (addBtn.style.display === 'none') addBtn.style.display = '';
+                } else {
+                    addBtn.classList.add('hidden');
+                    addBtn.style.display = 'none';
+                }
+            }
+        }
+
+        /**
+         * Terapkan Hak Akses Izin Role pada Antarmuka Manajemen Pengguna
+         */
+        function applyUsersRolePermissions(roleKey = null) {
+            const canManage = typeof window.hasPermission === 'function' ? window.hasPermission('users.manage', roleKey) : true;
+
+            // Tombol Tambah Pengguna di header modul
+            const addBtn = document.querySelector('button[onclick*="openAdminUserModal()"]');
+            if (addBtn) {
+                if (canManage) {
+                    addBtn.classList.remove('hidden');
+                    if (addBtn.style.display === 'none') addBtn.style.display = '';
+                } else {
+                    addBtn.classList.add('hidden');
+                    addBtn.style.display = 'none';
+                }
+            }
+        }
+
+        window.applySantriRolePermissions = applySantriRolePermissions;
+        window.applyUsersRolePermissions = applyUsersRolePermissions;
+

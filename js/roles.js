@@ -221,10 +221,10 @@
 
     // Pemetaan Modul Sistem ke Izin Terkait
     const MODULE_TO_PERMISSIONS = {
-        'santri': ['santri.view', 'santri.create', 'santri.edit'],
+        'santri': ['santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
         'presensi': ['presensi.view', 'presensi.entry'],
-        'ppdb': ['ppdb.manage'],
+        'ppdb': ['ppdb.manage', 'keuangan.verify'],
         'program': ['program.manage'],
         'unit-kegiatan': ['unit.manage'],
         'jadwal-kegiatan': ['jadwal.manage', 'unit.manage'],
@@ -244,7 +244,7 @@
     const DEFAULT_ROLE_PERMISSIONS_MAP = {
         'SUPER_ADMIN': ['*'],
         'ADMIN': [
-            'santri.view', 'santri.create', 'santri.edit', 'santri.export', 'unit.manage', 'jadwal.manage',
+            'santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export', 'unit.manage', 'jadwal.manage',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah', 'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
@@ -905,6 +905,11 @@
         // Ambil izin yang sedang aktif untuk role ini
         const activePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
         currentModalPermissions = [...activePerms];
+        if (currentModalPermissions.includes('*')) {
+            const allKeys = [];
+            PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => allKeys.push(i.key)));
+            currentModalPermissions = allKeys;
+        }
 
         const modal = document.getElementById('modal-admin-role-permissions');
         if (!modal) return;
@@ -962,7 +967,6 @@
         const container = document.getElementById('role-permissions-categories-container');
         if (!container) return;
 
-        const isSuperAdmin = (currentConfiguringRole === 'SUPER_ADMIN');
         const filter = String(searchFilter || '').trim().toLowerCase();
 
         container.innerHTML = PERMISSION_CATEGORIES.map(cat => {
@@ -985,25 +989,23 @@
                             </div>
                             <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-100">${cat.label}</h4>
                         </div>
-                        ${!isSuperAdmin ? `
-                            <div class="flex items-center space-x-2 text-[10px]">
-                                <button type="button" onclick="toggleCategoryPermissions('${cat.key}', true)" 
-                                    class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
-                                    Pilih Semua
-                                </button>
-                                <span class="text-slate-300 dark:text-slate-600">•</span>
-                                <button type="button" onclick="toggleCategoryPermissions('${cat.key}', false)" 
-                                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                                    Kosongkan
-                                </button>
-                            </div>
-                        ` : ''}
+                        <div class="flex items-center space-x-2 text-[10px]">
+                            <button type="button" onclick="toggleCategoryPermissions('${cat.key}', true)" 
+                                class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                                Pilih Semua
+                            </button>
+                            <span class="text-slate-300 dark:text-slate-600">•</span>
+                            <button type="button" onclick="toggleCategoryPermissions('${cat.key}', false)" 
+                                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                Kosongkan
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 2-Columns Checklist Cards Grid (Screenshot 3 KHODIM) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         ${filteredItems.map(item => {
-                            const isChecked = isSuperAdmin || currentModalPermissions.includes(item.key) || currentModalPermissions.includes('*');
+                            const isChecked = currentModalPermissions.includes(item.key) || currentModalPermissions.includes('*');
                             const cardBorder = isChecked
                                 ? 'border-emerald-500/80 bg-emerald-50/50 dark:bg-emerald-950/20'
                                 : 'border-slate-200 dark:border-[#253447] bg-white dark:bg-[#15202d] hover:border-slate-300';
@@ -1013,8 +1015,8 @@
                                 : 'border-2 border-slate-300 dark:border-slate-600 text-transparent';
 
                             return `
-                                <div onclick="${!isSuperAdmin ? `toggleRolePermissionItem('${item.key}')` : ''}"
-                                    class="p-3.5 rounded-2xl border ${cardBorder} transition select-none ${isSuperAdmin ? 'cursor-default' : 'cursor-pointer'} flex items-start space-x-3 group">
+                                <div onclick="toggleRolePermissionItem('${item.key}')"
+                                    class="p-3.5 rounded-2xl border ${cardBorder} transition select-none cursor-pointer flex items-start space-x-3 group">
                                     <div class="w-5 h-5 rounded-lg ${checkClass} flex items-center justify-center text-xs shrink-0 mt-0.5 transition">
                                         <i class="fa-solid fa-check text-[10px]"></i>
                                     </div>
@@ -1037,7 +1039,6 @@
      * Toggle satu item izin
      */
     function toggleRolePermissionItem(permKey) {
-        if (currentConfiguringRole === 'SUPER_ADMIN') return;
         const idx = currentModalPermissions.indexOf(permKey);
         if (idx !== -1) {
             currentModalPermissions.splice(idx, 1);
@@ -1051,7 +1052,6 @@
      * Toggle semua izin dalam satu kategori
      */
     function toggleCategoryPermissions(catKey, isSelectAll) {
-        if (currentConfiguringRole === 'SUPER_ADMIN') return;
         const category = PERMISSION_CATEGORIES.find(c => c.key === catKey);
         if (!category) return;
 
@@ -1070,7 +1070,6 @@
      * Pilih Semua / Kosongkan Seluruh Izin
      */
     function selectAllRolePermissions(isSelectAll) {
-        if (currentConfiguringRole === 'SUPER_ADMIN') return;
         if (isSelectAll) {
             const allKeys = [];
             PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => allKeys.push(i.key)));
@@ -1094,11 +1093,11 @@
     function updateRolePermissionsCounter() {
         const badge = document.getElementById('role-perm-counter-badge');
         if (!badge) return;
-        if (currentConfiguringRole === 'SUPER_ADMIN') {
-            badge.innerText = 'Semua Hak Akses (*)';
+        const totalItems = PERMISSION_CATEGORIES.reduce((acc, c) => acc + c.items.length, 0);
+        if (currentModalPermissions.length >= totalItems || currentModalPermissions.includes('*')) {
+            badge.innerText = `Semua Hak Akses (${totalItems}/${totalItems} Izin Aktif)`;
             badge.className = 'px-2.5 py-0.5 rounded-full font-bold text-xs bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200/60';
         } else {
-            const totalItems = PERMISSION_CATEGORIES.reduce((acc, c) => acc + c.items.length, 0);
             badge.innerText = `${currentModalPermissions.length} dari ${totalItems} Izin Aktif`;
             badge.className = 'px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60';
         }
@@ -1121,8 +1120,18 @@
         }
 
         try {
+            // Hitung total izin yang tersedia
+            const allKeys = [];
+            PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => allKeys.push(i.key)));
+            
+            let permsToSave = [...currentModalPermissions];
+            // Jika seluruh checkbox aktif, tambahkan wildcard '*' untuk kompatibilitas penuh
+            if (permsToSave.length === allKeys.length && !permsToSave.includes('*')) {
+                permsToSave.push('*');
+            }
+
             // Update state lokal
-            ROLE_PERMISSIONS_STATE[roleKey] = [...currentModalPermissions];
+            ROLE_PERMISSIONS_STATE[roleKey] = permsToSave;
             try {
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
             } catch (e) {}
@@ -1132,7 +1141,7 @@
                 try {
                     await authApiPost('auth.admin.saveRolePermissions', {
                         roleKey: roleKey,
-                        permissions: currentModalPermissions
+                        permissions: permsToSave
                     });
                 } catch (netErr) {
                     console.warn('[SAVE ROLE PERMS BACKEND WARN]', netErr);
@@ -1396,20 +1405,50 @@
     };
 
     /**
-     * Dapatkan daftar modul yang boleh diakses berdasarkan izin yang dicentang oleh Super Admin
+     * Cek apakah pengguna atau peran saat ini memiliki izin tertentu
+     * Sesuai Konfigurasi Izin (RBAC Dinamis)
+     */
+    function hasPermission(permissionKey, roleKey = null) {
+        if (!permissionKey) return true;
+        if (!roleKey) {
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+        }
+        roleKey = String(roleKey).toUpperCase();
+        if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
+
+        // Cek izin khusus pengguna (user-level override) jika tersedia
+        let rolePerms = null;
+        if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && Array.isArray(ASNIdentity.currentUser.permissions) && ASNIdentity.currentUser.permissions.length > 0) {
+            rolePerms = ASNIdentity.currentUser.permissions;
+        } else {
+            rolePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
+        }
+
+        if (rolePerms.includes('*')) return true;
+        return rolePerms.includes(permissionKey);
+    }
+
+    /**
+     * Dapatkan daftar modul yang boleh diakses berdasarkan izin yang dicentang pada Konfigurasi Izin
      */
     function getAllowedModulesForRole(roleKey) {
         if (!roleKey) {
             roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
                       sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                      sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
+                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
 
-        if (roleKey === 'SUPER_ADMIN') return Object.keys(MODULE_TO_PERMISSIONS);
+        let rolePerms = null;
+        if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && Array.isArray(ASNIdentity.currentUser.permissions) && ASNIdentity.currentUser.permissions.length > 0) {
+            rolePerms = ASNIdentity.currentUser.permissions;
+        } else {
+            rolePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
+        }
 
-        const rolePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
         if (rolePerms.includes('*')) return Object.keys(MODULE_TO_PERMISSIONS);
 
         return Object.keys(MODULE_TO_PERMISSIONS).filter(modKey => {
@@ -1433,8 +1472,6 @@
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
-        
-        if (roleKey === 'SUPER_ADMIN') return true;
 
         // Cek izin khusus pengguna (user-level override) jika tersedia
         let rolePerms = null;
@@ -1750,13 +1787,58 @@
             activeTag.className = `px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${profile.badgeBg}`;
         }
 
-        // 10. Perbarui hak akses & filter modul Tahfidz jika aktif
-        if (typeof applyTahfidzRolePermissions === 'function') {
-            applyTahfidzRolePermissions();
-        }
+        // 10. Terapkan konfigurasi izin secara menyeluruh ke seluruh UI
+        applyAllRolePermissionsUI(roleKey);
         if (roleKey === 'ASATIDZ') {
             if (typeof populateTahfidzFilters === 'function') populateTahfidzFilters();
             if (typeof filterTahfidzList === 'function') filterTahfidzList();
+        }
+    }
+
+    /**
+     * Terapkan konfigurasi izin ke seluruh elemen UI di DOM secara menyeluruh
+     */
+    function applyAllRolePermissionsUI(roleKey = null) {
+        if (!roleKey) {
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+        }
+        roleKey = String(roleKey).toUpperCase();
+        if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
+
+        // 1. Elemen dengan atribut data-require-permission
+        document.querySelectorAll('[data-require-permission]').forEach(el => {
+            const req = el.getAttribute('data-require-permission');
+            if (!req) return;
+            const allowed = hasPermission(req, roleKey);
+            if (allowed) {
+                el.classList.remove('hidden');
+                if (el.style.display === 'none') el.style.display = '';
+            } else {
+                el.classList.add('hidden');
+                el.style.display = 'none';
+            }
+        });
+
+        // 2. Modul Tahfidz Actions
+        if (typeof applyTahfidzRolePermissions === 'function') {
+            applyTahfidzRolePermissions(roleKey);
+        }
+
+        // 3. Modul Santri Actions
+        if (typeof applySantriRolePermissions === 'function') {
+            applySantriRolePermissions(roleKey);
+        }
+
+        // 4. Modul Pegawai Actions
+        if (typeof applyPegawaiRolePermissions === 'function') {
+            applyPegawaiRolePermissions(roleKey);
+        }
+
+        // 5. Modul Users Actions
+        if (typeof applyUsersRolePermissions === 'function') {
+            applyUsersRolePermissions(roleKey);
         }
     }
 
@@ -1945,7 +2027,10 @@
     window.ROLE_ALLOWED_MODULES = ROLE_ALLOWED_MODULES;
     window.ROLE_DASHBOARD_PROFILES = ROLE_DASHBOARD_PROFILES;
     window.isModuleAllowedForRole = isModuleAllowedForRole;
+    window.hasPermission = hasPermission;
+    window.applyAllRolePermissionsUI = applyAllRolePermissionsUI;
     window.applyAdminRoleVisibility = applyAdminRoleVisibility;
     window.switchActiveRolePreview = switchActiveRolePreview;
+    window.DEFAULT_ROLE_PERMISSIONS_MAP = DEFAULT_ROLE_PERMISSIONS_MAP;
 
 })(window, document);
