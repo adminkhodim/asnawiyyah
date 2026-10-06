@@ -1747,10 +1747,9 @@ function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
     let sesiList = ASNTahfidz.data.sesiList;
     if (!sesiList || sesiList.length === 0) {
         sesiList = [
-            { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jamMulai: "05:00", jamSelesai: "06:00", status: "Aktif Digunakan" },
-            { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jamMulai: "08:30", jamSelesai: "09:30", status: "Aktif Digunakan" },
-            { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jamMulai: "16:00", jamSelesai: "17:15", status: "Aktif Digunakan" },
-            { sesiId: "SESI-04", id: "SESI-04", namaSesi: "Malam (Ba'da Maghrib / Isya)", nama: "Malam (Ba'da Maghrib / Isya)", jamMulai: "18:45", jamSelesai: "20:30", status: "Aktif Digunakan" }
+            { sesiId: "SESI-20260912-1109", id: "SESI-20260912-1109", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jamMulai: "05:00", jamSelesai: "06:15", status: "Aktif Digunakan" },
+            { sesiId: "SESI-20260912-1110", id: "SESI-20260912-1110", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jamMulai: "15:30", jamSelesai: "16:30", status: "Aktif Digunakan" },
+            { sesiId: "SESI-20260912-1112", id: "SESI-20260912-1112", namaSesi: "Malam (Ba'da magrib)", nama: "Malam (Ba'da magrib)", jamMulai: "18:00", jamSelesai: "19:30", status: "Aktif Digunakan" }
         ];
     }
 
@@ -5094,10 +5093,9 @@ function renderTahfidzSesiCards() {
     // Default sesi jika belum ada di database
     if (!sesiList || sesiList.length === 0) {
         sesiList = [
-            { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:00", hariList: ["Sen", "Rab", "Kam", "Sab", "Min"], hari: ["Sen", "Rab", "Kam", "Sab", "Min"], status: "Aktif Digunakan" },
-            { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
-            { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], status: "Aktif Digunakan" },
-            { sesiId: "SESI-04", id: "SESI-04", namaSesi: "Malam (Ba'da Maghrib / Isya)", nama: "Malam (Ba'da Maghrib / Isya)", jenisSesi: "Muroja'ah & Tasmi'", jenis: "Muroja'ah & Tasmi'", jamMulai: "18:45", jamSelesai: "20:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Min"], hari: ["Sen", "Sel", "Rab", "Kam", "Min"], status: "Aktif Digunakan" }
+            { sesiId: "SESI-20260912-1109", id: "SESI-20260912-1109", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+            { sesiId: "SESI-20260912-1110", id: "SESI-20260912-1110", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "15:30", jamSelesai: "16:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+            { sesiId: "SESI-20260912-1112", id: "SESI-20260912-1112", namaSesi: "Malam (Ba'da magrib)", nama: "Malam (Ba'da magrib)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "18:00", jamSelesai: "19:30", hariList: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], hari: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], status: "Aktif Digunakan" }
         ];
     }
 
@@ -5794,9 +5792,8 @@ function openTahfidzPresensiModal(optionalHalaqahId = null) {
             if (!sesiList || sesiList.length === 0) {
                 sesiList = [
                     { namaSesi: "Pagi (Ba'da Subuh)" },
-                    { namaSesi: "Pagi (MA Tahfidz)" },
                     { namaSesi: "Sore (Ba'da Ashar)" },
-                    { namaSesi: "Malam (Ba'da Maghrib / Isya)" }
+                    { namaSesi: "Malam (Ba'da magrib)" }
                 ];
             }
             const activeList = sesiList.filter(s => {

@@ -732,23 +732,34 @@
                     const muhafizList = Array.from(new Set(halaqahList.map(h => h.muhafiz).filter(Boolean)));
 
 
+                    const parseSesiHariList = (val) => {
+                        if (Array.isArray(val)) return val;
+                        if (typeof val === 'string') {
+                            try {
+                                const parsed = JSON.parse(val);
+                                if (Array.isArray(parsed)) return parsed;
+                            } catch (e) {}
+                            return val.split(',').map(x => x.trim().replace(/^["'\[\]]|["'\[\]]$/g, '')).filter(Boolean);
+                        }
+                        return ['Sen', 'Sel', 'Rab', 'Kam', 'Sab'];
+                    };
+
                     const sesiList = (rawSesi && rawSesi.length > 0) ? rawSesi.map((s, idx) => ({
-                        sesiId: s.sesi_id || `SESI-0${idx + 1}`,
-                        id: s.sesi_id || `SESI-0${idx + 1}`,
+                        sesiId: s.sesi_id || `SESI-20260912-110${idx + 9}`,
+                        id: s.sesi_id || `SESI-20260912-110${idx + 9}`,
                         namaSesi: s.nama_sesi || 'Sesi',
                         nama: s.nama_sesi || 'Sesi',
                         jenisSesi: s.jenis_sesi || 'Ziyadah',
                         jenis: s.jenis_sesi || 'Ziyadah',
                         jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
-                        jamSelesai: (s.jam_selesai || '06:00').substring(0, 5),
-                        hariList: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
-                        hari: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
+                        jamSelesai: (s.jam_selesai || '06:15').substring(0, 5),
+                        hariList: parseSesiHariList(s.hari_list),
+                        hari: parseSesiHariList(s.hari_list),
                         status: s.status || 'Aktif Digunakan'
                     })) : [
-                        { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:00", hariList: ["Sen", "Rab", "Kam", "Sab", "Min"], hari: ["Sen", "Rab", "Kam", "Sab", "Min"], status: "Aktif Digunakan" },
-                        { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
-                        { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], status: "Aktif Digunakan" },
-                        { sesiId: "SESI-04", id: "SESI-04", namaSesi: "Malam (Ba'da Maghrib / Isya)", nama: "Malam (Ba'da Maghrib / Isya)", jenisSesi: "Muroja'ah & Tasmi'", jenis: "Muroja'ah & Tasmi'", jamMulai: "18:45", jamSelesai: "20:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Min"], hari: ["Sen", "Sel", "Rab", "Kam", "Min"], status: "Aktif Digunakan" }
+                        { sesiId: "SESI-20260912-1109", id: "SESI-20260912-1109", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-20260912-1110", id: "SESI-20260912-1110", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "15:30", jamSelesai: "16:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-20260912-1112", id: "SESI-20260912-1112", namaSesi: "Malam (Ba'da magrib)", nama: "Malam (Ba'da magrib)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "18:00", jamSelesai: "19:30", hariList: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], hari: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], status: "Aktif Digunakan" }
                     ];
 
                     return {
@@ -781,20 +792,31 @@
                     const res = await fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?order=sesi_id.asc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    const parseSesiHari = (val) => {
+                        if (Array.isArray(val)) return val;
+                        if (typeof val === 'string') {
+                            try {
+                                const parsed = JSON.parse(val);
+                                if (Array.isArray(parsed)) return parsed;
+                            } catch (e) {}
+                            return val.split(',').map(x => x.trim().replace(/^["'\[\]]|["'\[\]]$/g, '')).filter(Boolean);
+                        }
+                        return ['Sen', 'Sel', 'Rab', 'Kam', 'Sab'];
+                    };
                     return {
                         status: "success",
                         success: true,
                         data: rows.map((s, idx) => ({
-                            sesiId: s.sesi_id || `SESI-0${idx + 1}`,
-                            id: s.sesi_id || `SESI-0${idx + 1}`,
+                            sesiId: s.sesi_id || `SESI-20260912-110${idx + 9}`,
+                            id: s.sesi_id || `SESI-20260912-110${idx + 9}`,
                             namaSesi: s.nama_sesi || 'Sesi',
                             nama: s.nama_sesi || 'Sesi',
                             jenisSesi: s.jenis_sesi || 'Ziyadah',
                             jenis: s.jenis_sesi || 'Ziyadah',
                             jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
-                            jamSelesai: (s.jam_selesai || '06:00').substring(0, 5),
-                            hariList: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
-                            hari: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
+                            jamSelesai: (s.jam_selesai || '06:15').substring(0, 5),
+                            hariList: parseSesiHari(s.hari_list),
+                            hari: parseSesiHari(s.hari_list),
                             status: s.status || 'Aktif Digunakan'
                         }))
                     };
