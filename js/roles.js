@@ -1790,6 +1790,16 @@
             activeTag.className = `px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${profile.badgeBg}`;
         }
 
+        // Sinkronisasi Profil Sidebar Desktop (Fase 1)
+        const sidebarRoleBadge = document.getElementById('admin-sidebar-role-badge');
+        if (sidebarRoleBadge) {
+            sidebarRoleBadge.innerText = profile.name || profile.shortName;
+        }
+        const sidebarInitial = document.getElementById('admin-sidebar-avatar-initial');
+        if (sidebarInitial) {
+            sidebarInitial.innerText = (profile.shortName || 'AD').substring(0, 2).toUpperCase();
+        }
+
         // 10. Terapkan konfigurasi izin secara menyeluruh ke seluruh UI
         applyAllRolePermissionsUI(roleKey);
         if (roleKey === 'ASATIDZ') {
