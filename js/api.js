@@ -74,7 +74,8 @@
                                 ringkasan: n.ringkasan,
                                 isi: n.isi,
                                 penulis: n.penulis || "Admin",
-                                gambar: img || "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop"
+                                gambar: img || "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop",
+                                views: Number(n.views) || 0
                             };
                         })
                     };
@@ -485,8 +486,9 @@
 
             // Jalankan sinkronisasi Supabase secara proaktif untuk write actions agar Cloud DB selalu termutakhirkan
             const isJadwalWrite = action === 'saveJadwalKegiatan' || action === 'toggleJadwalKegiatan' || action === 'deleteJadwalKegiatan';
+            const isNewsViewWrite = action === 'recordNewsView';
             let supabaseWritePromise = null;
-            if (isJadwalWrite) {
+            if (isJadwalWrite || isNewsViewWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -933,6 +935,31 @@
                         });
                     }
                 }
+                else if (action === 'recordNewsView') {
+                    const newsId = (payload.data && (payload.data.news_id || payload.data.id)) || payload.news_id || payload.id;
+                    const slug = (payload.data && payload.data.slug) || payload.slug;
+                    if (newsId || slug) {
+                        try {
+                            const filter = newsId ? `news_id=eq.${encodeURIComponent(newsId)}` : `slug=eq.${encodeURIComponent(slug)}`;
+                            const gRes = await fetch(`${sbUrl}/rest/v1/berita?${filter}&select=news_id,views&limit=1`, {
+                                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                            });
+                            if (gRes.ok) {
+                                const rows = await gRes.json();
+                                if (rows && rows.length > 0) {
+                                    const currentV = Number(rows[0].views) || 0;
+                                    await fetch(`${sbUrl}/rest/v1/berita?news_id=eq.${encodeURIComponent(rows[0].news_id)}`, {
+                                        method: 'PATCH',
+                                        headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ views: currentV + 1 })
+                                    });
+                                }
+                            }
+                        } catch (errView) {
+                            console.warn('[SUPABASE RECORD VIEW SYNC WARN]', errView);
+                        }
+                    }
+                }
 
                 // ==================== 6. BANNER SLIDER ====================
                 else if (action === 'saveBanner') {
@@ -1328,7 +1355,8 @@
                 ringkasan: "Alhamdulillah, santri PPTQ Asnawiyyah kembali meraih prestasi membanggakan dengan meraih juara pertama olimpiade matematika...",
                 isi: "Alhamdulillah, santri PPTQ Asnawiyyah kembali meraih prestasi membanggakan dengan meraih juara pertama olimpiade matematika tingkat Provinsi Jawa Tengah.\n\nKeberhasilan ini membuktikan bahwa kurikulum terintegrasi yang menggabungkan khazanah salaf klasik dan sains teknologi mampu bersaing di kancah nasional. Semoga prestasi ini memacu santri lainnya.",
                 penulis: "Humas Pesantren",
-                gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop"
+                gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800&auto=format&fit=crop",
+                views: 124
             },
             {
                 news_id: "NEWS_2",
@@ -1339,7 +1367,8 @@
                 ringkasan: "Pesantren menyambut hangat silaturahmi tokoh ulama nasional yang memberikan wejangan mendalam bagi para santri...",
                 isi: "Pesantren menyambut hangat silaturahmi tokoh ulama nasional di Aula Utama. Beliau memberikan pengarahan keilmuan kepada seluruh santri agar tetap bersemangat menuntut ilmu di tengah derasnya modernitas global.\n\nBeliau menekankan pentingnya penguasaan literatur klasik sebagai akar moderasi beragama.",
                 penulis: "Kesiswaan",
-                gambar: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop"
+                gambar: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=800&auto=format&fit=crop",
+                views: 89
             }
         ];
 

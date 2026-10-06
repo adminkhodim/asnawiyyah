@@ -582,16 +582,22 @@
 
                 const imgHtml = `<img src="${imgSource}" alt="${escapeHtml(news.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null;this.src='${defaultNewsImage}';">`;
 
+                const viewsFormatted = Number(news.views || 0).toLocaleString('id-ID');
                 card.innerHTML = `
                     <div class="w-full h-40 bg-brand-800 rounded-xl relative flex items-center justify-center overflow-hidden">
                         ${imgHtml}
-                        <span class="absolute top-2.5 left-2.5 bg-brand-600 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${news.kategori}</span>
+                        <span class="absolute top-2.5 left-2.5 bg-brand-600 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">${news.kategori}</span>
                     </div>
                     <div class="space-y-1.5">
-                        <div class="flex items-center space-x-2 text-[10px] text-slate-400 dark:text-slate-400">
+                        <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-400 dark:text-slate-400">
                             <span><i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal}</span>
                             <span>•</span>
-                            <span class="text-brand-700 dark:text-emerald-400 font-bold">${news.penulis}</span>
+                            <span class="text-brand-700 dark:text-emerald-400 font-semibold">${news.penulis || 'Admin'}</span>
+                            <span>•</span>
+                            <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
+                                <i class="fa-regular fa-eye mr-1"></i>
+                                <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
+                            </span>
                         </div>
                         <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                             ${news.judul}
@@ -652,10 +658,15 @@
                     if (!thumbSrc || thumbSrc.includes('photo-1584286595398-a59f21d313f5')) {
                         thumbSrc = defaultThumb;
                     }
+                    const viewsFormatted = Number(news.views || 0).toLocaleString('id-ID');
                     item.innerHTML = `
                         <div class="space-y-1.5 flex-1 min-w-0">
-                            <div>
+                            <div class="flex items-center gap-2">
                                 <span class="inline-block px-2.5 py-0.5 bg-emerald-700 text-white text-[9px] font-extrabold rounded-md uppercase tracking-wider">${news.kategori}</span>
+                                <span class="inline-flex items-center text-[10px] text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
+                                    <i class="fa-regular fa-eye mr-1"></i>
+                                    <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
+                                </span>
                             </div>
                             <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                                 ${news.judul}
@@ -685,7 +696,14 @@
                             </div>
                             <div class="col-span-6 flex flex-col justify-between py-1">
                                 <div class="space-y-2">
-                                    <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">${bigNews.kategori} • ${bigNews.tanggal}</span>
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                        <span>${bigNews.kategori} • ${bigNews.tanggal}</span>
+                                        <span>•</span>
+                                        <span class="inline-flex items-center font-bold" title="${Number(bigNews.views || 0).toLocaleString('id-ID')} kali dibaca">
+                                            <i class="fa-regular fa-eye mr-1"></i>
+                                            <span data-news-views-id="${bigNews.news_id || bigNews.slug}">${Number(bigNews.views || 0).toLocaleString('id-ID')}</span>
+                                        </span>
+                                    </div>
                                     <h4 onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
                                         class="font-bold text-base text-slate-900 dark:text-slate-100 leading-snug hover:text-emerald-700 dark:hover:text-emerald-400 transition cursor-pointer line-clamp-2">
                                         ${bigNews.judul}
@@ -709,7 +727,13 @@
                             html += `
                                 <div onclick="bacaBerita('${smallNews.news_id || smallNews.slug}')"
                                     class="bg-white dark:bg-[#15202d] p-4 rounded-xl border border-slate-200/70 dark:border-[#253447] hover:border-slate-300 dark:hover:border-slate-600 transition cursor-pointer">
-                                    <span class="text-[11px] font-medium text-slate-400 dark:text-slate-400">${smallNews.kategori} • ${smallNews.tanggal}</span>
+                                    <div class="flex items-center justify-between text-[11px] font-medium text-slate-400 dark:text-slate-400">
+                                        <span>${smallNews.kategori} • ${smallNews.tanggal}</span>
+                                        <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${Number(smallNews.views || 0).toLocaleString('id-ID')} kali dibaca">
+                                            <i class="fa-regular fa-eye mr-1"></i>
+                                            <span data-news-views-id="${smallNews.news_id || smallNews.slug}">${Number(smallNews.views || 0).toLocaleString('id-ID')}</span>
+                                        </span>
+                                    </div>
                                     <h5 class="font-bold text-xs text-slate-800 dark:text-slate-100 mt-1 line-clamp-2 hover:text-emerald-700 dark:hover:text-emerald-400">
                                         ${smallNews.judul}
                                     </h5>
@@ -833,12 +857,18 @@
 
             // Increment visual counter secara instan
             news.views = (Number(news.views) || 0) + 1;
+            const formatted = Number(news.views).toLocaleString('id-ID');
             const viewsCountEl = document.getElementById('detail-news-views-count');
             if (viewsCountEl) {
-                viewsCountEl.innerText = Number(news.views).toLocaleString('id-ID');
+                viewsCountEl.innerText = formatted;
             }
 
-            // Sync ke backend GAS secara asinkron tanpa memblokir pembaca
+            // Sinkronkan elemen view di Headline & Menu Berita secara instan jika ada di DOM
+            document.querySelectorAll(`[data-news-views-id="${news.news_id}"], [data-news-views-id="${news.slug}"]`).forEach(el => {
+                el.innerText = formatted;
+            });
+
+            // Sync ke backend GAS & Supabase secara asinkron tanpa memblokir pembaca
             if (isApiConfigured()) {
                 apiPost("recordNewsView", {
                     news_id: news.news_id,
@@ -860,7 +890,9 @@
                 });
                 const rows = await res.json();
                 if (Array.isArray(rows) && rows.length > 0) {
-                    return rows[0];
+                    const row = rows[0];
+                    row.views = Number(row.views) || 0;
+                    return row;
                 }
             } catch (err) {
                 console.warn("fetchSingleNewsDirectly error:", err);
