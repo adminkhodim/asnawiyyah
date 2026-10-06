@@ -5,6 +5,51 @@ const GAS_API_URL = process.env.GAS_API_URL || "https://script.google.com/macros
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://tkjhfhyabacbyknwrysh.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRramhmaHlhYmFjYnlrbndyeXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDk1MDMsImV4cCI6MjEwNjM4NTUwM30.uIeUO_v29ztXFUyDAxb_50ybP62BO0ta_QEzgwWFdlo";
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function resolveImageUrl(newsItem) {
+    if (!newsItem) return 'https://asnawiyyah.or.id/assets/img/og-banner.jpg';
+
+    // Periksa semua kemungkinan nama properti gambar di Supabase, GAS, dan form input
+    let raw = newsItem.gambar_url || newsItem.foto_url || newsItem.gambar || newsItem.Gambar_URL || newsItem.image || newsItem.thumbnail || '';
+    if (typeof raw === 'string') raw = raw.trim();
+
+    // Jika kosong atau gambar placeholder default unsplash, coba cari dari tag <img> di dalam isi berita
+    if ((!raw || raw.includes('photo-1584286595398-a59f21d313f5')) && newsItem.isi) {
+        const match = String(newsItem.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
+            raw = match[1].trim();
+        }
+    }
+
+    if (!raw || raw.includes('photo-1584286595398-a59f21d313f5')) {
+        return 'https://asnawiyyah.or.id/assets/img/og-banner.jpg';
+    }
+
+    // Normalisasi Google Drive link ke direct high-res image link (lh3.googleusercontent.com)
+    const driveMatch = raw.match(/(?:id=|d\/|open\?id=)([a-zA-Z0-9_-]{25,})/);
+    if (driveMatch && driveMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+    }
+
+    // Pastikan URL absolut
+    if (raw.startsWith('/')) {
+        return `https://asnawiyyah.or.id${raw}`;
+    } else if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+        return `https://asnawiyyah.or.id/${raw}`;
+    }
+
+    return raw;
+}
+
 async function fetchNewsItem(slug) {
     if (!slug) return null;
     const cleanSlug = encodeURIComponent(slug.trim());
@@ -52,38 +97,51 @@ module.exports = async function handler(req, res) {
 
         if (newsItem) {
             const title = `${newsItem.judul} | PPTQ Asnawiyyah`;
-            const description = newsItem.ringkasan || `Baca selengkapnya tentang ${newsItem.judul}`;
+            let rawDesc = newsItem.ringkasan || (newsItem.isi ? String(newsItem.isi).replace(/<[^>]*>/g, '').substring(0, 160) : '') || `Baca warta selengkapnya tentang ${newsItem.judul}`;
+            rawDesc = rawDesc.replace(/\s+/g, ' ').trim();
+            const description = rawDesc;
             
-            // Prioritas gambar cover: newsItem.gambar -> gambar pertama di isi -> banner resmi
-            let image = (newsItem.gambar && String(newsItem.gambar).trim()) ? newsItem.gambar : '';
-            if ((!image || image.includes('photo-1584286595398-a59f21d313f5')) && newsItem.isi) {
-                const match = String(newsItem.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
-                if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
-                    image = match[1];
-                }
-            }
-            if (!image || image.includes('photo-1584286595398-a59f21d313f5')) {
-                image = "https://asnawiyyah.or.id/assets/img/og-banner.jpg";
-            }
-
+            const image = resolveImageUrl(newsItem);
             const url = `https://asnawiyyah.or.id/berita/${newsItem.slug || slug}`;
 
+            // Bersihkan semua metadata lama agar tidak duplikat dan membingungkan crawler (WhatsApp, FB, Twitter, dll)
+            html = html
+                .replace(/<title>[\s\S]*?<\/title>/i, '')
+                .replace(/<meta\s+name=["']description["'][^>]*>/gi, '')
+                .replace(/<meta\s+name=["']keywords["'][^>]*>/gi, '')
+                .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
+                .replace(/<meta\s+property=["']og:[^"']+["'][^>]*>/gi, '')
+                .replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>/gi, '')
+                .replace(/<link\s+rel=["']image_src["'][^>]*>/gi, '');
+
             const metaTags = `
-    <title>${title}</title>
-    <meta name="description" content="${description}" />
-    <meta property="og:title" content="${title}" />
-    <meta property="og:description" content="${description}" />
-    <meta property="og:image" content="${image}" />
-    <meta property="og:url" content="${url}" />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
+    <link rel="canonical" href="${escapeHtml(url)}" />
+
+    <!-- Open Graph (WhatsApp, Facebook, Telegram, LinkedIn) -->
+    <meta property="og:site_name" content="PPTQ Asnawiyyah" />
     <meta property="og:type" content="article" />
+    <meta property="og:url" content="${escapeHtml(url)}" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
+    <meta property="og:image" content="${escapeHtml(image)}" />
+    <meta property="og:image:secure_url" content="${escapeHtml(image)}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${escapeHtml(newsItem.judul || 'Berita PPTQ Asnawiyyah')}" />
+    <link rel="image_src" href="${escapeHtml(image)}" />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title}" />
-    <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${image}" />
+    <meta name="twitter:url" content="${escapeHtml(url)}" />
+    <meta name="twitter:title" content="${escapeHtml(title)}" />
+    <meta name="twitter:description" content="${escapeHtml(description)}" />
+    <meta name="twitter:image" content="${escapeHtml(image)}" />
             `;
 
-            // Replace existing title and inject metadata
-            html = html.replace(/<title>.*?<\/title>/is, metaTags);
+            // Sisipkan meta tags baru tepat di awal <head>
+            html = html.replace(/<head>/i, `<head>\n${metaTags}`);
         }
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -102,4 +160,3 @@ module.exports = async function handler(req, res) {
         }
     }
 };
-
