@@ -3700,11 +3700,11 @@
                         </div>
 
                         <!-- Lembar Gambar Mushaf Kemenag RI (WebP) -->
-                        <img id="quran-mushaf-img" src="" alt="Mushaf Standar Kemenag RI"
+                        <img id="quran-mushaf-img" alt="Mushaf Standar Kemenag RI"
                             class="hidden w-auto max-w-full max-h-[68vh] sm:max-h-[82vh] object-contain rounded-xl bg-transparent shadow-xs transition-transform duration-200 ease-out origin-center cursor-zoom-in"
-                            onload="onMushafImageLoaded()"
-                            onerror="onMushafImageError()"
-                            onclick="toggleMushafZoomClick()" />
+                            onload="if (typeof onMushafImageLoaded === 'function') onMushafImageLoaded()"
+                            onerror="if (typeof onMushafImageError === 'function') onMushafImageError()"
+                            onclick="if (typeof toggleMushafZoomClick === 'function') toggleMushafZoomClick()" />
                     </div>
 
                     <!-- Sisi Tepi Bawah Mushaf: Pilihan Kertas Mushaf & Kontrol Zoom -->

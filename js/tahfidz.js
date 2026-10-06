@@ -5786,6 +5786,8 @@ function openTahfidzPresensiModal(optionalHalaqahId = null) {
             if (activeHalVal) {
                 halSelect.value = activeHalVal;
             }
+        }
+
         const presensiSesiSelect = document.getElementById('tahfidz-presensi-sesi');
         if (presensiSesiSelect) {
             let sesiList = ASNTahfidz.data.sesiList;
