@@ -138,6 +138,69 @@
             }
         });
 
+        // ==================== OVERALL DATA & BIOMETRIC ANALYTICS CONTROLS ====================
+        let currentAdminAnalyticsRange = '7d';
+
+        function setAdminAnalyticsTimeRange(btnEl, rangeKey) {
+            currentAdminAnalyticsRange = rangeKey;
+            
+            // Update active pill UI styling
+            const pills = document.querySelectorAll('.admin-time-pill');
+            pills.forEach(p => {
+                p.classList.remove('active', 'bg-white', 'dark:bg-[#253447]', 'text-slate-900', 'dark:text-white', 'font-bold', 'shadow-xs');
+                p.classList.add('text-slate-600', 'dark:text-slate-300');
+            });
+
+            if (btnEl) {
+                btnEl.classList.add('active', 'bg-white', 'dark:bg-[#253447]', 'text-slate-900', 'dark:text-white', 'font-bold', 'shadow-xs');
+                btnEl.classList.remove('text-slate-600', 'dark:text-slate-300');
+            }
+
+            const rangeLabels = {
+                'today': 'Hari Ini',
+                '7d': '7 Hari Terakhir',
+                '30d': '30 Hari Terakhir',
+                '90d': '90 Hari Terakhir',
+                'all': 'Semua Periode'
+            };
+
+            const label = rangeLabels[rangeKey] || rangeKey;
+            showToast(`Rentang analitik disesuaikan: ${label}`);
+        }
+
+        function refreshAdminAnalyticsData() {
+            const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
+            const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
+
+            if (icon) {
+                icon.classList.add('animate-spin');
+            }
+
+            setTimeout(() => {
+                if (icon) {
+                    icon.classList.remove('animate-spin');
+                }
+                // Refresh KPI role data if available
+                if (typeof ASNIdentity !== 'undefined' && typeof ASNIdentity.getRoleConfig === 'function') {
+                    const currentRole = ASNIdentity.currentRole || 'SUPER_ADMIN';
+                    if (typeof applyAdminRoleVisibility === 'function') {
+                        applyAdminRoleVisibility(currentRole);
+                    }
+                }
+                showToast('Data analitik biometrik & KPI telah diperbarui realtime.');
+            }, 600);
+        }
+
+        function openAdminCameraPresensi() {
+            if (typeof openTahfidzPresensiModal === 'function') {
+                openTahfidzPresensiModal();
+                showToast('Membuka antarmuka presensi biometrik halaqah...');
+            } else {
+                showToast('Modul kamera presensi biometrik siap disinkronkan.');
+            }
+        }
+
+
         // Shortcut keyboard Alt+F atau Ctrl+K untuk focus search input
         document.addEventListener('keydown', function(e) {
             if ((e.altKey && (e.key === 'f' || e.key === 'F')) || ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) {

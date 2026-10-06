@@ -1261,10 +1261,10 @@
             noticeIconClass: 'fa-crown text-emerald-400',
             noticeBadgeClass: 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/30',
             kpis: [
-                { id: 'kpi-sa-users', label: 'Total Pengguna Sistem', icon: 'fa-users-gear', color: 'indigo', valueKey: 'sa_users', sub: '25 Akun • 7 Peran', action: "showAdminView('users')" },
-                { id: 'kpi-sa-sessions', label: 'Sesi Aktif Real-time', icon: 'fa-shield-halved', color: 'emerald', valueKey: 'sa_sessions', sub: 'Klik untuk Lihat Daftar', action: "openOnlineUsersModal()" },
-                { id: 'kpi-sa-db', label: 'Infrastruktur Cloud DB', icon: 'fa-database', color: 'cyan', valueKey: 'sa_cloud_db', sub: 'PostgreSQL Singapore', action: "showAdminView('pengaturan')" },
-                { id: 'kpi-sa-pwa', label: 'Kesehatan Web & PWA', icon: 'fa-mobile-screen-button', color: 'amber', valueKey: 'sa_pwa', sub: 'Service Worker Aktif', action: "showAdminView('pengaturan')" }
+                { id: 'kpi-sa-sessions', label: 'Kehadiran Pengguna', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_sessions', sub: 'Sesi Aktif Real-time', chipText: '● Live Online', action: "openOnlineUsersModal()" },
+                { id: 'kpi-sa-users', label: 'Total Pengguna Sistem', icon: 'fa-users-gear', color: 'indigo', valueKey: 'sa_users', sub: '25 Akun • 7 Peran', chipText: 'Terverifikasi', action: "showAdminView('users')" },
+                { id: 'kpi-sa-db', label: 'Infrastruktur Cloud DB', icon: 'fa-database', color: 'rose', valueKey: 'sa_cloud_db', sub: 'PostgreSQL Singapore', chipText: '⚡ Optimal', action: "showAdminView('pengaturan')" },
+                { id: 'kpi-sa-pwa', label: 'Kesehatan Web & PWA', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_pwa', sub: 'Service Worker Aktif', chipText: '98.5% Efektif', action: "showAdminView('pengaturan')" }
             ]
         },
         'ADMIN': {
@@ -1284,10 +1284,10 @@
             noticeIconClass: 'fa-shield-halved text-brand-600 dark:text-brand-400',
             noticeBadgeClass: 'bg-brand-200/70 text-brand-800 dark:bg-brand-900 dark:text-brand-200',
             kpis: [
-                { label: 'Total Santri Aktif', icon: 'fa-user-graduate', color: 'cyan', valueKey: 'santri', sub: 'Santri Belajar' },
-                { label: 'Setoran Tahfidz Qur\'an', icon: 'fa-book-quran', color: 'emerald', valueKey: 'tahfidz_tpq', sub: 'Terdata di Sistem' },
-                { label: 'Presensi Kegiatan Santri', icon: 'fa-calendar-check', color: 'teal', valueKey: 'presensi', sub: 'Live & QR Code' },
-                { label: 'Pendaftar PPDB Baru', icon: 'fa-user-plus', color: 'amber', valueKey: 'ppdb', sub: 'Menunggu Seleksi' }
+                { label: 'Total Kehadiran Santri', icon: 'fa-user-check', color: 'emerald', valueKey: 'santri', sub: 'Santri Mukim Terdata', chipText: '● 98.5% Hadir' },
+                { label: 'Setoran Tahfidz Qur\'an', icon: 'fa-book-quran', color: 'indigo', valueKey: 'tahfidz_tpq', sub: 'Target 30 Juz Terpantau', chipText: '⏳ Sesi Berjalan' },
+                { label: 'Presensi & Dispensasi', icon: 'fa-calendar-check', color: 'rose', valueKey: 'presensi', sub: 'Live QR Code Presensi', chipText: 'Buka Izin →' },
+                { label: 'Pendaftar PPDB Baru', icon: 'fa-bolt', color: 'amber', valueKey: 'ppdb', sub: 'Calon Santri Terdaftar', chipText: 'Siap Seleksi' }
             ]
         },
         'ASATIDZ': {
@@ -1635,34 +1635,76 @@
         }
 
         // 3. Render 4 Dynamic KPI Cards
+        // 3. Render 4 Vibrant Pastel Gradient KPI Cards (Mengadopsi Desain Referensi)
         const kpiGrid = document.getElementById('admin-hub-kpi-grid');
         if (kpiGrid && Array.isArray(profile.kpis)) {
-            const colorMap = {
-                purple: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-100 dark:border-purple-800/40',
-                indigo: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-100 dark:border-indigo-800/40',
-                emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800/40',
-                cyan: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300 border-cyan-100 dark:border-cyan-800/40',
-                teal: 'bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border-teal-100 dark:border-teal-800/40',
-                sky: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-100 dark:border-sky-800/40',
-                amber: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-100 dark:border-amber-800/40',
-                rose: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-100 dark:border-rose-800/40'
+            const vibrantGradientMap = {
+                emerald: {
+                    card: 'bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-900/15',
+                    chip: 'bg-emerald-950/40 text-emerald-100 border border-emerald-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                indigo: {
+                    card: 'bg-gradient-to-br from-indigo-500 via-blue-600 to-indigo-700 text-white shadow-md shadow-indigo-900/15',
+                    chip: 'bg-indigo-950/40 text-indigo-100 border border-indigo-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                rose: {
+                    card: 'bg-gradient-to-br from-pink-500 via-rose-500 to-rose-600 text-white shadow-md shadow-rose-900/15',
+                    chip: 'bg-rose-950/40 text-rose-100 border border-rose-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                amber: {
+                    card: 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 text-white shadow-md shadow-amber-900/15',
+                    chip: 'bg-amber-950/40 text-amber-100 border border-amber-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                cyan: {
+                    card: 'bg-gradient-to-br from-cyan-500 via-teal-500 to-blue-600 text-white shadow-md shadow-cyan-900/15',
+                    chip: 'bg-cyan-950/40 text-cyan-100 border border-cyan-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                purple: {
+                    card: 'bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-600 text-white shadow-md shadow-purple-900/15',
+                    chip: 'bg-purple-950/40 text-purple-100 border border-purple-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                teal: {
+                    card: 'bg-gradient-to-br from-teal-500 via-emerald-600 to-green-600 text-white shadow-md shadow-teal-900/15',
+                    chip: 'bg-teal-950/40 text-teal-100 border border-teal-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                },
+                sky: {
+                    card: 'bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white shadow-md shadow-sky-900/15',
+                    chip: 'bg-sky-950/40 text-sky-100 border border-sky-300/30',
+                    iconBg: 'bg-white/20 text-white'
+                }
             };
 
             kpiGrid.innerHTML = profile.kpis.map(kpi => {
                 const val = kpi.valueKey ? getKpiMetricValue(kpi.valueKey) : (kpi.value || '-');
-                const themeClass = colorMap[kpi.color] || colorMap['emerald'];
+                const theme = vibrantGradientMap[kpi.color] || vibrantGradientMap['emerald'];
                 const clickAttr = kpi.action ? `onclick="${kpi.action}" style="cursor: pointer;"` : '';
                 const valIdAttr = kpi.valueKey ? `id="kpi-val-${kpi.valueKey}"` : '';
-                const hoverClass = kpi.action ? 'hover:border-emerald-300 dark:hover:border-emerald-700/60 active:scale-[0.98]' : '';
+                const hoverClass = kpi.action ? 'hover:scale-[1.02] active:scale-[0.98]' : '';
+                const chipLabel = kpi.chipText || (kpi.sub ? kpi.sub : 'Aktif');
                 return `
-                    <div ${clickAttr} class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center justify-between space-x-3 transition hover:shadow-sm ${hoverClass}">
-                        <div class="min-w-0">
-                            <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-400 block truncate">${kpi.label}</span>
-                            <h4 ${valIdAttr} class="text-base md:text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">${val}</h4>
-                            <span class="text-[9px] text-slate-400 dark:text-slate-500 font-medium">${kpi.sub}</span>
+                    <div ${clickAttr} class="${theme.card} p-4 md:p-5 rounded-2xl md:rounded-3xl flex flex-col justify-between space-y-3 transition-all duration-300 ${hoverClass}">
+                        <div class="flex items-start justify-between">
+                            <span class="text-xs font-bold text-white/90 block truncate drop-shadow-2xs">${kpi.label}</span>
+                            <div class="w-8 h-8 rounded-xl ${theme.iconBg} flex items-center justify-center text-sm shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid ${kpi.icon}"></i>
+                            </div>
                         </div>
-                        <div class="w-10 h-10 rounded-2xl ${themeClass} flex items-center justify-center text-base shrink-0 shadow-xs border">
-                            <i class="fa-solid ${kpi.icon}"></i>
+                        <div>
+                            <h4 ${valIdAttr} class="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1.5">
+                                <span>${val}</span>
+                                <span class="text-sm font-bold text-white/80">↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1.5 border-t border-white/20">
+                            <span class="truncate font-medium opacity-90">${kpi.sub}</span>
+                            <span class="px-2 py-0.5 rounded-full font-bold ${theme.chip} shrink-0 text-[9px] shadow-2xs">${chipLabel}</span>
                         </div>
                     </div>
                 `;
