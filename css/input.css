@@ -116,7 +116,9 @@ html.dark option {
 /* PROTEKSI MUTLAK ISOLASI LAYOUT DESKTOP VS MOBILE (ANTI-LEAKAGE)           */
 /* ========================================================================= */
 @media (min-width: 768px) {
-  #beranda-mobile-section {
+  #beranda-mobile-section,
+  #main-mobile-header,
+  #mobile-bottom-nav {
     display: none !important;
   }
   #beranda-desktop-section {
@@ -127,11 +129,12 @@ html.dark option {
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   #beranda-mobile-section {
     display: block !important;
   }
-  #beranda-desktop-section {
+  #beranda-desktop-section,
+  #main-desktop-header {
     display: none !important;
   }
 }

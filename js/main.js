@@ -399,12 +399,13 @@
             const mainFooter = document.querySelector('footer');
 
             if (tabId === 'admin') {
-                if (mainDesktopHeader) mainDesktopHeader.classList.add('hidden');
-                if (mainMobileHeader) mainMobileHeader.classList.add('hidden');
-                if (deskNavMenu) deskNavMenu.classList.add('hidden');
-                if (deskActionMenu) deskActionMenu.classList.add('hidden');
-                if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
-                if (mainFooter) mainFooter.classList.add('hidden');
+                // Sembunyikan header publik saat di dashboard admin
+                if (mainDesktopHeader) mainDesktopHeader.style.display = 'none';
+                if (mainMobileHeader) mainMobileHeader.style.display = 'none';
+                if (deskNavMenu) deskNavMenu.style.display = 'none';
+                if (deskActionMenu) deskActionMenu.style.display = 'none';
+                if (mobileBottomNav) mobileBottomNav.style.display = 'none';
+                if (mainFooter) mainFooter.style.display = 'none';
                 const hasAdminToken = !!(
                     (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
                     (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
@@ -419,12 +420,15 @@
                     }, 100);
                 }
             } else {
-                if (mainDesktopHeader) mainDesktopHeader.classList.remove('hidden');
-                if (mainMobileHeader) mainMobileHeader.classList.remove('hidden');
-                if (deskNavMenu) deskNavMenu.classList.remove('hidden');
-                if (deskActionMenu) deskActionMenu.classList.remove('hidden');
-                if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');
-                if (mainFooter) mainFooter.classList.remove('hidden');
+                // Kembalikan header publik — hapus inline style agar Tailwind classes berlaku kembali
+                // Desktop header: class asli = "hidden md:block ..." (hidden di mobile, tampil di desktop)
+                // Mobile header: class asli = "md:hidden ..." (tampil di mobile, hidden di desktop)
+                if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
+                if (mainMobileHeader) mainMobileHeader.style.removeProperty('display');
+                if (deskNavMenu) deskNavMenu.style.removeProperty('display');
+                if (deskActionMenu) deskActionMenu.style.removeProperty('display');
+                if (mobileBottomNav) mobileBottomNav.style.removeProperty('display');
+                if (mainFooter) mainFooter.style.removeProperty('display');
             }
 
             if (tabId === 'admin') {

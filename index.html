@@ -82,6 +82,18 @@
             object-fit: contain !important;
             display: inline-block;
         }
+
+        /* Proteksi Mutlak Isolasi Header: Cegah Header Desktop Bocor ke Mobile */
+        @media (max-width: 767.98px) {
+            #main-desktop-header {
+                display: none !important;
+            }
+        }
+        @media (min-width: 768px) {
+            #main-mobile-header {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
