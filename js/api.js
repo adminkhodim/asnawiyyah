@@ -476,15 +476,16 @@
 
                 // 11. Dashboard Tahfidz Al-Qur'an (Fast Read Akselerasi Supabase <350ms)
                 if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard" || action === "auth.tahfidz.dashboard") {
-                    const [stRes, hlRes, lgRes, prRes] = await Promise.all([
+                    const [stRes, hlRes, lgRes, prRes, ssRes] = await Promise.all([
                         fetch(`${sbUrl}/rest/v1/students?order=name.asc`, { headers }),
                         fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?select=*&order=created_at.asc`, { headers }),
                         fetch(`${sbUrl}/rest/v1/tahfidz_logs?select=*&order=tanggal.desc`, { headers }),
-                        fetch(`${sbUrl}/rest/v1/tahfidz_presensi?select=*&order=tanggal.desc`, { headers })
+                        fetch(`${sbUrl}/rest/v1/tahfidz_presensi?select=*&order=tanggal.desc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?select=*&order=sesi_id.asc`, { headers })
                     ]);
                     if (!stRes.ok || !hlRes.ok || !lgRes.ok) return null;
-                    const [rawStudents, rawHalaqahs, rawLogs, rawPresensi] = await Promise.all([
-                        stRes.json(), hlRes.json(), lgRes.json(), prRes.ok ? prRes.json() : []
+                    const [rawStudents, rawHalaqahs, rawLogs, rawPresensi, rawSesi] = await Promise.all([
+                        stRes.json(), hlRes.json(), lgRes.json(), prRes.ok ? prRes.json() : [], ssRes.ok ? ssRes.json() : []
                     ]);
 
                     const getJuzCurriculumIndex = (juz) => {
@@ -730,6 +731,26 @@
 
                     const muhafizList = Array.from(new Set(halaqahList.map(h => h.muhafiz).filter(Boolean)));
 
+
+                    const sesiList = (rawSesi && rawSesi.length > 0) ? rawSesi.map((s, idx) => ({
+                        sesiId: s.sesi_id || `SESI-0${idx + 1}`,
+                        id: s.sesi_id || `SESI-0${idx + 1}`,
+                        namaSesi: s.nama_sesi || 'Sesi',
+                        nama: s.nama_sesi || 'Sesi',
+                        jenisSesi: s.jenis_sesi || 'Ziyadah',
+                        jenis: s.jenis_sesi || 'Ziyadah',
+                        jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
+                        jamSelesai: (s.jam_selesai || '06:00').substring(0, 5),
+                        hariList: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
+                        hari: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
+                        status: s.status || 'Aktif Digunakan'
+                    })) : [
+                        { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:00", hariList: ["Sen", "Rab", "Kam", "Sab", "Min"], hari: ["Sen", "Rab", "Kam", "Sab", "Min"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-04", id: "SESI-04", namaSesi: "Malam (Ba'da Maghrib / Isya)", nama: "Malam (Ba'da Maghrib / Isya)", jenisSesi: "Muroja'ah & Tasmi'", jenis: "Muroja'ah & Tasmi'", jamMulai: "18:45", jamSelesai: "20:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Min"], hari: ["Sen", "Sel", "Rab", "Kam", "Min"], status: "Aktif Digunakan" }
+                    ];
+
                     return {
                         status: 'success',
                         success: true,
@@ -749,8 +770,33 @@
                         },
                         students: enrichedStudents,
                         halaqahs: halaqahList,
+                        sesiList: sesiList,
                         categories: ['Semua Kategori', 'Tahfidz', 'Tahsin', 'Kitab Kuning'],
                         muhafizList: ['Semua Muhafiz', ...muhafizList]
+                    };
+                }
+
+                // 11b. Jadwal Sesi Waktu Tahfidz (Fast Read Akselerasi Supabase <100ms)
+                if (action === "getTahfidzSesiList" || action === "getTahfidzSesi" || action === "tahfidz.sesiList") {
+                    const res = await fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?order=sesi_id.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        status: "success",
+                        success: true,
+                        data: rows.map((s, idx) => ({
+                            sesiId: s.sesi_id || `SESI-0${idx + 1}`,
+                            id: s.sesi_id || `SESI-0${idx + 1}`,
+                            namaSesi: s.nama_sesi || 'Sesi',
+                            nama: s.nama_sesi || 'Sesi',
+                            jenisSesi: s.jenis_sesi || 'Ziyadah',
+                            jenis: s.jenis_sesi || 'Ziyadah',
+                            jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
+                            jamSelesai: (s.jam_selesai || '06:00').substring(0, 5),
+                            hariList: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
+                            hari: Array.isArray(s.hari_list) ? s.hari_list : String(s.hari_list || '').split(',').map(x => x.trim()).filter(Boolean),
+                            status: s.status || 'Aktif Digunakan'
+                        }))
                     };
                 }
 
@@ -1142,6 +1188,7 @@
                 'getTahfidzPresensi',
                 'getTahfidzDashboard', 'tahfidz.dashboard', 'auth.tahfidz.dashboard',
                 'getTahfidzStudentDetail', 'tahfidz.studentDetail', 'auth.tahfidz.studentDetail',
+                'getTahfidzSesiList', 'getTahfidzSesi', 'tahfidz.sesiList',
                 'program.list',
                 'getPPDB', 'checkStatus'
             ];
@@ -1172,8 +1219,9 @@
             const isNewsViewWrite = action === 'recordNewsView';
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
+            const isSesiWrite = action === 'saveTahfidzSesi' || action === 'deleteTahfidzSesi';
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite) {
+            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -1547,6 +1595,40 @@
                                 body: JSON.stringify(presRow)
                             });
                         }
+                    }
+                }
+                else if (action === 'saveTahfidzSesi') {
+                    const s = payload.payload || payload.data || payload;
+                    const sesiId = s.sesiId || s.sesi_id || s.id || ('SESI-' + Date.now());
+                    const jamMulai = (s.jamMulai || s.jam_mulai || '05:00').substring(0, 5);
+                    const jamSelesai = (s.jamSelesai || s.jam_selesai || '06:00').substring(0, 5);
+                    const rawHari = s.hariList || s.hari || [];
+                    const hariList = Array.isArray(rawHari) ? rawHari : (typeof rawHari === 'string' ? rawHari.split(',').map(x => x.trim()).filter(Boolean) : []);
+                    const sesiRow = {
+                        sesi_id: sesiId,
+                        nama_sesi: s.namaSesi || s.nama_sesi || s.nama || 'Sesi',
+                        jenis_sesi: s.jenisSesi || s.jenis_sesi || s.jenis || 'Ziyadah',
+                        jam_mulai: jamMulai,
+                        jam_selesai: jamSelesai,
+                        hari_list: hariList,
+                        status: s.status || 'Aktif Digunakan'
+                    };
+                    await fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi`, {
+                        method: 'POST',
+                        headers: {
+                            ...headers,
+                            'Prefer': 'resolution=merge-duplicates'
+                        },
+                        body: JSON.stringify(sesiRow)
+                    });
+                }
+                else if (action === 'deleteTahfidzSesi') {
+                    const sesiId = payload.sesiId || payload.sesi_id || payload.id;
+                    if (sesiId) {
+                        await fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?sesi_id=eq.${encodeURIComponent(sesiId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
                     }
                 }
 

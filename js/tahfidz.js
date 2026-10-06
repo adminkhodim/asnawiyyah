@@ -1728,6 +1728,16 @@ function checkAndApplyStudentRepeatState(studentId) {
 }
 
 /**
+ * Helper format jam sesi (HH:mm)
+ */
+function cleanSesiTime(timeVal, fallback = '00:00') {
+    if (!timeVal) return fallback;
+    const str = String(timeVal).trim();
+    if (str.length >= 5) return str.substring(0, 5);
+    return str || fallback;
+}
+
+/**
  * Mengisi dropdown Sesi Waktu di modal Catat Setoran sesuai DAFTAR JADWAL SESI WAKTU AKTIF
  */
 function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
@@ -1738,8 +1748,9 @@ function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
     if (!sesiList || sesiList.length === 0) {
         sesiList = [
             { sesiId: "SESI-01", id: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jamMulai: "05:00", jamSelesai: "06:00", status: "Aktif Digunakan" },
-            { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jamMulai: "08:00", jamSelesai: "09:00", status: "Aktif Digunakan" },
-            { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jamMulai: "16:00", jamSelesai: "17:00", status: "Aktif Digunakan" }
+            { sesiId: "SESI-02", id: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", nama: "Pagi (MA Tahfidz)", jamMulai: "08:30", jamSelesai: "09:30", status: "Aktif Digunakan" },
+            { sesiId: "SESI-03", id: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jamMulai: "16:00", jamSelesai: "17:15", status: "Aktif Digunakan" },
+            { sesiId: "SESI-04", id: "SESI-04", namaSesi: "Malam (Ba'da Maghrib / Isya)", nama: "Malam (Ba'da Maghrib / Isya)", jamMulai: "18:45", jamSelesai: "20:30", status: "Aktif Digunakan" }
         ];
     }
 
@@ -1754,8 +1765,8 @@ function populateTahfidzCatatSesiDropdown(selectedSesi = null) {
 
     selSesi.innerHTML = listToRender.map((s, idx) => {
         const nama = s.namaSesi || s.nama || `Sesi 0${idx + 1}`;
-        const jmMulai = typeof cleanSesiTime === 'function' ? cleanSesiTime(s.jamMulai, '05:00') : (s.jamMulai || '05:00');
-        const jmSelesai = typeof cleanSesiTime === 'function' ? cleanSesiTime(s.jamSelesai, '06:00') : (s.jamSelesai || '06:00');
+        const jmMulai = cleanSesiTime(s.jamMulai, '05:00');
+        const jmSelesai = cleanSesiTime(s.jamSelesai, '06:00');
         const timeStr = `${jmMulai} - ${jmSelesai} WIB`;
         const label = `${nama} ${timeStr}`;
         const isSelected = (currentVal && (currentVal === nama || currentVal === label)) ? 'selected' : (idx === 0 && !currentVal ? 'selected' : '');
@@ -5775,6 +5786,28 @@ function openTahfidzPresensiModal(optionalHalaqahId = null) {
             if (activeHalVal) {
                 halSelect.value = activeHalVal;
             }
+        const presensiSesiSelect = document.getElementById('tahfidz-presensi-sesi');
+        if (presensiSesiSelect) {
+            let sesiList = ASNTahfidz.data.sesiList;
+            if (!sesiList || sesiList.length === 0) {
+                sesiList = [
+                    { namaSesi: "Pagi (Ba'da Subuh)" },
+                    { namaSesi: "Pagi (MA Tahfidz)" },
+                    { namaSesi: "Sore (Ba'da Ashar)" },
+                    { namaSesi: "Malam (Ba'da Maghrib / Isya)" }
+                ];
+            }
+            const activeList = sesiList.filter(s => {
+                const st = String(s.status || 'Aktif Digunakan').toLowerCase();
+                return st.includes('aktif') && !st.includes('nonaktif');
+            });
+            const listToUse = activeList.length > 0 ? activeList : sesiList;
+            const currentPresensiSesi = presensiSesiSelect.value || ASNTahfidz.presensiState.sesi || "Pagi (Ba'da Subuh)";
+            presensiSesiSelect.innerHTML = listToUse.map(s => {
+                const nama = s.namaSesi || s.nama || "Sesi";
+                const isSel = (currentPresensiSesi === nama) ? 'selected' : '';
+                return `<option value="${escapeHtml(nama)}" ${isSel}>${escapeHtml(nama)}</option>`;
+            }).join('');
         }
 
         ASNTahfidz.presensiState.activeHalaqahId = (halSelect && halSelect.value) ? halSelect.value : activeHalVal;
