@@ -218,4 +218,10 @@ body:has(#page-admin:not(.hidden)) #main-mobile-header {
   display: none !important;
 }
 
+/* Proteksi Mutlak: Sembunyikan banner eksekutif lama di dashboard admin */
+#admin-hub-welcome-banner {
+  display: none !important;
+}
+
+
 

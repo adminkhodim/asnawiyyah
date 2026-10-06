@@ -1261,10 +1261,10 @@
             noticeIconClass: 'fa-crown text-emerald-400',
             noticeBadgeClass: 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/30',
             kpis: [
-                { id: 'kpi-sa-sessions', label: 'Total Kehadiran', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_sessions', sub: 'Belum Presensi', chipText: '● Wajib Check-In', action: "openAdminCameraPresensi()" },
-                { id: 'kpi-sa-users', label: 'Jam Kerja Efektif', icon: 'fa-clock', color: 'indigo', valueKey: 'sa_users', sub: 'Check-In Terverifikasi', chipText: '⏳ 12 Menit Tersisa', action: "showAdminView('jadwal-kegiatan')" },
-                { id: 'kpi-sa-db', label: 'Sisa Cuti Tahunan', icon: 'fa-calendar-xmark', color: 'rose', valueKey: 'sa_cloud_db', sub: 'Dari kuota 14 hari', chipText: 'Ajukan Cuti →', action: "showAdminView('tahfidz')" },
-                { id: 'kpi-sa-pwa', label: 'Total Lembur / Shift', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_pwa', sub: '+2.5 Jam minggu ini', chipText: '98.5% Efektif', action: "showAdminView('tahfidz')" }
+                { id: 'kpi-sa-sessions', label: 'Total Kehadiran', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_hadir_count', sub: 'Belum Presensi', chipText: '● Wajib Check-In', action: "openAdminCameraPresensi()" },
+                { id: 'kpi-sa-users', label: 'Jam Kerja Efektif', icon: 'fa-clock', color: 'indigo', valueKey: 'sa_jam_kerja', sub: 'Check-In Terverifikasi', chipText: '⏳ 12 Menit Tersisa', action: "showAdminView('jadwal-kegiatan')" },
+                { id: 'kpi-sa-db', label: 'Sisa Cuti Tahunan', icon: 'fa-calendar-xmark', color: 'rose', valueKey: 'sa_cuti_count', sub: 'Dari kuota 14 hari', chipText: 'Ajukan Cuti →', action: "showAdminView('tahfidz')" },
+                { id: 'kpi-sa-pwa', label: 'Total Lembur / Shift', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_lembur_count', sub: '+2.5 Jam minggu ini', chipText: '98.5% Efektif', action: "showAdminView('tahfidz')" }
             ]
         },
         'ADMIN': {
@@ -1284,10 +1284,10 @@
             noticeIconClass: 'fa-shield-halved text-brand-600 dark:text-brand-400',
             noticeBadgeClass: 'bg-brand-200/70 text-brand-800 dark:bg-brand-900 dark:text-brand-200',
             kpis: [
-                { label: 'Total Kehadiran', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_sessions', sub: 'Belum Presensi', chipText: '● Wajib Check-In', action: "openAdminCameraPresensi()" },
-                { label: 'Jam Kerja Efektif', icon: 'fa-clock', color: 'indigo', valueKey: 'sa_users', sub: 'Check-In Terverifikasi', chipText: '⏳ 12 Menit Tersisa', action: "showAdminView('jadwal-kegiatan')" },
-                { label: 'Sisa Cuti Tahunan', icon: 'fa-calendar-xmark', color: 'rose', valueKey: 'sa_cloud_db', sub: 'Dari kuota 14 hari', chipText: 'Ajukan Cuti →', action: "showAdminView('tahfidz')" },
-                { label: 'Total Lembur / Shift', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_pwa', sub: '+2.5 Jam minggu ini', chipText: '98.5% Efektif', action: "showAdminView('tahfidz')" }
+                { label: 'Total Kehadiran', icon: 'fa-user-check', color: 'emerald', valueKey: 'sa_hadir_count', sub: 'Belum Presensi', chipText: '● Wajib Check-In', action: "openAdminCameraPresensi()" },
+                { label: 'Jam Kerja Efektif', icon: 'fa-clock', color: 'indigo', valueKey: 'sa_jam_kerja', sub: 'Check-In Terverifikasi', chipText: '⏳ 12 Menit Tersisa', action: "showAdminView('jadwal-kegiatan')" },
+                { label: 'Sisa Cuti Tahunan', icon: 'fa-calendar-xmark', color: 'rose', valueKey: 'sa_cuti_count', sub: 'Dari kuota 14 hari', chipText: 'Ajukan Cuti →', action: "showAdminView('tahfidz')" },
+                { label: 'Total Lembur / Shift', icon: 'fa-bolt', color: 'amber', valueKey: 'sa_lembur_count', sub: '+2.5 Jam minggu ini', chipText: '98.5% Efektif', action: "showAdminView('tahfidz')" }
             ]
         },
         'ASATIDZ': {
@@ -1496,16 +1496,16 @@
      * Dapatkan nilai metrik dinamis untuk KPI
      */
     function getKpiMetricValue(valueKey) {
-        if (valueKey === 'sa_sessions') {
+        if (valueKey === 'sa_hadir_count' || valueKey === 'sa_sessions') {
             return '0';
         }
-        if (valueKey === 'sa_users') {
+        if (valueKey === 'sa_jam_kerja' || valueKey === 'sa_users') {
             return '08:00 <span class="text-xs font-semibold text-white/90">WIB</span>';
         }
-        if (valueKey === 'sa_cloud_db') {
+        if (valueKey === 'sa_cuti_count' || valueKey === 'sa_cloud_db') {
             return '0 <span class="text-xs font-semibold text-white/90">Hari</span>';
         }
-        if (valueKey === 'sa_pwa') {
+        if (valueKey === 'sa_lembur_count' || valueKey === 'sa_pwa') {
             return '893 <span class="text-xs font-semibold text-white/90">Jam</span>';
         }
         if (valueKey === 'santri') {
@@ -1560,28 +1560,11 @@
         const profile = ROLE_DASHBOARD_PROFILES[roleKey] || ROLE_DASHBOARD_PROFILES['ADMIN'];
         const allowedModules = getAllowedModulesForRole(roleKey);
 
-        // 1. Perbarui Banner Dashboard
+        // 1. Sembunyikan Banner Dashboard Lama Secara Mutlak
         const banner = document.getElementById('admin-hub-welcome-banner');
         if (banner) {
-            banner.className = `bg-gradient-to-r ${profile.gradientClass} text-white p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-md border relative overflow-hidden transition-all duration-300`;
-            
-            const badgeEl = document.getElementById('admin-hub-welcome-badge');
-            if (badgeEl) {
-                badgeEl.className = `${profile.badgeBg} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5`;
-                badgeEl.innerHTML = `<i class="fa-solid fa-crown text-[9px] text-amber-200"></i><span>${profile.shortName}</span>`;
-            }
-
-            const tierEl = document.getElementById('admin-hub-role-tier-badge');
-            if (tierEl) tierEl.innerText = profile.tier;
-
-            const titleEl = document.getElementById('admin-hub-welcome-title');
-            if (titleEl) titleEl.innerHTML = `<span>${profile.title}</span>`;
-
-            const descEl = document.getElementById('admin-hub-welcome-desc');
-            if (descEl) descEl.innerText = profile.desc;
-
-            const bgIconEl = document.getElementById('admin-hub-banner-bg-icon');
-            if (bgIconEl) bgIconEl.className = `fa-solid ${profile.bgIcon}`;
+            banner.className = 'hidden';
+            banner.style.display = 'none';
         }
 
         // 2. Perbarui Scope Notice Bar & Quick Toolbar
@@ -1674,21 +1657,21 @@
                 const hoverClass = kpi.action ? 'hover:scale-[1.02] active:scale-[0.98]' : '';
                 const chipLabel = kpi.chipText || (kpi.sub ? kpi.sub : 'Aktif');
                 return `
-                    <div ${clickAttr} class="${theme.card} p-4 md:p-5 rounded-2xl md:rounded-3xl flex flex-col justify-between space-y-3 transition-all duration-300 ${hoverClass}">
+                    <div ${clickAttr} class="${theme.card} p-3 md:p-3.5 rounded-2xl flex flex-col justify-between space-y-1.5 transition-all duration-300 ${hoverClass}">
                         <div class="flex items-start justify-between">
-                            <span class="text-xs font-medium text-white/90 block truncate drop-shadow-2xs">${kpi.label}</span>
-                            <div class="w-8 h-8 rounded-full ${theme.iconBg} flex items-center justify-center text-xs shrink-0 backdrop-blur-xs shadow-2xs">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">${kpi.label}</span>
+                            <div class="w-6 h-6 rounded-full ${theme.iconBg} flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid ${kpi.icon}"></i>
                             </div>
                         </div>
                         <div>
-                            <h4 ${valIdAttr} class="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1.5">
+                            <h4 ${valIdAttr} class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
                                 <span>${val}</span>
-                                <span class="text-sm font-bold text-white/80">↑</span>
+                                <span class="text-xs font-bold text-white/80">↑</span>
                             </h4>
                         </div>
-                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1.5">
-                            <span class="truncate font-normal opacity-90">${kpi.sub}</span>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">${kpi.sub}</span>
                             <span class="px-2 py-0.5 rounded-full ${theme.chip} shrink-0 text-[9px]">${chipLabel}</span>
                         </div>
                     </div>
