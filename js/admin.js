@@ -66,6 +66,91 @@
             }
         }
 
+        // ==================== ADMIN QUICK SEARCH FINDER & SHORTCUT ====================
+        const ADMIN_SEARCH_MODULES = [
+            { view: 'hub', name: 'Dashboard Utama', category: 'Ringkasan', icon: 'fa-gauge-high' },
+            { view: 'tahfidz', name: 'Tahfidz Qur\'an', category: 'Kesantrian', icon: 'fa-book-quran' },
+            { view: 'santri', name: 'Data Santri', category: 'Kesantrian', icon: 'fa-id-card-clip' },
+            { view: 'ppdb', name: 'Pendaftar PPDB', category: 'Kesantrian', icon: 'fa-user-graduate' },
+            { view: 'unit-kegiatan', name: 'Unit Kegiatan (UKS)', category: 'Kesantrian', icon: 'fa-people-roof' },
+            { view: 'jadwal-kegiatan', name: 'Jadwal Kegiatan', category: 'Kesantrian', icon: 'fa-calendar-check' },
+            { view: 'alumni', name: 'Rekap Alumni', category: 'Kesantrian', icon: 'fa-user-graduate' },
+            { view: 'program', name: 'Manajemen Program', category: 'Kesantrian', icon: 'fa-graduation-cap' },
+            { view: 'pegawai', name: 'Data Pegawai & Asatidz', category: 'Kepegawaian', icon: 'fa-user-tie' },
+            { view: 'berita', name: 'Manajemen Berita', category: 'Portal & Media', icon: 'fa-newspaper' },
+            { view: 'banner', name: 'Banner Slider', category: 'Portal & Media', icon: 'fa-images' },
+            { view: 'galeri', name: 'Manajemen Galeri', category: 'Portal & Media', icon: 'fa-camera-retro' },
+            { view: 'profil-lembaga', name: 'Profil & Kepengurusan', category: 'Portal & Media', icon: 'fa-building-columns' },
+            { view: 'pengaturan', name: 'Tautan & Sosmed', category: 'Portal & Media', icon: 'fa-share-nodes' },
+            { view: 'users', name: 'Manajemen Pengguna', category: 'Sistem', icon: 'fa-users-gear' },
+            { view: 'roles', name: 'Manajemen Peran (RBAC)', category: 'Sistem', icon: 'fa-shield-halved' },
+            { view: 'notifikasi', name: 'Notifikasi Broadcast', category: 'Sistem', icon: 'fa-bell' }
+        ];
+
+        function handleAdminQuickSearch(query) {
+            const dropdown = document.getElementById('admin-quick-search-dropdown');
+            if (!dropdown) return;
+            
+            const q = (query || '').trim().toLowerCase();
+            const currentRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                                sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+            
+            const filtered = ADMIN_SEARCH_MODULES.filter(item => {
+                if (item.view !== 'hub' && typeof isModuleAllowedForRole === 'function') {
+                    if (!isModuleAllowedForRole(item.view, currentRole)) return false;
+                }
+                if (!q) return true;
+                return item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+            });
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 dark:text-slate-500 text-center">Tidak ada modul yang cocok</div>`;
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = filtered.map(item => `
+                <button type="button" onclick="selectAdminQuickSearchResult('${item.view}')" class="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50/70 dark:hover:bg-slate-750 text-left transition group">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid ${item.icon} text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 text-xs w-4 text-center"></i>
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">${item.name}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">${item.category}</span>
+                </button>
+            `).join('');
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectAdminQuickSearchResult(viewName) {
+            const dropdown = document.getElementById('admin-quick-search-dropdown');
+            const input = document.getElementById('admin-quick-search-input');
+            if (dropdown) dropdown.classList.add('hidden');
+            if (input) input.value = '';
+            showAdminView(viewName);
+        }
+
+        // Event listener klik di luar untuk menutup dropdown search
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('admin-quick-search-dropdown');
+            const searchInput = document.getElementById('admin-quick-search-input');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== searchInput) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Shortcut keyboard Alt+F atau Ctrl+K untuk focus search input
+        document.addEventListener('keydown', function(e) {
+            if ((e.altKey && (e.key === 'f' || e.key === 'F')) || ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) {
+                const searchInput = document.getElementById('admin-quick-search-input');
+                const pageAdmin = document.getElementById('page-admin');
+                if (searchInput && pageAdmin && !pageAdmin.classList.contains('hidden')) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    handleAdminQuickSearch(searchInput.value);
+                }
+            }
+        });
+
         function showAdminView(viewName) {
             // Guard Navigasi RBAC: Validasi wewenang peran sebelum membuka sub-view
             if (viewName && viewName !== 'hub') {
@@ -79,7 +164,31 @@
                 }
             }
 
-            // Update Sidebar Active state
+            // Update Topbar Breadcrumb & Sidebar Active state
+            const breadcrumbEl = document.getElementById('admin-topbar-breadcrumb');
+            if (breadcrumbEl) {
+                const viewLabels = {
+                    'hub': 'Dashboard Utama',
+                    'tahfidz': 'Tahfidz Qur\'an',
+                    'santri': 'Data Santri',
+                    'ppdb': 'Pendaftar PPDB',
+                    'unit-kegiatan': 'Unit Kegiatan (UKS)',
+                    'jadwal-kegiatan': 'Jadwal Kegiatan',
+                    'alumni': 'Rekap Alumni',
+                    'program': 'Manajemen Program',
+                    'pegawai': 'Data Pegawai & Asatidz',
+                    'berita': 'Manajemen Berita',
+                    'banner': 'Banner Slider',
+                    'galeri': 'Manajemen Galeri',
+                    'profil-lembaga': 'Profil & Kepengurusan',
+                    'pengaturan': 'Tautan & Sosmed',
+                    'users': 'Manajemen Pengguna',
+                    'roles': 'Manajemen Peran',
+                    'notifikasi': 'Notifikasi Broadcast'
+                };
+                breadcrumbEl.innerText = viewLabels[viewName] || 'Panel Admin';
+            }
+
             document.querySelectorAll('.admin-nav-item').forEach(btn => {
                 if (btn.dataset.view === viewName) {
                     btn.classList.add('active', 'text-brand-700', 'bg-brand-50', 'font-bold');

@@ -4432,6 +4432,84 @@
                     <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg">Pusat Kontrol</span>
                 </div>
             </div>
+
+            <!-- ================= TOP HEADER BAR DESKTOP (FLOATING / STICKY) ================= -->
+            <header id="admin-desktop-topbar" class="hidden lg:flex items-center justify-between px-6 py-3 bg-white/85 dark:bg-[#15202d]/85 backdrop-blur-md border-b border-slate-200/80 dark:border-[#253447] z-20 shrink-0 sticky top-0 shadow-2xs transition-colors">
+                
+                <!-- Sisi Kiri: Breadcrumb & Quick Menu Search Finder -->
+                <div class="flex items-center gap-4">
+                    <!-- Breadcrumbs -->
+                    <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        <button type="button" onclick="showAdminView('hub')" class="hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-gauge-high text-emerald-600 dark:text-emerald-400"></i>
+                            <span>Admin</span>
+                        </button>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 dark:text-slate-600"></i>
+                        <span id="admin-topbar-breadcrumb" class="font-bold text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-slate-700/50">Dashboard Utama</span>
+                    </nav>
+
+                    <!-- Quick Menu Search Finder -->
+                    <div class="relative hidden xl:block w-72">
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" id="admin-quick-search-input" oninput="handleAdminQuickSearch(this.value)" onfocus="handleAdminQuickSearch(this.value)" placeholder="Cari menu & modul... (Alt+F)" class="w-full bg-slate-100/90 dark:bg-[#1e2c3d] text-xs rounded-xl pl-9 pr-14 py-2 border border-slate-200/80 dark:border-slate-700/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 transition" autocomplete="off">
+                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-mono font-bold text-slate-400 bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-600 pointer-events-none">Alt+F</span>
+                        </div>
+                        <div id="admin-quick-search-dropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#1a2634] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sisi Kanan: Live Telemetry, Actions & Profile Bar -->
+                <div class="flex items-center gap-3">
+                    <!-- Live Cloud Database Status Pill -->
+                    <div class="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span class="font-bold">Supabase Cloud</span>
+                        <span id="admin-topbar-latency" class="font-mono text-[10px] text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.2 rounded">35ms</span>
+                    </div>
+
+                    <!-- Live Real-Time Clock -->
+                    <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700">
+                        <i class="fa-regular fa-clock text-emerald-500"></i>
+                        <span id="admin-topbar-clock">--:--:-- WIB</span>
+                    </div>
+
+                    <!-- Vertical Separator -->
+                    <div class="h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+                    <!-- Quick Button: Visit Public Web -->
+                    <button type="button" onclick="switchTab('beranda')" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold transition active:scale-95" title="Lihat Tampilan Website Publik">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-emerald-600 dark:text-emerald-400 text-xs"></i>
+                        <span class="hidden xl:inline">Web Publik</span>
+                    </button>
+
+                    <!-- Quick Button: Dark Mode Toggle -->
+                    <button type="button" onclick="toggleDarkMode(!document.documentElement.classList.contains('dark'))" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs transition active:scale-95" title="Ganti Mode Terang / Gelap">
+                        <i class="fa-solid fa-circle-half-stroke text-amber-500 dark:text-indigo-400"></i>
+                    </button>
+
+                    <!-- Quick Button: Notification Shortcut -->
+                    <button type="button" onclick="showAdminView('notifikasi')" class="relative w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs transition active:scale-95" title="Broadcast & Notifikasi">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#15202d]"></span>
+                    </button>
+
+                    <!-- Mini Profile Avatar & Badge -->
+                    <div class="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-700">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                            <span id="admin-topbar-avatar-initial">AU</span>
+                        </div>
+                        <div class="hidden 2xl:block text-left leading-tight">
+                            <div id="admin-topbar-username" class="text-xs font-bold text-slate-800 dark:text-slate-100">Admin Utama</div>
+                            <div id="admin-topbar-role" class="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
             
             
 

@@ -1790,7 +1790,7 @@
             activeTag.className = `px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${profile.badgeBg}`;
         }
 
-        // Sinkronisasi Profil Sidebar Desktop (Fase 1)
+        // Sinkronisasi Profil Sidebar Desktop (Fase 1) & Topbar Desktop (Fase 2)
         const sidebarRoleBadge = document.getElementById('admin-sidebar-role-badge');
         if (sidebarRoleBadge) {
             sidebarRoleBadge.innerText = profile.name || profile.shortName;
@@ -1798,6 +1798,14 @@
         const sidebarInitial = document.getElementById('admin-sidebar-avatar-initial');
         if (sidebarInitial) {
             sidebarInitial.innerText = (profile.shortName || 'AD').substring(0, 2).toUpperCase();
+        }
+        const topbarRoleBadge = document.getElementById('admin-topbar-role');
+        if (topbarRoleBadge) {
+            topbarRoleBadge.innerText = profile.name || profile.shortName;
+        }
+        const topbarInitial = document.getElementById('admin-topbar-avatar-initial');
+        if (topbarInitial) {
+            topbarInitial.innerText = (profile.shortName || 'AD').substring(0, 2).toUpperCase();
         }
 
         // 10. Terapkan konfigurasi izin secara menyeluruh ke seluruh UI
@@ -1881,8 +1889,8 @@
     function initSuperAdminTelemetry() {
         // 1. Live Digital Clock (WIB - UTC+7)
         const clockEl = document.getElementById('super-admin-live-clock');
+        const topbarClockEl = document.getElementById('admin-topbar-clock');
         function updateClock() {
-            if (!clockEl) return;
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { 
                 hour: '2-digit', 
@@ -1890,7 +1898,8 @@
                 second: '2-digit',
                 hour12: false 
             });
-            clockEl.textContent = `${timeStr} WIB`;
+            if (clockEl) clockEl.textContent = `${timeStr} WIB`;
+            if (topbarClockEl) topbarClockEl.textContent = `${timeStr} WIB`;
         }
         updateClock();
         if (!superAdminClockTimer) {
@@ -1909,6 +1918,7 @@
 
     async function measureSupabasePing() {
         const latencyEl = document.getElementById('super-admin-db-latency');
+        const topbarLatencyEl = document.getElementById('admin-topbar-latency');
         const kpiDbEl = document.getElementById('kpi-val-sa_cloud_db');
         const statusEl = document.getElementById('super-admin-db-status');
         
@@ -1932,6 +1942,9 @@
                 latencyEl.className = duration < 120 
                     ? 'text-[10px] text-emerald-400 font-mono bg-emerald-900/50 px-1.5 py-0.2 rounded border border-emerald-500/30'
                     : 'text-[10px] text-amber-400 font-mono bg-amber-900/50 px-1.5 py-0.2 rounded border border-amber-500/30';
+            }
+            if (topbarLatencyEl) {
+                topbarLatencyEl.textContent = `${duration}ms`;
             }
             if (statusEl) {
                 statusEl.textContent = 'Sistem Optimal • Cloud DB Singapore';
