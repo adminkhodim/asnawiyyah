@@ -293,42 +293,73 @@
             if (!container) return;
 
             try {
-                const data = await apiGet('alumni.getTestimonials');
+                const raw = await apiGet('alumni.getTestimonials');
+                const data = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
                 
                 if (!data || data.length === 0) {
-                    container.innerHTML = '<div class="md:col-span-3 text-center text-xs text-slate-500 dark:text-slate-400 py-10">Belum ada testimoni terbaru.</div>';
+                    container.innerHTML = `
+                        <div class="md:col-span-3 text-center py-10 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-dashed border-slate-200 dark:border-[#253447] p-6 space-y-2">
+                            <i class="fa-solid fa-comments text-3xl text-slate-300 dark:text-slate-600"></i>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Belum ada testimoni alumni yang dipublikasikan.</p>
+                            <button onclick="switchTab('form-alumni')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                <span>Tulis Testimoni Pertama</span>
+                            </button>
+                        </div>
+                    `;
                     return;
                 }
 
                 container.innerHTML = '';
-                const colors = ['brand', 'purple', 'sky', 'rose', 'amber'];
+                const colorPalettes = [
+                    { border: 'border-emerald-300 dark:border-emerald-700/50', bg: 'bg-emerald-600', text: 'text-emerald-700 dark:text-emerald-400', badgeBg: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
+                    { border: 'border-amber-300 dark:border-amber-700/50', bg: 'bg-amber-600', text: 'text-amber-700 dark:text-amber-400', badgeBg: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' },
+                    { border: 'border-blue-300 dark:border-blue-700/50', bg: 'bg-blue-600', text: 'text-blue-700 dark:text-blue-400', badgeBg: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' },
+                    { border: 'border-purple-300 dark:border-purple-700/50', bg: 'bg-purple-600', text: 'text-purple-700 dark:text-purple-400', badgeBg: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300' },
+                    { border: 'border-teal-300 dark:border-teal-700/50', bg: 'bg-teal-600', text: 'text-teal-700 dark:text-teal-400', badgeBg: 'bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300' }
+                ];
 
                 data.forEach((item, index) => {
-                    const color = colors[index % colors.length];
-                    const inisial = item.nama.substring(0, 2).toUpperCase();
+                    const palette = colorPalettes[index % colorPalettes.length];
+                    const namaClean = String(item.nama || 'Alumni').trim();
+                    const inisial = (namaClean.split(' ').map(w => w[0]).slice(0, 2).join('') || namaClean.substring(0, 2)).toUpperCase();
                     
-                    const avatarHtml = item.foto && item.foto !== "" 
-                        ? `<img src="${item.foto}" alt="${item.nama}" class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-${color}-300">`
-                        : `<div class="w-12 h-12 bg-${color}-700 text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0 border-2 border-${color}-300">${inisial}</div>`;
+                    let fotoUrl = item.foto && String(item.foto).trim() !== "" ? item.foto : null;
+                    if (fotoUrl && fotoUrl.includes('drive.google.com')) {
+                        const idMatch = fotoUrl.match(/id=([a-zA-Z0-9_-]+)/) || fotoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                        if (idMatch && idMatch[1]) {
+                            fotoUrl = `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+                        }
+                    }
 
-                    let pekerjaan = item.instansi || item.kesibukan || 'Alumni';
+                    const avatarHtml = fotoUrl 
+                        ? `<img src="${fotoUrl}" alt="${escapeHtml(namaClean)}" loading="lazy" onerror="this.outerHTML='<div class=\'w-12 h-12 ${palette.bg} text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm\'>${inisial}</div>'" class="w-12 h-12 rounded-full object-cover shrink-0 border-2 ${palette.border} shadow-sm">`
+                        : `<div class="w-12 h-12 ${palette.bg} text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0 border-2 ${palette.border} shadow-sm">${inisial}</div>`;
+
+                    const angkatan = item.tahunLulus || item.tahunMasuk || item.angkatan || '-';
+                    const pekerjaan = item.instansi || item.kesibukan || item.pekerjaan || 'Alumni';
+                    const pesanTeks = item.kesan || item.pesan || '-';
                     
-                    let cardHtml = `
-                        <div class="bg-slate-50 dark:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] space-y-3 flex flex-col justify-between">
-                            <div class="space-y-2">
+                    const cardHtml = `
+                        <div class="bg-slate-50 dark:bg-[#1c2836] p-4 md:p-5 rounded-2xl border border-slate-100 dark:border-[#253447] space-y-3 flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+                            <div class="space-y-2.5">
                                 <div class="flex items-center space-x-3">
                                     ${avatarHtml}
-                                    <div>
-                                        <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1">${escapeHtml(item.nama)}</h4>
-                                        <p class="text-[10px] text-${color}-700 font-semibold">Alumni Angkatan ${escapeHtml(item.tahunLulus || item.tahunMasuk || '-')}</p>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(namaClean)}</h4>
+                                        <p class="text-[10px] ${palette.text} font-semibold">Alumni Angkatan ${escapeHtml(angkatan)}</p>
                                     </div>
                                 </div>
-                                <span class="inline-block bg-${color}-100 text-${color}-800 text-[9px] font-extrabold px-2 py-0.5 rounded-md line-clamp-1">
-                                    ${escapeHtml(pekerjaan)}
-                                </span>
-                                <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed italic line-clamp-4">
-                                    "${escapeHtml(item.kesan)}"
-                                </p>
+                                <div>
+                                    <span class="inline-block ${palette.badgeBg} text-[9px] font-extrabold px-2.5 py-0.5 rounded-md truncate max-w-full">
+                                        ${escapeHtml(pekerjaan)}
+                                    </span>
+                                </div>
+                                <div class="relative">
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed italic line-clamp-4">
+                                        "${escapeHtml(pesanTeks)}"
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -336,7 +367,7 @@
                 });
 
             } catch (err) {
-                console.error(err);
-                container.innerHTML = '<div class="md:col-span-3 text-center text-xs text-rose-500 py-10">Gagal memuat testimoni.</div>';
+                console.error("Gagal load testimoni alumni:", err);
+                container.innerHTML = '<div class="md:col-span-3 text-center text-xs text-rose-500 py-10">Gagal memuat testimoni alumni. Silakan periksa jaringan Anda.</div>';
             }
         }

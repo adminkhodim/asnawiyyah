@@ -252,18 +252,74 @@
                 }
 
                 if (action === "alumni.getTestimonials") {
-                    const res = await fetch(`${sbUrl}/rest/v1/alumni?izin_publikasi=eq.Ya&select=*`, { headers });
+                    const res = await fetch(`${sbUrl}/rest/v1/alumni?izin_publikasi=eq.Ya&order=id.desc&select=*`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return rows.filter(a => a.kesan_pesan && String(a.kesan_pesan).trim() !== "").map(a => {
+                        let fotoUrl = a.foto || "";
+                        if (fotoUrl && fotoUrl.includes('drive.google.com')) {
+                            const idMatch = fotoUrl.match(/id=([a-zA-Z0-9_-]+)/) || fotoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                            if (idMatch && idMatch[1]) {
+                                fotoUrl = `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+                            }
+                        }
+                        return {
+                            id: a.id,
+                            nama: a.nama_lengkap || "",
+                            tahunMasuk: a.tahun_masuk || "",
+                            tahunLulus: a.tahun_lulus || "",
+                            angkatan: a.tahun_lulus || a.tahun_masuk || "-",
+                            program: a.program_terakhir || "",
+                            kesibukan: a.kesibukan || "",
+                            instansi: a.instansi_perusahaan || a.kesibukan || "Alumni",
+                            pekerjaan: a.instansi_perusahaan || a.kesibukan || "Alumni",
+                            kesan: a.kesan_pesan || "",
+                            pesan: a.kesan_pesan || "",
+                            foto: fotoUrl
+                        };
+                    });
+                }
+
+                if (action === "alumni.getAll" || action === "admin.alumni.list") {
+                    const res = await fetch(`${sbUrl}/rest/v1/alumni?order=id.desc&select=*`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
                     return {
                         status: "success",
-                        data: rows.map(a => ({
-                            nama: a.nama_lengkap,
-                            angkatan: a.tahun_lulus,
-                            pekerjaan: a.kesibukan,
-                            pesan: a.kesan_pesan,
-                            foto: a.foto
-                        }))
+                        success: true,
+                        data: rows.map(a => {
+                            let fotoUrl = a.foto || "";
+                            if (fotoUrl && fotoUrl.includes('drive.google.com')) {
+                                const idMatch = fotoUrl.match(/id=([a-zA-Z0-9_-]+)/) || fotoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                                if (idMatch && idMatch[1]) {
+                                    fotoUrl = `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+                                }
+                            }
+                            return {
+                                id: a.id,
+                                timestamp: a.timestamp || "",
+                                nama: a.nama_lengkap || "",
+                                nama_lengkap: a.nama_lengkap || "",
+                                jenis_kelamin: a.jenis_kelamin || "Laki-laki",
+                                no_whatsapp: a.no_whatsapp || "",
+                                media_sosial: a.media_sosial || "",
+                                tahun_masuk: a.tahun_masuk || "",
+                                tahun_lulus: a.tahun_lulus || "",
+                                program_terakhir: a.program_terakhir || "",
+                                kesibukan: a.kesibukan || "",
+                                instansi_perusahaan: a.instansi_perusahaan || "",
+                                kesan_pesan: a.kesan_pesan || "",
+                                provinsi: a.provinsi || "",
+                                kabupaten: a.kabupaten || "",
+                                kecamatan: a.kecamatan || "",
+                                desa_kelurahan: a.desa_kelurahan || "",
+                                alamat_lengkap: a.alamat_lengkap || "",
+                                latitude: a.latitude || "",
+                                longitude: a.longitude || "",
+                                foto: fotoUrl,
+                                izin_publikasi: a.izin_publikasi || "Ya"
+                            };
+                        })
                     };
                 }
 
@@ -487,8 +543,9 @@
             // Jalankan sinkronisasi Supabase secara proaktif untuk write actions agar Cloud DB selalu termutakhirkan
             const isJadwalWrite = action === 'saveJadwalKegiatan' || action === 'toggleJadwalKegiatan' || action === 'deleteJadwalKegiatan';
             const isNewsViewWrite = action === 'recordNewsView';
+            const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsViewWrite) {
+            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -1245,34 +1302,52 @@
                 }
 
                 // ==================== 12. ALUMNI ====================
-                else if (action === 'alumni.create') {
+                else if (action === 'alumni.create' || action === 'saveAlumniData') {
                     const d = payload.data || payload;
+                    let photoUrl = (response && (response.fotoUrl || response.photoUrl || response.foto || response.url)) || d.foto || d.photoUrl || null;
+                    if (photoUrl && photoUrl.includes('drive.google.com')) {
+                        const idMatch = photoUrl.match(/id=([a-zA-Z0-9_-]+)/) || photoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                        if (idMatch && idMatch[1]) {
+                            photoUrl = `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+                        }
+                    }
                     const alumniRow = {
-                        id: d.id || ('ALM_' + Date.now()),
+                        id: (response && response.id) || d.id || ('ALM_' + Date.now()),
                         timestamp: new Date().toLocaleString('id-ID'),
                         nama_lengkap: d.nama_lengkap || d.nama || '',
-                        jenis_kelamin: d.jenis_kelamin || 'Laki-laki',
-                        no_whatsapp: d.no_whatsapp || d.telepon || '',
-                        media_sosial: d.media_sosial || null,
-                        tahun_masuk: String(d.tahun_masuk || ''),
-                        tahun_lulus: String(d.tahun_lulus || ''),
-                        program_terakhir: d.program_terakhir || 'Tahfidz Dewasa Putra',
+                        jenis_kelamin: d.jenis_kelamin || d.jk || 'Laki-laki',
+                        no_whatsapp: d.no_whatsapp || d.wa || d.telepon || '',
+                        media_sosial: d.media_sosial || d.medsos || null,
+                        tahun_masuk: String(d.tahun_masuk || d.masuk || ''),
+                        tahun_lulus: String(d.tahun_lulus || d.lulus || ''),
+                        program_terakhir: d.program_terakhir || d.program || 'Tahfidz Dewasa Putra',
                         kesibukan: d.kesibukan || '-',
-                        instansi_perusahaan: d.instansi_perusahaan || null,
-                        kesan_pesan: d.kesan_pesan || null,
+                        instansi_perusahaan: d.instansi_perusahaan || d.instansi || null,
+                        kesan_pesan: d.kesan_pesan || d.kesan || null,
                         provinsi: d.provinsi || null,
                         kabupaten: d.kabupaten || null,
                         kecamatan: d.kecamatan || null,
-                        desa_kelurahan: d.desa_kelurahan || null,
-                        alamat_lengkap: d.alamat_lengkap || null,
-                        foto: d.foto || null,
-                        izin_publikasi: d.izin_publikasi || 'Ya'
+                        desa_kelurahan: d.desa_kelurahan || d.desa || null,
+                        alamat_lengkap: d.alamat_lengkap || d.alamat || null,
+                        latitude: String(d.latitude || d.lat || ''),
+                        longitude: String(d.longitude || d.lng || ''),
+                        foto: photoUrl,
+                        izin_publikasi: d.izin_publikasi || d.izin || 'Ya'
                     };
                     await fetch(`${sbUrl}/rest/v1/alumni`, {
                         method: 'POST',
                         headers,
                         body: JSON.stringify(alumniRow)
                     });
+                }
+                else if (action === 'alumni.delete') {
+                    const alumniId = payload.id || (payload.data && payload.data.id);
+                    if (alumniId) {
+                        await fetch(`${sbUrl}/rest/v1/alumni?id=eq.${encodeURIComponent(alumniId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
                 }
             } catch (syncErr) {
                 console.warn('[SUPABASE DUAL-WRITE SYNC ERROR]', action, syncErr);

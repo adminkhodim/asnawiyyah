@@ -161,6 +161,8 @@
                 { key: 'santri.edit', label: 'Mengubah Data Santri', desc: 'Izin memperbarui informasi biodata & wali santri' },
                 { key: 'santri.delete', label: 'Menghapus Data Santri', desc: 'Izin menghapus data santri dari database' },
                 { key: 'santri.export', label: 'Import Excel / Massal', desc: 'Izin mengimpor dan mengekspor data santri dari file .xlsx' },
+                { key: 'alumni.view', label: 'Melihat Rekap Alumni (IKASAPNA)', desc: 'Akses melihat direktori data alumni dan sebaran wilayah' },
+                { key: 'alumni.manage', label: 'Kelola & Ekspor Data Alumni', desc: 'Izin manajemen status, hapus, dan unduh data alumni' },
                 { key: 'unit.manage', label: 'Unit Kegiatan Santri (UKS)', desc: 'Akses mengelola ekstrakurikuler & kegiatan asrama' }
             ]
         },
@@ -222,6 +224,7 @@
     // Pemetaan Modul Sistem ke Izin Terkait
     const MODULE_TO_PERMISSIONS = {
         'santri': ['santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export'],
+        'alumni': ['alumni.view', 'alumni.manage', 'santri.view'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
         'presensi': ['presensi.view', 'presensi.entry'],
         'ppdb': ['ppdb.manage', 'keuangan.verify'],
@@ -244,7 +247,7 @@
     const DEFAULT_ROLE_PERMISSIONS_MAP = {
         'SUPER_ADMIN': ['*'],
         'ADMIN': [
-            'santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export', 'unit.manage', 'jadwal.manage',
+            'santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export', 'alumni.view', 'alumni.manage', 'unit.manage', 'jadwal.manage',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah', 'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
@@ -260,7 +263,7 @@
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'notifikasi.broadcast'
         ],
         'PENGURUS': [
-            'presensi.view', 'presensi.entry', 'unit.manage', 'jadwal.manage', 'ppdb.manage',
+            'presensi.view', 'presensi.entry', 'alumni.view', 'unit.manage', 'jadwal.manage', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
