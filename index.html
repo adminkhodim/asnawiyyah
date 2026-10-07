@@ -94,6 +94,63 @@
                 display: none !important;
             }
         }
+
+        /* 1. SCROLLBAR MENU SIDEBAR KE LUAR LATAR HIJAU (SEAMLESS DENGAN AREA KONTEN) */
+        #admin-sidebar-menu {
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 var(--admin-content-bg, #f8fafc);
+        }
+        #admin-sidebar-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+        #admin-sidebar-menu::-webkit-scrollbar-track {
+            background: var(--admin-content-bg, #f8fafc);
+            border-left: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        #admin-sidebar-menu::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 9999px;
+        }
+        #admin-sidebar-menu::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Dark Mode Scrollbar Track */
+        html.dark #admin-sidebar-menu {
+            scrollbar-color: #475569 var(--admin-content-bg, #0b131e);
+        }
+        html.dark #admin-sidebar-menu::-webkit-scrollbar-track {
+            background: var(--admin-content-bg, #0b131e);
+            border-left: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        html.dark #admin-sidebar-menu::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        html.dark #admin-sidebar-menu::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* 4. ANIMASI MUNCUL BERURUTAN DARI ARAH BAWAH (STAGGERED SLIDE-UP FADE) */
+        @keyframes adminFadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: adminFadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+            will-change: transform, opacity;
+        }
+        .stagger-1 { animation-delay: 0.04s; }
+        .stagger-2 { animation-delay: 0.10s; }
+        .stagger-3 { animation-delay: 0.18s; }
+        .stagger-4 { animation-delay: 0.26s; }
+        .stagger-5 { animation-delay: 0.34s; }
+        .stagger-6 { animation-delay: 0.42s; }
     </style>
 </head>
 
@@ -4561,7 +4618,7 @@
 
                 
                 <!-- Minimalist Executive Greeting Bar (Benchmark Hadirin Analysis) -->
-                <div class="flex items-center justify-between pb-0.5">
+                <div id="admin-hub-greeting-section" class="flex items-center justify-between pb-0.5 animate-fade-in-up stagger-1">
                     <div class="flex items-center gap-2">
                         <h2 class="text-sm md:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">Selamat Datang, Administrator</h2>
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-300/60 dark:border-emerald-800">
@@ -4594,30 +4651,23 @@
                 </div>
 
                 <!-- ================= OVERALL DATA & TIME RANGE CONTROLS (1-TO-1 HADIRIN BENCHMARK) ================= -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+                <div id="admin-hub-overall-header-section" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5 animate-fade-in-up stagger-2">
                     <!-- Sisi Kiri: Judul "Overall Data" & Filter Pills yang Menyatu Sejajar -->
                     <div class="flex flex-wrap items-center gap-2.5 md:gap-3.5">
                         <h3 class="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">Overall Data</h3>
                         
                         <!-- Filter Pills Minimalis Persis Referensi -->
                         <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                            <button type="button" onclick="setAdminAnalyticsTimeRange(this, 'today')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">Today</button>
-                            <button type="button" onclick="setAdminAnalyticsTimeRange(this, '7d')" class="admin-time-pill active px-3 py-1 rounded-lg bg-sky-500 text-white font-bold shadow-xs transition-all">Last 7 days</button>
-                            <button type="button" onclick="setAdminAnalyticsTimeRange(this, '30d')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">Last 30 days</button>
-                            <button type="button" onclick="setAdminAnalyticsTimeRange(this, '90d')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">Last 90 days</button>
-                            <button type="button" onclick="setAdminAnalyticsTimeRange(this, 'all')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">All time</button>
+                            <button type="button" data-range="today" onclick="setAdminAnalyticsTimeRange(this, 'today')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">Today</button>
+                            <button type="button" data-range="7d" onclick="setAdminAnalyticsTimeRange(this, '7d')" class="admin-time-pill active px-3 py-1 rounded-lg bg-sky-500 text-white font-bold shadow-xs transition-all">Last 7 days</button>
+                            <button type="button" data-range="30d" onclick="setAdminAnalyticsTimeRange(this, '30d')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">Last 30 days</button>
+                            <button type="button" data-range="90d" onclick="setAdminAnalyticsTimeRange(this, '90d')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">Last 90 days</button>
+                            <button type="button" data-range="all" onclick="setAdminAnalyticsTimeRange(this, 'all')" class="admin-time-pill px-2.5 py-1 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">All time</button>
                         </div>
                     </div>
 
-                    <!-- Sisi Kanan: Action Button Biru Royal & Tombol Reload Persis Referensi -->
+                    <!-- Sisi Kanan: Action Button Minimalis Persis Referensi (Tombol Buka Kamera Presensi Dihilangkan) -->
                     <div class="flex items-center gap-1.5">
-                        <!-- Action Button: Buka Kamera Presensi (Royal Blue SaaS) -->
-                        <button type="button" onclick="openAdminCameraPresensi()"
-                            class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-[11px] font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
-                            <i class="fa-solid fa-camera"></i>
-                            <span>Buka Kamera Presensi 📷</span>
-                        </button>
-
                         <!-- Refresh Button Minimalis -->
                         <button type="button" id="admin-analytics-refresh-btn" onclick="refreshAdminAnalyticsData()" title="Segarkan Data Analitik"
                             class="w-7 h-7 rounded-xl bg-white dark:bg-[#1a2634] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200/80 dark:border-[#2b3b4f] flex items-center justify-center text-xs transition-all shadow-2xs active:scale-95 cursor-pointer">
@@ -4627,14 +4677,14 @@
                 </div>
 
                 <!-- Dynamic Role KPI Stat Cards Grid -->
-                <div id="admin-hub-kpi-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+                <div id="admin-hub-kpi-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 animate-fade-in-up stagger-3">
                     <!-- Populated dynamically by applyAdminRoleVisibility -->
                 </div>
 
                 <!-- ================= BIOMETRIC ANALYTICS & ATTENDANCE CHARTS (BENCHMARK HADIRIN) ================= -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 md:gap-3.5">
+                <div id="admin-hub-charts-section" class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 md:gap-3.5 animate-fade-in-up stagger-4">
                     
-                    <!-- KOLOM KIRI: STACKED ROUNDED BAR CHART (AKTIVITAS KEHADIRAN 7 HARI) -->
+                    <!-- KOLOM KIRI: STACKED ROUNDED BAR CHART (AKTIVITAS KEHADIRAN) -->
                     <div class="lg:col-span-7 xl:col-span-8 bg-white dark:bg-[#15202d] rounded-2xl p-3 md:p-3.5 border border-slate-200/80 dark:border-[#253447] shadow-xs flex flex-col justify-between space-y-2">
                         <!-- Chart Header -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1.5 border-b border-slate-100 dark:border-slate-800/80">
@@ -4642,7 +4692,7 @@
                                 <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">Aktivitas Kehadiran Harian</h4>
                                 <p class="text-[10px] text-slate-400 dark:text-slate-500">Volume presensi santri & asatidz terverifikasi</p>
                             </div>
-                            <!-- Legend & Dropdown Filter -->
+                            <!-- Legend & Dropdown Filter Badge -->
                             <div class="flex items-center gap-2.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                                 <span class="flex items-center gap-1">
                                     <span class="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -4652,8 +4702,8 @@
                                     <span class="w-2 h-2 rounded-full bg-sky-400"></span>
                                     <span>Santri</span>
                                 </span>
-                                <span class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[10px] cursor-pointer">
-                                    Last 7 days ▾
+                                <span id="admin-analytics-chart-range-label" class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold">
+                                    Last 7 days
                                 </span>
                             </div>
                         </div>
@@ -4679,61 +4729,51 @@
                                     <line x1="40" y1="135" x2="520" y2="135" stroke="currentColor" class="text-slate-200 dark:text-slate-700" stroke-width="1"/>
                                     <text x="32" y="139" text-anchor="end" class="text-[9px] fill-slate-300 dark:fill-slate-600 font-medium">0</text>
 
-                                    <!-- BARS (7 Days: 05-18 s.d. 05-24) -->
-                                    <!-- Day 1: 05-18 -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-18: 180 Santri, 35 Asatidz</title>
-                                        <rect x="72" y="65" width="20" height="70" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="72" y="42" width="20" height="26" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="82" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-18</text>
-                                    </g>
-
-                                    <!-- Day 2: 05-19 -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-19: 210 Santri, 40 Asatidz</title>
-                                        <rect x="142" y="55" width="20" height="80" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="142" y="32" width="20" height="26" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="152" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-19</text>
-                                    </g>
-
-                                    <!-- Day 3: 05-20 -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-20: 200 Santri, 38 Asatidz</title>
-                                        <rect x="212" y="60" width="20" height="75" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="212" y="36" width="20" height="26" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="222" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-20</text>
-                                    </g>
-
-                                    <!-- Day 4: 05-21 (Peak) -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-21: 260 Santri, 48 Asatidz (Puncak Kehadiran)</title>
-                                        <rect x="282" y="42" width="20" height="93" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="282" y="16" width="20" height="30" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="292" y="152" text-anchor="middle" class="text-[10px] font-bold fill-sky-600 dark:fill-sky-400">05-21</text>
-                                    </g>
-
-                                    <!-- Day 5: 05-22 -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-22: 215 Santri, 42 Asatidz</title>
-                                        <rect x="352" y="55" width="20" height="80" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="352" y="34" width="20" height="24" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="362" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-22</text>
-                                    </g>
-
-                                    <!-- Day 6: 05-23 -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-23: 190 Santri, 36 Asatidz</title>
-                                        <rect x="422" y="65" width="20" height="70" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="422" y="44" width="20" height="24" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="432" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-23</text>
-                                    </g>
-
-                                    <!-- Day 7: 05-24 -->
-                                    <g class="cursor-pointer group">
-                                        <title>05-24: 170 Santri, 32 Asatidz</title>
-                                        <rect x="492" y="75" width="20" height="60" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
-                                        <rect x="492" y="52" width="20" height="25" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
-                                        <text x="502" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-24</text>
+                                    <!-- BARS GROUP (Rendered dynamically by renderAdminAnalyticsChart) -->
+                                    <g id="admin-attendance-bars-group">
+                                        <!-- Default initial: 7 Days (05-18 s.d. 05-24) -->
+                                        <g class="cursor-pointer group">
+                                            <title>05-18: 180 Santri, 35 Asatidz</title>
+                                            <rect x="72" y="65" width="20" height="70" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="72" y="42" width="20" height="26" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="82" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-18</text>
+                                        </g>
+                                        <g class="cursor-pointer group">
+                                            <title>05-19: 210 Santri, 40 Asatidz</title>
+                                            <rect x="142" y="55" width="20" height="80" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="142" y="32" width="20" height="26" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="152" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-19</text>
+                                        </g>
+                                        <g class="cursor-pointer group">
+                                            <title>05-20: 200 Santri, 38 Asatidz</title>
+                                            <rect x="212" y="60" width="20" height="75" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="212" y="36" width="20" height="26" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="222" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-20</text>
+                                        </g>
+                                        <g class="cursor-pointer group">
+                                            <title>05-21: 260 Santri, 48 Asatidz (Puncak Kehadiran)</title>
+                                            <rect x="282" y="42" width="20" height="93" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="282" y="16" width="20" height="30" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="292" y="152" text-anchor="middle" class="text-[10px] font-bold fill-sky-600 dark:fill-sky-400">05-21</text>
+                                        </g>
+                                        <g class="cursor-pointer group">
+                                            <title>05-22: 215 Santri, 42 Asatidz</title>
+                                            <rect x="352" y="55" width="20" height="80" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="352" y="34" width="20" height="24" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="362" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-22</text>
+                                        </g>
+                                        <g class="cursor-pointer group">
+                                            <title>05-23: 190 Santri, 36 Asatidz</title>
+                                            <rect x="422" y="65" width="20" height="70" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="422" y="44" width="20" height="24" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="432" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-23</text>
+                                        </g>
+                                        <g class="cursor-pointer group">
+                                            <title>05-24: 170 Santri, 32 Asatidz</title>
+                                            <rect x="492" y="75" width="20" height="60" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-opacity"/>
+                                            <rect x="492" y="52" width="20" height="25" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-opacity"/>
+                                            <text x="502" y="152" text-anchor="middle" class="text-[10px] font-medium fill-slate-400 group-hover:fill-sky-500">05-24</text>
+                                        </g>
                                     </g>
                                 </svg>
                             </div>
@@ -4745,7 +4785,7 @@
                                 <i class="fa-solid fa-circle-info text-[9px]"></i>
                                 <span>Data diperbarui setiap 15 menit melalui biometrik sync</span>
                             </span>
-                            <span class="font-bold text-slate-700 dark:text-slate-300">
+                            <span id="admin-attendance-avg-label" class="font-bold text-slate-700 dark:text-slate-300">
                                 Rata-rata 317 Presensi/Hari
                             </span>
                         </div>
@@ -4770,22 +4810,22 @@
                                 <!-- Background Track -->
                                 <circle cx="80" cy="80" r="60" stroke="currentColor" class="text-slate-100 dark:text-[#1e2a38]" stroke-width="18" fill="transparent"/>
                                 
-                                <!-- Segment 1: Tepat Waktu (Sky Blue 46.3% -> circumference 376.99 => 174.5) -->
-                                <circle cx="80" cy="80" r="60" stroke="#38bdf8" stroke-width="18" fill="transparent"
+                                <!-- Segment 1: Tepat Waktu (Sky Blue) -->
+                                <circle id="admin-donut-segment-tepat" cx="80" cy="80" r="60" stroke="#38bdf8" stroke-width="18" fill="transparent"
                                     stroke-dasharray="174.5 376.99" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-700"/>
                                 
-                                <!-- Segment 2: Lembur/Ekstra (Warm Amber 32.6% => 122.9) -->
-                                <circle cx="80" cy="80" r="60" stroke="#fb923c" stroke-width="18" fill="transparent"
+                                <!-- Segment 2: Lembur/Ekstra (Warm Amber) -->
+                                <circle id="admin-donut-segment-lembur" cx="80" cy="80" r="60" stroke="#fb923c" stroke-width="18" fill="transparent"
                                     stroke-dasharray="122.9 376.99" stroke-dashoffset="-180" stroke-linecap="round" class="transition-all duration-700"/>
 
-                                <!-- Segment 3: Cuti/Izin (Green/Emerald 22.1% => 83.3) -->
-                                <circle cx="80" cy="80" r="60" stroke="#22c55e" stroke-width="18" fill="transparent"
+                                <!-- Segment 3: Cuti/Izin (Green/Emerald) -->
+                                <circle id="admin-donut-segment-cuti" cx="80" cy="80" r="60" stroke="#22c55e" stroke-width="18" fill="transparent"
                                     stroke-dasharray="75.0 376.99" stroke-dashoffset="-305" stroke-linecap="round" class="transition-all duration-700"/>
                             </svg>
 
                             <!-- Centered Summary Text inside Donut -->
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span class="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">98.5%</span>
+                                <span id="admin-donut-percent-text" class="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">98.5%</span>
                                 <span class="text-[9px] font-semibold text-slate-400 dark:text-slate-500">Kehadiran</span>
                             </div>
                         </div>
@@ -4796,21 +4836,21 @@
                             <div class="flex items-center gap-1">
                                 <span class="w-2 h-2 rounded-full bg-sky-400"></span>
                                 <span class="text-slate-500 dark:text-slate-400">Tepat:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">46.3%</span>
+                                <span id="admin-donut-breakdown-tepat" class="font-bold text-slate-800 dark:text-slate-200">46.3%</span>
                             </div>
 
                             <!-- Lembur / Ekstra -->
                             <div class="flex items-center gap-1">
                                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                                 <span class="text-slate-500 dark:text-slate-400">Lembur:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">32.6%</span>
+                                <span id="admin-donut-breakdown-lembur" class="font-bold text-slate-800 dark:text-slate-200">32.6%</span>
                             </div>
 
                             <!-- Cuti / Izin -->
                             <div class="flex items-center gap-1">
                                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                 <span class="text-slate-500 dark:text-slate-400">Cuti:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">22.1%</span>
+                                <span id="admin-donut-breakdown-cuti" class="font-bold text-slate-800 dark:text-slate-200">22.1%</span>
                             </div>
                         </div>
 
@@ -4819,7 +4859,7 @@
                 </div>
 
                 <!-- WIDGET KHUSUS WALI SANTRI (MUNCUL JIKA ROLE WALI_SANTRI) -->
-                <div id="admin-hub-parent-widget" class="hidden bg-gradient-to-br from-teal-900 via-slate-900 to-emerald-950 text-white p-5 rounded-3xl border border-teal-500/40 shadow-sm space-y-3">
+                <div id="admin-hub-parent-widget" class="hidden bg-gradient-to-br from-teal-900 via-slate-900 to-emerald-950 text-white p-5 rounded-3xl border border-teal-500/40 shadow-sm space-y-3 animate-fade-in-up stagger-5">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2.5">
                             <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center text-sm font-bold border border-teal-400/30">
@@ -4839,7 +4879,7 @@
                 </div>
 
                 <!-- WIDGET KHUSUS PENGASUH (MUNCUL JIKA ROLE PENGASUH) -->
-                <div id="admin-hub-pengasuh-widget" class="hidden bg-gradient-to-br from-emerald-950 via-[#0a2318] to-amber-950 text-white p-5 rounded-3xl border border-amber-500/40 shadow-sm space-y-3">
+                <div id="admin-hub-pengasuh-widget" class="hidden bg-gradient-to-br from-emerald-950 via-[#0a2318] to-amber-950 text-white p-5 rounded-3xl border border-amber-500/40 shadow-sm space-y-3 animate-fade-in-up stagger-5">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2.5">
                             <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-sm font-bold border border-amber-400/30">
@@ -4866,7 +4906,7 @@
                 </div>
 
                 <!-- ================= 4 KATEGORI LAYANAN ADMIN HUB (DISEMBUNYIKAN UNTUK EXECUTIVE OVERVIEW MURNI) ================= -->
-                <div id="admin-hub-categories-container" class="hidden space-y-5">
+                <div id="admin-hub-categories-container" class="hidden space-y-5 animate-fade-in-up stagger-6">
 
                     <!-- KATEGORI 1: KESANTRIAN, TAHFIDZ & PENDIDIKAN -->
                     <section class="admin-hub-category bg-white dark:bg-[#15202d] rounded-2xl md:rounded-3xl p-4 md:p-5 border border-slate-200/80 dark:border-[#253447] shadow-xs space-y-4 transition-all">

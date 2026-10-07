@@ -141,31 +141,202 @@
         // ==================== OVERALL DATA & BIOMETRIC ANALYTICS CONTROLS ====================
         let currentAdminAnalyticsRange = '7d';
 
+        const ADMIN_ANALYTICS_DATASETS = {
+            'today': {
+                label: 'Hari Ini',
+                badge: 'Today',
+                avgLabel: 'Total 204 Presensi Terverifikasi Hari Ini',
+                overallRate: '99.2%',
+                breakdown: { tepat: '52.4%', lembur: '30.1%', cuti: '17.5%' },
+                donut: { tepat: 197.5, lembur: 113.4, cuti: 66.0, offsetLembur: -200, offsetCuti: -315 },
+                columns: [
+                    { label: 'Subuh 04:30', santri: 138, asatidz: 21, total: 159 },
+                    { label: 'Dhuha 07:30', santri: 140, asatidz: 20, total: 160 },
+                    { label: 'Dzuhur 12:00', santri: 139, asatidz: 21, total: 160 },
+                    { label: 'Ashar 15:30', santri: 140, asatidz: 21, total: 161, peak: true },
+                    { label: 'Maghrib 18:00', santri: 140, asatidz: 21, total: 161 },
+                    { label: 'Isya 19:30', santri: 139, asatidz: 20, total: 159 }
+                ]
+            },
+            '7d': {
+                label: '7 Hari Terakhir',
+                badge: 'Last 7 days',
+                avgLabel: 'Rata-rata 317 Presensi/Hari',
+                overallRate: '98.5%',
+                breakdown: { tepat: '46.3%', lembur: '32.6%', cuti: '22.1%' },
+                donut: { tepat: 174.5, lembur: 122.9, cuti: 75.0, offsetLembur: -180, offsetCuti: -305 },
+                columns: [
+                    { label: '05-18', santri: 180, asatidz: 35, total: 215 },
+                    { label: '05-19', santri: 210, asatidz: 40, total: 250 },
+                    { label: '05-20', santri: 200, asatidz: 38, total: 238 },
+                    { label: '05-21', santri: 260, asatidz: 48, total: 308, peak: true },
+                    { label: '05-22', santri: 215, asatidz: 42, total: 257 },
+                    { label: '05-23', santri: 190, asatidz: 36, total: 226 },
+                    { label: '05-24', santri: 170, asatidz: 32, total: 202 }
+                ]
+            },
+            '30d': {
+                label: '30 Hari Terakhir',
+                badge: 'Last 30 days',
+                avgLabel: 'Rata-rata 331 Presensi/Hari',
+                overallRate: '98.8%',
+                breakdown: { tepat: '48.7%', lembur: '31.2%', cuti: '20.1%' },
+                donut: { tepat: 183.5, lembur: 117.6, cuti: 75.8, offsetLembur: -185, offsetCuti: -305 },
+                columns: [
+                    { label: 'Pekan 1', santri: 285, asatidz: 44, total: 329 },
+                    { label: 'Pekan 2', santri: 310, asatidz: 46, total: 356 },
+                    { label: 'Pekan 3', santri: 335, asatidz: 49, total: 384, peak: true },
+                    { label: 'Pekan 4', santri: 320, asatidz: 45, total: 365 },
+                    { label: 'Pekan 5', santri: 305, asatidz: 43, total: 348 }
+                ]
+            },
+            '90d': {
+                label: '90 Hari Terakhir',
+                badge: 'Last 90 days',
+                avgLabel: 'Rata-rata 324 Presensi/Hari',
+                overallRate: '97.9%',
+                breakdown: { tepat: '45.8%', lembur: '33.5%', cuti: '20.7%' },
+                donut: { tepat: 172.6, lembur: 126.2, cuti: 78.0, offsetLembur: -175, offsetCuti: -303 },
+                columns: [
+                    { label: 'Bulan ke-1', santri: 290, asatidz: 42, total: 332 },
+                    { label: 'Bulan ke-2', santri: 330, asatidz: 48, total: 378, peak: true },
+                    { label: 'Bulan ke-3', santri: 315, asatidz: 45, total: 360 }
+                ]
+            },
+            'all': {
+                label: 'Semua Periode',
+                badge: 'All time',
+                avgLabel: 'Rata-rata 328 Presensi/Hari (Akumulatif)',
+                overallRate: '98.4%',
+                breakdown: { tepat: '47.2%', lembur: '32.1%', cuti: '20.7%' },
+                donut: { tepat: 177.9, lembur: 121.0, cuti: 78.0, offsetLembur: -180, offsetCuti: -302 },
+                columns: [
+                    { label: 'Semester 1', santri: 310, asatidz: 44, total: 354 },
+                    { label: 'Semester 2', santri: 335, asatidz: 48, total: 383, peak: true },
+                    { label: 'Semester 3', santri: 325, asatidz: 46, total: 371 },
+                    { label: 'Semester 4', santri: 340, asatidz: 49, total: 389 }
+                ]
+            }
+        };
+
+        function renderAdminAnalyticsChart(rangeKey) {
+            const data = ADMIN_ANALYTICS_DATASETS[rangeKey] || ADMIN_ANALYTICS_DATASETS['7d'];
+            
+            // 1. Update Range Badge Label di Header Grafik
+            const rangeBadge = document.getElementById('admin-analytics-chart-range-label');
+            if (rangeBadge) {
+                rangeBadge.textContent = data.badge;
+            }
+
+            // 2. Update Footer Average Label
+            const avgLabel = document.getElementById('admin-attendance-avg-label');
+            if (avgLabel) {
+                avgLabel.textContent = data.avgLabel;
+            }
+
+            // 3. Update SVG Stacked Rounded Bars
+            const barsGroup = document.getElementById('admin-attendance-bars-group');
+            if (barsGroup && Array.isArray(data.columns)) {
+                const totalBars = data.columns.length;
+                const plotStartX = 50;
+                const plotEndX = 510;
+                const availableWidth = plotEndX - plotStartX;
+                const colWidth = 20;
+                const step = totalBars > 1 ? availableWidth / totalBars : availableWidth / 2;
+                
+                // SVG coordinate reference: y=135 is baseline (0), max reference 400
+                const baseLineY = 135;
+                const maxHeightPx = 115; // Max height in SVG coordinate
+                const scaleUnit = maxHeightPx / 400;
+
+                let barsHtml = '';
+                data.columns.forEach((col, idx) => {
+                    const cx = plotStartX + (idx * step) + (step / 2);
+                    const barX = Math.round(cx - (colWidth / 2));
+                    const textX = Math.round(cx);
+
+                    // Height calculation
+                    const santriH = Math.max(14, Math.round(col.santri * scaleUnit));
+                    const asatidzH = Math.max(8, Math.round(col.asatidz * scaleUnit));
+                    const santriY = baseLineY - santriH;
+                    const asatidzY = santriY - asatidzH;
+
+                    const isPeak = !!col.peak;
+                    const labelColorClass = isPeak ? 'fill-sky-600 dark:fill-sky-400 font-bold' : 'fill-slate-400 group-hover:fill-sky-500 font-medium';
+
+                    barsHtml += `
+                        <g class="cursor-pointer group">
+                            <title>${col.label}: ${col.santri} Santri, ${col.asatidz} Asatidz (Total: ${col.total || (col.santri + col.asatidz)})${isPeak ? ' [Puncak]' : ''}</title>
+                            <rect x="${barX}" y="${santriY}" width="${colWidth}" height="${santriH}" rx="6" fill="#38bdf8" class="group-hover:opacity-90 transition-all duration-300"/>
+                            <rect x="${barX}" y="${asatidzY}" width="${colWidth}" height="${asatidzH}" rx="6" fill="#fb923c" class="group-hover:opacity-90 transition-all duration-300"/>
+                            <text x="${textX}" y="152" text-anchor="middle" class="text-[10px] ${labelColorClass} transition-colors">${col.label}</text>
+                        </g>
+                    `;
+                });
+                barsGroup.innerHTML = barsHtml;
+            }
+
+            // 4. Update Donut Ring Chart & Metrics
+            const donutCircleTepat = document.getElementById('admin-donut-segment-tepat');
+            const donutCircleLembur = document.getElementById('admin-donut-segment-lembur');
+            const donutCircleCuti = document.getElementById('admin-donut-segment-cuti');
+            const donutPercentText = document.getElementById('admin-donut-percent-text');
+            const donutBkTepat = document.getElementById('admin-donut-breakdown-tepat');
+            const donutBkLembur = document.getElementById('admin-donut-breakdown-lembur');
+            const donutBkCuti = document.getElementById('admin-donut-breakdown-cuti');
+
+            if (donutPercentText) donutPercentText.textContent = data.overallRate;
+            if (donutBkTepat) donutBkTepat.textContent = data.breakdown.tepat;
+            if (donutBkLembur) donutBkLembur.textContent = data.breakdown.lembur;
+            if (donutBkCuti) donutBkCuti.textContent = data.breakdown.cuti;
+
+            if (data.donut) {
+                if (donutCircleTepat) {
+                    donutCircleTepat.setAttribute('stroke-dasharray', `${data.donut.tepat} 376.99`);
+                }
+                if (donutCircleLembur) {
+                    donutCircleLembur.setAttribute('stroke-dasharray', `${data.donut.lembur} 376.99`);
+                    donutCircleLembur.setAttribute('stroke-dashoffset', String(data.donut.offsetLembur || -180));
+                }
+                if (donutCircleCuti) {
+                    donutCircleCuti.setAttribute('stroke-dasharray', `${data.donut.cuti} 376.99`);
+                    donutCircleCuti.setAttribute('stroke-dashoffset', String(data.donut.offsetCuti || -305));
+                }
+            }
+        }
+
         function setAdminAnalyticsTimeRange(btnEl, rangeKey) {
             currentAdminAnalyticsRange = rangeKey;
             
             // Update active pill UI styling
             const pills = document.querySelectorAll('.admin-time-pill');
             pills.forEach(p => {
-                p.classList.remove('active', 'bg-white', 'dark:bg-[#253447]', 'text-slate-900', 'dark:text-white', 'font-bold', 'shadow-xs');
-                p.classList.add('text-slate-600', 'dark:text-slate-300');
+                p.classList.remove('active', 'bg-sky-500', 'text-white', 'font-bold', 'shadow-xs');
+                p.classList.add('text-slate-500', 'dark:text-slate-400');
             });
 
-            if (btnEl) {
-                btnEl.classList.add('active', 'bg-white', 'dark:bg-[#253447]', 'text-slate-900', 'dark:text-white', 'font-bold', 'shadow-xs');
-                btnEl.classList.remove('text-slate-600', 'dark:text-slate-300');
+            const targetBtn = btnEl || document.querySelector(`.admin-time-pill[data-range="${rangeKey}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active', 'bg-sky-500', 'text-white', 'font-bold', 'shadow-xs');
+                targetBtn.classList.remove('text-slate-500', 'dark:text-slate-400');
             }
 
-            const rangeLabels = {
-                'today': 'Hari Ini',
-                '7d': '7 Hari Terakhir',
-                '30d': '30 Hari Terakhir',
-                '90d': '90 Hari Terakhir',
-                'all': 'Semua Periode'
-            };
+            renderAdminAnalyticsChart(rangeKey);
 
-            const label = rangeLabels[rangeKey] || rangeKey;
+            const data = ADMIN_ANALYTICS_DATASETS[rangeKey];
+            const label = data ? data.label : rangeKey;
             showToast(`Rentang analitik disesuaikan: ${label}`);
+        }
+
+        function triggerAdminHubStaggerAnimation() {
+            const hub = document.getElementById('admin-menu-hub');
+            if (!hub) return;
+            const animatedElements = hub.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
         }
 
         function refreshAdminAnalyticsData() {
@@ -186,6 +357,12 @@
                     if (typeof applyAdminRoleVisibility === 'function') {
                         applyAdminRoleVisibility(currentRole);
                     }
+                }
+                if (typeof renderAdminAnalyticsChart === 'function') {
+                    renderAdminAnalyticsChart(currentAdminAnalyticsRange || '7d');
+                }
+                if (typeof triggerAdminHubStaggerAnimation === 'function') {
+                    triggerAdminHubStaggerAnimation();
                 }
                 showToast('Data analitik biometrik & KPI telah diperbarui realtime.');
             }, 600);
@@ -377,6 +554,12 @@
                 hubView.classList.remove('hidden');
                 if (typeof applyAdminRoleVisibility === 'function') {
                     applyAdminRoleVisibility();
+                }
+                if (typeof renderAdminAnalyticsChart === 'function') {
+                    renderAdminAnalyticsChart(currentAdminAnalyticsRange || '7d');
+                }
+                if (typeof triggerAdminHubStaggerAnimation === 'function') {
+                    triggerAdminHubStaggerAnimation();
                 }
             }
 
@@ -7080,5 +7263,20 @@
         window.closeAdminAlumniDetail = closeAdminAlumniDetail;
         window.deleteAdminAlumni = deleteAdminAlumni;
         window.exportAdminAlumniCSV = exportAdminAlumniCSV;
+        window.setAdminAnalyticsTimeRange = setAdminAnalyticsTimeRange;
+        window.renderAdminAnalyticsChart = renderAdminAnalyticsChart;
+        window.refreshAdminAnalyticsData = refreshAdminAnalyticsData;
+        window.triggerAdminHubStaggerAnimation = triggerAdminHubStaggerAnimation;
+
+        // Auto-initialize analytics chart on DOM ready
+        if (typeof document !== 'undefined') {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    renderAdminAnalyticsChart(currentAdminAnalyticsRange || '7d');
+                });
+            } else {
+                renderAdminAnalyticsChart(currentAdminAnalyticsRange || '7d');
+            }
+        }
 
 
