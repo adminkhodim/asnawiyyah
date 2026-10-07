@@ -375,6 +375,30 @@
         }
         window.triggerAlumniStaggerAnimation = triggerAlumniStaggerAnimation;
 
+        function triggerPegawaiStaggerAnimation() {
+            const pegawaiView = document.getElementById('admin-view-pegawai');
+            if (!pegawaiView) return;
+            const animatedElements = pegawaiView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerPegawaiStaggerAnimation = triggerPegawaiStaggerAnimation;
+
+        function triggerKeaktifanStaggerAnimation() {
+            const keaktifanView = document.getElementById('admin-view-keaktifan-asatidz');
+            if (!keaktifanView) return;
+            const animatedElements = keaktifanView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerKeaktifanStaggerAnimation = triggerKeaktifanStaggerAnimation;
+
         function refreshAdminAnalyticsData() {
             const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
             const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
@@ -537,6 +561,9 @@
                 loadAdminStudentsData();
             } else if (viewName === 'pegawai') {
                 if (pegawaiView) pegawaiView.classList.remove('hidden');
+                if (typeof triggerPegawaiStaggerAnimation === 'function') {
+                    triggerPegawaiStaggerAnimation();
+                }
                 if (typeof loadAdminEmployeesData === 'function') {
                     loadAdminEmployeesData();
                 }
@@ -562,6 +589,9 @@
                 }
             } else if (viewName === 'keaktifan-asatidz') {
                 if (keaktifanView) keaktifanView.classList.remove('hidden');
+                if (typeof triggerKeaktifanStaggerAnimation === 'function') {
+                    triggerKeaktifanStaggerAnimation();
+                }
                 if (typeof loadAdminKeaktifanAsatidz === 'function') {
                     loadAdminKeaktifanAsatidz();
                 }

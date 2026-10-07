@@ -6623,7 +6623,7 @@
             <!-- ================= VIEW: MODUL MASTER DATA PEGAWAI ================= -->
             <div id="admin-view-pegawai" class="hidden space-y-4">
                 <!-- Header Sub-View -->
-                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
@@ -6649,28 +6649,91 @@
                     </div>
                 </div>
 
-                <!-- CARDS RINGKASAN DATA PEGAWAI -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Pegawai</span>
-                        <div id="admin-pegawai-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800 dark:text-slate-100">0</div>
+                <!-- CARDS RINGKASAN DATA PEGAWAI (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Pegawai (Indigo Gradient) -->
+                    <div class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL PEGAWAI</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-pegawai-stat-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Personil ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">SDM Pesantren</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-indigo-700 font-black shadow-xs shrink-0 text-[9px]">Data Induk</span>
+                        </div>
                     </div>
-                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/30 dark:bg-indigo-950/20 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">Asatidz / Muhafiz</span>
-                        <div id="admin-pegawai-stat-asatidz" class="text-lg md:text-xl font-extrabold text-indigo-800 dark:text-indigo-300">0</div>
+
+                    <!-- 2. Asatidz / Muhafiz (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">ASATIDZ & MUHAFIZ</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-pegawai-stat-asatidz">0</span>
+                                <span class="text-xs font-bold text-white/80">Guru</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Pengajar & Musyrif</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Pendidik</span>
+                        </div>
                     </div>
-                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-950/20 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">Tenaga Kependidikan</span>
-                        <div id="admin-pegawai-stat-staf" class="text-lg md:text-xl font-extrabold text-amber-800 dark:text-amber-300">0</div>
+
+                    <!-- 3. Tenaga Kependidikan (Warm Amber / Orange Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TENAGA PENDIDIKAN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-id-badge"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-pegawai-stat-staf">0</span>
+                                <span class="text-xs font-bold text-white/80">Staf</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Tata Usaha & Admin</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Kependidikan</span>
+                        </div>
                     </div>
-                    <div class="bg-white dark:bg-[#15202d] p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/20 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Status Aktif</span>
-                        <div id="admin-pegawai-stat-aktif" class="text-lg md:text-xl font-extrabold text-emerald-800 dark:text-emerald-300">0</div>
+
+                    <!-- 4. Status Aktif (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">STATUS AKTIF</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-pegawai-stat-aktif">0</span>
+                                <span class="text-xs font-bold text-white/80">Aktif</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Tugas aktif lembaga</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Aktif</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- FITUR SEARCH & FILTER DATA PEGAWAI -->
-                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between animate-fade-in-up stagger-6">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" id="admin-pegawai-search" oninput="filterAdminPegawaiList()" placeholder="Cari Nama, NIP, atau Keahlian Pegawai..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
@@ -6692,7 +6755,7 @@
                 </div>
 
                 <!-- TABLE SECTION -->
-                <section class="bg-white dark:bg-[#15202d] rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] overflow-hidden p-3.5 md:p-4 space-y-3">
+                <section class="bg-white dark:bg-[#15202d] rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] overflow-hidden p-3.5 md:p-4 space-y-3 animate-fade-in-up stagger-7">
                     <!-- DESKTOP TABLE VIEW (MD UP) -->
                     <div class="hidden md:block overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs">
@@ -6982,7 +7045,7 @@
             <!-- ================= VIEW: MODUL KEAKTIFAN ASATIDZ (SUPER ADMIN & PENGASUH) ================= -->
             <div id="admin-view-keaktifan-asatidz" class="hidden space-y-4">
                 <!-- Header Sub-View -->
-                <div class="bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-3">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -7105,7 +7168,7 @@
                 </div>
 
                 <!-- UNIFIED REALTIME DEADLINE & SESI STRIP (KOMPAK & SLIM) -->
-                <div id="keaktifan-timeline-banner" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-3 sm:p-3.5 rounded-2xl shadow-sm border border-indigo-800/40 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                <div id="keaktifan-timeline-banner" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-3 sm:p-3.5 rounded-2xl shadow-sm border border-indigo-800/40 flex flex-col xl:flex-row xl:items-center justify-between gap-3 animate-fade-in-up stagger-2">
                     <div class="flex items-center space-x-3 shrink-0">
                         <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-base shrink-0">
                             <i class="fa-solid fa-stopwatch-20"></i>
@@ -7129,59 +7192,91 @@
                     </div>
                 </div>
 
-                <!-- STATS KPI CARDS -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <!-- Stat 1: Tingkat Keaktifan -->
-                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Tingkat Keaktifan</span>
-                            <span class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
+                <!-- STATS KPI CARDS (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- Stat 1: Tingkat Keaktifan (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TINGKAT KEAKTIFAN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid fa-chart-line"></i>
-                            </span>
+                            </div>
                         </div>
-                        <div id="keaktifan-stat-active-rate" class="text-xl md:text-2xl font-black text-slate-800 dark:text-white">0%</div>
-                        <div id="keaktifan-stat-active-count" class="text-[11px] text-slate-500 dark:text-slate-400">0 dari 0 asatidz aktif</div>
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <h4 id="keaktifan-stat-active-rate" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0%</h4>
+                                <span class="text-xs font-bold text-white/80">Kepatuhan</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span id="keaktifan-stat-active-count" class="truncate font-normal text-[10px] opacity-90">0 dari 0 asatidz aktif</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Audit SDM</span>
+                        </div>
                     </div>
 
-                    <!-- Stat 2: Tepat Waktu -->
-                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-sm space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Tepat Waktu</span>
-                            <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs">
+                    <!-- Stat 2: Tepat Waktu (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TEPAT WAKTU</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid fa-check"></i>
-                            </span>
+                            </div>
                         </div>
-                        <div id="keaktifan-stat-ontime" class="text-xl md:text-2xl font-black text-emerald-700 dark:text-emerald-400">0</div>
-                        <div id="keaktifan-stat-late" class="text-[11px] text-emerald-600 dark:text-emerald-500 font-medium">+0 terlambat</div>
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <h4 id="keaktifan-stat-ontime" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0</h4>
+                                <span class="text-xs font-bold text-white/80">Sesi On-Time</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span id="keaktifan-stat-late" class="truncate font-normal text-[10px] opacity-90">+0 terlambat</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Sesuai Jam</span>
+                        </div>
                     </div>
 
-                    <!-- Stat 3: Lewat Deadline / Belum Aktif -->
-                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/20 dark:bg-rose-950/10 shadow-sm space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase">Lewat Deadline</span>
-                            <span class="w-6 h-6 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 flex items-center justify-center text-xs">
+                    <!-- Stat 3: Lewat Deadline / Belum Aktif (Rose / Pink Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f43f5e] via-[#ec4899] to-[#d946ef] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-pink-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">LEWAT DEADLINE</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                            </span>
+                            </div>
                         </div>
-                        <div id="keaktifan-stat-missed" class="text-xl md:text-2xl font-black text-rose-700 dark:text-rose-400">0</div>
-                        <div id="keaktifan-stat-missed-sub" class="text-[11px] text-rose-600 dark:text-rose-500 font-medium">belum menginput data</div>
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <h4 id="keaktifan-stat-missed" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0</h4>
+                                <span class="text-xs font-bold text-white/80">Perlu Dipantau</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span id="keaktifan-stat-missed-sub" class="truncate font-normal text-[10px] opacity-90">belum menginput data</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Peringatan</span>
+                        </div>
                     </div>
 
-                    <!-- Stat 4: Volume Aktivitas -->
-                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/20 dark:bg-indigo-950/10 shadow-sm space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">Total Aktivitas</span>
-                            <span class="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs">
+                    <!-- Stat 4: Volume Aktivitas (Indigo Gradient) -->
+                    <div class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-6 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL AKTIVITAS</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid fa-database"></i>
-                            </span>
+                            </div>
                         </div>
-                        <div id="keaktifan-stat-records" class="text-xl md:text-2xl font-black text-indigo-700 dark:text-indigo-400">0</div>
-                        <div id="keaktifan-stat-records-sub" class="text-[11px] text-indigo-600 dark:text-indigo-500 font-medium">0 setoran • 0 presensi</div>
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <h4 id="keaktifan-stat-records" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0</h4>
+                                <span class="text-xs font-bold text-white/80">Log Input</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span id="keaktifan-stat-records-sub" class="truncate font-normal text-[10px] opacity-90">0 setoran • 0 presensi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-indigo-700 font-black shadow-xs shrink-0 text-[9px]">Realtime</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- FILTER & SEARCH PANEL -->
-                <div class="bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                <div class="bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <!-- Search Box -->
                         <div class="relative">
@@ -7239,7 +7334,7 @@
                 </div>
 
                 <!-- DATA TABLE & CARD LIST SECTION -->
-                <div class="bg-white dark:bg-[#16222f] rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] overflow-hidden">
+                <div class="bg-white dark:bg-[#16222f] rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] overflow-hidden animate-fade-in-up stagger-8">
                     <!-- Desktop Table View -->
                     <div class="hidden md:block overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs">
