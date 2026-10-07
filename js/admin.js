@@ -5059,11 +5059,16 @@
 
                 if (response && (response.status === "success" || response.success)) {
                     adminStudentsData = response.data || [];
+                    window.adminStudentsData = adminStudentsData;
+                    window.adminStudentsList = adminStudentsData;
 
-                    // Update Hub Badge
+                    // Update Hub Badge & KPI Cards
                     const hubBadge = document.getElementById('admin-hub-santri-count');
                     if (hubBadge) {
                         hubBadge.innerText = `${adminStudentsData.length} Santri`;
+                    }
+                    if (typeof updateAdminDashboardKpis === 'function') {
+                        updateAdminDashboardKpis();
                     }
 
                     // Update Statistik

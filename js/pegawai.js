@@ -111,6 +111,10 @@ async function loadAdminEmployeesData() {
         // Update Counter Statistik
         updatePegawaiStatistics(employees);
 
+        if (typeof updateAdminDashboardKpis === 'function') {
+            updateAdminDashboardKpis();
+        }
+
         // Update Hub Counter jika ada
         const hubBadge = document.getElementById('admin-hub-pegawai-count');
         if (hubBadge) hubBadge.innerText = `${employees.length} Pegawai`;
