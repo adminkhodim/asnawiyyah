@@ -57,7 +57,37 @@ assert(htmlContent.includes('id="modal-keaktifan-detail"'), 'Modal modal-keaktif
 assert(htmlContent.includes('data-view="keaktifan-asatidz"'), 'Nav link data-view="keaktifan-asatidz" harus ada di sidebar');
 assert(htmlContent.includes('data-admin-module="keaktifan-asatidz"'), 'Quick link data-admin-module="keaktifan-asatidz" harus ada di hub & mobile grid');
 assert(htmlContent.includes('src="js/keaktifan-asatidz.js"'), 'Script js/keaktifan-asatidz.js harus disertakan');
-console.log('   ✅ Integrasi UI lulus: Menu Keaktifan Asatidz berdiri mandiri di luar menu Tahfidz.');
+
+// Memastikan semua komponen keaktifan terbungkus di dalam admin-view-keaktifan-asatidz (tidak bocor ke dashboard)
+const startTag = '<div id="admin-view-keaktifan-asatidz"';
+const startIdx = htmlContent.indexOf(startTag);
+assert(startIdx !== -1, 'admin-view-keaktifan-asatidz harus ditemukan');
+
+let depth = 0;
+let endIdx = -1;
+const divRegex = /<\/?div\b[^>]*>/g;
+divRegex.lastIndex = startIdx;
+let match;
+while ((match = divRegex.exec(htmlContent)) !== null) {
+    if (match[0].startsWith('</div')) {
+        depth--;
+        if (depth === 0) {
+            endIdx = match.index;
+            break;
+        }
+    } else if (!match[0].endsWith('/>')) {
+        depth++;
+    }
+}
+assert(depth === 0 && endIdx !== -1, 'Container admin-view-keaktifan-asatidz harus memiliki tag penutup </div> yang seimbang');
+
+const keaktifanSubHtml = htmlContent.substring(startIdx, endIdx);
+assert(keaktifanSubHtml.includes('id="keaktifan-timeline-banner"'), 'keaktifan-timeline-banner harus berada di DALAM admin-view-keaktifan-asatidz');
+assert(keaktifanSubHtml.includes('id="keaktifan-table-body"'), 'keaktifan-table-body harus berada di DALAM admin-view-keaktifan-asatidz');
+assert(keaktifanSubHtml.includes('id="keaktifan-stat-active-rate"'), 'KPI stat harus berada di DALAM admin-view-keaktifan-asatidz');
+assert(keaktifanSubHtml.includes('id="keaktifan-period-wrapper"'), 'keaktifan-period-wrapper harus berada di DALAM admin-view-keaktifan-asatidz');
+
+console.log('   ✅ Integrasi UI & Enkapsulasi lulus: Seluruh komponen keaktifan terbungkus sempurna di dalam #admin-view-keaktifan-asatidz dan tidak bocor ke dashboard.');
 
 // 3. VERIFIKASI LOGIKA DEADLINE & TIMELINE SESI
 console.log('\n▶️  3. Menguji Kalkulator Deadline Sesi Tahfidz...');
