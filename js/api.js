@@ -822,6 +822,288 @@
                     };
                 }
 
+                // 11c. Audit Keaktifan Asatidz & Muhafiz (Fast Read Akselerasi Supabase <200ms)
+                if (action === "getKeaktifanAsatidz" || action === "keaktifan.getAsatidz" || action === "auth.keaktifan.asatidz") {
+                    const [hlRes, ssRes, lgRes, prRes, empRes] = await Promise.all([
+                        fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?select=*&order=created_at.asc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?select=*&order=sesi_id.asc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_logs?select=*&order=tanggal.desc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/tahfidz_presensi?select=*&order=tanggal.desc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/pegawai?select=*&order=nama.asc`, { headers })
+                    ]);
+
+                    const rawHalaqahs = hlRes.ok ? await hlRes.json() : [];
+                    const rawSesi = ssRes.ok ? await ssRes.json() : [];
+                    const rawLogs = lgRes.ok ? await lgRes.json() : [];
+                    const rawPresensi = prRes.ok ? await prRes.json() : [];
+                    const rawPegawai = empRes.ok ? await empRes.json() : [];
+
+                    // Time calculations in WIB (UTC+7)
+                    const now = new Date();
+                    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                    const wibDate = new Date(utc + (3600000 * 7));
+                    const todayStr = wibDate.toISOString().split('T')[0];
+                    const curH = String(wibDate.getHours()).padStart(2, '0');
+                    const curM = String(wibDate.getMinutes()).padStart(2, '0');
+                    const curTime = `${curH}:${curM}`;
+                    const dayCodes = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+                    const currentDayCode = dayCodes[wibDate.getDay()];
+
+                    const parseSesiHari = (val) => {
+                        if (Array.isArray(val)) return val;
+                        if (typeof val === 'string') {
+                            try {
+                                const parsed = JSON.parse(val);
+                                if (Array.isArray(parsed)) return parsed;
+                            } catch (e) {}
+                            return val.split(',').map(x => x.trim().replace(/^["'\[\]]|["'\[\]]$/g, '')).filter(Boolean);
+                        }
+                        return ['Sen', 'Sel', 'Rab', 'Kam', 'Sab'];
+                    };
+
+                    const sesiList = (rawSesi && rawSesi.length > 0) ? rawSesi.map((s, idx) => ({
+                        sesiId: s.sesi_id || `SESI-${idx + 1}`,
+                        namaSesi: s.nama_sesi || 'Sesi',
+                        jenisSesi: s.jenis_sesi || 'Ziyadah',
+                        jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
+                        jamSelesai: (s.jam_selesai || '06:15').substring(0, 5),
+                        hariList: parseSesiHari(s.hari_list),
+                        status: s.status || 'Aktif Digunakan'
+                    })) : [
+                        { sesiId: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen","Sel","Rab","Kam","Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-04", namaSesi: "Malam (Ba'da Isya')", jenisSesi: "Muroja'ah", jamMulai: "19:30", jamSelesai: "20:30", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" }
+                    ];
+
+                    const todaySessions = sesiList.filter(s => s.status === 'Aktif Digunakan').map(s => {
+                        const isDayActive = !s.hariList || s.hariList.length === 0 || s.hariList.includes(currentDayCode);
+                        let timelineStatus = 'UPCOMING';
+                        if (curTime < s.jamMulai) {
+                            timelineStatus = 'UPCOMING';
+                        } else if (curTime >= s.jamMulai && curTime <= s.jamSelesai) {
+                            timelineStatus = 'IN_PROGRESS';
+                        } else {
+                            timelineStatus = 'PASSED_DEADLINE';
+                        }
+                        return {
+                            ...s,
+                            isDayActive,
+                            timelineStatus
+                        };
+                    });
+
+                    // Map contacts from pegawai
+                    const empContacts = {};
+                    rawPegawai.forEach(p => {
+                        const nameKey = String(p.nama || '').trim().toLowerCase();
+                        empContacts[nameKey] = p.telepon || p.no_hp || p.phone || '';
+                    });
+
+                    // Halaqahs list
+                    const halaqahList = (rawHalaqahs && rawHalaqahs.length > 0) ? rawHalaqahs.map((h, idx) => {
+                        const stIds = Array.isArray(h.student_ids) 
+                            ? h.student_ids.map(s => String(s).trim()).filter(Boolean)
+                            : (typeof h.student_ids === 'string' ? h.student_ids.split(',').map(s => s.trim()).filter(Boolean) : []);
+                        const mName = h.muhafiz || ('Ustadz ' + (idx + 1));
+                        return {
+                            halaqahId: h.halaqah_id || `HLQ-${idx + 1}`,
+                            namaHalaqah: h.nama_halaqah || ('Halaqah ' + mName),
+                            muhafiz: mName,
+                            targetKurikulum: h.target_kurikulum || 'Tahfidz 30 Juz',
+                            gender: (h.nama_halaqah && h.nama_halaqah.toLowerCase().includes('putri')) ? 'PUTRI' : 'PUTRA',
+                            studentIds: stIds,
+                            studentCount: stIds.length
+                        };
+                    }) : [];
+
+                    // 7 days and 30 days timestamps
+                    const d7Ago = new Date(wibDate);
+                    d7Ago.setDate(d7Ago.getDate() - 7);
+                    const d30Ago = new Date(wibDate);
+                    d30Ago.setDate(d30Ago.getDate() - 30);
+
+                    // Group logs and presence by muhafiz and student
+                    const asatidzList = halaqahList.map((hlq, idx) => {
+                        const muhName = hlq.muhafiz;
+                        const cleanMuh = muhName.toLowerCase().replace(/^(ustadz|ustadzah|ust\.|ustd\.|kyai|nyai|gus|ning)\s+/i, '').trim();
+                        const contact = empContacts[cleanMuh] || empContacts[muhName.toLowerCase()] || '';
+
+                        const studentSet = new Set(hlq.studentIds);
+
+                        // Logs for this halaqah / muhafiz
+                        const myLogs = rawLogs.filter(l => {
+                            if (l.muhafiz && l.muhafiz.toLowerCase() === muhName.toLowerCase()) return true;
+                            if (l.student_id && studentSet.has(String(l.student_id).trim())) return true;
+                            if (l.nis && studentSet.has(String(l.nis).trim())) return true;
+                            return false;
+                        });
+
+                        // Presence for this halaqah / muhafiz
+                        const myPresensi = rawPresensi.filter(p => {
+                            if (p.muhafiz && p.muhafiz.toLowerCase() === muhName.toLowerCase()) return true;
+                            if (p.student_id && studentSet.has(String(p.student_id).trim())) return true;
+                            if (p.nis && studentSet.has(String(p.nis).trim())) return true;
+                            return false;
+                        });
+
+                        // Today logs and presence
+                        const todayLogs = myLogs.filter(l => String(l.tanggal || l.created_at || '').startsWith(todayStr));
+                        const todayPres = myPresensi.filter(p => String(p.tanggal || p.created_at || '').startsWith(todayStr));
+
+                        // 7 Days
+                        const logs7d = myLogs.filter(l => new Date(l.tanggal || l.created_at) >= d7Ago);
+                        const pres7d = myPresensi.filter(p => new Date(p.tanggal || p.created_at) >= d7Ago);
+                        const days7Active = new Set([
+                            ...logs7d.map(l => String(l.tanggal || l.created_at).split('T')[0]),
+                            ...pres7d.map(p => String(p.tanggal || p.created_at).split('T')[0])
+                        ]).size;
+
+                        // 30 Days
+                        const logs30d = myLogs.filter(l => new Date(l.tanggal || l.created_at) >= d30Ago);
+                        const pres30d = myPresensi.filter(p => new Date(p.tanggal || p.created_at) >= d30Ago);
+                        const days30Active = new Set([
+                            ...logs30d.map(l => String(l.tanggal || l.created_at).split('T')[0]),
+                            ...pres30d.map(p => String(p.tanggal || p.created_at).split('T')[0])
+                        ]).size;
+
+                        // Sesi summary today
+                        let totalSesiTuntas = 0;
+                        let totalSesiLewat = 0;
+                        let totalSesiAktif = 0;
+
+                        const sesiSummary = todaySessions.map(ts => {
+                            if (!ts.isDayActive) return null;
+                            totalSesiAktif++;
+
+                            const sLogs = todayLogs.filter(l => !l.sesi || l.sesi === ts.namaSesi || l.sesi === ts.sesiId);
+                            const sPres = todayPres.filter(p => !p.sesi || p.sesi === ts.namaSesi || p.sesi === ts.sesiId);
+                            const hasActivity = sLogs.length > 0 || sPres.length > 0;
+
+                            let firstTime = '';
+                            if (sLogs.length > 0) {
+                                const t = sLogs[0].created_at || sLogs[0].tanggal;
+                                if (t && t.includes('T')) firstTime = t.split('T')[1].substring(0, 5);
+                            }
+                            if (!firstTime && sPres.length > 0) {
+                                const t = sPres[0].created_at || sPres[0].tanggal;
+                                if (t && t.includes('T')) firstTime = t.split('T')[1].substring(0, 5);
+                            }
+
+                            let statusKepatuhan = 'WAITING';
+                            if (hasActivity) {
+                                if (firstTime && firstTime > ts.jamSelesai) {
+                                    statusKepatuhan = 'LATE';
+                                } else {
+                                    statusKepatuhan = 'ON_TIME';
+                                }
+                                totalSesiTuntas++;
+                            } else {
+                                if (ts.timelineStatus === 'PASSED_DEADLINE') {
+                                    statusKepatuhan = 'MISSED_DEADLINE';
+                                    totalSesiLewat++;
+                                } else if (ts.timelineStatus === 'IN_PROGRESS') {
+                                    statusKepatuhan = 'IN_PROGRESS';
+                                } else {
+                                    statusKepatuhan = 'WAITING';
+                                }
+                            }
+
+                            return {
+                                sesiId: ts.sesiId,
+                                namaSesi: ts.namaSesi,
+                                jamMulai: ts.jamMulai,
+                                jamSelesai: ts.jamSelesai,
+                                timelineStatus: ts.timelineStatus,
+                                hasPresensi: sPres.length > 0,
+                                hasSetoran: sLogs.length > 0,
+                                statusKepatuhan: statusKepatuhan,
+                                inputTime: firstTime || (hasActivity ? ts.jamMulai : ''),
+                                presensiCount: sPres.length,
+                                setoranCount: sLogs.length
+                            };
+                        }).filter(Boolean);
+
+                        let statusHariIni = 'MENUNGGU_SESI';
+                        if (todayLogs.length > 0 || todayPres.length > 0) {
+                            statusHariIni = totalSesiLewat === 0 ? 'AKTIF_LENGKAP' : 'AKTIF_SEBAGIAN_TERLEWAT';
+                        } else if (totalSesiLewat > 0) {
+                            statusHariIni = 'LEWAT_DEADLINE';
+                        } else if (todaySessions.some(s => s.timelineStatus === 'IN_PROGRESS')) {
+                            statusHariIni = 'SEDANG_SESI';
+                        }
+
+                        const uniqueSantriSetorToday = new Set(todayLogs.map(l => l.student_id || l.nis)).size;
+                        const uniqueSantriHadirToday = new Set(todayPres.filter(p => p.status === 'HADIR').map(p => p.student_id || p.nis)).size;
+                        const totalHlmToday = todayLogs.reduce((acc, l) => acc + (Number(l.total_halaman) || 1), 0);
+
+                        return {
+                            id: `AST-${idx + 1}`,
+                            muhafiz: muhName,
+                            halaqahId: hlq.halaqahId,
+                            namaHalaqah: hlq.namaHalaqah,
+                            targetKurikulum: hlq.targetKurikulum,
+                            gender: hlq.gender,
+                            totalBinaan: hlq.studentCount,
+                            telepon: contact,
+                            email: '',
+                            hariIni: {
+                                status: statusHariIni,
+                                lastActiveTime: todayLogs.length > 0 ? (todayLogs[0].created_at || '').substring(11, 16) : '',
+                                presensiSantriCount: todayPres.length,
+                                hadirSantriCount: uniqueSantriHadirToday,
+                                setoranCount: uniqueSantriSetorToday,
+                                totalLogsCount: todayLogs.length,
+                                halamanCount: totalHlmToday,
+                                sesiSummary: sesiSummary,
+                                totalSesiHariIni: totalSesiAktif,
+                                totalSesiTuntas: totalSesiTuntas,
+                                totalSesiLewatDeadline: totalSesiLewat
+                            },
+                            pekanan: {
+                                activeDaysCount: days7Active,
+                                activePercentage: Math.min(100, Math.round((days7Active / 7) * 100)),
+                                presensiCount: pres7d.length,
+                                setoranCount: logs7d.length,
+                                halamanCount: logs7d.reduce((acc, l) => acc + (Number(l.total_halaman) || 1), 0)
+                            },
+                            bulanan: {
+                                activeDaysCount: days30Active,
+                                activePercentage: Math.min(100, Math.round((days30Active / 30) * 100)),
+                                presensiCount: pres30d.length,
+                                setoranCount: logs30d.length,
+                                halamanCount: logs30d.reduce((acc, l) => acc + (Number(l.total_halaman) || 1), 0)
+                            }
+                        };
+                    });
+
+                    const totalUstadz = asatidzList.length;
+                    const ustadzAktifHariIni = asatidzList.filter(a => a.hariIni.presensiSantriCount > 0 || a.hariIni.setoranCount > 0).length;
+                    const ustadzLewatDeadline = asatidzList.filter(a => a.hariIni.status === 'LEWAT_DEADLINE' || a.hariIni.totalSesiLewatDeadline > 0).length;
+
+                    return {
+                        status: 'success',
+                        success: true,
+                        data: {
+                            serverTime: curTime,
+                            serverDate: todayStr,
+                            serverDay: currentDayCode,
+                            summary: {
+                                totalUstadz: totalUstadz,
+                                ustadzAktifHariIni: ustadzAktifHariIni,
+                                persenAktifHariIni: totalUstadz > 0 ? Math.round((ustadzAktifHariIni / totalUstadz) * 100) : 0,
+                                ustadzLewatDeadline: ustadzLewatDeadline,
+                                totalSetoranHariIni: asatidzList.reduce((acc, a) => acc + a.hariIni.totalLogsCount, 0),
+                                totalHalamanHariIni: asatidzList.reduce((acc, a) => acc + a.hariIni.halamanCount, 0),
+                                totalPresensiHariIni: asatidzList.reduce((acc, a) => acc + a.hariIni.presensiSantriCount, 0),
+                                totalSesiAktifHariIni: todaySessions.filter(s => s.isDayActive).length
+                            },
+                            todaySessions: todaySessions,
+                            asatidzList: asatidzList
+                        }
+                    };
+                }
+
                 // 12. Detail Santri / Mutaba'ah Riwayat & Target (Fast Read Akselerasi Supabase <200ms)
                 if (action === "getTahfidzStudentDetail" || action === "tahfidz.studentDetail" || action === "auth.tahfidz.studentDetail") {
                     const cleanId = String(params.studentId || params.student_id || params.nis || params.id || "").trim();
