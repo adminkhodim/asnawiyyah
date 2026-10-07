@@ -339,6 +339,18 @@
             });
         }
 
+        function triggerTahfidzStaggerAnimation() {
+            const tahfidzView = document.getElementById('admin-view-tahfidz');
+            if (!tahfidzView) return;
+            const animatedElements = tahfidzView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerTahfidzStaggerAnimation = triggerTahfidzStaggerAnimation;
+
         function refreshAdminAnalyticsData() {
             const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
             const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
@@ -503,6 +515,9 @@
                 }
             } else if (viewName === 'tahfidz') {
                 if (tahfidzView) tahfidzView.classList.remove('hidden');
+                if (typeof triggerTahfidzStaggerAnimation === 'function') {
+                    triggerTahfidzStaggerAnimation();
+                }
                 if (typeof loadAdminTahfidzData === 'function') {
                     loadAdminTahfidzData();
                 }

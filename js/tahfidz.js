@@ -525,6 +525,9 @@ async function loadAdminTahfidzData(forceRefresh = false) {
 
     if (refreshIcon && forceRefresh) {
         refreshIcon.classList.add('fa-spin');
+        if (typeof window.triggerTahfidzStaggerAnimation === 'function') {
+            window.triggerTahfidzStaggerAnimation();
+        }
     }
 
     // 1. Cek cache lokal (Memory, localStorage, atau sessionStorage)
