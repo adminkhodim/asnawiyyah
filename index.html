@@ -5876,7 +5876,7 @@
             <div id="admin-view-ppdb" class="hidden space-y-4">
                 <!-- Header Sub-View -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -5885,55 +5885,114 @@
                         </button>
                         <div>
                             <span
-                                class="text-[10px] font-extrabold text-blue-700 uppercase tracking-widest block">Dashboard
+                                class="text-[10px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-widest block">Dashboard
                                 Admin</span>
                             <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Data Pendaftar PPDB</h2>
                         </div>
                     </div>
                     <button type="button" onclick="loadAdminPPDBData()"
-                        class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold border border-blue-100 transition flex items-center space-x-1.5 active:scale-95">
+                        class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-100 dark:border-blue-800/60 transition flex items-center space-x-1.5 active:scale-95">
                         <i class="fa-solid fa-rotate text-xs"></i>
                         <span class="hidden sm:inline">Refresh Data</span>
                     </button>
                 </div>
 
-                <!-- CARDS RINGKASAN PPDB -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Pendaftar</span>
-                        <div id="admin-ppdb-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800">0</div>
-                    </div>
-                    <div class="bg-white p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-amber-700 uppercase">Menunggu Seleksi</span>
-                        <div id="admin-ppdb-stat-pending" class="text-lg md:text-xl font-extrabold text-amber-800">0
+                <!-- CARDS RINGKASAN DATA PPDB (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Pendaftar (Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-blue-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL PENDAFTAR</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-clipboard-user"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-ppdb-stat-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Pendaftar ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Seluruh calon santri</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-blue-700 font-black shadow-xs shrink-0 text-[9px]">Total Masuk</span>
                         </div>
                     </div>
-                    <div
-                        class="bg-white p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-emerald-700 uppercase">Diterima</span>
-                        <div id="admin-ppdb-stat-diterima" class="text-lg md:text-xl font-extrabold text-emerald-800">0
+
+                    <!-- 2. Menunggu Seleksi (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">MENUNGGU SELEKSI</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-ppdb-stat-pending">0</span>
+                                <span class="text-xs font-bold text-white/80">Berkas</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Menunggu verifikasi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Seleksi</span>
                         </div>
                     </div>
-                    <div class="bg-white p-3.5 rounded-2xl border border-rose-100 bg-rose-50/30 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-rose-700 uppercase">Ditolak</span>
-                        <div id="admin-ppdb-stat-ditolak" class="text-lg md:text-xl font-extrabold text-rose-800">0
+
+                    <!-- 3. Diterima (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">DITERIMA</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-ppdb-stat-diterima">0</span>
+                                <span class="text-xs font-bold text-white/80">Lolos</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Lulus tes & administrasi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Diterima</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Ditolak (Rose Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f43f5e] to-[#e11d48] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-rose-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">DITOLAK</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-ppdb-stat-ditolak">0</span>
+                                <span class="text-xs font-bold text-white/80">Gugur</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Belum memenuhi syarat</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-rose-700 font-black shadow-xs shrink-0 text-[9px]">Tidak Lolos</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- FITUR SEARCH & FILTER -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between animate-fade-in-up stagger-6">
                     <div class="relative flex-1">
                         <i
                             class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" id="admin-ppdb-search" oninput="filterAdminPPDBList()"
                             placeholder="Cari berdasarkan Nama atau NISN..."
-                            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] dark:text-slate-100 focus:bg-white dark:focus:bg-[#15202d] transition">
                     </div>
                     <div class="flex items-center space-x-2">
                         <select id="admin-ppdb-filter-status" onchange="filterAdminPPDBList()"
-                            class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] dark:text-slate-100 focus:bg-white dark:focus:bg-[#15202d] transition">
                             <option value="ALL">Semua Status</option>
                             <option value="Pending">Menunggu (Pending)</option>
                             <option value="Diterima">Diterima</option>
@@ -5943,9 +6002,9 @@
                 </div>
 
                 <!-- DAFTAR PENDAFTAR TABLE & MOBILE LIST -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
                     <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-2.5">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-list-check text-blue-600 mr-2"></i> Daftar Calon Santri
                         </h3>
                         <span id="admin-ppdb-list-count"
@@ -7520,7 +7579,7 @@
             <div id="admin-view-program" class="hidden space-y-4">
                 <!-- Header Sub-View -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -7529,7 +7588,7 @@
                         </button>
                         <div>
                             <span
-                                class="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest block">Dashboard
+                                class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block">Dashboard
                                 Admin</span>
                             <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Program Pesantren (CMS)
                             </h2>
@@ -7542,51 +7601,109 @@
                             <span>Tambah Program</span>
                         </button>
                         <button type="button" onclick="loadAdminProgramList()"
-                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
                             <i class="fa-solid fa-rotate text-xs"></i>
                             <span class="hidden sm:inline">Refresh</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- CARDS RINGKASAN STATUS PROGRAM -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total Program</span>
-                        <div id="admin-program-stat-total" class="text-lg md:text-xl font-extrabold text-slate-800">0
+                <!-- CARDS RINGKASAN STATUS PROGRAM (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Program (Indigo Gradient) -->
+                    <div class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL PROGRAM</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-program-stat-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Program ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Katalog kurikulum & opsi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-indigo-700 font-black shadow-xs shrink-0 text-[9px]">Katalog CMS</span>
                         </div>
                     </div>
-                    <div
-                        class="bg-white p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-emerald-700 uppercase">Published</span>
-                        <div id="admin-program-stat-published"
-                            class="text-lg md:text-xl font-extrabold text-emerald-800">0</div>
-                    </div>
-                    <div class="bg-white p-3.5 rounded-2xl border border-amber-100 bg-amber-50/30 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-amber-700 uppercase">Draft</span>
-                        <div id="admin-program-stat-draft" class="text-lg md:text-xl font-extrabold text-amber-800">0
+
+                    <!-- 2. Published (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">PUBLISHED</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-program-stat-published">0</span>
+                                <span class="text-xs font-bold text-white/80">Aktif</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Tayang di portal website</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Tayang</span>
                         </div>
                     </div>
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 shadow-sm space-y-1">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">Archived</span>
-                        <div id="admin-program-stat-archived" class="text-lg md:text-xl font-extrabold text-slate-700">0
+
+                    <!-- 3. Draft (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">DRAFT</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-file-pen"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-program-stat-draft">0</span>
+                                <span class="text-xs font-bold text-white/80">Konsep</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Menunggu publikasi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Draft</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Archived (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">ARCHIVED</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-box-archive"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-program-stat-archived">0</span>
+                                <span class="text-xs font-bold text-white/80">Arsip</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Riwayat program nonaktif</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-700 font-black shadow-xs shrink-0 text-[9px]">Diarsipkan</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- FITUR SEARCH & FILTER -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between animate-fade-in-up stagger-6">
                     <div class="relative flex-1">
                         <i
                             class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" id="admin-program-search" oninput="filterAdminProgramList()"
                             placeholder="Cari berdasarkan Nama atau ID Program..."
-                            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 dark:bg-[#1c2836] dark:text-slate-100 focus:bg-white dark:focus:bg-[#15202d] transition">
                     </div>
                     <div class="flex items-center space-x-2">
                         <select id="admin-program-filter-status" onchange="filterAdminProgramList()"
-                            class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 focus:bg-white transition">
+                            class="px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 dark:bg-[#1c2836] dark:text-slate-100 focus:bg-white dark:focus:bg-[#15202d] transition">
                             <option value="ALL">Semua Status</option>
                             <option value="published">Published</option>
                             <option value="draft">Draft</option>
@@ -7596,9 +7713,9 @@
                 </div>
 
                 <!-- DAFTAR PROGRAM TABLE & MOBILE LIST -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
                     <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-2.5">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-list-check text-emerald-700 mr-2"></i> Daftar Program Pesantren
                         </h3>
                         <span id="admin-program-list-count"

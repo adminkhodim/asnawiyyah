@@ -423,6 +423,30 @@
         }
         window.triggerRolesStaggerAnimation = triggerRolesStaggerAnimation;
 
+        function triggerPPDBStaggerAnimation() {
+            const ppdbView = document.getElementById('admin-view-ppdb');
+            if (!ppdbView) return;
+            const animatedElements = ppdbView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerPPDBStaggerAnimation = triggerPPDBStaggerAnimation;
+
+        function triggerProgramStaggerAnimation() {
+            const programView = document.getElementById('admin-view-program');
+            if (!programView) return;
+            const animatedElements = programView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerProgramStaggerAnimation = triggerProgramStaggerAnimation;
+
         function refreshAdminAnalyticsData() {
             const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
             const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
@@ -636,9 +660,15 @@
                 loadAdminPengaturan();
             } else if (viewName === 'ppdb') {
                 if (ppdbView) ppdbView.classList.remove('hidden');
+                if (typeof triggerPPDBStaggerAnimation === 'function') {
+                    triggerPPDBStaggerAnimation();
+                }
                 loadAdminPPDBData();
             } else if (viewName === 'program') {
                 if (programView) programView.classList.remove('hidden');
+                if (typeof triggerProgramStaggerAnimation === 'function') {
+                    triggerProgramStaggerAnimation();
+                }
                 loadAdminProgramList();
             } else if (viewName === 'profil-lembaga') {
                 if (profilLembagaView) profilLembagaView.classList.remove('hidden');
