@@ -308,10 +308,13 @@
     let currentModalPermissions = [];
 
     // Matriks Hak Akses per Modul Sistem (CRUD & Permissions)
-    // Nilai akses: 'full' (CRUD), 'write' (Input/Edit Mutabaah), 'read' (Lihat Saja), 'none' (Tertutup)
+    // 19 Modul Lengkap Aplikasi PPTQ Asnawiyyah
+    // Nilai akses: 'full' (CRUD Lengkap), 'read' (Lihat Saja), 'write' (Entri/Input), 'read_own' (Milik Sendiri), 'none' (Tutup)
     const MODULE_PERMISSIONS_MATRIX = [
+        // 1. Kesantrian & Kesiswaan (8 Modul)
         {
-            category: 'Kesiswaan & Akademik',
+            key: 'santri',
+            category: 'Kesantrian & Pendidikan',
             module: 'Master Data Santri',
             icon: 'fa-users',
             desc: 'Biodata santri, NIS, kelas, wali, dan status aktif.',
@@ -326,10 +329,11 @@
             }
         },
         {
-            category: 'Kesiswaan & Akademik',
+            key: 'tahfidz',
+            category: 'Kesantrian & Pendidikan',
             module: 'Tahfidz Al-Qur\'an',
             icon: 'fa-book-quran',
-            desc: 'Hafalan 30 juz, rekapitulasi, target capaian, halaqah plotting & estimasi khatam.',
+            desc: 'Hafalan 30 juz, rekapitulasi, target capaian & halaqah plotting.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
@@ -341,25 +345,11 @@
             }
         },
         {
-            category: 'Kesiswaan & Akademik',
-            module: 'Keaktifan Asatidz',
-            icon: 'fa-user-clock',
-            desc: 'Monitoring kepatuhan sesi, presensi & setoran tahfidz asatidz realtime khusus Super Admin & Pengasuh.',
-            permissions: {
-                SUPER_ADMIN: 'full',
-                ADMIN: 'none',
-                PENGASUH: 'read',
-                ASATIDZ: 'none',
-                PENGURUS: 'none',
-                BENDAHARA: 'none',
-                WALI_SANTRI: 'none'
-            }
-        },
-        {
-            category: 'Kesiswaan & Akademik',
+            key: 'presensi',
+            category: 'Kesantrian & Pendidikan',
             module: 'Presensi & Kehadiran',
             icon: 'fa-calendar-check',
-            desc: 'Absensi QR Code, jadwal halaqah, dan rekap ketertiban.',
+            desc: 'Absensi QR Code, jadwal halaqah, dan rekap ketertiban santri.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
@@ -371,7 +361,8 @@
             }
         },
         {
-            category: 'Kesiswaan & Akademik',
+            key: 'ppdb',
+            category: 'Kesantrian & Pendidikan',
             module: 'PPDB Santri Baru',
             icon: 'fa-user-plus',
             desc: 'Form pendaftaran online, seleksi berkas, dan aktivasi santri.',
@@ -386,9 +377,10 @@
             }
         },
         {
-            category: 'Kesiswaan & Akademik',
+            key: 'unit-kegiatan',
+            category: 'Kesantrian & Pendidikan',
             module: 'Unit Kegiatan (UKS)',
-            icon: 'fa-futbol',
+            icon: 'fa-people-roof',
             desc: 'Organisasi santri, ekstrakurikuler, dan kegiatan asrama.',
             permissions: {
                 SUPER_ADMIN: 'full',
@@ -401,10 +393,11 @@
             }
         },
         {
-            category: 'Kesiswaan & Akademik',
+            key: 'jadwal-kegiatan',
+            category: 'Kesantrian & Pendidikan',
             module: 'Jadwal Kegiatan Santri',
-            icon: 'fa-calendar-check',
-            desc: 'Pengaturan agenda rutinitas santri (harian, mingguan, bulanan, tahunan).',
+            icon: 'fa-calendar-days',
+            desc: 'Pengaturan agenda rutinitas santri (harian, mingguan, kalender).',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
@@ -416,37 +409,42 @@
             }
         },
         {
-            category: 'Pengguna & SDM',
-            module: 'Manajemen Pengguna',
-            icon: 'fa-users-gear',
-            desc: 'Akun wali santri, pegawai, admin, reset password, dan status.',
+            key: 'alumni',
+            category: 'Kesantrian & Pendidikan',
+            module: 'Rekap Alumni (IKASAPNA)',
+            icon: 'fa-user-graduate',
+            desc: 'Direktori data alumni, persebaran wilayah, dan ikatan alumni.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
                 PENGASUH: 'read',
                 ASATIDZ: 'none',
-                PENGURUS: 'none',
-                BENDAHARA: 'none',
+                PENGURUS: 'read',
+                BENDAHARA: 'read',
                 WALI_SANTRI: 'none'
             }
         },
         {
-            category: 'Pengguna & SDM',
-            module: 'Manajemen Peran (RBAC)',
-            icon: 'fa-shield-halved',
-            desc: 'Matriks hak akses, inspeksi wewenang, dan hierarki peran.',
+            key: 'program',
+            category: 'Kesantrian & Pendidikan',
+            module: 'Manajemen Program (CMS)',
+            icon: 'fa-graduation-cap',
+            desc: 'Pengelolaan program unggulan, takhasus, dan kurikulum pesantren.',
             permissions: {
                 SUPER_ADMIN: 'full',
-                ADMIN: 'read',
+                ADMIN: 'full',
                 PENGASUH: 'read',
-                ASATIDZ: 'none',
-                PENGURUS: 'none',
-                BENDAHARA: 'none',
-                WALI_SANTRI: 'none'
+                ASATIDZ: 'read',
+                PENGURUS: 'read',
+                BENDAHARA: 'read',
+                WALI_SANTRI: 'read'
             }
         },
+
+        // 2. Kepegawaian & SDM (2 Modul)
         {
-            category: 'Pengguna & SDM',
+            key: 'pegawai',
+            category: 'Kepegawaian & SDM',
             module: 'Data Pegawai & Asatidz',
             icon: 'fa-user-tie',
             desc: 'Master NIP, jabatan, riwayat pengajaran, dan profil staf.',
@@ -461,10 +459,29 @@
             }
         },
         {
+            key: 'keaktifan-asatidz',
+            category: 'Kepegawaian & SDM',
+            module: 'Keaktifan Asatidz',
+            icon: 'fa-user-clock',
+            desc: 'Monitoring kepatuhan sesi, presensi & setoran tahfidz asatidz realtime.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'none',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'none',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'none'
+            }
+        },
+
+        // 3. Konten & Publikasi (3 Modul)
+        {
+            key: 'berita',
             category: 'Konten & Publikasi',
             module: 'Berita & Pengumuman',
             icon: 'fa-newspaper',
-            desc: 'Artikel pondok, agenda pesantren, dan kabar santri.',
+            desc: 'Artikel warta pondok, agenda pesantren, dan kabar santri.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
@@ -476,10 +493,11 @@
             }
         },
         {
+            key: 'banner',
             category: 'Konten & Publikasi',
-            module: 'Banner & Galeri Foto',
+            module: 'Banner Slider Beranda',
             icon: 'fa-images',
-            desc: 'Slider beranda, album dokumentasi kegiatan santri.',
+            desc: 'Slider beranda rasio 3:1 untuk promosi & informasi utama.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
@@ -491,6 +509,25 @@
             }
         },
         {
+            key: 'galeri',
+            category: 'Konten & Publikasi',
+            module: 'Manajemen Galeri Foto',
+            icon: 'fa-camera-retro',
+            desc: 'Album dokumentasi foto kegiatan santri & event pesantren.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'full',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'read'
+            }
+        },
+
+        // 4. Kelembagaan & Pengaturan (2 Modul)
+        {
+            key: 'profil-lembaga',
             category: 'Kelembagaan & Pengaturan',
             module: 'Profil Lembaga & Masyayikh',
             icon: 'fa-building-columns',
@@ -506,24 +543,341 @@
             }
         },
         {
+            key: 'pengaturan',
             category: 'Kelembagaan & Pengaturan',
-            module: 'Konfigurasi Sistem',
-            icon: 'fa-gears',
-            desc: 'Pengaturan API, integrasi sheets, token, dan maintenance.',
+            module: 'Tautan & Media Sosial',
+            icon: 'fa-share-nodes',
+            desc: 'Pengaturan tautan video streaming, kanal sosmed, dan kontak resmi.',
             permissions: {
                 SUPER_ADMIN: 'full',
-                ADMIN: 'none',
-                PENGASUH: 'none',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'none',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'read'
+            }
+        },
+
+        // 5. Keamanan & Hak Akses (3 Modul)
+        {
+            key: 'users',
+            category: 'Keamanan & Hak Akses',
+            module: 'Manajemen Pengguna',
+            icon: 'fa-users-gear',
+            desc: 'Akun wali santri, pegawai, admin, reset password, dan status.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
                 BENDAHARA: 'none',
                 WALI_SANTRI: 'none'
             }
+        },
+        {
+            key: 'roles',
+            category: 'Keamanan & Hak Akses',
+            module: 'Manajemen Peran (RBAC)',
+            icon: 'fa-shield-halved',
+            desc: 'Matriks hak akses, inspeksi wewenang, dan hierarki peran.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'read',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'none',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'none'
+            }
+        },
+        {
+            key: 'notifikasi',
+            category: 'Keamanan & Hak Akses',
+            module: 'Notifikasi Broadcast',
+            icon: 'fa-bell',
+            desc: 'Kirim broadcast pengumuman & pesan ke akun santri/wali.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'full',
+                BENDAHARA: 'write',
+                WALI_SANTRI: 'none'
+            }
+        },
+
+        // 6. Keuangan & Administrasi (1 Modul)
+        {
+            key: 'keuangan',
+            category: 'Keuangan & Administrasi',
+            module: 'Keuangan & Iuran SPP',
+            icon: 'fa-wallet',
+            desc: 'Pencatatan pembayaran SPP santri, syahriah & kas pesantren.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'none',
+                BENDAHARA: 'full',
+                WALI_SANTRI: 'read_own'
+            }
         }
     ];
 
+    // State Penyimpanan Matriks Kustom & Perubahan Tertunda
+    let SAVED_MATRIX_STATE = (function () {
+        try {
+            const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
+            const raw = ls ? ls.getItem('ASNAWIYYAH_ROLE_MATRIX_STATE') : null;
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return {};
+    })();
+
+    let MATRIX_PENDING_CHANGES = {};
+
     let currentRoleFilter = 'ALL';
     let currentActiveRoleModal = null;
+
+    /**
+     * Konversi level matriks ('full', 'read', 'write', 'read_own', 'none') ke granular permission keys
+     */
+    function convertMatrixLevelToPermissions(moduleKey, level) {
+        const allKeys = MODULE_TO_PERMISSIONS[moduleKey] || [];
+        if (!allKeys.length) return [];
+        if (level === 'none') return [];
+        if (level === 'full') return [...allKeys];
+        if (level === 'read' || level === 'read_own') {
+            const viewKey = allKeys.find(k => k.endsWith('.view')) || allKeys[0];
+            return [viewKey];
+        }
+        if (level === 'write') {
+            return allKeys.filter(k => !k.endsWith('.delete') && !k.endsWith('.export'));
+        }
+        return [];
+    }
+
+    /**
+     * Dapatkan level izin saat ini untuk kombinasi modul & peran
+     */
+    function getMatrixPermission(moduleKey, roleKey) {
+        if (roleKey === 'SUPER_ADMIN') return 'full';
+        const cellKey = `${moduleKey}___${roleKey}`;
+        if (MATRIX_PENDING_CHANGES[cellKey] !== undefined) {
+            return MATRIX_PENDING_CHANGES[cellKey];
+        }
+        if (SAVED_MATRIX_STATE[cellKey] !== undefined) {
+            return SAVED_MATRIX_STATE[cellKey];
+        }
+        const found = MODULE_PERMISSIONS_MATRIX.find(m => m.key === moduleKey);
+        return (found && found.permissions && found.permissions[roleKey]) || 'none';
+    }
+
+    /**
+     * Handle perubahan nilai dropdown izin pada sel matriks
+     */
+    function handleMatrixCellChange(moduleKey, roleKey, newLevel) {
+        if (roleKey === 'SUPER_ADMIN') return;
+        const cellKey = `${moduleKey}___${roleKey}`;
+        const currentSaved = (SAVED_MATRIX_STATE[cellKey] !== undefined)
+            ? SAVED_MATRIX_STATE[cellKey]
+            : ((MODULE_PERMISSIONS_MATRIX.find(m => m.key === moduleKey) || {}).permissions || {})[roleKey] || 'none';
+
+        if (newLevel === currentSaved) {
+            delete MATRIX_PENDING_CHANGES[cellKey];
+        } else {
+            MATRIX_PENDING_CHANGES[cellKey] = newLevel;
+        }
+
+        updateMatrixFloatingBar();
+        renderRolesMatrixTable();
+    }
+
+    /**
+     * Toggle dropdown menu aksi cepat per kolom peran
+     */
+    function toggleBatchRoleMenu(roleKey, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const allMenus = document.querySelectorAll('[id^="batch-menu-"]');
+        allMenus.forEach(m => {
+            if (m.id !== `batch-menu-${roleKey}`) m.classList.add('hidden');
+        });
+        const targetMenu = document.getElementById(`batch-menu-${roleKey}`);
+        if (targetMenu) targetMenu.classList.toggle('hidden');
+    }
+
+    // Listener global menutup menu aksi cepat saat klik di luar
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('[id^="batch-menu-"]') && !e.target.closest('button[onclick*="toggleBatchRoleMenu"]')) {
+            document.querySelectorAll('[id^="batch-menu-"]').forEach(m => m.classList.add('hidden'));
+        }
+    });
+
+    /**
+     * Set serentak seluruh modul untuk satu peran (Batch Action)
+     */
+    function batchSetRoleMatrix(roleKey, targetLevel) {
+        if (roleKey === 'SUPER_ADMIN') return;
+        MODULE_PERMISSIONS_MATRIX.forEach(item => {
+            let lvl = targetLevel;
+            // Guardrail: Wali Santri tidak boleh full pada modul administratif sensitif
+            if (roleKey === 'WALI_SANTRI' && lvl === 'full' && ['users', 'roles', 'pegawai', 'keuangan', 'pengaturan'].includes(item.key)) {
+                lvl = 'none';
+            }
+            const cellKey = `${item.key}___${roleKey}`;
+            const currentSaved = (SAVED_MATRIX_STATE[cellKey] !== undefined)
+                ? SAVED_MATRIX_STATE[cellKey]
+                : (item.permissions && item.permissions[roleKey]) || 'none';
+
+            if (lvl === currentSaved) {
+                delete MATRIX_PENDING_CHANGES[cellKey];
+            } else {
+                MATRIX_PENDING_CHANGES[cellKey] = lvl;
+            }
+        });
+        document.querySelectorAll('[id^="batch-menu-"]').forEach(m => m.classList.add('hidden'));
+        updateMatrixFloatingBar();
+        renderRolesMatrixTable();
+    }
+
+    /**
+     * Reset izin satu peran kembali ke baseline bawaan
+     */
+    function batchResetRoleMatrix(roleKey) {
+        if (roleKey === 'SUPER_ADMIN') return;
+        MODULE_PERMISSIONS_MATRIX.forEach(item => {
+            const cellKey = `${item.key}___${roleKey}`;
+            delete MATRIX_PENDING_CHANGES[cellKey];
+            delete SAVED_MATRIX_STATE[cellKey];
+        });
+        try {
+            const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
+            if (ls) ls.setItem('ASNAWIYYAH_ROLE_MATRIX_STATE', JSON.stringify(SAVED_MATRIX_STATE));
+        } catch (e) {}
+        document.querySelectorAll('[id^="batch-menu-"]').forEach(m => m.classList.add('hidden'));
+        updateMatrixFloatingBar();
+        renderRolesMatrixTable();
+        if (typeof showToast === 'function') {
+            showToast(`🔄 Hak akses peran ${ROLE_DEFINITIONS[roleKey]?.shortName || roleKey} dikembalikan ke default baseline.`);
+        }
+    }
+
+    /**
+     * Update tampilan bilah simpan mengambang (Floating Action Bar)
+     */
+    function updateMatrixFloatingBar() {
+        const bar = document.getElementById('role-matrix-floating-bar');
+        const countEl = document.getElementById('role-matrix-pending-count');
+        if (!bar) return;
+
+        const count = Object.keys(MATRIX_PENDING_CHANGES).length;
+        if (count > 0) {
+            bar.classList.remove('hidden');
+            if (countEl) countEl.innerText = `${count} perubahan izin belum disimpan`;
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Simpan seluruh perubahan matriks ke cache lokal dan sinkronisasi ke backend
+     */
+    async function saveMatrixPermissionsChanges() {
+        const changedKeys = Object.keys(MATRIX_PENDING_CHANGES);
+        if (changedKeys.length === 0) return;
+
+        const btnSave = document.getElementById('btn-save-role-matrix');
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Menyimpan...</span>`;
+        }
+
+        try {
+            // 1. Simpan ke SAVED_MATRIX_STATE
+            const affectedRoles = new Set();
+            for (const cellKey of changedKeys) {
+                const parts = cellKey.split('___');
+                const roleKey = parts[1];
+                SAVED_MATRIX_STATE[cellKey] = MATRIX_PENDING_CHANGES[cellKey];
+                affectedRoles.add(roleKey);
+            }
+            try {
+                const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
+                if (ls) ls.setItem('ASNAWIYYAH_ROLE_MATRIX_STATE', JSON.stringify(SAVED_MATRIX_STATE));
+            } catch (e) {}
+
+            // 2. Sinkronkan ke granular permissions per role yang terpengaruh
+            for (const rKey of affectedRoles) {
+                if (rKey === 'SUPER_ADMIN') continue;
+                const newPermSet = new Set();
+                MODULE_PERMISSIONS_MATRIX.forEach(m => {
+                    const lvl = getMatrixPermission(m.key, rKey);
+                    const mappedPerms = convertMatrixLevelToPermissions(m.key, lvl);
+                    mappedPerms.forEach(pk => newPermSet.add(pk));
+                });
+
+                ROLE_PERMISSIONS_STATE[rKey] = Array.from(newPermSet);
+
+                // Kirim ke backend API jika tersedia
+                if (typeof authApiPost === 'function') {
+                    try {
+                        await authApiPost('auth.admin.saveRolePermissions', {
+                            roleKey: rKey,
+                            permissions: ROLE_PERMISSIONS_STATE[rKey]
+                        });
+                    } catch (errApi) {
+                        console.warn(`[SAVE ROLE PERMS API ERROR ${rKey}]`, errApi);
+                    }
+                }
+            }
+
+            // 3. Cache role permissions
+            localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
+
+            MATRIX_PENDING_CHANGES = {};
+            updateMatrixFloatingBar();
+            renderRolesMatrixTable();
+            renderRoleCardsGrid();
+
+            // Terapkan visibilitas peran aktif jika sedang mempratinjau peran
+            const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                              sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
+            applyAdminRoleVisibility(activeRole);
+
+            if (typeof showToast === 'function') {
+                showToast(`✅ Matriks hak akses untuk ${affectedRoles.size} peran berhasil disimpan & aktif!`);
+            }
+        } catch (err) {
+            console.error('[SAVE MATRIX ERROR]', err);
+            if (typeof showToast === 'function') {
+                showToast(`⚠️ Terjadi kesalahan saat menyimpan matriks: ${err.message}`);
+            }
+        } finally {
+            if (btnSave) {
+                btnSave.disabled = false;
+                btnSave.innerHTML = `<i class="fa-solid fa-floppy-disk text-xs"></i> <span>Simpan Matriks</span>`;
+            }
+        }
+    }
+
+    /**
+     * Batalkan seluruh perubahan tertunda pada matriks
+     */
+    function cancelMatrixPermissionsChanges() {
+        MATRIX_PENDING_CHANGES = {};
+        updateMatrixFloatingBar();
+        renderRolesMatrixTable();
+        if (typeof showToast === 'function') {
+            showToast('ℹ️ Seluruh perubahan matriks izin dibatalkan.');
+        }
+    }
 
     /**
      * Memuat dan merender modul Manajemen Peran
@@ -559,6 +913,7 @@
         renderRolesSummaryKPIs();
         renderRolesMatrixTable();
         renderRoleCardsGrid();
+        updateMatrixFloatingBar();
     }
 
     /**
@@ -596,7 +951,7 @@
     }
 
     /**
-     * Format visual badge sel izin
+     * Format visual badge sel izin (Legacy Fallback)
      */
     function renderPermissionBadge(perm) {
         if (perm === 'full') {
@@ -625,7 +980,7 @@
     }
 
     /**
-     * Render Matriks Tabel RBAC
+     * Render Matriks Tabel RBAC Interaktif (19 Modul x 7 Peran)
      */
     function renderRolesMatrixTable() {
         const tbody = document.getElementById('admin-roles-matrix-body');
@@ -633,23 +988,67 @@
 
         const roleKeys = ['SUPER_ADMIN', 'ADMIN', 'PENGASUH', 'ASATIDZ', 'PENGURUS', 'BENDAHARA', 'WALI_SANTRI'];
 
+        // Styling konfigurasi level otoritas
+        const levelConfig = {
+            'full': { color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', label: 'Penuh' },
+            'read': { color: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800', label: 'Lihat' },
+            'write': { color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800', label: 'Entri' },
+            'read_own': { color: 'bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border-teal-200 dark:border-teal-800', label: 'Milik Sendiri' },
+            'none': { color: 'bg-slate-50 text-slate-400 dark:bg-slate-800/80 dark:text-slate-500 border-slate-200 dark:border-slate-700', label: 'Tutup' }
+        };
+
         tbody.innerHTML = MODULE_PERMISSIONS_MATRIX.map((item, idx) => {
             const isStriped = idx % 2 === 1 ? 'bg-slate-50/50 dark:bg-[#15202d]/50' : 'bg-white dark:bg-[#15202d]';
             const permCells = roleKeys.map(k => {
-                const p = item.permissions[k] || 'none';
-                return `<td class="p-3 text-center whitespace-nowrap">${renderPermissionBadge(p)}</td>`;
+                const currentPerm = getMatrixPermission(item.key, k);
+                const cellKey = `${item.key}___${k}`;
+                const isModified = MATRIX_PENDING_CHANGES[cellKey] !== undefined;
+
+                if (k === 'SUPER_ADMIN') {
+                    return `
+                        <td class="p-2.5 text-center whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs cursor-default select-none" title="Super Admin memiliki otoritas root tak terbatas">
+                                <i class="fa-solid fa-crown text-[8px] mr-1 text-emerald-600"></i>Penuh
+                            </span>
+                        </td>
+                    `;
+                }
+
+                const cfg = levelConfig[currentPerm] || levelConfig['none'];
+                const modBorder = isModified ? 'ring-2 ring-amber-400/80 dark:ring-amber-500 font-black' : '';
+                const modDot = isModified ? `<span class="w-2 h-2 rounded-full bg-amber-500 animate-ping absolute -top-0.5 -right-0.5 pointer-events-none"></span><span class="w-1.5 h-1.5 rounded-full bg-amber-500 absolute -top-0.5 -right-0.5 pointer-events-none"></span>` : '';
+
+                return `
+                    <td class="p-2 text-center whitespace-nowrap">
+                        <div class="relative inline-block text-left">
+                            <select onchange="handleMatrixCellChange('${item.key}', '${k}', this.value)"
+                                class="appearance-none cursor-pointer pl-2 pr-5 py-1 rounded-xl text-[10px] font-bold border transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs ${cfg.color} ${modBorder}">
+                                <option value="full" ${currentPerm === 'full' ? 'selected' : ''} class="bg-white dark:bg-[#16222f] text-emerald-700 font-bold">🟢 Penuh (CRUD)</option>
+                                <option value="read" ${currentPerm === 'read' ? 'selected' : ''} class="bg-white dark:bg-[#16222f] text-sky-700 font-bold">🔵 Lihat Saja</option>
+                                <option value="write" ${currentPerm === 'write' ? 'selected' : ''} class="bg-white dark:bg-[#16222f] text-amber-700 font-bold">🟡 Entri & Input</option>
+                                <option value="read_own" ${currentPerm === 'read_own' ? 'selected' : ''} class="bg-white dark:bg-[#16222f] text-teal-700 font-bold">🟣 Milik Sendiri</option>
+                                <option value="none" ${currentPerm === 'none' ? 'selected' : ''} class="bg-white dark:bg-[#16222f] text-slate-500 font-medium">⚪ Tutup</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down text-[7px] absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"></i>
+                            ${modDot}
+                        </div>
+                    </td>
+                `;
             }).join('');
 
             return `
                 <tr class="${isStriped} hover:bg-emerald-50/30 dark:hover:bg-[#1c2836] transition border-b border-slate-100 dark:border-[#253447]">
-                    <td class="p-3.5 min-w-[200px]">
+                    <td class="p-3 min-w-[210px]">
                         <div class="flex items-center space-x-2.5">
                             <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs shrink-0 shadow-xs">
                                 <i class="fa-solid ${item.icon}"></i>
                             </div>
                             <div>
-                                <h5 class="font-bold text-slate-800 dark:text-slate-100 text-xs">${item.module}</h5>
-                                <span class="text-[10px] text-slate-400 block">${item.desc}</span>
+                                <div class="flex items-center gap-1.5">
+                                    <h5 class="font-bold text-slate-800 dark:text-slate-100 text-xs">${item.module}</h5>
+                                    <span class="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">${item.category.split(' ')[0]}</span>
+                                </div>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 block truncate max-w-xs">${item.desc}</span>
                             </div>
                         </div>
                     </td>
@@ -2098,5 +2497,16 @@
     window.applyAdminRoleVisibility = applyAdminRoleVisibility;
     window.switchActiveRolePreview = switchActiveRolePreview;
     window.DEFAULT_ROLE_PERMISSIONS_MAP = DEFAULT_ROLE_PERMISSIONS_MAP;
+    window.renderRolesMatrixTable = renderRolesMatrixTable;
+    window.handleMatrixCellChange = handleMatrixCellChange;
+    window.toggleBatchRoleMenu = toggleBatchRoleMenu;
+    window.batchSetRoleMatrix = batchSetRoleMatrix;
+    window.batchResetRoleMatrix = batchResetRoleMatrix;
+    window.saveMatrixPermissionsChanges = saveMatrixPermissionsChanges;
+    window.cancelMatrixPermissionsChanges = cancelMatrixPermissionsChanges;
+    window.getMatrixPermission = getMatrixPermission;
+    window.convertMatrixLevelToPermissions = convertMatrixLevelToPermissions;
+    window.SAVED_MATRIX_STATE = SAVED_MATRIX_STATE;
+    window.MATRIX_PENDING_CHANGES = MATRIX_PENDING_CHANGES;
 
 })(window, document);

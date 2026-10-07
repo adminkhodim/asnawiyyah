@@ -6168,22 +6168,28 @@
                                     <div
                                         class="p-4 border-b border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-[#1c2836]/40">
                                         <div>
-                                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">
-                                                Matriks Hak Akses per Modul Sistem (RBAC Table)</h3>
-                                            <p class="text-[10px] text-slate-400">Perbandingan wewenang CRUD dan kontrol
-                                                akses pada setiap peran</p>
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">
+                                                    Matriks Hak Akses per Modul Sistem (RBAC Table)</h3>
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                                    19 Modul Terproteksi
+                                                </span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-400 mt-0.5">Konfigurasi dinamis 5 tingkat otoritas: ubah langsung lewat tombol dropdown di tiap sel</p>
                                         </div>
                                         <div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
                                             <span class="inline-flex items-center"><i
                                                     class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Penuh
                                                 (CRUD)</span>
                                             <span class="inline-flex items-center"><i
-                                                    class="fa-solid fa-pen-nib text-amber-500 mr-1"></i>Entri &
-                                                Mutaba'ah</span>
-                                            <span class="inline-flex items-center"><i
                                                     class="fa-solid fa-eye text-sky-500 mr-1"></i>Lihat Saja</span>
                                             <span class="inline-flex items-center"><i
-                                                    class="fa-solid fa-minus text-slate-400 mr-1"></i>Tertutup</span>
+                                                    class="fa-solid fa-pen-nib text-amber-500 mr-1"></i>Entri &
+                                                Input</span>
+                                            <span class="inline-flex items-center"><i
+                                                    class="fa-solid fa-user-lock text-teal-500 mr-1"></i>Milik Sendiri</span>
+                                            <span class="inline-flex items-center"><i
+                                                    class="fa-solid fa-minus text-slate-400 mr-1"></i>Tutup</span>
                                         </div>
                                     </div>
 
@@ -6192,27 +6198,117 @@
                                             <thead
                                                 class="bg-slate-50 dark:bg-[#1c2836] text-[11px] font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#253447]">
                                                 <tr>
-                                                    <th class="p-3.5">Modul & Fitur Aplikasi</th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-purple-700 dark:text-purple-300">
-                                                        <i class="fa-solid fa-crown text-[10px] mr-1"></i>Super Admin
+                                                    <th class="p-3.5 min-w-[210px]">Modul & Fitur Aplikasi</th>
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-purple-700 dark:text-purple-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-crown text-[10px]"></i>Super Admin
+                                                            </span>
+                                                            <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.2 rounded-full border border-emerald-200 dark:border-emerald-800">Terkunci</span>
+                                                        </div>
                                                     </th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-brand-700 dark:text-brand-300">
-                                                        <i class="fa-solid fa-shield-halved text-[10px] mr-1"></i>Admin
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-brand-700 dark:text-brand-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-shield-halved text-[10px]"></i>Admin
+                                                            </span>
+                                                            <div class="relative inline-block">
+                                                                <button type="button" onclick="toggleBatchRoleMenu('ADMIN', event)" class="px-2 py-0.5 rounded-lg text-[9px] font-semibold bg-white hover:bg-slate-100 dark:bg-[#16222f] dark:hover:bg-[#1f2e40] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition active:scale-95 cursor-pointer">
+                                                                    Aksi Cepat ▾
+                                                                </button>
+                                                                <div id="batch-menu-ADMIN" class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white dark:bg-[#16222f] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-1 z-30 text-left text-[10px] space-y-0.5">
+                                                                    <button type="button" onclick="batchSetRoleMatrix('ADMIN', 'full')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold">🟢 Set Semua Penuh</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('ADMIN', 'read')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold">🔵 Set Semua Lihat</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('ADMIN', 'none')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold">⚪ Set Semua Tutup</button>
+                                                                    <button type="button" onclick="batchResetRoleMatrix('ADMIN')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-t border-slate-100 dark:border-slate-800 mt-0.5 pt-1">🔄 Reset Baseline</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-amber-700 dark:text-amber-300">
-                                                        <i class="fa-solid fa-hands-praying text-[10px] mr-1"></i>Pengasuh
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-amber-700 dark:text-amber-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-hands-praying text-[10px]"></i>Pengasuh
+                                                            </span>
+                                                            <div class="relative inline-block">
+                                                                <button type="button" onclick="toggleBatchRoleMenu('PENGASUH', event)" class="px-2 py-0.5 rounded-lg text-[9px] font-semibold bg-white hover:bg-slate-100 dark:bg-[#16222f] dark:hover:bg-[#1f2e40] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition active:scale-95 cursor-pointer">
+                                                                    Aksi Cepat ▾
+                                                                </button>
+                                                                <div id="batch-menu-PENGASUH" class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white dark:bg-[#16222f] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-1 z-30 text-left text-[10px] space-y-0.5">
+                                                                    <button type="button" onclick="batchSetRoleMatrix('PENGASUH', 'read')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold">🔵 Set Semua Lihat</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('PENGASUH', 'none')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold">⚪ Set Semua Tutup</button>
+                                                                    <button type="button" onclick="batchResetRoleMatrix('PENGASUH')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-t border-slate-100 dark:border-slate-800 mt-0.5 pt-1">🔄 Reset Baseline</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-indigo-700 dark:text-indigo-300">
-                                                        <i class="fa-solid fa-chalkboard-user text-[10px] mr-1"></i>Asatidz
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-indigo-700 dark:text-indigo-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-chalkboard-user text-[10px]"></i>Asatidz
+                                                            </span>
+                                                            <div class="relative inline-block">
+                                                                <button type="button" onclick="toggleBatchRoleMenu('ASATIDZ', event)" class="px-2 py-0.5 rounded-lg text-[9px] font-semibold bg-white hover:bg-slate-100 dark:bg-[#16222f] dark:hover:bg-[#1f2e40] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition active:scale-95 cursor-pointer">
+                                                                    Aksi Cepat ▾
+                                                                </button>
+                                                                <div id="batch-menu-ASATIDZ" class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white dark:bg-[#16222f] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-1 z-30 text-left text-[10px] space-y-0.5">
+                                                                    <button type="button" onclick="batchSetRoleMatrix('ASATIDZ', 'read')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold">🔵 Set Semua Lihat</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('ASATIDZ', 'none')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold">⚪ Set Semua Tutup</button>
+                                                                    <button type="button" onclick="batchResetRoleMatrix('ASATIDZ')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-t border-slate-100 dark:border-slate-800 mt-0.5 pt-1">🔄 Reset Baseline</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-teal-700 dark:text-teal-300">
-                                                        <i class="fa-solid fa-clipboard-user text-[10px] mr-1"></i>Pengurus
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-teal-700 dark:text-teal-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-clipboard-user text-[10px]"></i>Pengurus
+                                                            </span>
+                                                            <div class="relative inline-block">
+                                                                <button type="button" onclick="toggleBatchRoleMenu('PENGURUS', event)" class="px-2 py-0.5 rounded-lg text-[9px] font-semibold bg-white hover:bg-slate-100 dark:bg-[#16222f] dark:hover:bg-[#1f2e40] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition active:scale-95 cursor-pointer">
+                                                                    Aksi Cepat ▾
+                                                                </button>
+                                                                <div id="batch-menu-PENGURUS" class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white dark:bg-[#16222f] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-1 z-30 text-left text-[10px] space-y-0.5">
+                                                                    <button type="button" onclick="batchSetRoleMatrix('PENGURUS', 'read')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold">🔵 Set Semua Lihat</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('PENGURUS', 'none')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold">⚪ Set Semua Tutup</button>
+                                                                    <button type="button" onclick="batchResetRoleMatrix('PENGURUS')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-t border-slate-100 dark:border-slate-800 mt-0.5 pt-1">🔄 Reset Baseline</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-emerald-700 dark:text-emerald-300">
-                                                        <i class="fa-solid fa-wallet text-[10px] mr-1"></i>Bendahara
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-emerald-700 dark:text-emerald-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-wallet text-[10px]"></i>Bendahara
+                                                            </span>
+                                                            <div class="relative inline-block">
+                                                                <button type="button" onclick="toggleBatchRoleMenu('BENDAHARA', event)" class="px-2 py-0.5 rounded-lg text-[9px] font-semibold bg-white hover:bg-slate-100 dark:bg-[#16222f] dark:hover:bg-[#1f2e40] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition active:scale-95 cursor-pointer">
+                                                                    Aksi Cepat ▾
+                                                                </button>
+                                                                <div id="batch-menu-BENDAHARA" class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white dark:bg-[#16222f] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-1 z-30 text-left text-[10px] space-y-0.5">
+                                                                    <button type="button" onclick="batchSetRoleMatrix('BENDAHARA', 'read')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold">🔵 Set Semua Lihat</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('BENDAHARA', 'none')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold">⚪ Set Semua Tutup</button>
+                                                                    <button type="button" onclick="batchResetRoleMatrix('BENDAHARA')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-t border-slate-100 dark:border-slate-800 mt-0.5 pt-1">🔄 Reset Baseline</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </th>
-                                                    <th class="p-3 text-center whitespace-nowrap text-sky-700 dark:text-sky-300">
-                                                        <i class="fa-solid fa-user-group text-[10px] mr-1"></i>Wali Santri
+                                                    <th class="p-2.5 text-center whitespace-nowrap text-sky-700 dark:text-sky-300">
+                                                        <div class="flex flex-col items-center gap-1">
+                                                            <span class="inline-flex items-center gap-1">
+                                                                <i class="fa-solid fa-user-group text-[10px]"></i>Wali Santri
+                                                            </span>
+                                                            <div class="relative inline-block">
+                                                                <button type="button" onclick="toggleBatchRoleMenu('WALI_SANTRI', event)" class="px-2 py-0.5 rounded-lg text-[9px] font-semibold bg-white hover:bg-slate-100 dark:bg-[#16222f] dark:hover:bg-[#1f2e40] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition active:scale-95 cursor-pointer">
+                                                                    Aksi Cepat ▾
+                                                                </button>
+                                                                <div id="batch-menu-WALI_SANTRI" class="hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white dark:bg-[#16222f] rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-1 z-30 text-left text-[10px] space-y-0.5">
+                                                                    <button type="button" onclick="batchSetRoleMatrix('WALI_SANTRI', 'read')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-bold">🔵 Set Semua Lihat</button>
+                                                                    <button type="button" onclick="batchSetRoleMatrix('WALI_SANTRI', 'none')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold">⚪ Set Semua Tutup</button>
+                                                                    <button type="button" onclick="batchResetRoleMatrix('WALI_SANTRI')" class="w-full px-2 py-1.5 text-left rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-t border-slate-100 dark:border-slate-800 mt-0.5 pt-1">🔄 Reset Baseline</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </th>
                                                 </tr>
                                             </thead>
@@ -6220,6 +6316,28 @@
                                                 <!-- Dynamic generated by js/roles.js -->
                                             </tbody>
                                         </table>
+                                    </div>
+                                </div>
+
+                                <!-- FLOATING SAVE BAR MATRIKS HAK AKSES -->
+                                <div id="role-matrix-floating-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 dark:bg-[#121c27]/95 text-white backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-indigo-500/40 flex items-center justify-between gap-4 min-w-[340px] max-w-[92vw] animate-in fade-in slide-in-from-bottom-4 duration-200">
+                                    <div class="flex items-center space-x-2.5">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+                                        <div class="text-xs">
+                                            <span class="font-bold block" id="role-matrix-pending-count">0 perubahan izin belum disimpan</span>
+                                            <span class="text-[10px] text-slate-400">Klik simpan untuk menerapkan matriks baru ke sistem</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2 shrink-0">
+                                        <button type="button" onclick="cancelMatrixPermissionsChanges()"
+                                            class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition active:scale-95 cursor-pointer">
+                                            Batal
+                                        </button>
+                                        <button type="button" id="btn-save-role-matrix" onclick="saveMatrixPermissionsChanges()"
+                                            class="px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition flex items-center space-x-1.5 active:scale-95 cursor-pointer">
+                                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                                            <span>Simpan Matriks</span>
+                                        </button>
                                     </div>
                                 </div>
 
