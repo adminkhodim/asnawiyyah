@@ -6739,22 +6739,81 @@
                         </div>
                     </div>
                     
-                    <!-- Action Toolbar -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <!-- Timeframe Switcher Tabs -->
-                        <div class="inline-flex p-1 bg-slate-100 dark:bg-[#1c2836] rounded-xl text-xs font-semibold">
-                            <button type="button" id="keaktifan-timeframe-btn-today" onclick="setKeaktifanTimeframe('today')"
-                                class="px-3 py-1.5 rounded-lg text-xs transition-all duration-200 bg-white dark:bg-indigo-600 text-indigo-700 dark:text-white shadow-sm font-bold">
-                                <i class="fa-solid fa-bolt text-[10px] mr-1 text-amber-500"></i> Hari Ini
+                        <!-- PERIODE DATA DROPDOWN SELECTOR (SESUAI GAMBAR REFERENSI) -->
+                        <div class="relative" id="keaktifan-period-wrapper">
+                            <button type="button" id="keaktifan-period-trigger-btn" onclick="toggleKeaktifanPeriodDropdown(event)"
+                                class="px-3 py-1.5 bg-white dark:bg-[#16222f] hover:bg-slate-50 dark:hover:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl shadow-xs text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2 transition active:scale-95 cursor-pointer">
+                                <span class="text-slate-400 dark:text-slate-400 text-xs">Periode Data</span>
+                                <span id="keaktifan-period-label-type" class="font-extrabold text-slate-900 dark:text-white">Real-time</span>
+                                <span id="keaktifan-period-label-detail" class="text-slate-600 dark:text-slate-300 font-normal">Hari Ini - Pk 07:00 (GMT+07)</span>
+                                <i class="fa-regular fa-calendar text-slate-400 text-xs ml-0.5"></i>
                             </button>
-                            <button type="button" id="keaktifan-timeframe-btn-7d" onclick="setKeaktifanTimeframe('7d')"
-                                class="px-3 py-1.5 rounded-lg text-xs transition-all duration-200 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white">
-                                7 Hari
-                            </button>
-                            <button type="button" id="keaktifan-timeframe-btn-30d" onclick="setKeaktifanTimeframe('30d')"
-                                class="px-3 py-1.5 rounded-lg text-xs transition-all duration-200 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white">
-                                1 Bulan
-                            </button>
+
+                            <!-- 2-COLUMN DROPDOWN POPUP -->
+                            <div id="keaktifan-period-dropdown"
+                                class="hidden absolute right-0 sm:right-auto sm:left-0 top-full mt-2 w-[460px] max-w-[94vw] bg-white dark:bg-[#16222f] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#253447] z-50 overflow-hidden transform opacity-0 scale-95 transition-all duration-200">
+                                <div class="flex flex-col sm:flex-row min-h-[300px]">
+                                    <!-- Kolom Kiri: Presets & Kategori -->
+                                    <div class="w-full sm:w-48 p-2 border-b sm:border-b-0 sm:border-r border-slate-100 dark:border-[#253447] bg-white dark:bg-[#16222f] shrink-0 text-xs">
+                                        <div class="space-y-0.5">
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('realtime')"
+                                                id="keaktifan-menu-realtime"
+                                                class="w-full text-left px-3 py-2 rounded-xl font-bold transition flex items-center justify-between text-[#ea580c] bg-orange-50/70 dark:bg-orange-950/30">
+                                                <span>Real-time</span>
+                                            </button>
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('yesterday')"
+                                                id="keaktifan-menu-yesterday"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>Kemarin</span>
+                                            </button>
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('7d')"
+                                                id="keaktifan-menu-7d"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>7 hari sebelumnya.</span>
+                                            </button>
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('30d')"
+                                                id="keaktifan-menu-30d"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>30 hari sebelumnya.</span>
+                                            </button>
+                                        </div>
+
+                                        <hr class="my-2 border-slate-100 dark:border-[#253447]">
+
+                                        <div class="space-y-0.5">
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('by_day')"
+                                                id="keaktifan-menu-by_day"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>Per Hari</span>
+                                                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                                            </button>
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('by_week')"
+                                                id="keaktifan-menu-by_week"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>Per Minggu</span>
+                                                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                                            </button>
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('by_month')"
+                                                id="keaktifan-menu-by_month"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>Per Bulan</span>
+                                                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                                            </button>
+                                            <button type="button" onclick="selectKeaktifanPeriodMenu('by_year')"
+                                                id="keaktifan-menu-by_year"
+                                                class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between">
+                                                <span>Berdasarkan Tahun</span>
+                                                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Kolom Kanan: Detail Sub-Pilihan Panel -->
+                                    <div id="keaktifan-period-right-panel" class="flex-1 p-3.5 bg-slate-50/70 dark:bg-[#121c27] flex flex-col justify-between text-xs">
+                                        <!-- Injected dynamically by selectKeaktifanPeriodMenu -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Export & Refresh -->

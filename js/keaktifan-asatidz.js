@@ -12,7 +12,13 @@
     // State Modul
     const ASNKeaktifan = {
         loading: false,
-        timeframe: 'today', // 'today' | '7d' | '30d'
+        timeframe: 'today', // 'today' | 'yesterday' | '7d' | '30d' | 'by_day' | 'by_week' | 'by_month' | 'by_year'
+        activePeriodMenu: 'realtime', // 'realtime' | 'yesterday' | '7d' | '30d' | 'by_day' | 'by_week' | 'by_month' | 'by_year'
+        periodLabel: {
+            type: 'Real-time',
+            detail: 'Hari Ini - Pk 07:00 (GMT+07)'
+        },
+        periodParams: {},
         data: null,
         filteredAsatidz: [],
         filter: {
@@ -23,6 +29,21 @@
         },
         activeDetailAsatidz: null
     };
+
+    // Konstanta & Helper Format Tanggal Indonesia
+    const INDO_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const INDO_MONTHS_FULL = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const INDO_DAYS = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+    function getBaseDate() {
+        if (ASNKeaktifan.data && ASNKeaktifan.data.serverDate) {
+            const parts = ASNKeaktifan.data.serverDate.split('-');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            }
+        }
+        return new Date();
+    }
 
     /**
      * Helper Escape HTML untuk proteksi XSS
@@ -94,6 +115,20 @@
             // 4. Terapkan filter & render ke layar
             filterKeaktifanList();
             renderKeaktifanView();
+
+            // Sinkronkan label trigger button jika mode realtime default
+            if (ASNKeaktifan.timeframe === 'today' && ASNKeaktifan.data && ASNKeaktifan.data.serverTime) {
+                const dEl = document.getElementById('keaktifan-period-label-detail');
+                const tEl = document.getElementById('keaktifan-period-label-type');
+                if (tEl && (!tEl.innerText || tEl.innerText === 'Real-time')) {
+                    tEl.innerText = 'Real-time';
+                }
+                if (dEl && (!dEl.innerText || dEl.innerText.includes('07:00'))) {
+                    const detailStr = `Hari Ini - Pk ${ASNKeaktifan.data.serverTime} (GMT+07)`;
+                    dEl.innerText = detailStr;
+                    ASNKeaktifan.periodLabel.detail = detailStr;
+                }
+            }
 
             if (forceRefresh && typeof showToast === 'function') {
                 showToast("Data keaktifan asatidz berhasil diperbarui.");
@@ -355,25 +390,408 @@
     }
 
     /**
-     * Ganti Dimensi Waktu Pemantauan ('today', '7d', '30d')
+     * Kontrol Dropdown Popover Periode Data 2 Kolom
      */
-    function setKeaktifanTimeframe(tf) {
-        if (!['today', '7d', '30d'].includes(tf)) return;
-        ASNKeaktifan.timeframe = tf;
+    function toggleKeaktifanPeriodDropdown(e) {
+        if (e) e.stopPropagation();
+        const dropdown = document.getElementById('keaktifan-period-dropdown');
+        if (!dropdown) return;
+        if (dropdown.classList.contains('hidden')) {
+            openKeaktifanPeriodDropdown();
+        } else {
+            closeKeaktifanPeriodDropdown();
+        }
+    }
 
-        const btnToday = document.getElementById('keaktifan-timeframe-btn-today');
-        const btn7d = document.getElementById('keaktifan-timeframe-btn-7d');
-        const btn30d = document.getElementById('keaktifan-timeframe-btn-30d');
+    function openKeaktifanPeriodDropdown() {
+        const dropdown = document.getElementById('keaktifan-period-dropdown');
+        if (!dropdown) return;
+        dropdown.classList.remove('hidden');
+        // Force reflow
+        void dropdown.offsetWidth;
+        dropdown.classList.remove('opacity-0', 'scale-95');
+        dropdown.classList.add('opacity-100', 'scale-100');
 
-        const activeClass = "px-3 py-1.5 rounded-lg text-xs transition-all duration-200 bg-white dark:bg-indigo-600 text-indigo-700 dark:text-white shadow-sm font-bold";
-        const inactiveClass = "px-3 py-1.5 rounded-lg text-xs transition-all duration-200 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white";
+        selectKeaktifanPeriodMenu(ASNKeaktifan.activePeriodMenu || 'realtime');
+    }
 
-        if (btnToday) btnToday.className = (tf === 'today') ? activeClass : inactiveClass;
-        if (btn7d) btn7d.className = (tf === '7d') ? activeClass : inactiveClass;
-        if (btn30d) btn30d.className = (tf === '30d') ? activeClass : inactiveClass;
+    function closeKeaktifanPeriodDropdown() {
+        const dropdown = document.getElementById('keaktifan-period-dropdown');
+        if (!dropdown || dropdown.classList.contains('hidden')) return;
+        dropdown.classList.remove('opacity-100', 'scale-100');
+        dropdown.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+            dropdown.classList.add('hidden');
+        }, 150);
+    }
+
+    // Listener klik luar dan tombol Escape
+    document.addEventListener('click', function (e) {
+        const wrapper = document.getElementById('keaktifan-period-wrapper');
+        const dropdown = document.getElementById('keaktifan-period-dropdown');
+        if (wrapper && dropdown && !dropdown.classList.contains('hidden') && !wrapper.contains(e.target)) {
+            closeKeaktifanPeriodDropdown();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeKeaktifanPeriodDropdown();
+        }
+    });
+
+    /**
+     * Pilih Menu Kategori Kolom Kiri
+     */
+    function selectKeaktifanPeriodMenu(menuKey) {
+        ASNKeaktifan.activePeriodMenu = menuKey;
+        const menuKeys = ['realtime', 'yesterday', '7d', '30d', 'by_day', 'by_week', 'by_month', 'by_year'];
+
+        menuKeys.forEach(k => {
+            const btn = document.getElementById(`keaktifan-menu-${k}`);
+            if (!btn) return;
+            const chevron = btn.querySelector('.fa-chevron-right');
+
+            if (k === menuKey) {
+                btn.className = "w-full text-left px-3 py-2 rounded-xl font-bold transition flex items-center justify-between text-[#ea580c] bg-orange-50/70 dark:bg-orange-950/30";
+                if (chevron) {
+                    chevron.className = "fa-solid fa-chevron-right text-[10px] text-[#ea580c]";
+                }
+            } else {
+                btn.className = "w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2836] transition flex items-center justify-between font-normal";
+                if (chevron) {
+                    chevron.className = "fa-solid fa-chevron-right text-[10px] text-slate-400";
+                }
+            }
+        });
+
+        renderKeaktifanPeriodRightPanel(menuKey);
+    }
+
+    /**
+     * Render Sub-panel Kolom Kanan Sesuai Menu Kiri
+     */
+    function renderKeaktifanPeriodRightPanel(menuKey) {
+        const container = document.getElementById('keaktifan-period-right-panel');
+        if (!container) return;
+
+        const base = getBaseDate();
+        let html = '';
+
+        if (menuKey === 'realtime') {
+            const curTime = (ASNKeaktifan.data && ASNKeaktifan.data.serverTime) || '07:00';
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-[#ea580c] font-bold text-sm tracking-tight">Hari Ini - Pk ${curTime}</div>
+                        <div class="mt-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40 text-xs text-orange-950 dark:text-orange-200 leading-relaxed">
+                            <i class="fa-solid fa-circle-dot text-[9px] text-[#ea580c] mr-1.5 animate-pulse"></i>
+                            Data dimonitor secara <strong>realtime</strong> mengikuti patokan jam deadline sesi berjalan hari ini (GMT+07).
+                        </div>
+                        <div class="mt-3 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500 text-[10px]"></i> Presensi halaqah langsung tersinkron</div>
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500 text-[10px]"></i> Status kepatuhan auto-update tiap sesi</div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="applyKeaktifanPeriod('today', 'Real-time', 'Hari Ini - Pk ${curTime} (GMT+07)')"
+                        class="mt-4 w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-xs transition active:scale-95 text-xs flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-bolt"></i> Terapkan Real-time
+                    </button>
+                </div>
+            `;
+        } else if (menuKey === 'yesterday') {
+            const yDate = new Date(base);
+            yDate.setDate(yDate.getDate() - 1);
+            const dayName = INDO_DAYS[yDate.getDay()];
+            const dateNum = yDate.getDate();
+            const monthName = INDO_MONTHS_SHORT[yDate.getMonth()];
+            const yr = yDate.getFullYear();
+            const yFormatted = `${dayName}, ${dateNum} ${monthName} ${yr}`;
+            const yIso = `${yr}-${String(yDate.getMonth() + 1).padStart(2, '0')}-${String(dateNum).padStart(2, '0')}`;
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">Kemarin</div>
+                        <div class="text-xs text-[#ea580c] font-semibold mt-0.5">${yFormatted}</div>
+                        <div class="mt-2.5 p-3 rounded-xl bg-slate-100 dark:bg-[#1a2636] border border-slate-200/80 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Rekapitulasi lengkap seluruh 3 sesi tahfidz kemarin untuk audit kedisiplinan harian yang telah tuntas.
+                        </div>
+                    </div>
+                    <button type="button" onclick="applyKeaktifanPeriod('yesterday', 'Kemarin', '${yFormatted}', { date: '${yIso}' })"
+                        class="mt-4 w-full py-2.5 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-xl shadow-xs transition active:scale-95 text-xs flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-check"></i> Terapkan Kemarin
+                    </button>
+                </div>
+            `;
+        } else if (menuKey === '7d') {
+            const d7 = new Date(base);
+            d7.setDate(d7.getDate() - 6);
+            const rStart = `${d7.getDate()} ${INDO_MONTHS_SHORT[d7.getMonth()]}`;
+            const rEnd = `${base.getDate()} ${INDO_MONTHS_SHORT[base.getMonth()]} ${base.getFullYear()}`;
+            const range7d = `${rStart} - ${rEnd}`;
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">7 Hari Sebelumnya</div>
+                        <div class="text-xs text-[#ea580c] font-semibold mt-0.5">${range7d}</div>
+                        <div class="mt-2.5 p-3 rounded-xl bg-slate-100 dark:bg-[#1a2636] border border-slate-200/80 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Menganalisis rata-rata persentase keaktifan dan akumulasi log simakan santri sepekan terakhir.
+                        </div>
+                    </div>
+                    <button type="button" onclick="applyKeaktifanPeriod('7d', '7 Hari', '${range7d}')"
+                        class="mt-4 w-full py-2.5 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-xl shadow-xs transition active:scale-95 text-xs flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-check"></i> Terapkan 7 Hari
+                    </button>
+                </div>
+            `;
+        } else if (menuKey === '30d') {
+            const d30 = new Date(base);
+            d30.setDate(d30.getDate() - 29);
+            const rStart30 = `${d30.getDate()} ${INDO_MONTHS_SHORT[d30.getMonth()]}`;
+            const rEnd30 = `${base.getDate()} ${INDO_MONTHS_SHORT[base.getMonth()]} ${base.getFullYear()}`;
+            const range30d = `${rStart30} - ${rEnd30}`;
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">30 Hari Sebelumnya</div>
+                        <div class="text-xs text-[#ea580c] font-semibold mt-0.5">${range30d}</div>
+                        <div class="mt-2.5 p-3 rounded-xl bg-slate-100 dark:bg-[#1a2636] border border-slate-200/80 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Tinjauan performa bulanan, tren kepatuhan, serta volume input setoran santri selama 30 hari ke belakang.
+                        </div>
+                    </div>
+                    <button type="button" onclick="applyKeaktifanPeriod('30d', '30 Hari', '${range30d}')"
+                        class="mt-4 w-full py-2.5 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-xl shadow-xs transition active:scale-95 text-xs flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-check"></i> Terapkan 30 Hari
+                    </button>
+                </div>
+            `;
+        } else if (menuKey === 'by_day') {
+            const defIso = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+            const curVal = (ASNKeaktifan.periodParams && ASNKeaktifan.periodParams.date) || defIso;
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">Pilih Tanggal Spesifik</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Audit keaktifan asatidz pada tanggal tertentu:</div>
+                        
+                        <div class="mt-3">
+                            <input type="date" id="keaktifan-picker-input-date" value="${curVal}"
+                                class="w-full px-3 py-2 bg-white dark:bg-[#16222f] border border-slate-300 dark:border-[#253447] rounded-xl text-xs text-slate-800 dark:text-slate-100 font-medium focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 mt-2.5">
+                            <button type="button" onclick="setCustomDatePickerVal('today')"
+                                class="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white dark:bg-[#16222f] border border-slate-200 dark:border-[#253447] text-slate-600 dark:text-slate-300 hover:border-orange-500 hover:text-orange-600 cursor-pointer">
+                                Hari Ini
+                            </button>
+                            <button type="button" onclick="setCustomDatePickerVal('yesterday')"
+                                class="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white dark:bg-[#16222f] border border-slate-200 dark:border-[#253447] text-slate-600 dark:text-slate-300 hover:border-orange-500 hover:text-orange-600 cursor-pointer">
+                                Kemarin
+                            </button>
+                            <button type="button" onclick="setCustomDatePickerVal('prev2')"
+                                class="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white dark:bg-[#16222f] border border-slate-200 dark:border-[#253447] text-slate-600 dark:text-slate-300 hover:border-orange-500 hover:text-orange-600 cursor-pointer">
+                                2 Hari Lalu
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="applyCustomDatePeriod()"
+                        class="mt-4 w-full py-2.5 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-xl shadow-xs transition active:scale-95 text-xs flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-check"></i> Terapkan Tanggal
+                    </button>
+                </div>
+            `;
+        } else if (menuKey === 'by_week') {
+            const weeks = [
+                { offset: 0, label: 'Pekan Ini' },
+                { offset: 1, label: '1 Pekan Lalu' },
+                { offset: 2, label: '2 Pekan Lalu' },
+                { offset: 3, label: '3 Pekan Lalu' }
+            ];
+
+            const weekRows = weeks.map(w => {
+                const wStart = new Date(base);
+                const dayOfWeek = wStart.getDay() === 0 ? 6 : wStart.getDay() - 1; // 0=Senin
+                wStart.setDate(wStart.getDate() - dayOfWeek - (w.offset * 7));
+                const wEnd = new Date(wStart);
+                wEnd.setDate(wEnd.getDate() + 6);
+                const wRangeStr = `${wStart.getDate()} ${INDO_MONTHS_SHORT[wStart.getMonth()]} - ${wEnd.getDate()} ${INDO_MONTHS_SHORT[wEnd.getMonth()]} ${wEnd.getFullYear()}`;
+
+                return `
+                    <button type="button" onclick="applyWeekPeriod(${w.offset}, '${w.label}', '${wRangeStr}')"
+                        class="w-full text-left p-2 rounded-xl border border-slate-200 dark:border-[#253447] bg-white dark:bg-[#16222f] hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition flex items-center justify-between cursor-pointer">
+                        <div>
+                            <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">${w.label}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400">${wRangeStr}</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                    </button>
+                `;
+            }).join('');
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">Pilih Periode Pekan</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Pilih rentang 7 hari (Senin - Ahad):</div>
+                        <div class="space-y-1.5 mt-2.5">
+                            ${weekRows}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (menuKey === 'by_month') {
+            const yr = base.getFullYear();
+            const curM = base.getMonth();
+
+            const mButtons = INDO_MONTHS_SHORT.map((mName, idx) => {
+                const isCurrent = idx === curM;
+                return `
+                    <button type="button" onclick="applyMonthPeriod(${idx}, ${yr})"
+                        class="py-2 px-1 text-center rounded-xl border text-xs font-bold transition cursor-pointer ${isCurrent ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-500 text-[#ea580c]' : 'bg-white dark:bg-[#16222f] border-slate-200 dark:border-[#253447] text-slate-700 dark:text-slate-300 hover:border-orange-400'}">
+                        ${mName}
+                    </button>
+                `;
+            }).join('');
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">Pilih Bulan (${yr})</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Rekap bulanan performa kedisiplinan:</div>
+                        <div class="grid grid-cols-3 gap-1.5 mt-3">
+                            ${mButtons}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (menuKey === 'by_year') {
+            const yr = base.getFullYear();
+            const years = [yr, yr - 1, yr - 2];
+
+            const yRows = years.map(y => {
+                return `
+                    <button type="button" onclick="applyYearPeriod(${y})"
+                        class="w-full text-left p-2.5 rounded-xl border border-slate-200 dark:border-[#253447] bg-white dark:bg-[#16222f] hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition flex items-center justify-between cursor-pointer">
+                        <div>
+                            <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Tahun ${y}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400">${y === yr ? 'Tahun Ajaran / Kalender Berjalan' : 'Arsip Riwayat Tahunan'}</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                    </button>
+                `;
+            }).join('');
+
+            html = `
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="text-slate-800 dark:text-white font-bold text-sm tracking-tight">Berdasarkan Tahun</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Audit tahunan performa tahfidz:</div>
+                        <div class="space-y-2 mt-3">
+                            ${yRows}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    /**
+     * Terapkan Filter Periode Terpilih
+     */
+    function applyKeaktifanPeriod(timeframe, labelType, labelDetail, params = {}) {
+        ASNKeaktifan.timeframe = timeframe;
+        ASNKeaktifan.periodLabel = { type: labelType, detail: labelDetail };
+        ASNKeaktifan.periodParams = params;
+
+        // Perbarui trigger button UI
+        const typeEl = document.getElementById('keaktifan-period-label-type');
+        const detailEl = document.getElementById('keaktifan-period-label-detail');
+        if (typeEl) typeEl.innerText = labelType;
+        if (detailEl) detailEl.innerText = labelDetail;
+
+        closeKeaktifanPeriodDropdown();
 
         filterKeaktifanList();
         renderKeaktifanView();
+
+        if (typeof showToast === 'function') {
+            showToast(`Periode diubah: ${labelType} (${labelDetail})`);
+        }
+    }
+
+    /**
+     * Helper Terapkan Tanggal Kustom (Per Hari)
+     */
+    function applyCustomDatePeriod() {
+        const input = document.getElementById('keaktifan-picker-input-date');
+        if (!input || !input.value) return;
+        const parts = input.value.split('-');
+        if (parts.length === 3) {
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            const dayName = INDO_DAYS[d.getDay()];
+            const labelDetail = `${dayName}, ${d.getDate()} ${INDO_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+            applyKeaktifanPeriod('by_day', 'Per Hari', labelDetail, { date: input.value });
+        }
+    }
+
+    /**
+     * Helper Shortcut Pengisian Nilai Date Picker
+     */
+    function setCustomDatePickerVal(preset) {
+        const input = document.getElementById('keaktifan-picker-input-date');
+        if (!input) return;
+        const base = getBaseDate();
+        if (preset === 'today') {
+            // tetap base
+        } else if (preset === 'yesterday') {
+            base.setDate(base.getDate() - 1);
+        } else if (preset === 'prev2') {
+            base.setDate(base.getDate() - 2);
+        }
+        const iso = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+        input.value = iso;
+    }
+
+    /**
+     * Helper Terapkan Periode Pekan
+     */
+    function applyWeekPeriod(offset, label, rangeStr) {
+        applyKeaktifanPeriod('by_week', label, rangeStr, { weekOffset: offset });
+    }
+
+    /**
+     * Helper Terapkan Periode Bulan
+     */
+    function applyMonthPeriod(mIdx, year) {
+        const mName = INDO_MONTHS_FULL[mIdx];
+        applyKeaktifanPeriod('by_month', 'Per Bulan', `${mName} ${year}`, { monthIndex: mIdx, year: year });
+    }
+
+    /**
+     * Helper Terapkan Periode Tahun
+     */
+    function applyYearPeriod(year) {
+        applyKeaktifanPeriod('by_year', 'Tahun', `${year}`, { year: year });
+    }
+
+    /**
+     * Ganti Dimensi Waktu Pemantauan (Backward Compatibility)
+     */
+    function setKeaktifanTimeframe(tf) {
+        if (tf === 'today') {
+            const curTime = (ASNKeaktifan.data && ASNKeaktifan.data.serverTime) || '07:00';
+            applyKeaktifanPeriod('today', 'Real-time', `Hari Ini - Pk ${curTime} (GMT+07)`);
+        } else if (tf === '7d') {
+            applyKeaktifanPeriod('7d', '7 Hari', '7 Hari Sebelumnya');
+        } else if (tf === '30d') {
+            applyKeaktifanPeriod('30d', '30 Hari', '30 Hari Sebelumnya');
+        }
     }
 
     /**
@@ -452,7 +870,7 @@
             // 3. Status Filter
             const st = ASNKeaktifan.filter.status;
             if (st && st !== 'ALL') {
-                if (ASNKeaktifan.timeframe === 'today') {
+                if (['today', 'yesterday', 'by_day'].includes(ASNKeaktifan.timeframe)) {
                     if (st === 'ON_TIME') {
                         const hasOnTime = ast.hariIni.sesiSummary.some(s => s.statusKepatuhan === 'ON_TIME') || ast.hariIni.status === 'AKTIF_LENGKAP';
                         if (!hasOnTime) return false;
@@ -467,7 +885,7 @@
                         if (!isWaiting) return false;
                     }
                 } else {
-                    const stat = (ASNKeaktifan.timeframe === '7d') ? ast.pekanan : ast.bulanan;
+                    const stat = ['7d', 'by_week'].includes(ASNKeaktifan.timeframe) ? ast.pekanan : ast.bulanan;
                     const pct = stat.activePercentage || 0;
                     if (st === 'ON_TIME' && pct < 75) return false;
                     if (st === 'LATE' && (pct < 50 || pct >= 75)) return false;
@@ -475,9 +893,9 @@
                 }
             }
 
-            // 4. Sesi Filter (Khusus Mode Today)
+            // 4. Sesi Filter (Khusus Mode Harian)
             const ss = ASNKeaktifan.filter.sesi;
-            if (ss && ss !== 'ALL' && ASNKeaktifan.timeframe === 'today') {
+            if (ss && ss !== 'ALL' && ['today', 'yesterday', 'by_day'].includes(ASNKeaktifan.timeframe)) {
                 const hasSesi = ast.hariIni.sesiSummary.some(s => s.namaSesi === ss || s.sesiId === ss);
                 if (!hasSesi) return false;
             }
@@ -671,7 +1089,10 @@
         const recordsEl = document.getElementById('keaktifan-stat-records');
         const recordsSubEl = document.getElementById('keaktifan-stat-records-sub');
 
-        if (tf === 'today') {
+        const isDaily = ['today', 'yesterday', 'by_day'].includes(tf);
+        const isWeekly = ['7d', 'by_week'].includes(tf);
+
+        if (isDaily) {
             const ontimeCount = rawList.filter(a => a.hariIni.sesiSummary.some(s => s.statusKepatuhan === 'ON_TIME')).length;
             const lateCount = rawList.filter(a => a.hariIni.sesiSummary.some(s => s.statusKepatuhan === 'LATE')).length;
             const missedCount = summary.ustadzLewatDeadline || 0;
@@ -681,12 +1102,12 @@
             if (rateEl) rateEl.innerText = `${summary.persenAktifHariIni || 0}%`;
             if (countEl) countEl.innerText = `${summary.ustadzAktifHariIni || 0} dari ${summary.totalUstadz || 0} asatidz aktif`;
             if (ontimeEl) ontimeEl.innerText = `${ontimeCount}`;
-            if (lateEl) lateEl.innerText = `+${lateCount} terlambat`;
+            if (lateEl) lateEl.innerText = tf === 'today' ? `+${lateCount} terlambat` : `${lateCount} terlambat`;
             if (missedEl) missedEl.innerText = `${missedCount}`;
             if (missedSubEl) missedSubEl.innerText = `belum menginput data`;
             if (recordsEl) recordsEl.innerText = `${totalSetoran + totalPresensi}`;
             if (recordsSubEl) recordsSubEl.innerText = `${totalSetoran} setoran • ${totalPresensi} presensi`;
-        } else if (tf === '7d') {
+        } else if (isWeekly) {
             const avg7d = rawList.length > 0 ? Math.round(rawList.reduce((acc, a) => acc + (a.pekanan.activePercentage || 0), 0) / rawList.length) : 0;
             const disciplinedCount = rawList.filter(a => (a.pekanan.activePercentage || 0) >= 75).length;
             const totalSetoran7d = rawList.reduce((acc, a) => acc + (a.pekanan.setoranCount || 0), 0);
@@ -694,14 +1115,14 @@
             const lowCount = rawList.filter(a => (a.pekanan.activePercentage || 0) < 50).length;
 
             if (rateEl) rateEl.innerText = `${avg7d}%`;
-            if (countEl) countEl.innerText = `Rata-rata keaktifan 7 hari`;
+            if (countEl) countEl.innerText = tf === 'by_week' ? `Rata-rata keaktifan pekanan` : `Rata-rata keaktifan 7 hari`;
             if (ontimeEl) ontimeEl.innerText = `${disciplinedCount}`;
             if (lateEl) lateEl.innerText = `keaktifan ≥ 75%`;
             if (missedEl) missedEl.innerText = `${lowCount}`;
             if (missedSubEl) missedSubEl.innerText = `keaktifan < 50%`;
             if (recordsEl) recordsEl.innerText = `${totalSetoran7d + totalPresensi7d}`;
             if (recordsSubEl) recordsSubEl.innerText = `${totalSetoran7d} setoran • ${totalPresensi7d} presensi`;
-        } else if (tf === '30d') {
+        } else {
             const avg30d = rawList.length > 0 ? Math.round(rawList.reduce((acc, a) => acc + (a.bulanan.activePercentage || 0), 0) / rawList.length) : 0;
             const disciplinedCount = rawList.filter(a => (a.bulanan.activePercentage || 0) >= 75).length;
             const totalSetoran30d = rawList.reduce((acc, a) => acc + (a.bulanan.setoranCount || 0), 0);
@@ -709,7 +1130,7 @@
             const lowCount = rawList.filter(a => (a.bulanan.activePercentage || 0) < 50).length;
 
             if (rateEl) rateEl.innerText = `${avg30d}%`;
-            if (countEl) countEl.innerText = `Rata-rata keaktifan 30 hari`;
+            if (countEl) countEl.innerText = tf === 'by_year' ? `Rata-rata keaktifan tahunan` : (tf === 'by_month' ? `Rata-rata keaktifan bulanan` : `Rata-rata keaktifan 30 hari`);
             if (ontimeEl) ontimeEl.innerText = `${disciplinedCount}`;
             if (lateEl) lateEl.innerText = `keaktifan ≥ 75%`;
             if (missedEl) missedEl.innerText = `${lowCount}`;
@@ -729,6 +1150,8 @@
 
         const list = ASNKeaktifan.filteredAsatidz || [];
         const tf = ASNKeaktifan.timeframe;
+        const isDaily = ['today', 'yesterday', 'by_day'].includes(tf);
+        const isWeekly = ['7d', 'by_week'].includes(tf);
 
         if (list.length === 0) {
             if (tbody) tbody.innerHTML = '';
@@ -746,7 +1169,7 @@
             let statusBadge = '';
             let rowAlertBg = '';
 
-            if (tf === 'today') {
+            if (isDaily) {
                 const h = ast.hariIni;
                 if (h.status === 'AKTIF_LENGKAP') {
                     statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><i class="fa-solid fa-circle-check text-emerald-600"></i> Tepat Waktu</span>';
@@ -761,7 +1184,7 @@
                     statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-400"><i class="fa-regular fa-clock"></i> Menunggu Sesi</span>';
                 }
             } else {
-                const stat = (tf === '7d') ? ast.pekanan : ast.bulanan;
+                const stat = isWeekly ? ast.pekanan : ast.bulanan;
                 const pct = stat.activePercentage || 0;
                 if (pct >= 75) {
                     statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><i class="fa-solid fa-star text-emerald-500"></i> Sangat Disiplin (${pct}%)</span>`;
@@ -779,7 +1202,7 @@
                 if (phoneNum.startsWith('0')) phoneNum = '62' + phoneNum.substring(1);
                 waButtonHtml = `
                     <button type="button" onclick="sendKeaktifanWhatsAppReminder('${phoneNum}', '${escapeHtml(ast.muhafiz)}')" 
-                        class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 transition active:scale-95" title="Kirim Pengingat WhatsApp">
+                        class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 transition active:scale-95 cursor-pointer" title="Kirim Pengingat WhatsApp">
                         <i class="fa-brands fa-whatsapp text-sm"></i>
                     </button>
                 `;
@@ -787,7 +1210,7 @@
 
             // Sesi mini pills
             let sesiPillsHtml = '';
-            if (tf === 'today') {
+            if (isDaily) {
                 const h = ast.hariIni;
                 h.sesiSummary.forEach(ss => {
                     let pBg = 'bg-slate-100 text-slate-500 dark:bg-[#1c2836] dark:text-slate-400';
@@ -813,8 +1236,8 @@
                     `;
                 });
             } else {
-                const stat = (tf === '7d') ? ast.pekanan : ast.bulanan;
-                const maxDays = (tf === '7d') ? 7 : 30;
+                const stat = isWeekly ? ast.pekanan : ast.bulanan;
+                const maxDays = isWeekly ? 7 : 30;
                 sesiPillsHtml = `
                     <div class="space-y-1">
                         <div class="flex justify-between items-baseline text-[10px] font-bold">
@@ -830,12 +1253,12 @@
 
             // --- 1. DESKTOP ROW (7 KOLOM) ---
             const h = ast.hariIni;
-            const stat = (tf === '7d') ? ast.pekanan : ast.bulanan;
-            const presensiDisplay = (tf === 'today') 
+            const stat = isWeekly ? ast.pekanan : ast.bulanan;
+            const presensiDisplay = isDaily 
                 ? (h.presensiSantriCount > 0 ? `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-check text-[10px]"></i> Sudah (${h.hadirSantriCount} Hadir)</span>` : `<span class="text-slate-400">Belum Ada</span>`)
                 : `<span class="font-bold text-slate-700 dark:text-slate-200">${stat.presensiCount || 0} Santri</span>`;
 
-            const setoranDisplay = (tf === 'today')
+            const setoranDisplay = isDaily
                 ? (h.setoranCount > 0 ? `<span class="text-emerald-600 font-bold">${h.setoranCount} Santri (${h.halamanCount} Hlm)</span>` : `<span class="text-slate-400">0 Santri</span>`)
                 : `<span class="font-bold text-emerald-600 dark:text-emerald-400">${stat.setoranCount || 0} Setoran (${stat.halamanCount || 0} Hlm)</span>`;
 
@@ -1084,7 +1507,9 @@
         }
 
         const tf = ASNKeaktifan.timeframe;
-        const tfLabel = tf === 'today' ? 'Hari_Ini' : (tf === '7d' ? '7_Hari' : '30_Hari');
+        const isDaily = ['today', 'yesterday', 'by_day'].includes(tf);
+        const isWeekly = ['7d', 'by_week'].includes(tf);
+        const tfLabel = (ASNKeaktifan.periodLabel && ASNKeaktifan.periodLabel.type) ? ASNKeaktifan.periodLabel.type.replace(/[\s\W]+/g, '_') : 'Periode';
         const dateStr = (ASNKeaktifan.data && ASNKeaktifan.data.serverDate) || new Date().toISOString().split('T')[0];
 
         let csvContent = "data:text/csv;charset=utf-8,";
@@ -1095,10 +1520,10 @@
             const statPkn = ast.pekanan;
             const statBln = ast.bulanan;
             
-            const statusTxt = tf === 'today' ? statHari.status : ((tf === '7d' ? statPkn.activePercentage : statBln.activePercentage) + '% Aktif');
-            const presensiTxt = tf === 'today' ? statHari.presensiSantriCount : ((tf === '7d' ? statPkn.presensiCount : statBln.presensiCount));
-            const setoranTxt = tf === 'today' ? statHari.setoranCount : ((tf === '7d' ? statPkn.setoranCount : statBln.setoranCount));
-            const hlmTxt = tf === 'today' ? statHari.halamanCount : ((tf === '7d' ? statPkn.halamanCount : statBln.halamanCount));
+            const statusTxt = isDaily ? statHari.status : ((isWeekly ? statPkn.activePercentage : statBln.activePercentage) + '% Aktif');
+            const presensiTxt = isDaily ? statHari.presensiSantriCount : (isWeekly ? statPkn.presensiCount : statBln.presensiCount);
+            const setoranTxt = isDaily ? statHari.setoranCount : (isWeekly ? statPkn.setoranCount : statBln.setoranCount);
+            const hlmTxt = isDaily ? statHari.halamanCount : (isWeekly ? statPkn.halamanCount : statBln.halamanCount);
 
             const row = [
                 idx + 1,
@@ -1135,6 +1560,16 @@
     // Expose Global Functions
     window.ASNKeaktifan = ASNKeaktifan;
     window.loadAdminKeaktifanAsatidz = loadAdminKeaktifanAsatidz;
+    window.toggleKeaktifanPeriodDropdown = toggleKeaktifanPeriodDropdown;
+    window.openKeaktifanPeriodDropdown = openKeaktifanPeriodDropdown;
+    window.closeKeaktifanPeriodDropdown = closeKeaktifanPeriodDropdown;
+    window.selectKeaktifanPeriodMenu = selectKeaktifanPeriodMenu;
+    window.applyKeaktifanPeriod = applyKeaktifanPeriod;
+    window.applyCustomDatePeriod = applyCustomDatePeriod;
+    window.applyWeekPeriod = applyWeekPeriod;
+    window.applyMonthPeriod = applyMonthPeriod;
+    window.applyYearPeriod = applyYearPeriod;
+    window.setCustomDatePickerVal = setCustomDatePickerVal;
     window.setKeaktifanTimeframe = setKeaktifanTimeframe;
     window.filterKeaktifanList = filterKeaktifanList;
     window.resetKeaktifanFilter = resetKeaktifanFilter;
