@@ -1146,42 +1146,42 @@
 
                         <!-- Indikator Izin Aktif -->
                         <div class="flex items-center space-x-2 pt-1 text-xs">
-                            <i class="fa-solid ${isSuperAdmin ? 'fa-crown text-purple-600 dark:text-purple-400' : 'fa-sliders text-emerald-600 dark:text-emerald-400'}"></i>
+                            <i class="fa-solid ${isSuperAdmin ? 'fa-crown text-purple-600 dark:text-purple-400' : 'fa-shield-halved text-emerald-600 dark:text-emerald-400'}"></i>
                             <span class="font-bold ${isSuperAdmin ? 'text-purple-700 dark:text-purple-300' : 'text-emerald-700 dark:text-emerald-400'}">
                                 ${permsText}
                             </span>
                         </div>
 
-                        <!-- Tombol Utama: Konfigurasi Izin (Sesuai Screenshot 2 KHODIM) -->
-                        <div>
+                        <!-- Aksi Kartu: Fokus Direktori Pengguna & Rincian Izin -->
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button type="button" onclick="filterAndShowUsersByRole('${key}')"
+                                class="w-full py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 active:scale-98 shadow-sm cursor-pointer"
+                                title="Lihat ${userCount} akun dengan peran ${role.shortName}">
+                                <i class="fa-solid fa-users text-xs"></i>
+                                <span>Lihat Akun</span>
+                            </button>
                             <button type="button" onclick="openRolePermissionsModal('${key}')"
-                                class="w-full py-2.5 px-4 rounded-2xl border border-emerald-600/70 hover:border-emerald-600 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-bold transition flex items-center justify-center space-x-2 active:scale-98 shadow-xs">
-                                <i class="fa-solid fa-sliders text-xs"></i>
-                                <span>Konfigurasi Izin</span>
+                                class="w-full py-2.5 px-3 rounded-2xl border border-slate-200 dark:border-[#253447] hover:border-indigo-400 dark:hover:border-indigo-500 bg-white hover:bg-slate-50 dark:bg-[#16222f] dark:hover:bg-[#1c2836] text-slate-700 dark:text-slate-200 text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-98 shadow-2xs cursor-pointer"
+                                title="Lihat rincian butir izin aktif untuk peran ${role.shortName}">
+                                <i class="fa-solid fa-list-check text-xs text-indigo-500"></i>
+                                <span>Rincian Izin</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Footer Kartu: Akun Pengguna Aktif & Aksi Rinci -->
-                    <div class="pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between">
-                        <div class="flex items-center space-x-1.5 text-slate-500 dark:text-slate-400 text-xs">
-                            <i class="fa-solid fa-users text-xs"></i>
+                    <!-- Footer Kartu: Status Akun & Profil Wewenang -->
+                    <div class="pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-1.5 text-slate-500 dark:text-slate-400">
+                            <span class="w-2 h-2 rounded-full ${userCount > 0 ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}"></span>
                             <span class="font-bold text-slate-700 dark:text-slate-200">${userCount}</span>
-                            <span class="text-[10px]">Akun Terdaftar</span>
+                            <span class="text-[11px]">Akun Terdaftar</span>
                         </div>
-                        <div class="flex items-center space-x-1.5">
-                            <button type="button" onclick="filterAndShowUsersByRole('${key}')"
-                                class="px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-[#1c2836] rounded-xl transition flex items-center space-x-1"
-                                title="Lihat daftar akun dengan peran ${role.shortName}">
-                                <span>Lihat Akun</span>
-                                <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                            </button>
-                            <button type="button" onclick="inspectRoleDetails('${key}')"
-                                class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 flex items-center justify-center transition active:scale-95"
-                                title="Detail Wewenang & Batasan">
-                                <i class="fa-solid fa-circle-info text-xs"></i>
-                            </button>
-                        </div>
+                        <button type="button" onclick="inspectRoleDetails('${key}')"
+                            class="text-[11px] font-semibold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 flex items-center space-x-1 transition cursor-pointer"
+                            title="Detail wewenang dan batasan peran">
+                            <span>Profil Wewenang</span>
+                            <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                        </button>
                     </div>
                 </div>
             `;
@@ -1335,10 +1335,10 @@
 
         // Update Header
         const titleEl = document.getElementById('role-perm-title');
-        if (titleEl) titleEl.innerText = `Konfigurasi Izin: ${role.name}`;
+        if (titleEl) titleEl.innerText = `Rincian Detail Izin: ${role.name}`;
 
         const subEl = document.getElementById('role-perm-subtitle');
-        if (subEl) subEl.innerText = `Role ID: ${role.key} • ${role.summary}`;
+        if (subEl) subEl.innerText = `Role ID: ${role.key} • Hak akses diatur terpusat via Matriks Izin di halaman utama.`;
 
         const iconEl = document.getElementById('role-perm-icon');
         if (iconEl) iconEl.className = `fa-solid ${role.icon}`;
