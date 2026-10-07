@@ -384,6 +384,22 @@
     }
 
     /**
+     * Filter cepat berdasarkan klik chip sesi pada timeline
+     */
+    function filterKeaktifanBySesi(namaSesi) {
+        const sesiSelect = document.getElementById('keaktifan-filter-session') || document.getElementById('keaktifan-filter-sesi');
+        if (sesiSelect) {
+            if (sesiSelect.value === namaSesi) {
+                sesiSelect.value = '';
+            } else {
+                sesiSelect.value = namaSesi;
+            }
+        }
+        filterKeaktifanList();
+        renderKeaktifanSessionTracker();
+    }
+
+    /**
      * Reset semua filter ke default
      */
     function resetKeaktifanFilter() {
@@ -558,7 +574,7 @@
             }
         }
 
-        // Render Cards Tracker Grid jika container tersedia
+        // Render Sesi Pills Tracker jika container tersedia
         if (container) {
             let html = '';
             sessions.forEach(s => {
@@ -566,49 +582,59 @@
                 let statusText = '';
                 let iconClass = '';
                 let cardBg = '';
+                let iconBg = '';
+                const isSelected = ASNKeaktifan.filter && (ASNKeaktifan.filter.sesi === s.namaSesi || ASNKeaktifan.filter.sesi === s.sesiId);
 
                 if (!s.isDayActive) {
-                    badgeColor = 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
-                    statusText = 'Libur Hari Ini';
+                    badgeColor = 'bg-slate-800 text-slate-400 border border-slate-700/50';
+                    statusText = 'Libur';
                     iconClass = 'fa-bed text-slate-400';
-                    cardBg = 'opacity-60 bg-slate-50 dark:bg-[#1c2836]/40 border-slate-200 dark:border-[#253447]';
+                    iconBg = 'bg-slate-800/80 text-slate-400';
+                    cardBg = 'bg-slate-900/60 border-slate-800 text-slate-400 opacity-60';
                 } else if (s.timelineStatus === 'PASSED_DEADLINE') {
-                    badgeColor = 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900';
-                    statusText = 'Lewat Deadline';
-                    iconClass = 'fa-clock-rotate-left text-rose-500';
-                    cardBg = 'bg-white dark:bg-[#15202d] border-rose-200/60 dark:border-rose-900/40';
+                    badgeColor = 'bg-rose-500/25 text-rose-300 border border-rose-500/40';
+                    statusText = 'Lewat';
+                    iconClass = 'fa-clock-rotate-left text-rose-400';
+                    iconBg = 'bg-rose-500/20 text-rose-300';
+                    cardBg = isSelected
+                        ? 'bg-rose-950/80 border-amber-400 ring-2 ring-amber-400 text-white'
+                        : 'bg-rose-950/40 border-rose-800/60 text-rose-100 hover:border-rose-500/80';
                 } else if (s.timelineStatus === 'IN_PROGRESS') {
-                    badgeColor = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 animate-pulse';
-                    statusText = 'Sedang Berjalan';
-                    iconClass = 'fa-play text-emerald-600';
-                    cardBg = 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 ring-2 ring-emerald-500/20';
+                    badgeColor = 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50 animate-pulse';
+                    statusText = 'Berjalan';
+                    iconClass = 'fa-play text-emerald-400';
+                    iconBg = 'bg-emerald-500/20 text-emerald-300 animate-pulse';
+                    cardBg = isSelected
+                        ? 'bg-emerald-950/80 border-amber-400 ring-2 ring-amber-400 text-white'
+                        : 'bg-emerald-950/50 border-emerald-600/70 text-emerald-100 hover:border-emerald-400';
                 } else {
-                    badgeColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-900';
-                    statusText = 'Menunggu Jam Sesi';
-                    iconClass = 'fa-hourglass-start text-blue-500';
-                    cardBg = 'bg-white dark:bg-[#15202d] border-slate-200 dark:border-[#253447]';
+                    badgeColor = 'bg-indigo-500/25 text-indigo-200 border border-indigo-500/40';
+                    statusText = 'Nanti';
+                    iconClass = 'fa-hourglass-start text-indigo-300';
+                    iconBg = 'bg-indigo-500/20 text-indigo-300';
+                    cardBg = isSelected
+                        ? 'bg-indigo-900/80 border-amber-400 ring-2 ring-amber-400 text-white'
+                        : 'bg-slate-800/70 border-indigo-800/50 text-slate-200 hover:border-indigo-500/70';
                 }
 
                 html += `
-                    <div class="p-3 rounded-2xl border ${cardBg} shadow-2xs space-y-1.5 transition-all">
-                        <div class="flex items-center justify-between gap-1.5">
-                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 truncate">${escapeHtml(s.jenisSesi || 'Tahfidz')}</span>
-                            <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold ${badgeColor} shrink-0">
-                                ${statusText}
-                            </span>
-                        </div>
-                        <div>
-                            <h5 class="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                                <i class="fa-solid ${iconClass} text-xs"></i>
-                                <span class="truncate">${escapeHtml(s.namaSesi)}</span>
-                            </h5>
-                            <div class="mt-1 flex items-baseline gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                                <span>${s.jamMulai}</span>
-                                <span class="text-slate-400">-</span>
-                                <span class="text-indigo-600 dark:text-indigo-400">${s.jamSelesai} WIB</span>
-                                <span class="text-[9px] font-normal text-slate-400">(Deadline)</span>
+                    <div class="px-2.5 py-1.5 rounded-xl border ${cardBg} shadow-2xs flex items-center gap-2 transition-all cursor-pointer select-none shrink-0"
+                         onclick="filterKeaktifanBySesi('${escapeHtml(s.namaSesi)}')"
+                         title="Klik untuk filter asatidz sesi ${escapeHtml(s.namaSesi)}">
+                        <span class="w-5 h-5 rounded-lg ${iconBg} flex items-center justify-center text-[9px] shrink-0">
+                            <i class="fa-solid ${iconClass}"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-[11px] font-black leading-tight text-white truncate max-w-[125px]">
+                                ${escapeHtml(s.namaSesi)}
+                            </div>
+                            <div class="text-[9px] font-bold text-slate-300 leading-tight">
+                                <span>${s.jamMulai}</span><span class="text-slate-400">-</span><span class="text-amber-300">${s.jamSelesai}</span>
                             </div>
                         </div>
+                        <span class="px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${badgeColor} shrink-0 ml-0.5">
+                            ${statusText}
+                        </span>
                     </div>
                 `;
             });
@@ -1121,5 +1147,6 @@
     window.exportKeaktifanXLSX = exportKeaktifanToExcel;
     window.printKeaktifanReport = printKeaktifanReport;
     window.printKeaktifanRekap = printKeaktifanReport;
+    window.filterKeaktifanBySesi = filterKeaktifanBySesi;
 
 })(window, document);

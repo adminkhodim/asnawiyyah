@@ -6779,33 +6779,29 @@
                     </div>
                 </div>
 
-                <!-- REALTIME DEADLINE & SESI BANNER -->
-                <div id="keaktifan-timeline-banner" class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white p-4 rounded-2xl shadow-sm border border-indigo-700/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div class="flex items-start md:items-center space-x-3.5">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-lg shrink-0">
+                <!-- UNIFIED REALTIME DEADLINE & SESI STRIP (KOMPAK & SLIM) -->
+                <div id="keaktifan-timeline-banner" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-3 sm:p-3.5 rounded-2xl shadow-sm border border-indigo-800/40 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3 shrink-0">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-base shrink-0">
                             <i class="fa-solid fa-stopwatch-20"></i>
                         </div>
                         <div>
                             <div class="flex items-center space-x-2">
-                                <span class="text-[10px] uppercase font-bold tracking-wider text-indigo-200">Patokan Deadline Harian: Jadwal & Sesi Tahfidz</span>
-                                <span id="keaktifan-deadline-status-pill" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-700 text-white">Memuat Sesi...</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider text-indigo-300">Patokan Deadline Harian</span>
+                                <span id="keaktifan-deadline-status-pill" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-700 text-white">Memuat Sesi...</span>
                             </div>
-                            <div class="text-sm font-semibold mt-0.5 flex flex-wrap items-center gap-x-2">
-                                <span>Sesi Hari Ini: <b id="keaktifan-active-session-text" class="text-amber-300">Memeriksa jadwal...</b></span>
-                                <span class="text-indigo-300">•</span>
-                                <span>Batas Jam Selesai: <b id="keaktifan-deadline-time-text" class="text-white">--:-- WIB</b></span>
+                            <div class="text-xs sm:text-sm font-semibold mt-0.5 flex flex-wrap items-center gap-x-2 text-slate-100">
+                                <span>Sesi: <b id="keaktifan-active-session-text" class="text-amber-300 font-extrabold">Memeriksa jadwal...</b></span>
+                                <span class="text-indigo-400">•</span>
+                                <span>Batas Selesai: <b id="keaktifan-deadline-time-text" class="text-white font-extrabold">--:-- WIB</b></span>
                             </div>
                         </div>
                     </div>
-                    <div class="text-xs text-indigo-200/90 bg-indigo-950/40 px-3 py-2 rounded-xl border border-indigo-700/40 md:max-w-md">
-                        <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>
-                        Status kepatuhan otomatis dideteksi dari aktivitas setoran atau presensi sebelum jam selesai sesi berakhir.
-                    </div>
-                </div>
 
-                <!-- LIVE SESSIONS CARDS TRACKER -->
-                <div id="keaktifan-sessions-tracker-container" class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                    <!-- Injected dynamically by js/keaktifan-asatidz.js -->
+                    <!-- Horizontal Sesi Pills Container (Terpadu Ringkas) -->
+                    <div id="keaktifan-sessions-tracker-container" class="flex flex-wrap sm:flex-nowrap items-center gap-2 overflow-x-auto">
+                        <!-- Injected dynamically by js/keaktifan-asatidz.js -->
+                    </div>
                 </div>
 
                 <!-- STATS KPI CARDS -->
