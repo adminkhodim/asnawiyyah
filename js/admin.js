@@ -447,6 +447,72 @@
         }
         window.triggerProgramStaggerAnimation = triggerProgramStaggerAnimation;
 
+        function triggerBeritaStaggerAnimation() {
+            const v = document.getElementById('admin-view-berita');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerBeritaStaggerAnimation = triggerBeritaStaggerAnimation;
+
+        function triggerBannerStaggerAnimation() {
+            const v = document.getElementById('admin-view-banner');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerBannerStaggerAnimation = triggerBannerStaggerAnimation;
+
+        function triggerGaleriStaggerAnimation() {
+            const v = document.getElementById('admin-view-galeri');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerGaleriStaggerAnimation = triggerGaleriStaggerAnimation;
+
+        function triggerUnitKegiatanStaggerAnimation() {
+            const v = document.getElementById('admin-view-unit-kegiatan');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerUnitKegiatanStaggerAnimation = triggerUnitKegiatanStaggerAnimation;
+
+        function triggerJadwalKegiatanStaggerAnimation() {
+            const v = document.getElementById('admin-view-jadwal-kegiatan');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerJadwalKegiatanStaggerAnimation = triggerJadwalKegiatanStaggerAnimation;
+
+        function triggerNotifikasiStaggerAnimation() {
+            const v = document.getElementById('admin-view-notifikasi');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerNotifikasiStaggerAnimation = triggerNotifikasiStaggerAnimation;
+
         function refreshAdminAnalyticsData() {
             const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
             const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
@@ -589,9 +655,15 @@
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
+                if (typeof triggerBeritaStaggerAnimation === 'function') {
+                    triggerBeritaStaggerAnimation();
+                }
                 renderAdminNewsList();
             } else if (viewName === 'banner') {
                 bannerView.classList.remove('hidden');
+                if (typeof triggerBannerStaggerAnimation === 'function') {
+                    triggerBannerStaggerAnimation();
+                }
                 renderAdminBannerList();
             } else if (viewName === 'users') {
                 if (usersView) usersView.classList.remove('hidden');
@@ -651,9 +723,15 @@
                 }
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');
+                if (typeof triggerNotifikasiStaggerAnimation === 'function') {
+                    triggerNotifikasiStaggerAnimation();
+                }
                 loadAdminNotifikasi();
             } else if (viewName === 'galeri') {
                 if (galeriView) galeriView.classList.remove('hidden');
+                if (typeof triggerGaleriStaggerAnimation === 'function') {
+                    triggerGaleriStaggerAnimation();
+                }
                 renderAdminGaleriList();
             } else if (viewName === 'pengaturan') {
                 if (pengaturanView) pengaturanView.classList.remove('hidden');
@@ -675,9 +753,15 @@
                 loadAdminProfilLembaga();
             } else if (viewName === 'unit-kegiatan') {
                 if (unitKegiatanView) unitKegiatanView.classList.remove('hidden');
+                if (typeof triggerUnitKegiatanStaggerAnimation === 'function') {
+                    triggerUnitKegiatanStaggerAnimation();
+                }
                 renderAdminUnitKegiatanList();
             } else if (viewName === 'jadwal-kegiatan') {
                 if (jadwalKegiatanView) jadwalKegiatanView.classList.remove('hidden');
+                if (typeof triggerJadwalKegiatanStaggerAnimation === 'function') {
+                    triggerJadwalKegiatanStaggerAnimation();
+                }
                 loadJadwalKegiatan();
             } else if (viewName === 'alumni') {
                 if (alumniView) alumniView.classList.remove('hidden');
@@ -1386,6 +1470,24 @@
 
             if (hubBadge) hubBadge.innerText = `${mockNewsData.length} Berita`;
             if (totalBadge) totalBadge.innerText = `${mockNewsData.length} Berita`;
+
+            // Update KPI Cards
+            const kpiTotal = document.getElementById('admin-berita-kpi-total');
+            const kpiPublished = document.getElementById('admin-berita-kpi-published');
+            const kpiCategories = document.getElementById('admin-berita-kpi-categories');
+            const kpiViews = document.getElementById('admin-berita-kpi-views');
+
+            if (kpiTotal) kpiTotal.innerText = mockNewsData.length;
+            if (kpiPublished) kpiPublished.innerText = mockNewsData.length;
+            if (kpiCategories) {
+                const uniqueCats = new Set(mockNewsData.map(n => n.kategori).filter(Boolean));
+                kpiCategories.innerText = uniqueCats.size || 1;
+            }
+            if (kpiViews) {
+                const totalViews = mockNewsData.reduce((acc, n) => acc + (parseInt(n.views) || 0), 0);
+                kpiViews.innerText = totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews;
+            }
+
             if (!container) return;
 
             container.innerHTML = "";
@@ -2220,6 +2322,20 @@
             if (hubBadge) hubBadge.innerText = `${activeCount} Aktif`;
             if (totalBadge) totalBadge.innerText = `${mockBannerData.length} Banner`;
 
+            // Update KPI Cards
+            const bannerKpiTotal = document.getElementById('admin-banner-kpi-total');
+            const bannerKpiActive = document.getElementById('admin-banner-kpi-active');
+            const bannerKpiInteractive = document.getElementById('admin-banner-kpi-interactive');
+            const bannerKpiInactive = document.getElementById('admin-banner-kpi-inactive');
+
+            if (bannerKpiTotal) bannerKpiTotal.innerText = mockBannerData.length;
+            if (bannerKpiActive) bannerKpiActive.innerText = activeCount;
+            if (bannerKpiInteractive) {
+                const interactiveCount = mockBannerData.filter(b => b.tipeAksi && b.tipeAksi !== 'none').length;
+                bannerKpiInteractive.innerText = interactiveCount;
+            }
+            if (bannerKpiInactive) bannerKpiInactive.innerText = mockBannerData.length - activeCount;
+
             if (!listContainer) return;
             listContainer.innerHTML = "";
 
@@ -2469,6 +2585,20 @@
             const activeCount = mockGaleriData.filter(g => g.status === "Aktif").length;
             if (hubBadge) hubBadge.innerText = `${activeCount} Aktif`;
             if (totalBadge) totalBadge.innerText = `${mockGaleriData.length} Foto`;
+
+            // Update KPI Cards
+            const galeriKpiTotal = document.getElementById('admin-galeri-kpi-total');
+            const galeriKpiActive = document.getElementById('admin-galeri-kpi-active');
+            const galeriKpiCategories = document.getElementById('admin-galeri-kpi-categories');
+            const galeriKpiDraft = document.getElementById('admin-galeri-kpi-draft');
+
+            if (galeriKpiTotal) galeriKpiTotal.innerText = mockGaleriData.length;
+            if (galeriKpiActive) galeriKpiActive.innerText = activeCount;
+            if (galeriKpiCategories) {
+                const uniqueCats = new Set(mockGaleriData.map(g => g.kategori).filter(Boolean));
+                galeriKpiCategories.innerText = uniqueCats.size || 1;
+            }
+            if (galeriKpiDraft) galeriKpiDraft.innerText = mockGaleriData.length - activeCount;
 
             if (!listContainer) return;
             listContainer.innerHTML = "";
@@ -2752,6 +2882,23 @@
             const activeCount = mockUnitKegiatanData.filter(item => item.status === "Aktif").length;
             if (hubBadge) hubBadge.innerText = `${activeCount} Aktif`;
             if (countBadge) countBadge.innerText = `${mockUnitKegiatanData.length} Unit`;
+
+            // Update KPI Cards
+            const uksKpiTotal = document.getElementById('admin-uks-kpi-total');
+            const uksKpiActive = document.getElementById('admin-uks-kpi-active');
+            const uksKpiCategories = document.getElementById('admin-uks-kpi-categories');
+            const uksKpiMentors = document.getElementById('admin-uks-kpi-mentors');
+
+            if (uksKpiTotal) uksKpiTotal.innerText = mockUnitKegiatanData.length;
+            if (uksKpiActive) uksKpiActive.innerText = activeCount;
+            if (uksKpiCategories) {
+                const uniqueCats = new Set(mockUnitKegiatanData.map(u => u.kategori).filter(Boolean));
+                uksKpiCategories.innerText = uniqueCats.size || 1;
+            }
+            if (uksKpiMentors) {
+                const mentorCount = mockUnitKegiatanData.filter(u => u.pembina && u.pembina.trim()).length;
+                uksKpiMentors.innerText = mentorCount;
+            }
 
             if (!container) return;
             container.innerHTML = "";
@@ -3242,6 +3389,17 @@
             if (countMingguan) countMingguan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'mingguan').length;
             if (countBulanan) countBulanan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'bulanan').length;
             if (countTahunan) countTahunan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'tahunan').length;
+
+            // Update KPI Cards
+            const jdwKpiTotal = document.getElementById('admin-jadwal-kpi-total');
+            const jdwKpiHarian = document.getElementById('admin-jadwal-kpi-harian');
+            const jdwKpiMingguan = document.getElementById('admin-jadwal-kpi-mingguan');
+            const jdwKpiPeriodik = document.getElementById('admin-jadwal-kpi-periodik');
+
+            if (jdwKpiTotal) jdwKpiTotal.innerText = mockJadwalKegiatanData.length;
+            if (jdwKpiHarian) jdwKpiHarian.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'harian').length;
+            if (jdwKpiMingguan) jdwKpiMingguan.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'mingguan').length;
+            if (jdwKpiPeriodik) jdwKpiPeriodik.innerText = mockJadwalKegiatanData.filter(j => j.tipe === 'bulanan' || j.tipe === 'tahunan').length;
 
             if (!container) return;
 
@@ -4895,6 +5053,20 @@
             if (countAktifEl) countAktifEl.innerText = aktifCount;
             if (countNonaktifEl) countNonaktifEl.innerText = nonaktifCount;
             if (countBadge) countBadge.innerText = `${totalCount} Warta`;
+
+            // Update KPI Cards
+            const notifKpiTotal = document.getElementById('admin-notif-kpi-total');
+            const notifKpiActive = document.getElementById('admin-notif-kpi-active');
+            const notifKpiPopup = document.getElementById('admin-notif-kpi-popup');
+            const notifKpiInactive = document.getElementById('admin-notif-kpi-inactive');
+
+            if (notifKpiTotal) notifKpiTotal.innerText = totalCount;
+            if (notifKpiActive) notifKpiActive.innerText = aktifCount;
+            if (notifKpiPopup) {
+                const popupCount = adminNotifikasiList.filter(n => Boolean(n.is_popup === true || n.is_popup === 1 || String(n.is_popup) === "1" || String(n.is_popup).toLowerCase() === "true" || n.isPopup === true || n.isPopup === 1 || String(n.isPopup) === "1" || String(n.isPopup).toLowerCase() === "true" || n.popupBeranda)).length;
+                notifKpiPopup.innerText = popupCount;
+            }
+            if (notifKpiInactive) notifKpiInactive.innerText = nonaktifCount;
 
             let filtered = adminNotifikasiList;
 

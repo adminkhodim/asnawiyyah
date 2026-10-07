@@ -5250,7 +5250,7 @@
             <div id="admin-view-berita" class="hidden space-y-4">
                 <!-- Header Sub-View -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -5259,18 +5259,101 @@
                         </button>
                         <div>
                             <span
-                                class="text-[10px] font-extrabold text-brand-700 uppercase tracking-widest block">Dashboard
+                                class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block">Dashboard
                                 Admin</span>
                             <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Berita & Publikasi</h2>
                         </div>
                     </div>
                 </div>
 
+                <!-- CARDS RINGKASAN DATA BERITA (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Berita (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#059669] to-[#047857] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL BERITA</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-newspaper"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-news-kpi-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Berita ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Katalog publikasi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Katalog Warta</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Total Pembaca (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL PEMBACA</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-news-kpi-views">0</span>
+                                <span class="text-xs font-bold text-white/80">Views</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Akumulasi pembaca</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-sky-700 font-black shadow-xs shrink-0 text-[9px]">Pembaca</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Kategori Berita (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">KATEGORI RUBRIK</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-tags"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-news-kpi-categories">0</span>
+                                <span class="text-xs font-bold text-white/80">Topik</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Rubrik berita aktif</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Rubrikasi</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Penulis / Redaksi (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">REDAKSI PENULIS</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-feather-pointed"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-news-kpi-authors">0</span>
+                                <span class="text-xs font-bold text-white/80">Penulis</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Kontributor aktif</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-700 font-black shadow-xs shrink-0 text-[9px]">Kontributor</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- FORMULIR INPUT BERITA -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
                         <h3 id="admin-form-title"
-                            class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-pen-to-square text-brand-700 mr-2"></i> Tambah Berita Baru
                         </h3>
                         <button type="button" id="admin-cancel-edit-btn" onclick="resetAdminNewsForm()"
@@ -5436,9 +5519,9 @@
                 </section>
 
                 <!-- DAFTAR BERITA TERBIT -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
                     <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-2.5">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-list-check text-brand-700 mr-2"></i> Daftar Berita Terbit
                         </h3>
                         <span id="admin-total-news"
@@ -5455,7 +5538,7 @@
 
                 <!-- Header Sub-View Banner -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -5464,7 +5547,7 @@
                         </button>
                         <div>
                             <span
-                                class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest block">Dashboard
+                                class="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">Dashboard
                                 Admin</span>
                             <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Pengaturan Banner Slider Beranda
                             </h2>
@@ -5472,11 +5555,94 @@
                     </div>
                 </div>
 
+                <!-- CARDS RINGKASAN DATA BANNER (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Banner (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL BANNER</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-images"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-banner-kpi-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Banner ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Koleksi slider</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Semua Slider</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Banner Aktif (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">BANNER AKTIF</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-banner-kpi-active">0</span>
+                                <span class="text-xs font-bold text-white/80">Tayang</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Tampil di beranda utama</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Slider Aktif</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Draft / Nonaktif (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">DRAFT / NONAKTIF</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-eye-slash"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-banner-kpi-draft">0</span>
+                                <span class="text-xs font-bold text-white/80">Draft</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Disimpan sementara</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-700 font-black shadow-xs shrink-0 text-[9px]">Disimpan</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Interaktif / Tautan (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TAUTAN AKSI</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-banner-kpi-interactive">0</span>
+                                <span class="text-xs font-bold text-white/80">Tautan</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Memiliki aksi klik</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-sky-700 font-black shadow-xs shrink-0 text-[9px]">Aksi Cepat</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- FORMULIR TAMBAH / EDIT BANNER -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
                         <h3 id="admin-banner-form-title"
-                            class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-plus-circle text-amber-600 mr-2"></i> Tambah Banner Baru
                         </h3>
                         <button type="button" id="admin-cancel-banner-edit-btn" onclick="resetAdminBannerForm()"
@@ -5589,9 +5755,9 @@
                 </section>
 
                 <!-- DAFTAR BANNER TERPASANG -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
                     <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-2.5">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-layer-group text-amber-600 mr-2"></i> Daftar Banner Slider Terpasang
                         </h3>
                         <span id="admin-total-banners"
@@ -5610,7 +5776,7 @@
 
                 <!-- Header Sub-View Galeri -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -5618,16 +5784,102 @@
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
                         <div>
+                            <span
+                                class="text-[10px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-widest block">Dashboard
+                                Admin</span>
                             <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Galeri</h2>
                         </div>
                     </div>
                 </div>
 
+                <!-- CARDS RINGKASAN DATA GALERI (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Foto (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL FOTO</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-camera-retro"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-galeri-kpi-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Foto ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Koleksi dokumentasi</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-700 font-black shadow-xs shrink-0 text-[9px]">Dokumentasi</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Foto Aktif (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">FOTO TAYANG</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-galeri-kpi-active">0</span>
+                                <span class="text-xs font-bold text-white/80">Tayang</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Tampil di web publik</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Galeri Aktif</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Kategori Album (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">KATEGORI ALBUM</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-galeri-kpi-categories">0</span>
+                                <span class="text-xs font-bold text-white/80">Album</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Kelompok album foto</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-sky-700 font-black shadow-xs shrink-0 text-[9px]">Album</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Draft / Simpanan (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">DRAFT / SIMPANAN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-box-archive"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-galeri-kpi-draft">0</span>
+                                <span class="text-xs font-bold text-white/80">Draft</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Foto belum tayang</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Simpanan</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Formulir Input Galeri -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
                         <h3 id="admin-galeri-form-title"
-                            class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-camera text-purple-700 mr-2"></i> Tambah Foto Galeri
                         </h3>
                         <button type="button" id="admin-cancel-galeri-btn" onclick="resetAdminGaleriForm()"
@@ -5715,9 +5967,9 @@
                 </section>
 
                 <!-- Daftar Galeri -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-7">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
+                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-images text-slate-400 mr-2"></i> Daftar Foto Galeri
                         </h3>
                         <span id="admin-total-galeri"
@@ -7758,28 +8010,111 @@
             <!-- ================= VIEW 6: MODUL MANAJEMEN UNIT KEGIATAN SANTRI (UKS) ================= -->
             <div id="admin-view-unit-kegiatan" class="hidden space-y-4">
                 <!-- Header Sub-View -->
-                <div class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
                         <div>
-                            <span class="text-[10px] font-extrabold text-teal-700 uppercase tracking-widest block">Dashboard Admin</span>
+                            <span class="text-[10px] font-extrabold text-teal-700 dark:text-teal-400 uppercase tracking-widest block">Dashboard Admin</span>
                             <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Manajemen Unit Kegiatan Santri (UKS)</h2>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button type="button" onclick="loadUnitKegiatan()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                        <button type="button" onclick="loadUnitKegiatan()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
                             <i class="fa-solid fa-rotate text-xs"></i>
                             <span class="hidden sm:inline">Refresh</span>
                         </button>
                     </div>
                 </div>
 
+                <!-- CARDS RINGKASAN DATA UKS (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Unit UKS (Teal Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0d9488] to-[#0f766e] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-teal-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL UNIT UKS</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-people-roof"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-uks-kpi-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Unit ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Katalog ekstrakurikuler</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-teal-700 font-black shadow-xs shrink-0 text-[9px]">Katalog UKS</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Unit Aktif (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">UNIT AKTIF</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-uks-kpi-active">0</span>
+                                <span class="text-xs font-bold text-white/80">Aktif</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Kegiatan aktif berjalan</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Berjalan</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Divisi / Bidang (Indigo Gradient) -->
+                    <div class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">BIDANG PEMINATAN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-uks-kpi-categories">0</span>
+                                <span class="text-xs font-bold text-white/80">Bidang</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Seni, literasi, olahraga</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-indigo-700 font-black shadow-xs shrink-0 text-[9px]">Peminatan</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Pembina Terdata (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">PEMBINA TERDATA</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-uks-kpi-mentors">0</span>
+                                <span class="text-xs font-bold text-white/80">Pembina</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Asatidz & pelatih UKS</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Pendamping</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- FORM TAMBAH / EDIT UNIT KEGIATAN -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                        <h3 id="admin-uks-form-title" class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
+                    <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-3">
+                        <h3 id="admin-uks-form-title" class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-plus-circle text-teal-600 mr-2"></i> Tambah Unit Kegiatan Baru
                         </h3>
                         <button id="admin-uks-cancel-edit-btn" onclick="resetAdminUnitKegiatanForm()" type="button" class="hidden text-xs text-rose-600 hover:underline font-semibold flex items-center gap-1">
@@ -7854,10 +8189,10 @@
                 </section>
 
                 <!-- DAFTAR UNIT KEGIATAN -->
-                <section class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 dark:border-[#253447] pb-3">
                         <div class="flex items-center space-x-2">
-                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                                 <i class="fa-solid fa-list-check text-teal-600 mr-2"></i> Daftar Unit Kegiatan Santri
                             </h3>
                             <span id="admin-uks-list-count" class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-lg">0 Unit</span>
@@ -7888,7 +8223,7 @@
             <!-- ================= VIEW: MODUL MANAJEMEN JADWAL KEGIATAN SANTRI ================= -->
             <div id="admin-view-jadwal-kegiatan" class="hidden space-y-4">
                 <!-- Header Sub-View -->
-                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
@@ -7913,8 +8248,91 @@
                     </div>
                 </div>
 
+                <!-- CARDS RINGKASAN DATA JADWAL KEGIATAN (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Agenda (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#059669] to-[#047857] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL AGENDA</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-jadwal-kpi-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Agenda ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Jadwal pesantren</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Jadwal Santri</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Agenda Harian (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">AGENDA HARIAN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-jadwal-kpi-harian">0</span>
+                                <span class="text-xs font-bold text-white/80">Harian</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Rutinitas santri</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-sky-700 font-black shadow-xs shrink-0 text-[9px]">Rutinitas</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Agenda Mingguan (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">AGENDA MINGGUAN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-calendar-week"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-jadwal-kpi-mingguan">0</span>
+                                <span class="text-xs font-bold text-white/80">Mingguan</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Kajian & siklus pekanan</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Pekanan</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Periodik / Khusus (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">PERIODIK & KHUSUS</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-jadwal-kpi-periodik">0</span>
+                                <span class="text-xs font-bold text-white/80">Periodik</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Bulanan & event tahunan</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-700 font-black shadow-xs shrink-0 text-[9px]">Event Khusus</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Filter Tab & Search Bar -->
-                <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                <div class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <!-- Sub-tab Filter Chips -->
                         <div class="flex p-1 bg-slate-100 dark:bg-[#1c2836] rounded-xl gap-1 overflow-x-auto custom-scrollbar">
@@ -7934,7 +8352,7 @@
                 </div>
 
                 <!-- List Agenda Cards / Table Container -->
-                <div id="admin-jadwal-kegiatan-list-container" class="space-y-3">
+                <div id="admin-jadwal-kegiatan-list-container" class="space-y-3 animate-fade-in-up stagger-7">
                     <!-- Dimuat oleh JavaScript -->
                 </div>
             </div>
@@ -7942,7 +8360,7 @@
             <!-- ==================== VIEW 9: MANAJEMEN NOTIFIKASI & POP-UP BERANDA ==================== -->
             <div id="admin-view-notifikasi" class="hidden space-y-4">
                 <!-- Header Sub-View -->
-                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -7959,8 +8377,91 @@
                     </div>
                 </div>
 
+                <!-- CARDS RINGKASAN DATA NOTIFIKASI (BERWARNA VIBRANT PERSIS DASHBOARD UTAMA) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Warta (Rose Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f43f5e] to-[#e11d48] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-rose-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL WARTA</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-notif-kpi-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Warta ↑</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Semua notifikasi dibuat</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-rose-700 font-black shadow-xs shrink-0 text-[9px]">Arsip Warta</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Warta Aktif (Emerald Gradient) -->
+                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">WARTA AKTIF</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-notif-kpi-active">0</span>
+                                <span class="text-xs font-bold text-white/80">Aktif</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Tayang di aplikasi santri</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Tayang</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Pop-up Muncul (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">POP-UP MODAL</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-window-restore"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-notif-kpi-popup">0</span>
+                                <span class="text-xs font-bold text-white/80">Pop-up</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Auto dialog beranda</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-700 font-black shadow-xs shrink-0 text-[9px]">Pop-up</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Nonaktif / Diarsipkan (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">NONAKTIF</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-notif-kpi-inactive">0</span>
+                                <span class="text-xs font-bold text-white/80">Nonaktif</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Selesai masa tayang</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-700 font-black shadow-xs shrink-0 text-[9px]">Arsip</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- FORMULIR INPUT / EDIT NOTIFIKASI -->
-                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
                     <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
                         <h3 id="admin-notif-form-title" class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
                             <i class="fa-solid fa-bullhorn text-rose-600 mr-2"></i> Tambah Notifikasi Baru
@@ -8065,7 +8566,7 @@
                 </section>
 
                 <!-- DAFTAR NOTIFIKASI TERSIMPAN -->
-                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-slate-100 dark:border-[#253447] pb-3">
                         <div class="flex items-center space-x-2">
                             <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Daftar Notifikasi</h3>
