@@ -351,6 +351,30 @@
         }
         window.triggerTahfidzStaggerAnimation = triggerTahfidzStaggerAnimation;
 
+        function triggerSantriStaggerAnimation() {
+            const santriView = document.getElementById('admin-view-santri');
+            if (!santriView) return;
+            const animatedElements = santriView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerSantriStaggerAnimation = triggerSantriStaggerAnimation;
+
+        function triggerAlumniStaggerAnimation() {
+            const alumniView = document.getElementById('admin-view-alumni');
+            if (!alumniView) return;
+            const animatedElements = alumniView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerAlumniStaggerAnimation = triggerAlumniStaggerAnimation;
+
         function refreshAdminAnalyticsData() {
             const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
             const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
@@ -507,6 +531,9 @@
                 }
             } else if (viewName === 'santri') {
                 if (santriView) santriView.classList.remove('hidden');
+                if (typeof triggerSantriStaggerAnimation === 'function') {
+                    triggerSantriStaggerAnimation();
+                }
                 loadAdminStudentsData();
             } else if (viewName === 'pegawai') {
                 if (pegawaiView) pegawaiView.classList.remove('hidden');
@@ -564,6 +591,9 @@
                 loadJadwalKegiatan();
             } else if (viewName === 'alumni') {
                 if (alumniView) alumniView.classList.remove('hidden');
+                if (typeof triggerAlumniStaggerAnimation === 'function') {
+                    triggerAlumniStaggerAnimation();
+                }
                 loadAdminAlumniData();
             } else {
                 hubView.classList.remove('hidden');
