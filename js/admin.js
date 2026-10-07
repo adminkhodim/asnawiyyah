@@ -667,6 +667,9 @@
                 if (typeof triggerBannerStaggerAnimation === 'function') {
                     triggerBannerStaggerAnimation();
                 }
+                if (typeof toggleAdminBannerForm === 'function' && !document.getElementById('admin-banner-id')?.value) {
+                    toggleAdminBannerForm(false);
+                }
                 renderAdminBannerList();
             } else if (viewName === 'users') {
                 if (usersView) usersView.classList.remove('hidden');
@@ -2431,79 +2434,168 @@
             }
         }
 
-        function renderAdminBannerList() {
+        let isAdminBannerFormOpen = false;
+        let currentAdminBannerStatusFilter = 'all';
+
+        function toggleAdminBannerForm(forceState = null) {
+            const formSection = document.getElementById('admin-banner-form-section');
+            const toggleIcon = document.getElementById('admin-banner-toggle-icon');
+            const toggleText = document.getElementById('admin-banner-toggle-text');
+            const toggleBtn = document.getElementById('admin-banner-toggle-btn');
+            if (!formSection) return;
+
+            if (forceState !== null) {
+                isAdminBannerFormOpen = forceState;
+            } else {
+                isAdminBannerFormOpen = !isAdminBannerFormOpen;
+            }
+
+            if (isAdminBannerFormOpen) {
+                formSection.classList.remove('hidden');
+                if (toggleIcon) toggleIcon.className = "fa-solid fa-chevron-up text-xs";
+                if (toggleText) toggleText.innerText = "Tutup Form Banner";
+                if (toggleBtn) {
+                    toggleBtn.className = "px-3.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95";
+                }
+                formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(() => {
+                    const namaInput = document.getElementById('admin-banner-nama');
+                    if (namaInput) namaInput.focus();
+                }, 250);
+            } else {
+                formSection.classList.add('hidden');
+                if (toggleIcon) toggleIcon.className = "fa-solid fa-plus text-xs";
+                if (toggleText) toggleText.innerText = "Tambah Banner Baru";
+                if (toggleBtn) {
+                    toggleBtn.className = "px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm active:scale-95";
+                }
+            }
+        }
+        window.toggleAdminBannerForm = toggleAdminBannerForm;
+
+        function setAdminBannerStatusFilter(status) {
+            currentAdminBannerStatusFilter = status;
+            document.querySelectorAll('.admin-banner-filter-chip').forEach(btn => {
+                const s = btn.getAttribute('data-banner-status');
+                if (s === status) {
+                    btn.className = "admin-banner-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-amber-500 text-slate-900 shadow-sm transition shrink-0";
+                } else {
+                    btn.className = "admin-banner-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0";
+                }
+            });
+            filterAdminBannerList();
+        }
+        window.setAdminBannerStatusFilter = setAdminBannerStatusFilter;
+
+        function filterAdminBannerList() {
+            const searchInput = document.getElementById('admin-banner-search');
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+            let filtered = mockBannerData || [];
+
+            if (currentAdminBannerStatusFilter && currentAdminBannerStatusFilter !== 'all') {
+                filtered = filtered.filter(b => (b.status || 'Aktif').toLowerCase() === currentAdminBannerStatusFilter.toLowerCase());
+            }
+
+            if (query) {
+                filtered = filtered.filter(b => 
+                    (b.nama || '').toLowerCase().includes(query) ||
+                    (b.targetAksi || '').toLowerCase().includes(query) ||
+                    (b.tipeAksi || '').toLowerCase().includes(query)
+                );
+            }
+
+            renderAdminBannerList(filtered);
+        }
+        window.filterAdminBannerList = filterAdminBannerList;
+
+        function renderAdminBannerList(itemsToRender = null) {
             const listContainer = document.getElementById('admin-banner-list');
             const totalBadge = document.getElementById('admin-total-banners');
             const hubBadge = document.getElementById('admin-hub-banner-count');
+            const emptyState = document.getElementById('admin-banner-empty-state');
 
-            const activeCount = mockBannerData.filter(b => b.status === "Aktif").length;
+            const totalBanners = Array.isArray(mockBannerData) ? mockBannerData.length : 0;
+            const activeCount = (mockBannerData || []).filter(b => b.status === "Aktif").length;
             if (hubBadge) hubBadge.innerText = `${activeCount} Aktif`;
-            if (totalBadge) totalBadge.innerText = `${mockBannerData.length} Banner`;
+            if (totalBadge) totalBadge.innerText = `${totalBanners} Banner`;
 
             // Update KPI Cards
             const bannerKpiTotal = document.getElementById('admin-banner-kpi-total');
             const bannerKpiActive = document.getElementById('admin-banner-kpi-active');
             const bannerKpiInteractive = document.getElementById('admin-banner-kpi-interactive');
-            const bannerKpiInactive = document.getElementById('admin-banner-kpi-inactive');
+            const bannerKpiInactive = document.getElementById('admin-banner-kpi-inactive') || document.getElementById('admin-banner-kpi-draft');
 
-            if (bannerKpiTotal) bannerKpiTotal.innerText = mockBannerData.length;
+            if (bannerKpiTotal) bannerKpiTotal.innerText = totalBanners;
             if (bannerKpiActive) bannerKpiActive.innerText = activeCount;
             if (bannerKpiInteractive) {
-                const interactiveCount = mockBannerData.filter(b => b.tipeAksi && b.tipeAksi !== 'none').length;
+                const interactiveCount = (mockBannerData || []).filter(b => b.tipeAksi && b.tipeAksi !== 'none').length;
                 bannerKpiInteractive.innerText = interactiveCount;
             }
-            if (bannerKpiInactive) bannerKpiInactive.innerText = mockBannerData.length - activeCount;
+            if (bannerKpiInactive) bannerKpiInactive.innerText = totalBanners - activeCount;
 
             if (!listContainer) return;
-            listContainer.innerHTML = "";
 
-            mockBannerData.forEach((banner, idx) => {
-                const card = document.createElement('div');
-                card.className = "p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2.5";
+            const list = itemsToRender !== null ? itemsToRender : (mockBannerData || []);
 
-                const statusBadge = banner.status === "Aktif"
-                    ? `<span class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">Aktif</span>`
-                    : `<span class="text-[9px] font-extrabold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md uppercase">Nonaktif</span>`;
+            if (list.length === 0) {
+                listContainer.innerHTML = "";
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
 
-                let actionInfo = "Tidak ada aksi";
-                if (banner.tipeAksi === "tab") actionInfo = `Buka Tab: <strong>#${banner.targetAksi}</strong>`;
-                if (banner.tipeAksi === "url") actionInfo = `Tautan: <strong class="truncate block max-w-[150px]">${banner.targetAksi}</strong>`;
+            if (emptyState) emptyState.classList.add('hidden');
 
-                card.innerHTML = `
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center space-x-2.5 min-w-0">
-                            <span class="w-6 h-6 bg-amber-100 text-amber-800 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                                ${banner.urutan}
-                            </span>
-                            <div class="min-w-0">
-                                <h4 class="text-xs font-bold text-slate-800 truncate">${banner.nama}</h4>
-                                <p class="text-[10px] text-slate-400 mt-0.5">${actionInfo}</p>
+            listContainer.innerHTML = list.map((banner, idx) => {
+                const originalIdx = mockBannerData.findIndex(b => b.id === banner.id);
+                const actualIdx = originalIdx >= 0 ? originalIdx : idx;
+
+                const isAktif = banner.status === "Aktif";
+                const statusBadge = isAktif
+                    ? `<span class="text-[9px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-md uppercase">Aktif</span>`
+                    : `<span class="text-[9px] font-black bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 px-2 py-0.5 rounded-md uppercase">Draft</span>`;
+
+                let actionBadge = `<span class="text-[10px] text-slate-400 flex items-center gap-1"><i class="fa-regular fa-image"></i> Gambar Statis</span>`;
+                if (banner.tipeAksi === "tab") {
+                    actionBadge = `<span class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-800/40"><i class="fa-solid fa-folder-open text-[9px]"></i> Tab: <strong>#${escapeHtml(banner.targetAksi)}</strong></span>`;
+                } else if (banner.tipeAksi === "url") {
+                    actionBadge = `<span class="text-[10px] text-sky-700 dark:text-sky-400 font-semibold flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded-md border border-sky-200/60 dark:border-sky-800/40"><i class="fa-solid fa-link text-[9px]"></i> Link: <strong class="truncate max-w-[120px]">${escapeHtml(banner.targetAksi)}</strong></span>`;
+                }
+
+                return `
+                    <div class="p-3.5 bg-slate-50/80 dark:bg-[#1a2634] hover:bg-white dark:hover:bg-[#1e2c3c] rounded-2xl border border-slate-200/80 dark:border-[#253447] flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition-all duration-200 hover:shadow-md">
+                        <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center text-xs font-black shrink-0 border border-amber-300/40 shadow-xs">
+                                #${banner.urutan}
+                            </div>
+                            <div class="w-32 sm:w-36 aspect-[3/1] rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-[#253447] shrink-0 group relative shadow-xs">
+                                <img src="${escapeHtml(banner.gambar || '')}" alt="${escapeHtml(banner.nama)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=600&auto=format&fit=crop'">
+                            </div>
+                            <div class="min-w-0 flex-1 space-y-1">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    ${statusBadge}
+                                    ${actionBadge}
+                                </div>
+                                <h4 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1 leading-snug cursor-pointer hover:text-amber-600 transition" onclick="editAdminBanner(${actualIdx})" title="${escapeHtml(banner.nama)}">${escapeHtml(banner.nama)}</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Urutan Tampil: Ke-${banner.urutan} di Beranda Utama</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1.5 shrink-0">
-                            ${statusBadge}
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3 pt-1 border-t border-slate-200/60">
-                        <div class="w-28 aspect-[3/1] rounded-lg overflow-hidden bg-slate-200 border border-slate-200 shrink-0">
-                            <img src="${banner.gambar}" alt="${banner.nama}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                            <button onclick="toggleAdminBannerStatus('${banner.id}', '${banner.status === 'Aktif' ? 'Nonaktif' : 'Aktif'}')" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-sm transition" title="Ubah Status">
-                                <i class="fa-solid ${banner.status === 'Aktif' ? 'fa-eye-slash text-amber-600' : 'fa-eye text-emerald-600'}"></i>
+                        <div class="flex items-center space-x-1.5 self-end md:self-center shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60 dark:border-[#253447] w-full md:w-auto justify-end">
+                            <button type="button" onclick="toggleAdminBannerStatus('${banner.id}', '${isAktif ? 'Nonaktif' : 'Aktif'}')" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold border border-slate-200 dark:border-[#253447] shadow-xs transition flex items-center gap-1 active:scale-95" title="${isAktif ? 'Sembunyikan Banner' : 'Aktifkan Banner'}">
+                                <i class="fa-solid ${isAktif ? 'fa-eye-slash text-amber-600' : 'fa-eye text-emerald-600'} text-xs"></i>
+                                <span class="text-[10px] hidden sm:inline">${isAktif ? 'Nonaktifkan' : 'Aktifkan'}</span>
                             </button>
-                            <button onclick="editAdminBanner(${idx})" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold border border-amber-100 transition" title="Edit">
-                                <i class="fa-solid fa-pen"></i>
+                            <button type="button" onclick="editAdminBanner(${actualIdx})" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95" title="Edit Data Banner">
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                                <span class="text-[10px]">Edit</span>
                             </button>
-                            <button onclick="deleteAdminBanner('${banner.id}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold border border-rose-100 transition" title="Hapus">
-                                <i class="fa-solid fa-trash"></i>
+                            <button type="button" onclick="deleteAdminBanner('${banner.id}')" class="w-8 h-8 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-400 rounded-xl flex items-center justify-center text-xs transition active:scale-95" title="Hapus Banner">
+                                <i class="fa-solid fa-trash text-xs"></i>
                             </button>
                         </div>
                     </div>
                 `;
-                listContainer.appendChild(card);
-            });
+            }).join('');
         }
 
         async function handleAdminBannerSubmit(event) {
@@ -2561,6 +2653,9 @@
                 if (response && response.success) {
                     showToast("✅ " + response.message);
                     resetAdminBannerForm();
+                    if (typeof toggleAdminBannerForm === 'function') {
+                        toggleAdminBannerForm(false);
+                    }
                     try { localStorage.removeItem('asnawiyyah_banner_cache'); } catch (e) {}
                     loadBanners();
                 } else {
@@ -2603,29 +2698,56 @@
                 placeholder.classList.add('hidden');
             }
 
-            document.getElementById('admin-banner-form-title').innerHTML = `<i class="fa-solid fa-pen text-amber-600 mr-2"></i> Edit Banner: #${banner.urutan}`;
-            document.getElementById('admin-banner-submit-text').innerText = "Perbarui Data Banner";
-            document.getElementById('admin-cancel-banner-edit-btn').classList.remove('hidden');
+            const titleEl = document.getElementById('admin-banner-form-title');
+            if (titleEl) {
+                titleEl.innerHTML = `<i class="fa-solid fa-pen text-amber-600 mr-2"></i> Edit Banner: #${banner.urutan} - ${escapeHtml(banner.nama)}`;
+            }
+            const submitText = document.getElementById('admin-banner-submit-text');
+            if (submitText) {
+                submitText.innerText = "Perbarui Data Banner";
+            }
+            const cancelBtn = document.getElementById('admin-cancel-banner-edit-btn');
+            if (cancelBtn) {
+                cancelBtn.classList.remove('hidden');
+            }
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (typeof toggleAdminBannerForm === 'function') {
+                toggleAdminBannerForm(true);
+            }
         }
 
         function resetAdminBannerForm() {
-            document.getElementById('adminBannerForm').reset();
-            document.getElementById('admin-banner-id').value = "";
-            document.getElementById('admin-banner-old-img').value = "";
+            const form = document.getElementById('adminBannerForm');
+            if (form) form.reset();
+            const idInput = document.getElementById('admin-banner-id');
+            if (idInput) idInput.value = "";
+            const oldImgInput = document.getElementById('admin-banner-old-img');
+            if (oldImgInput) oldImgInput.value = "";
 
             const previewImg = document.getElementById('admin-banner-preview-img');
             const placeholder = document.getElementById('admin-banner-preview-placeholder');
-            previewImg.src = "";
-            previewImg.classList.add('hidden');
-            placeholder.classList.remove('hidden');
+            if (previewImg) {
+                previewImg.src = "";
+                previewImg.classList.add('hidden');
+            }
+            if (placeholder) {
+                placeholder.classList.remove('hidden');
+            }
 
             toggleBannerActionInput('tab');
 
-            document.getElementById('admin-banner-form-title').innerHTML = `<i class="fa-solid fa-plus-circle text-amber-600 mr-2"></i> Tambah Banner Baru`;
-            document.getElementById('admin-banner-submit-text').innerText = "Simpan & Pasang Banner";
-            document.getElementById('admin-cancel-banner-edit-btn').classList.add('hidden');
+            const titleEl = document.getElementById('admin-banner-form-title');
+            if (titleEl) {
+                titleEl.innerHTML = `<i class="fa-solid fa-plus-circle text-amber-600 mr-2"></i> Tambah Banner Baru`;
+            }
+            const submitText = document.getElementById('admin-banner-submit-text');
+            if (submitText) {
+                submitText.innerText = "Simpan & Pasang Banner";
+            }
+            const cancelBtn = document.getElementById('admin-cancel-banner-edit-btn');
+            if (cancelBtn) {
+                cancelBtn.classList.add('hidden');
+            }
         }
 
         async function toggleAdminBannerStatus(bannerId, newStatus) {

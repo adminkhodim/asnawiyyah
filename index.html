@@ -5598,33 +5598,41 @@
                         </button>
                     </div>
                 </section>
-            </div>ext-[11px] font-bold text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-lg">0
-                            Berita</span>
-                    </div>
-                    <div id="admin-news-list" class="space-y-2.5"></div>
-                </section>
             </div>
-
 
             <!-- ================= VIEW 3: MODUL PENGATURAN BANNER SLIDER (SUB-VIEW BARU) ================= -->
             <div id="admin-view-banner" class="hidden space-y-4">
 
                 <!-- Header Sub-View Banner -->
                 <div
-                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between animate-fade-in-up stagger-1">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali">
+                            title="Kembali ke Dashboard">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shadow-sm">
+                            <i class="fa-solid fa-images"></i>
+                        </div>
                         <div>
                             <span
                                 class="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">Dashboard
                                 Admin</span>
-                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Pengaturan Banner Slider Beranda
-                            </h2>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Pengaturan Banner Slider Beranda</h2>
                         </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="admin-banner-toggle-btn" onclick="toggleAdminBannerForm()"
+                            class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-plus text-xs" id="admin-banner-toggle-icon"></i>
+                            <span id="admin-banner-toggle-text">Tambah Banner Baru</span>
+                        </button>
+                        <button type="button" onclick="renderAdminBannerList()"
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
                     </div>
                 </div>
 
@@ -5711,17 +5719,30 @@
                     </div>
                 </div>
 
-                <!-- FORMULIR TAMBAH / EDIT BANNER -->
-                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
-                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-2.5">
-                        <h3 id="admin-banner-form-title"
-                            class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
-                            <i class="fa-solid fa-plus-circle text-amber-600 mr-2"></i> Tambah Banner Baru
-                        </h3>
-                        <button type="button" id="admin-cancel-banner-edit-btn" onclick="resetAdminBannerForm()"
-                            class="text-xs text-rose-600 hover:underline hidden font-semibold">
-                            Batal Edit
-                        </button>
+                <!-- FORMULIR TAMBAH / EDIT BANNER (SLEEK & COLLAPSIBLE CARD) -->
+                <section id="admin-banner-form-section" class="hidden bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#253447] pb-3">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center text-xs font-bold">
+                                <i class="fa-solid fa-plus-circle"></i>
+                            </div>
+                            <h3 id="admin-banner-form-title"
+                                class="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                                Tambah Banner Baru
+                            </h3>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" id="admin-cancel-banner-edit-btn" onclick="resetAdminBannerForm()"
+                                class="text-xs text-rose-600 hover:text-rose-700 font-bold hidden flex items-center gap-1 px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-lg transition">
+                                <i class="fa-solid fa-xmark"></i> Batal Edit
+                            </button>
+                            <button type="button" onclick="toggleAdminBannerForm(false)"
+                                class="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-bold flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] rounded-lg transition"
+                                title="Sembunyikan formulir">
+                                <i class="fa-solid fa-chevron-up"></i>
+                                <span class="hidden sm:inline">Tutup Form</span>
+                            </button>
+                        </div>
                     </div>
 
                     <form id="adminBannerForm" onsubmit="handleAdminBannerSubmit(event)" class="space-y-4">
@@ -5732,43 +5753,42 @@
 
                             <!-- Nama / Label Banner -->
                             <div class="md:col-span-2">
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nama / Label
-                                    Banner (Pengenal)</label>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama / Label Banner (Pengenal) <span class="text-rose-500">*</span></label>
                                 <input type="text" id="admin-banner-nama" required
-                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-amber-500 focus:outline-none transition shadow-2xs"
                                     placeholder="Contoh: Banner PPDB 2026/2027 Gelombang 2">
                             </div>
 
                             <!-- Upload Gambar Banner -->
-                            <div class="md:col-span-2 space-y-2">
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase">Upload Gambar Banner
-                                    (Rasio Ideal 3:1 / Ramping)</label>
+                            <div class="md:col-span-2 space-y-2 p-3.5 bg-slate-50/70 dark:bg-[#1a2634] rounded-2xl border border-slate-200/80 dark:border-[#253447]">
+                                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                                    Upload Gambar Banner (Rasio Ideal 3:1 / Ramping)
+                                </label>
                                 <input type="file" id="admin-banner-file" accept="image/*"
                                     onchange="previewBannerLive(event)"
-                                    class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-800 hover:file:bg-amber-100 border border-slate-200 rounded-xl cursor-pointer bg-slate-50 p-1 focus:outline-none">
+                                    class="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-50 dark:file:bg-amber-950/60 file:text-amber-800 dark:file:text-amber-300 hover:file:bg-amber-100 dark:hover:file:bg-amber-900/60 border border-slate-200 dark:border-[#253447] rounded-xl cursor-pointer bg-white dark:bg-[#15202d] p-1.5 focus:outline-none transition">
 
                                 <!-- LIVE PREVIEW BANNER RASIO 3:1 -->
-                                <div class="pt-1">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Live Preview
-                                        (Tampilan Beranda):</span>
+                                <div class="pt-1.5">
+                                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Live Preview (Tampilan Beranda):</span>
                                     <div
-                                        class="w-full aspect-[3/1] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                                        class="w-full aspect-[3/1] rounded-2xl overflow-hidden bg-slate-100 dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] relative flex items-center justify-center shadow-inner group">
                                         <img id="admin-banner-preview-img" src="" alt="Pratinjau Banner"
                                             class="w-full h-full object-cover hidden">
                                         <span id="admin-banner-preview-placeholder"
-                                            class="text-xs text-slate-400 italic">Pilih gambar untuk melihat
-                                            pratinjau</span>
+                                            class="text-xs text-slate-400 flex items-center gap-1.5">
+                                            <i class="fa-regular fa-image text-base opacity-60"></i> Pilih gambar untuk melihat pratinjau rasio 3:1
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Tipe Aksi Saat Banner Diklik -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Aksi Saat
-                                    Banner Diklik</label>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Aksi Saat Banner Diklik</label>
                                 <select id="admin-banner-tipe-aksi" onchange="toggleBannerActionInput(this.value)"
                                     required
-                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-amber-500 focus:outline-none transition shadow-2xs">
                                     <option value="tab">Buka Tab Internal Web</option>
                                     <option value="url">Buka Tautan Luar / Eksternal</option>
                                     <option value="none">Tidak Ada Aksi (Hanya Gambar)</option>
@@ -5778,11 +5798,10 @@
                             <!-- Target Aksi (Dropdown Tab / URL Input) -->
                             <div id="admin-banner-target-container">
                                 <label id="admin-banner-target-label"
-                                    class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Pilih Tab
-                                    Tujuan</label>
+                                    class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Pilih Tab Tujuan</label>
                                 <!-- Pilihan Tab -->
                                 <select id="admin-banner-target-tab"
-                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-amber-500 focus:outline-none transition shadow-2xs">
                                     <option value="ppdb">Pendaftaran PPDB</option>
                                     <option value="kabar">Berita Pesantren</option>
                                     <option value="ibadah">Portal Ibadah</option>
@@ -5793,24 +5812,22 @@
                                 </select>
                                 <!-- Input URL Eksternal (Hidden Default) -->
                                 <input type="url" id="admin-banner-target-url"
-                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition hidden"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-amber-500 focus:outline-none transition shadow-2xs hidden"
                                     placeholder="https://wa.me/... atau link web lain">
                             </div>
 
                             <!-- Nomor Urutan Slide -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nomor Urutan
-                                    Slide</label>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nomor Urutan Slide</label>
                                 <input type="number" id="admin-banner-urutan" min="1" max="20" value="1" required
-                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-amber-500 focus:outline-none transition shadow-2xs">
                             </div>
 
                             <!-- Status Banner -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Status
-                                    Publikasi</label>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Status Publikasi</label>
                                 <select id="admin-banner-status" required
-                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition">
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-amber-500 focus:outline-none transition shadow-2xs">
                                     <option value="Aktif">Aktif (Tampil di Beranda)</option>
                                     <option value="Nonaktif">Nonaktif (Disembunyikan)</option>
                                 </select>
@@ -5818,28 +5835,57 @@
 
                         </div>
 
-                        <!-- Tombol Submit Banner -->
-                        <button type="submit" id="admin-banner-submit-btn"
-                            class="w-full bg-amber-500 hover:bg-amber-600 text-brand-dark font-extrabold py-3 rounded-xl text-xs md:text-sm shadow-md transition flex items-center justify-center space-x-2 active:scale-98">
-                            <i class="fa-solid fa-cloud-arrow-up" id="admin-banner-submit-icon"></i>
-                            <span id="admin-banner-submit-text">Simpan & Pasang Banner</span>
-                        </button>
+                        <!-- Action Bar Form -->
+                        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100 dark:border-[#253447]">
+                            <button type="button" onclick="toggleAdminBannerForm(false)"
+                                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition active:scale-95">
+                                Batal
+                            </button>
+                            <button type="submit" id="admin-banner-submit-btn"
+                                class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold rounded-xl text-xs md:text-sm shadow-md transition flex items-center justify-center space-x-2 active:scale-98">
+                                <i class="fa-solid fa-cloud-arrow-up" id="admin-banner-submit-icon"></i>
+                                <span id="admin-banner-submit-text">Simpan & Pasang Banner</span>
+                            </button>
+                        </div>
                     </form>
                 </section>
 
                 <!-- DAFTAR BANNER TERPASANG -->
-                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 animate-fade-in-up stagger-7">
-                    <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#253447] pb-2.5">
-                        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
-                            <i class="fa-solid fa-layer-group text-amber-600 mr-2"></i> Daftar Banner Slider Terpasang
-                        </h3>
-                        <span id="admin-total-banners"
-                            class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg">0
-                            Banner</span>
+                <section class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4 animate-fade-in-up stagger-7">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 dark:border-[#253447] pb-3">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-layer-group text-amber-600 mr-2"></i> Daftar Banner Slider Terpasang
+                            </h3>
+                            <span id="admin-total-banners"
+                                class="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-lg border border-amber-200/60 dark:border-amber-800/40">0
+                                Banner</span>
+                        </div>
+                        <div class="w-full sm:w-72 relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="admin-banner-search" oninput="filterAdminBannerList()" placeholder="Cari nama banner, aksi..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 transition">
+                        </div>
                     </div>
 
+                    <!-- Filter Status Chips -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 pt-0.5">
+                        <button type="button" onclick="setAdminBannerStatusFilter('all')" data-banner-status="all" class="admin-banner-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-amber-500 text-slate-900 shadow-sm transition shrink-0">Semua Banner</button>
+                        <button type="button" onclick="setAdminBannerStatusFilter('Aktif')" data-banner-status="Aktif" class="admin-banner-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0">Aktif (Tayang)</button>
+                        <button type="button" onclick="setAdminBannerStatusFilter('Nonaktif')" data-banner-status="Nonaktif" class="admin-banner-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0">Draft (Nonaktif)</button>
+                    </div>
+
+                    <!-- List Container Banner -->
                     <div id="admin-banner-list" class="space-y-3">
                         <!-- Card banner di-render dinamis oleh JavaScript -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="admin-banner-empty-state" class="hidden py-12 text-center text-xs text-slate-400 space-y-2">
+                        <i class="fa-solid fa-images text-3xl text-slate-300 dark:text-slate-600"></i>
+                        <p class="font-medium">Tidak ada banner yang sesuai filter.</p>
+                        <button type="button" onclick="toggleAdminBannerForm(true)" class="mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-plus text-xs"></i> Tambah Banner Baru
+                        </button>
                     </div>
                 </section>
             </div>
