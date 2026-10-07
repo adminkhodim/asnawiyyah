@@ -875,10 +875,9 @@ function initTahfidzSheets(token) {
       // Default Sesi Waktu Awal
       const nowIso = new Date().toISOString();
       const defaultSesi = [
-        ["SESI-01", "Pagi (Ba'da Subuh)", "Muroja'ah", "Aktif Digunakan", "05:00", "06:00", "Sen,Rab,Kam,Sab,Min", nowIso],
-        ["SESI-02", "Pagi (MA Tahfidz)", "Ziyadah (Setoran Hafalan Baru)", "Aktif Digunakan", "08:30", "09:30", "Sen,Sel,Rab,Kam,Sab", nowIso],
-        ["SESI-03", "Sore (Ba'da Ashar)", "Ziyadah (Setoran Hafalan Baru)", "Aktif Digunakan", "16:00", "17:15", "Sen,Sel,Rab,Kam,Sab,Min", nowIso],
-        ["SESI-04", "Malam (Ba'da Isya')", "Muroja'ah", "Aktif Digunakan", "19:30", "20:30", "Sen,Sel,Rab,Kam,Sab,Min", nowIso]
+        ["SESI-20260912-1109", "Pagi (Ba'da Subuh)", "Muroja'ah (Pengulangan)", "Aktif Digunakan", "05:00", "06:15", "Sen,Sel,Rab,Kam,Sab", nowIso],
+        ["SESI-20260912-1110", "Sore (Ba'da Ashar)", "Muroja'ah (Pengulangan)", "Aktif Digunakan", "15:30", "16:30", "Sen,Sel,Rab,Kam,Sab", nowIso],
+        ["SESI-20260912-1112", "Malam (Ba'da magrib)", "Ziyadah (Setoran Hafalan Baru)", "Aktif Digunakan", "18:00", "19:30", "Sen,Sel,Rab,Jum,Sab,Min", nowIso]
       ];
       sheetSesi.getRange(2, 1, defaultSesi.length, headersSesi.length).setValues(defaultSesi);
       created.push(SHEET_TAHFIDZ_SESI);

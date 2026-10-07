@@ -13,16 +13,22 @@
 const { execSync } = require('child_process');
 const path = require('path');
 
+const fs = require('fs');
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const SUITES = [
-  { name: 'Syntax Integrity (JS & GS)', cmd: 'node scripts/check_syntax.js' },
-  { name: 'Modular Apps Script Backend Verification', cmd: 'node scratch/test_modular_backend.js' },
-  { name: 'P0 Security Remediation Suite', cmd: 'node scratch/test_p0_security_remediation.js' },
-  { name: 'P1 Session TTL & Security Expiry Suite', cmd: 'node scratch/test_p1_session_ttl.js' },
-  { name: 'Tahfidz Al-Quran Advanced Integration Suite', cmd: 'node scratch/comprehensive_test_tahfidz.js' },
-  { name: 'RBAC Matrix & Authority Pipeline Suite', cmd: 'node scratch/final_verify_rbac.js' }
+const ALL_CANDIDATE_SUITES = [
+  { name: 'Syntax Integrity (JS & GS)', file: 'scripts/check_syntax.js' },
+  { name: 'Keaktifan Asatidz RBAC & Deadline Verification', file: 'scripts/test_keaktifan.js' },
+  { name: 'Modular Apps Script Backend Verification', file: 'scratch/test_modular_backend.js' },
+  { name: 'P0 Security Remediation Suite', file: 'scratch/test_p0_security_remediation.js' },
+  { name: 'P1 Session TTL & Security Expiry Suite', file: 'scratch/test_p1_session_ttl.js' },
+  { name: 'Tahfidz Al-Quran Advanced Integration Suite', file: 'scratch/comprehensive_test_tahfidz.js' },
+  { name: 'RBAC Matrix & Authority Pipeline Suite', file: 'scratch/final_verify_rbac.js' }
 ];
+
+const SUITES = ALL_CANDIDATE_SUITES
+  .filter(s => fs.existsSync(path.join(ROOT_DIR, s.file)))
+  .map(s => ({ name: s.name, cmd: `node ${s.file}` }));
 
 console.log('🚀 ========================================================');
 console.log('   PPTQ ASNAWIYYAH AUTOMATED TEST RUNNER (CI/CD)');

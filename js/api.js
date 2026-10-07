@@ -803,6 +803,20 @@
                         }
                         return ['Sen', 'Sel', 'Rab', 'Kam', 'Sab'];
                     };
+
+                    const formatTimeHHMM = (t, defaultVal = "00:00") => {
+                        if (!t) return defaultVal;
+                        let str = String(t).trim();
+                        if (str.includes('.')) str = str.replace('.', ':');
+                        const parts = str.split(':');
+                        if (parts.length >= 2) {
+                            const h = parts[0].padStart(2, '0');
+                            const m = parts[1].substring(0, 2).padStart(2, '0');
+                            return `${h}:${m}`;
+                        }
+                        return str.padStart(5, '0');
+                    };
+
                     return {
                         status: "success",
                         success: true,
@@ -811,10 +825,10 @@
                             id: s.sesi_id || `SESI-20260912-110${idx + 9}`,
                             namaSesi: s.nama_sesi || 'Sesi',
                             nama: s.nama_sesi || 'Sesi',
-                            jenisSesi: s.jenis_sesi || 'Ziyadah',
-                            jenis: s.jenis_sesi || 'Ziyadah',
-                            jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
-                            jamSelesai: (s.jam_selesai || '06:15').substring(0, 5),
+                            jenisSesi: s.jenis_sesi || 'Muroja\'ah (Pengulangan)',
+                            jenis: s.jenis_sesi || 'Muroja\'ah (Pengulangan)',
+                            jamMulai: formatTimeHHMM(s.jam_mulai, '05:00'),
+                            jamSelesai: formatTimeHHMM(s.jam_selesai, '06:15'),
                             hariList: parseSesiHari(s.hari_list),
                             hari: parseSesiHari(s.hari_list),
                             status: s.status || 'Aktif Digunakan'
@@ -861,20 +875,38 @@
                         return ['Sen', 'Sel', 'Rab', 'Kam', 'Sab'];
                     };
 
-                    const sesiList = (rawSesi && rawSesi.length > 0) ? rawSesi.map((s, idx) => ({
-                        sesiId: s.sesi_id || `SESI-${idx + 1}`,
-                        namaSesi: s.nama_sesi || 'Sesi',
-                        jenisSesi: s.jenis_sesi || 'Ziyadah',
-                        jamMulai: (s.jam_mulai || '05:00').substring(0, 5),
-                        jamSelesai: (s.jam_selesai || '06:15').substring(0, 5),
-                        hariList: parseSesiHari(s.hari_list),
-                        status: s.status || 'Aktif Digunakan'
-                    })) : [
-                        { sesiId: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" },
-                        { sesiId: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen","Sel","Rab","Kam","Sab"], status: "Aktif Digunakan" },
-                        { sesiId: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" },
-                        { sesiId: "SESI-04", namaSesi: "Malam (Ba'da Isya')", jenisSesi: "Muroja'ah", jamMulai: "19:30", jamSelesai: "20:30", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" }
+                    const formatTimeHHMM = (t, defaultVal = "00:00") => {
+                        if (!t) return defaultVal;
+                        let str = String(t).trim();
+                        if (str.includes('.')) str = str.replace('.', ':');
+                        const parts = str.split(':');
+                        if (parts.length >= 2) {
+                            const h = parts[0].padStart(2, '0');
+                            const m = parts[1].substring(0, 2).padStart(2, '0');
+                            return `${h}:${m}`;
+                        }
+                        return str.padStart(5, '0');
+                    };
+
+                    const defaultSesiList = [
+                        { sesiId: "SESI-20260912-1109", id: "SESI-20260912-1109", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-20260912-1110", id: "SESI-20260912-1110", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "15:30", jamSelesai: "16:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+                        { sesiId: "SESI-20260912-1112", id: "SESI-20260912-1112", namaSesi: "Malam (Ba'da magrib)", nama: "Malam (Ba'da magrib)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "18:00", jamSelesai: "19:30", hariList: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], hari: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], status: "Aktif Digunakan" }
                     ];
+
+                    const sesiList = (rawSesi && rawSesi.length > 0) ? rawSesi.map((s, idx) => ({
+                        sesiId: s.sesi_id || `SESI-20260912-110${idx + 9}`,
+                        id: s.sesi_id || `SESI-20260912-110${idx + 9}`,
+                        namaSesi: s.nama_sesi || 'Sesi',
+                        nama: s.nama_sesi || 'Sesi',
+                        jenisSesi: s.jenis_sesi || 'Muroja\'ah (Pengulangan)',
+                        jenis: s.jenis_sesi || 'Muroja\'ah (Pengulangan)',
+                        jamMulai: formatTimeHHMM(s.jam_mulai, '05:00'),
+                        jamSelesai: formatTimeHHMM(s.jam_selesai, '06:15'),
+                        hariList: parseSesiHari(s.hari_list),
+                        hari: parseSesiHari(s.hari_list),
+                        status: s.status || 'Aktif Digunakan'
+                    })) : defaultSesiList;
 
                     const todaySessions = sesiList.filter(s => s.status === 'Aktif Digunakan').map(s => {
                         const isDayActive = !s.hariList || s.hariList.length === 0 || s.hariList.includes(currentDayCode);
@@ -1493,6 +1525,7 @@
                 'getTahfidzDashboard', 'tahfidz.dashboard', 'auth.tahfidz.dashboard',
                 'getTahfidzStudentDetail', 'tahfidz.studentDetail', 'auth.tahfidz.studentDetail',
                 'getTahfidzSesiList', 'getTahfidzSesi', 'tahfidz.sesiList',
+                'getKeaktifanAsatidz', 'keaktifan.getAsatidz', 'auth.keaktifan.asatidz',
                 'program.list',
                 'getPPDB', 'checkStatus'
             ];

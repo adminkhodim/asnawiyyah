@@ -80,6 +80,14 @@
             if (response && response.success && response.data) {
                 ASNKeaktifan.data = response.data;
             } else {
+                if (typeof apiPost === 'function' && (!window._ASNSesiListCache || window._ASNSesiListCache.length === 0)) {
+                    try {
+                        const sRes = await apiPost("getTahfidzSesiList", { token });
+                        if (sRes && sRes.success && Array.isArray(sRes.data) && sRes.data.length > 0) {
+                            window._ASNSesiListCache = sRes.data;
+                        }
+                    } catch (e) {}
+                }
                 ASNKeaktifan.data = generateClientSideKeaktifanData();
             }
 
@@ -104,6 +112,25 @@
         }
     }
 
+    const REAL_TAHFIDZ_SESI_DEFAULT = [
+        { sesiId: "SESI-20260912-1109", id: "SESI-20260912-1109", namaSesi: "Pagi (Ba'da Subuh)", nama: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+        { sesiId: "SESI-20260912-1110", id: "SESI-20260912-1110", namaSesi: "Sore (Ba'da Ashar)", nama: "Sore (Ba'da Ashar)", jenisSesi: "Muroja'ah (Pengulangan)", jenis: "Muroja'ah (Pengulangan)", jamMulai: "15:30", jamSelesai: "16:30", hariList: ["Sen", "Sel", "Rab", "Kam", "Sab"], hari: ["Sen", "Sel", "Rab", "Kam", "Sab"], status: "Aktif Digunakan" },
+        { sesiId: "SESI-20260912-1112", id: "SESI-20260912-1112", namaSesi: "Malam (Ba'da magrib)", nama: "Malam (Ba'da magrib)", jenisSesi: "Ziyadah (Setoran Hafalan Baru)", jenis: "Ziyadah (Setoran Hafalan Baru)", jamMulai: "18:00", jamSelesai: "19:30", hariList: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], hari: ["Sen", "Sel", "Rab", "Jum", "Sab", "Min"], status: "Aktif Digunakan" }
+    ];
+
+    function formatTimeHHMM(t, defaultVal = "00:00") {
+        if (!t) return defaultVal;
+        let str = String(t).trim();
+        if (str.includes('.')) str = str.replace('.', ':');
+        const parts = str.split(':');
+        if (parts.length >= 2) {
+            const h = parts[0].padStart(2, '0');
+            const m = parts[1].substring(0, 2).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+        return str.padStart(5, '0');
+    }
+
     /**
      * Fallback kalkulasi data keaktifan asatidz di sisi client secara tangguh
      */
@@ -117,18 +144,25 @@
         const dayCodes = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
         const currentDayCode = dayCodes[now.getDay()];
 
-        // Ambil sesi tahfidz dari memory atau default pesantren
-        let sesiList = [];
+        // Ambil sesi tahfidz dari memory atau default resmi tahfidz_jadwal_sesi
+        let rawSesi = [];
         if (typeof ASNTahfidz !== 'undefined' && ASNTahfidz.data && Array.isArray(ASNTahfidz.data.sesiList) && ASNTahfidz.data.sesiList.length > 0) {
-            sesiList = ASNTahfidz.data.sesiList;
+            rawSesi = ASNTahfidz.data.sesiList;
+        } else if (window._ASNSesiListCache && Array.isArray(window._ASNSesiListCache) && window._ASNSesiListCache.length > 0) {
+            rawSesi = window._ASNSesiListCache;
         } else {
-            sesiList = [
-                { sesiId: "SESI-01", namaSesi: "Pagi (Ba'da Subuh)", jenisSesi: "Muroja'ah", jamMulai: "05:00", jamSelesai: "06:15", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" },
-                { sesiId: "SESI-02", namaSesi: "Pagi (MA Tahfidz)", jenisSesi: "Ziyadah (Setoran Baru)", jamMulai: "08:30", jamSelesai: "09:30", hariList: ["Sen","Sel","Rab","Kam","Sab"], status: "Aktif Digunakan" },
-                { sesiId: "SESI-03", namaSesi: "Sore (Ba'da Ashar)", jenisSesi: "Ziyadah (Setoran Baru)", jamMulai: "16:00", jamSelesai: "17:15", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" },
-                { sesiId: "SESI-04", namaSesi: "Malam (Ba'da Isya')", jenisSesi: "Muroja'ah", jamMulai: "19:30", jamSelesai: "20:30", hariList: ["Sen","Sel","Rab","Kam","Sab","Min"], status: "Aktif Digunakan" }
-            ];
+            rawSesi = REAL_TAHFIDZ_SESI_DEFAULT;
         }
+
+        const sesiList = rawSesi.map((s, idx) => ({
+            sesiId: s.sesiId || s.id || s.sesi_id || `SESI-20260912-110${idx + 9}`,
+            namaSesi: s.namaSesi || s.nama || s.nama_sesi || 'Sesi',
+            jenisSesi: s.jenisSesi || s.jenis || s.jenis_sesi || 'Muroja\'ah (Pengulangan)',
+            jamMulai: formatTimeHHMM(s.jamMulai || s.jam_mulai, '05:00'),
+            jamSelesai: formatTimeHHMM(s.jamSelesai || s.jam_selesai, '06:15'),
+            hariList: Array.isArray(s.hariList || s.hari) ? (s.hariList || s.hari) : (typeof s.hari_list === 'string' ? s.hari_list.split(',').map(x => x.trim()).filter(Boolean) : ["Sen", "Sel", "Rab", "Kam", "Sab"]),
+            status: s.status || 'Aktif Digunakan'
+        }));
 
         const todaySessions = sesiList.filter(s => s.status === "Aktif Digunakan").map(s => {
             const isDayActive = !s.hariList || s.hariList.length === 0 || s.hariList.includes(currentDayCode);
@@ -141,9 +175,9 @@
                 timelineStatus = "PASSED_DEADLINE";
             }
             return {
-                sesiId: s.sesiId || s.id,
-                namaSesi: s.namaSesi || s.nama,
-                jenisSesi: s.jenisSesi || s.jenis,
+                sesiId: s.sesiId,
+                namaSesi: s.namaSesi,
+                jenisSesi: s.jenisSesi,
                 jamMulai: s.jamMulai,
                 jamSelesai: s.jamSelesai,
                 isDayActive: isDayActive,
