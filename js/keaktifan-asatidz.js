@@ -1834,11 +1834,531 @@
     }
 
     /**
-     * Cetak Laporan Keaktifan dalam Bentuk File .xlsx
-     * Mengikuti preferensi ekspor & cetak dalam format file .xlsx sesuai filter periode terpilih
+     * Cetak Laporan Keaktifan Menjadi PDF Resmi (Langsung Terhubung dengan Browser Print)
+     * Menghasilkan dokumen A4 Landscape formal dengan Kop Pesantren, ringkasan KPI, dan tabel rapi sesuai periode
      */
     function printKeaktifanReport() {
-        exportKeaktifanToExcel(true);
+        const list = ASNKeaktifan.filteredAsatidz || [];
+        if (list.length === 0) {
+            if (typeof showToast === 'function') showToast("Tidak ada data untuk dicetak.");
+            return;
+        }
+
+        const tf = ASNKeaktifan.timeframe;
+        const isDaily = ['today', 'yesterday', 'by_day'].includes(tf);
+        const isWeekly = ['7d', 'by_week'].includes(tf);
+
+        const periodType = (ASNKeaktifan.periodLabel && ASNKeaktifan.periodLabel.type) || 'Real-time';
+        const periodDetail = (ASNKeaktifan.periodLabel && ASNKeaktifan.periodLabel.detail) || '';
+        const periodFullLabel = `${periodType} (${periodDetail})`;
+
+        const now = new Date();
+        const curDateIndo = (ASNKeaktifan.data && ASNKeaktifan.data.serverDate) ? ASNKeaktifan.data.serverDate : now.toISOString().split('T')[0];
+        const curTimeIndo = (ASNKeaktifan.data && ASNKeaktifan.data.serverTime) ? ASNKeaktifan.data.serverTime : now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+        // Filter aktif
+        let filterDesc = [];
+        if (ASNKeaktifan.filter.status) filterDesc.push(`Status: ${ASNKeaktifan.filter.status}`);
+        if (ASNKeaktifan.filter.sesi) filterDesc.push(`Sesi: ${ASNKeaktifan.filter.sesi}`);
+        if (ASNKeaktifan.filter.gender) filterDesc.push(`Kategori: ${ASNKeaktifan.filter.gender}`);
+        if (ASNKeaktifan.filter.search) filterDesc.push(`Pencarian: "${ASNKeaktifan.filter.search}"`);
+        const filterStr = filterDesc.length > 0 ? filterDesc.join(', ') : 'Semua Kategori & Sesi';
+
+        // Summary KPI
+        const summary = ASNKeaktifan.data.summary || {};
+        let kpiHtml = '';
+        if (isDaily) {
+            const ontimeCount = list.filter(a => a.hariIni.sesiSummary.some(s => s.statusKepatuhan === 'ON_TIME')).length;
+            const lateCount = list.filter(a => a.hariIni.sesiSummary.some(s => s.statusKepatuhan === 'LATE')).length;
+            const missedCount = list.filter(a => a.hariIni.status === 'LEWAT_DEADLINE' || a.hariIni.totalSesiLewatDeadline > 0).length;
+            const totalSetoran = list.reduce((acc, a) => acc + (a.hariIni.setoranCount || 0), 0);
+            const totalPresensi = list.reduce((acc, a) => acc + (a.hariIni.hadirSantriCount || 0), 0);
+
+            kpiHtml = `
+                <div class="kpi-grid">
+                    <div class="kpi-box">
+                        <div class="kpi-val">${summary.persenAktifHariIni || 0}%</div>
+                        <div class="kpi-lbl">Tingkat Keaktifan</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-green">${ontimeCount}</div>
+                        <div class="kpi-lbl">Tepat Waktu (+${lateCount} terlambat)</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-red">${missedCount}</div>
+                        <div class="kpi-lbl">Lewat Deadline / Belum Input</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-blue">${totalSetoran + totalPresensi}</div>
+                        <div class="kpi-lbl">${totalSetoran} Setoran • ${totalPresensi} Presensi</div>
+                    </div>
+                </div>
+            `;
+        } else if (isWeekly) {
+            const avg7d = list.length > 0 ? Math.round(list.reduce((acc, a) => acc + (a.pekanan.activePercentage || 0), 0) / list.length) : 0;
+            const disciplined = list.filter(a => (a.pekanan.activePercentage || 0) >= 75).length;
+            const lowCount = list.filter(a => (a.pekanan.activePercentage || 0) < 50).length;
+            const totalSetoran = list.reduce((acc, a) => acc + (a.pekanan.setoranCount || 0), 0);
+            const totalPresensi = list.reduce((acc, a) => acc + (a.pekanan.presensiCount || 0), 0);
+
+            kpiHtml = `
+                <div class="kpi-grid">
+                    <div class="kpi-box">
+                        <div class="kpi-val">${avg7d}%</div>
+                        <div class="kpi-lbl">Rata-Rata Keaktifan Pekanan</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-green">${disciplined}</div>
+                        <div class="kpi-lbl">Sangat Disiplin (≥ 75%)</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-red">${lowCount}</div>
+                        <div class="kpi-lbl">Kurang Aktif (&lt; 50%)</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-blue">${totalSetoran + totalPresensi}</div>
+                        <div class="kpi-lbl">${totalSetoran} Setoran • ${totalPresensi} Presensi</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            const avg30d = list.length > 0 ? Math.round(list.reduce((acc, a) => acc + (a.bulanan.activePercentage || 0), 0) / list.length) : 0;
+            const disciplined = list.filter(a => (a.bulanan.activePercentage || 0) >= 75).length;
+            const lowCount = list.filter(a => (a.bulanan.activePercentage || 0) < 50).length;
+            const totalSetoran = list.reduce((acc, a) => acc + (a.bulanan.setoranCount || 0), 0);
+            const totalPresensi = list.reduce((acc, a) => acc + (a.bulanan.presensiCount || 0), 0);
+
+            kpiHtml = `
+                <div class="kpi-grid">
+                    <div class="kpi-box">
+                        <div class="kpi-val">${avg30d}%</div>
+                        <div class="kpi-lbl">Rata-Rata Keaktifan Bulanan</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-green">${disciplined}</div>
+                        <div class="kpi-lbl">Sangat Disiplin (≥ 75%)</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-red">${lowCount}</div>
+                        <div class="kpi-lbl">Kurang Aktif (&lt; 50%)</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-val text-blue">${totalSetoran + totalPresensi}</div>
+                        <div class="kpi-lbl">${totalSetoran} Setoran • ${totalPresensi} Presensi</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Table Rows
+        let tableHeaderHtml = '';
+        let tableRowsHtml = '';
+        let totalBinaanAll = 0;
+        let totalPresensiAll = 0;
+        let totalSetoranAll = 0;
+        let totalHalamanAll = 0;
+
+        if (isDaily) {
+            tableHeaderHtml = `
+                <tr>
+                    <th style="width: 30px;">NO</th>
+                    <th>NAMA ASATIDZ / MUHAFIZ</th>
+                    <th>HALAQAH & TARGET</th>
+                    <th style="width: 50px;">BINAAN</th>
+                    <th style="width: 85px;">PRESENSI</th>
+                    <th style="width: 95px;">SETORAN</th>
+                    <th style="width: 60px;">HALAMAN</th>
+                    <th>SESI JADWAL HARI INI</th>
+                    <th style="width: 100px;">STATUS KEPATUHAN</th>
+                </tr>
+            `;
+
+            list.forEach((ast, idx) => {
+                const h = ast.hariIni;
+                totalBinaanAll += (ast.totalBinaan || 0);
+                totalPresensiAll += (h.hadirSantriCount || 0);
+                totalSetoranAll += (h.setoranCount || 0);
+                totalHalamanAll += (h.halamanCount || 0);
+
+                const presensiText = h.presensiSantriCount > 0 ? `Sudah (${h.hadirSantriCount} Hadir)` : 'Belum Ada';
+                const setoranText = h.setoranCount > 0 ? `${h.setoranCount} Santri` : '0 Santri';
+
+                const sessionsText = (h.sesiSummary || []).map(s => {
+                    let mark = '⏳';
+                    if (s.statusKepatuhan === 'ON_TIME') mark = '✅';
+                    else if (s.statusKepatuhan === 'LATE') mark = '⚠️';
+                    else if (s.statusKepatuhan === 'MISSED_DEADLINE') mark = '❌';
+                    return `${s.namaSesi.split(' ')[0]}: ${mark} ${s.statusKepatuhan === 'ON_TIME' ? 'Tepat' : (s.statusKepatuhan === 'LATE' ? 'Telat' : (s.statusKepatuhan === 'MISSED_DEADLINE' ? 'Lewat' : 'Tunggu'))}`;
+                }).join(' • ') || '-';
+
+                let statusBadge = '<span class="badge badge-gray">Menunggu</span>';
+                if (h.status === 'AKTIF_LENGKAP') statusBadge = '<span class="badge badge-green">Tepat Waktu</span>';
+                else if (h.status === 'AKTIF_SEBAGIAN_TERLEWAT') statusBadge = '<span class="badge badge-yellow">Ada Terlewat</span>';
+                else if (h.status === 'LEWAT_DEADLINE') statusBadge = '<span class="badge badge-red">Lewat Deadline</span>';
+                else if (h.status === 'SEDANG_SESI') statusBadge = '<span class="badge badge-blue">Sesi Berjalan</span>';
+
+                tableRowsHtml += `
+                    <tr>
+                        <td class="text-center">${idx + 1}</td>
+                        <td><strong>${escapeHtml(ast.muhafiz)}</strong><div class="text-sub">${ast.telepon ? escapeHtml(ast.telepon) : '-'} • ${ast.gender || 'PUTRA'}</div></td>
+                        <td>${escapeHtml(ast.namaHalaqah)}<div class="text-sub">${escapeHtml(ast.targetKurikulum)}</div></td>
+                        <td class="text-center">${ast.totalBinaan || 0}</td>
+                        <td class="text-center">${presensiText}</td>
+                        <td class="text-center">${setoranText}</td>
+                        <td class="text-center font-bold">${h.halamanCount || 0}</td>
+                        <td class="text-small">${sessionsText}</td>
+                        <td class="text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+
+            tableRowsHtml += `
+                <tr class="row-total">
+                    <td colspan="3" class="text-right"><strong>TOTAL KESELURUHAN (${list.length} Asatidz):</strong></td>
+                    <td class="text-center font-bold">${totalBinaanAll}</td>
+                    <td class="text-center font-bold">${totalPresensiAll} Hadir</td>
+                    <td class="text-center font-bold">${totalSetoranAll} Santri</td>
+                    <td class="text-center font-bold">${totalHalamanAll} Hlm</td>
+                    <td colspan="2"></td>
+                </tr>
+            `;
+        } else {
+            const isWk = isWeekly;
+            tableHeaderHtml = `
+                <tr>
+                    <th style="width: 30px;">NO</th>
+                    <th>NAMA ASATIDZ / MUHAFIZ</th>
+                    <th>HALAQAH & TARGET</th>
+                    <th style="width: 50px;">BINAAN</th>
+                    <th style="width: 80px;">HARI AKTIF</th>
+                    <th style="width: 80px;">% KEAKTIFAN</th>
+                    <th style="width: 90px;">TOTAL PRESENSI</th>
+                    <th style="width: 95px;">TOTAL SETORAN</th>
+                    <th style="width: 65px;">HALAMAN</th>
+                    <th style="width: 110px;">STATUS DISIPLIN</th>
+                </tr>
+            `;
+
+            list.forEach((ast, idx) => {
+                const stat = isWk ? ast.pekanan : ast.bulanan;
+                const maxDays = isWk ? 7 : 30;
+                totalBinaanAll += (ast.totalBinaan || 0);
+                totalPresensiAll += (stat.presensiCount || 0);
+                totalSetoranAll += (stat.setoranCount || 0);
+                totalHalamanAll += (stat.halamanCount || 0);
+
+                let statusBadge = '<span class="badge badge-red">Kurang Aktif</span>';
+                if (stat.activePercentage >= 75) statusBadge = '<span class="badge badge-green">Sangat Disiplin</span>';
+                else if (stat.activePercentage >= 50) statusBadge = '<span class="badge badge-yellow">Cukup Aktif</span>';
+
+                tableRowsHtml += `
+                    <tr>
+                        <td class="text-center">${idx + 1}</td>
+                        <td><strong>${escapeHtml(ast.muhafiz)}</strong><div class="text-sub">${ast.telepon ? escapeHtml(ast.telepon) : '-'} • ${ast.gender || 'PUTRA'}</div></td>
+                        <td>${escapeHtml(ast.namaHalaqah)}<div class="text-sub">${escapeHtml(ast.targetKurikulum)}</div></td>
+                        <td class="text-center">${ast.totalBinaan || 0}</td>
+                        <td class="text-center">${stat.activeDaysCount || 0} / ${maxDays}</td>
+                        <td class="text-center font-bold">${stat.activePercentage || 0}%</td>
+                        <td class="text-center">${stat.presensiCount || 0} Santri</td>
+                        <td class="text-center">${stat.setoranCount || 0} Setoran</td>
+                        <td class="text-center font-bold">${stat.halamanCount || 0}</td>
+                        <td class="text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+
+            tableRowsHtml += `
+                <tr class="row-total">
+                    <td colspan="3" class="text-right"><strong>TOTAL KESELURUHAN (${list.length} Asatidz):</strong></td>
+                    <td class="text-center font-bold">${totalBinaanAll}</td>
+                    <td colspan="2"></td>
+                    <td class="text-center font-bold">${totalPresensiAll} Santri</td>
+                    <td class="text-center font-bold">${totalSetoranAll} Setoran</td>
+                    <td class="text-center font-bold">${totalHalamanAll} Hlm</td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        // Full Printable Document HTML
+        const html = `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Keaktifan Asatidz - ${periodType} - PPTQ Asnawiyyah</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm 12mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111827;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+        .kop-container {
+            display: flex;
+            align-items: center;
+            border-bottom: 2.5px solid #065f46;
+            padding-bottom: 8px;
+            margin-bottom: 4px;
+        }
+        .kop-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-right: 14px;
+        }
+        .kop-text {
+            flex: 1;
+            text-align: center;
+        }
+        .kop-text h1 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            color: #065f46;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .kop-text h2 {
+            margin: 2px 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .kop-text p {
+            margin: 0;
+            font-size: 9.5px;
+            color: #4b5563;
+        }
+        .sub-border {
+            border-bottom: 1px solid #065f46;
+            margin-bottom: 10px;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+        .report-title h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 800;
+            color: #111827;
+            text-transform: uppercase;
+        }
+        .report-title p {
+            margin: 2px 0 0 0;
+            font-size: 10px;
+            color: #047857;
+            font-weight: bold;
+        }
+        .meta-box {
+            font-size: 9.5px;
+            text-align: right;
+            color: #4b5563;
+            line-height: 1.4;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .kpi-box {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 6px 8px;
+            text-align: center;
+            background: #f9fafb;
+        }
+        .kpi-val {
+            font-size: 14px;
+            font-weight: 800;
+            color: #111827;
+        }
+        .kpi-lbl {
+            font-size: 9px;
+            color: #6b7280;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+        .text-green { color: #059669 !important; }
+        .text-red { color: #dc2626 !important; }
+        .text-blue { color: #2563eb !important; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 15px;
+        }
+        th {
+            background-color: #065f46 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: left;
+            padding: 6px 7px;
+            border: 1px solid #065f46;
+            font-size: 9.5px;
+            letter-spacing: 0.3px;
+        }
+        td {
+            padding: 5px 7px;
+            border: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        tr:nth-child(even) td {
+            background-color: #f9fafb;
+        }
+        .row-total td {
+            background-color: #f0fdf4 !important;
+            border-top: 2px solid #065f46;
+            font-size: 10.5px;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-sub { font-size: 8.5px; color: #6b7280; margin-top: 1px; }
+        .text-small { font-size: 9px; color: #374151; }
+        .font-bold { font-weight: 700; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 8.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-green { background: #d1fae5 !important; color: #065f46 !important; border: 1px solid #a7f3d0; }
+        .badge-yellow { background: #fef3c7 !important; color: #92400e !important; border: 1px solid #fde68a; }
+        .badge-red { background: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca; }
+        .badge-blue { background: #dbeafe !important; color: #1e40af !important; border: 1px solid #bfdbfe; }
+        .badge-gray { background: #f3f4f6 !important; color: #4b5563 !important; border: 1px solid #e5e7eb; }
+
+        .footer-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            page-break-inside: avoid;
+            font-size: 10px;
+        }
+        .sig-box {
+            text-align: center;
+            width: 220px;
+        }
+        .sig-space {
+            height: 48px;
+        }
+        .sig-name {
+            font-weight: 800;
+            border-bottom: 1px solid #111827;
+            padding-bottom: 2px;
+            display: inline-block;
+            min-width: 170px;
+        }
+        .sig-role {
+            font-size: 9px;
+            color: #4b5563;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="kop-container">
+        <img src="/assets/img/logo-asnawiyyah.jpg" alt="Logo PPTQ Asnawiyyah" class="kop-logo" onerror="this.style.display='none'">
+        <div class="kop-text">
+            <h1>Pondok Pesantren Tahfidzul Qur'an Asnawiyyah</h1>
+            <h2>Biro Pendidikan & Pengasuhan Tahfidz Al-Qur'an</h2>
+            <p>Pilangwetan RT 03 / RW 01, Kebonagung, Kabupaten Demak, Jawa Tengah 59583 &bull; Website: asnawiyyah.or.id</p>
+        </div>
+    </div>
+    <div class="sub-border"></div>
+
+    <div class="report-header">
+        <div class="report-title">
+            <h3>Laporan Audit Keaktifan & Kedisiplinan Asatidz</h3>
+            <p>Periode Data: ${escapeHtml(periodFullLabel)}</p>
+        </div>
+        <div class="meta-box">
+            <div><strong>Waktu Cetak:</strong> ${escapeHtml(curDateIndo)}, Pk ${escapeHtml(curTimeIndo)} WIB</div>
+            <div><strong>Filter Aktif:</strong> ${escapeHtml(filterStr)}</div>
+            <div><strong>Total Data:</strong> ${list.length} Asatidz & Muhafiz</div>
+        </div>
+    </div>
+
+    ${kpiHtml}
+
+    <table>
+        <thead>
+            ${tableHeaderHtml}
+        </thead>
+        <tbody>
+            ${tableRowsHtml}
+        </tbody>
+    </table>
+
+    <div class="footer-signatures">
+        <div class="sig-box">
+            <div>Mengetahui,</div>
+            <div class="sig-role">Koordinator Tahfidz Al-Qur'an</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">Ustadz Halim / Asatidz Senior</div>
+            <div class="sig-role">ID: EMP-THF-001</div>
+        </div>
+        <div class="sig-box">
+            <div>Demak, ${escapeHtml(curDateIndo)}</div>
+            <div class="sig-role">Pimpinan / Pengasuh PPTQ Asnawiyyah</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">Admin Utama / Pengasuh</div>
+            <div class="sig-role">Super Administrator</div>
+        </div>
+    </div>
+</body>
+</html>
+        `;
+
+        // Eksekusi Print via Frame Terisolasi
+        let printFrame = document.getElementById('keaktifan-print-iframe');
+        if (!printFrame) {
+            printFrame = document.createElement('iframe');
+            printFrame.id = 'keaktifan-print-iframe';
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = '0';
+            printFrame.style.opacity = '0';
+            printFrame.style.pointerEvents = 'none';
+            document.body.appendChild(printFrame);
+        }
+
+        const doc = printFrame.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        if (typeof showToast === 'function') {
+            showToast("Membuka dialog Cetak / Print ke PDF...");
+        }
+
+        setTimeout(() => {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+        }, 400);
     }
 
     // Expose Global Functions
