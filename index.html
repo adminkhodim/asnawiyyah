@@ -6166,81 +6166,373 @@
 
             <!-- ================= VIEW 7: PROFIL LEMBAGA ================= -->
             <div id="admin-view-profil-lembaga" class="hidden space-y-4">
-                <!-- Header Sub-View -->
+                <!-- Header Sub-View Profil Lembaga -->
                 <div
-                    class="bg-white p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-2.5">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
-                            title="Kembali">
+                            title="Kembali ke Dashboard">
                             <i class="fa-solid fa-arrow-left text-xs"></i>
                         </button>
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-lg shadow-sm">
+                            <i class="fa-solid fa-building-columns"></i>
+                        </div>
                         <div>
-                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Profil & Kepengurusan</h2>
+                            <span
+                                class="text-[10px] font-extrabold text-teal-700 dark:text-teal-400 uppercase tracking-widest block">Dashboard
+                                Admin</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Profil & Kepengurusan Pesantren</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="switchTab('profil')"
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95"
+                            title="Buka halaman profil publik">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                            <span class="hidden sm:inline">Lihat Web Publik</span>
+                        </button>
+                        <button type="button" onclick="loadAdminProfilLembaga()"
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95"
+                            title="Muat ulang data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                        <button type="button" onclick="document.getElementById('btn-submit-profil-lembaga').click()"
+                            class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Simpan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARDS RINGKASAN DATA PROFIL & KEPENGURUSAN (4 VIBRANT KPI CARDS) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Pengurus (Teal Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0d9488] to-[#0f766e] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-teal-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL PENGURUS</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-profil-kpi-pengurus">0</span>
+                                <span class="text-xs font-bold text-white/80">Figur</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Dewan Asatidz & Tim</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-teal-800 font-black shadow-xs shrink-0 text-[9px]">Pengurus</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Kelengkapan Foto (Sky Blue Gradient) -->
+                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">FOTO RESMI</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-camera-retro"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-profil-kpi-foto">0</span>
+                                <span class="text-xs font-bold text-white/80">Terpasang</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90" id="admin-profil-kpi-foto-sub">Foto profil 1:1</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-sky-800 font-black shadow-xs shrink-0 text-[9px]">Galeri Foto</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Narasi Sejarah (Amber Gradient) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">NARASI SEJARAH</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-book-open-reader"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-profil-kpi-kata-sejarah">0</span>
+                                <span class="text-xs font-bold text-white/80">Kata</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90" id="admin-profil-kpi-paragraf-sejarah">0 Paragraf</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-800 font-black shadow-xs shrink-0 text-[9px]">Sejarah</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Visi & Misi Lembaga (Purple Gradient) -->
+                    <div class="bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-purple-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">ARAH & FALSAFAH</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="admin-profil-kpi-visimisi-status">Siap</span>
+                                <span class="text-xs font-bold text-white/80">Publikasi</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90" id="admin-profil-kpi-poin-visimisi">0 Butir Poin</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-purple-800 font-black shadow-xs shrink-0 text-[9px]">Visi Misi</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Formulir Profil Lembaga -->
-                <section class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <form id="form-profil-lembaga" onsubmit="event.preventDefault(); saveAdminProfilLembaga();"
-                        class="space-y-6">
+                <!-- SEGMENTED TABS NAVIGATION (SEJARAH | VISI MISI | KEPENGURUSAN) -->
+                <div class="bg-white dark:bg-[#15202d] p-1.5 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center space-x-1.5 overflow-x-auto custom-scrollbar animate-fade-in-up stagger-6">
+                    <button type="button" id="tab-btn-profil-sejarah" onclick="switchAdminProfilTab('sejarah')"
+                        class="admin-profil-nav-tab flex-1 min-w-[140px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-teal-600 text-white shadow-sm">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>Sejarah Pesantren</span>
+                    </button>
+                    <button type="button" id="tab-btn-profil-visimisi" onclick="switchAdminProfilTab('visimisi')"
+                        class="admin-profil-nav-tab flex-1 min-w-[140px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]">
+                        <i class="fa-solid fa-bullseye"></i>
+                        <span>Visi, Misi & Tujuan</span>
+                    </button>
+                    <button type="button" id="tab-btn-profil-pengurus" onclick="switchAdminProfilTab('pengurus')"
+                        class="admin-profil-nav-tab flex-1 min-w-[140px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]">
+                        <i class="fa-solid fa-sitemap"></i>
+                        <span>Struktur Kepengurusan</span>
+                        <span id="admin-profil-tab-pengurus-count" class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-full text-[10px] font-black">0</span>
+                    </button>
+                </div>
 
-                        <!-- Sejarah -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                Sejarah & Perkembangan
-                            </label>
-                            <p class="text-[10px] text-slate-500 leading-relaxed mb-2">Gunakan Enter untuk membuat paragraf baru.</p>
-                            <textarea id="input-profil-sejarah" rows="6"
-                                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-sm transition outline-none resize-y"
-                                placeholder="Tuliskan sejarah pesantren..."></textarea>
-                        </div>
+                <!-- FORM UTAMA PROFIL LEMBAGA -->
+                <form id="form-profil-lembaga" onsubmit="event.preventDefault(); saveAdminProfilLembaga();" class="space-y-4">
 
-                        <hr class="border-slate-100">
+                    <!-- ================= PANEL 1: SEJARAH & PERKEMBANGAN ================= -->
+                    <div id="admin-profil-panel-sejarah" class="space-y-4 animate-fade-in-up">
+                        <section class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 dark:border-[#253447] pb-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold">
+                                        <i class="fa-solid fa-book-open"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                                            Sejarah & Latar Belakang Pendirian
+                                        </h3>
+                                        <p class="text-[11px] text-slate-400">Tekan tombol Enter dua kali untuk memisahkan antar-paragraf.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="px-2.5 py-1 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 rounded-lg font-semibold text-[11px]" id="sejarah-counter-badge">
+                                        <span id="sejarah-word-count">0</span> Kata | <span id="sejarah-char-count">0</span> Karakter
+                                    </span>
+                                </div>
+                            </div>
 
-                        <!-- Visi Misi -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                Visi, Misi, & Tujuan
-                            </label>
-                            <p class="text-[10px] text-slate-500 leading-relaxed mb-2">Tuliskan dengan format list jika diperlukan.</p>
-                            <textarea id="input-profil-visimisi" rows="6"
-                                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-sm transition outline-none resize-y"
-                                placeholder="Tuliskan visi & misi pesantren..."></textarea>
-                        </div>
+                            <!-- Dual Grid: Editor Kiri & Live Preview Kanan -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <!-- Kolom Editor -->
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                            Editor Narasi Sejarah
+                                        </label>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" onclick="insertSejarahParagraphTemplate()"
+                                                class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-lg text-[10px] font-bold transition flex items-center gap-1 active:scale-95"
+                                                title="Sisipkan Paragraf Baru">
+                                                <i class="fa-solid fa-plus text-[9px]"></i> Paragraf Baru
+                                            </button>
+                                            <button type="button" onclick="formatSejarahText()"
+                                                class="px-2.5 py-1 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 active:scale-95"
+                                                title="Rapikan spasi berlebih">
+                                                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i> Rapikan
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="input-profil-sejarah" rows="12"
+                                        oninput="updateSejarahLivePreview()"
+                                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-[#15202d] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-xs md:text-sm leading-relaxed transition outline-none resize-y"
+                                        placeholder="Tuliskan sejarah berdirinya pondok pesantren, riwayat pengasuh, dan perkembangannya..."></textarea>
+                                </div>
 
-                        <hr class="border-slate-100">
+                                <!-- Kolom Live Preview Tampilan Publik -->
+                                <div class="space-y-2 flex flex-col">
+                                    <div class="flex items-center justify-between">
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                            Live Preview Tampilan Publik
+                                        </label>
+                                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sinkron Otomatis
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 p-4 md:p-5 rounded-xl border border-slate-200 dark:border-[#253447] bg-amber-50/20 dark:bg-[#1a2634] max-h-[320px] overflow-y-auto custom-scrollbar space-y-3">
+                                        <div class="flex items-center gap-2 pb-2 border-b border-amber-200/50 dark:border-amber-900/30 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                                            <i class="fa-solid fa-clock-rotate-left"></i>
+                                            <span>Pratinjau Halaman Profil:</span>
+                                        </div>
+                                        <div id="preview-profil-sejarah" class="text-xs md:text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-3">
+                                            <p class="text-slate-400 italic">Pratinjau narasi sejarah akan muncul di sini secara real-time.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
 
-                        <!-- Struktur Kepengurusan -->
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    Struktur Kepengurusan
-                                </label>
+                    <!-- ================= PANEL 2: VISI, MISI & TUJUAN ================= -->
+                    <div id="admin-profil-panel-visimisi" class="hidden space-y-4 animate-fade-in-up">
+                        <section class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 dark:border-[#253447] pb-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs font-bold">
+                                        <i class="fa-solid fa-bullseye"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                                            Visi, Misi & Orientasi Pesantren
+                                        </h3>
+                                        <p class="text-[11px] text-slate-400">Gunakan simbol strip (-) atau angka untuk membuat poin daftar yang rapi.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="px-2.5 py-1 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 rounded-lg font-semibold text-[11px]" id="visimisi-counter-badge">
+                                        <span id="visimisi-points-count">0</span> Poin | <span id="visimisi-word-count">0</span> Kata
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Dual Grid: Editor Kiri & Live Preview Kanan -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <!-- Kolom Editor -->
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                            Editor Visi, Misi & Nilai
+                                        </label>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" onclick="insertVisiMisiBullet()"
+                                                class="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-lg text-[10px] font-bold transition flex items-center gap-1 active:scale-95"
+                                                title="Sisipkan Butir Poin Baru">
+                                                <i class="fa-solid fa-list-ul text-[9px]"></i> + Poin
+                                            </button>
+                                            <button type="button" onclick="formatVisiMisiText()"
+                                                class="px-2.5 py-1 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1 active:scale-95"
+                                                title="Format Otomatis">
+                                                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i> Rapikan
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="input-profil-visimisi" rows="12"
+                                        oninput="updateVisiMisiLivePreview()"
+                                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-[#15202d] focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-xs md:text-sm leading-relaxed transition outline-none resize-y"
+                                        placeholder="Tuliskan Visi, Misi, dan Tujuan Utama PPTQ Asnawiyyah..."></textarea>
+                                </div>
+
+                                <!-- Kolom Live Preview Tampilan Publik -->
+                                <div class="space-y-2 flex flex-col">
+                                    <div class="flex items-center justify-between">
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                            Live Preview Tampilan Publik
+                                        </label>
+                                        <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span> Terformat Sesuai Beranda
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 p-4 md:p-5 rounded-xl border border-slate-200 dark:border-[#253447] bg-purple-50/20 dark:bg-[#1a2634] max-h-[320px] overflow-y-auto custom-scrollbar space-y-3">
+                                        <div class="flex items-center gap-2 pb-2 border-b border-purple-200/50 dark:border-purple-900/30 text-purple-800 dark:text-purple-300 text-xs font-bold">
+                                            <i class="fa-solid fa-compass"></i>
+                                            <span>Arah & Tujuan Lembaga:</span>
+                                        </div>
+                                        <div id="preview-profil-visimisi" class="text-xs md:text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-2.5">
+                                            <p class="text-slate-400 italic">Pratinjau visi dan misi akan muncul di sini secara real-time.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- ================= PANEL 3: STRUKTUR KEPENGURUSAN ================= -->
+                    <div id="admin-profil-panel-pengurus" class="hidden space-y-4 animate-fade-in-up">
+                        <section class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+                            <!-- Header Toolbar Pengurus -->
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 dark:border-[#253447] pb-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xs font-bold">
+                                        <i class="fa-solid fa-sitemap"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+                                            Dewan Pengurus & Asatidz
+                                            <span id="admin-profil-pengurus-count-badge" class="px-2 py-0.5 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 rounded-lg text-[10px] font-bold border border-teal-200/60 dark:border-teal-800/40">0 Orang</span>
+                                        </h3>
+                                        <p class="text-[11px] text-slate-400">Kelola foto resmi (rasio 1:1), nama lengkap berserta gelar, dan amanah jabatan.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <!-- Search input pengurus -->
+                                    <div class="relative flex-1 sm:w-56">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                        <input type="text" id="admin-pengurus-search" oninput="filterAdminPengurusList()"
+                                            placeholder="Cari nama / jabatan..."
+                                            class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 transition">
+                                    </div>
+                                    <!-- Tombol Tambah Pengurus Baru -->
+                                    <button type="button" onclick="addPengurusField()"
+                                        class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm active:scale-95 shrink-0">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                        <span>Tambah Pengurus</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Petunjuk Format Foto -->
+                            <div class="p-3 bg-teal-50/70 dark:bg-teal-950/30 rounded-xl border border-teal-100 dark:border-teal-900/40 flex items-center justify-between text-xs text-teal-800 dark:text-teal-300">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-info text-teal-600 dark:text-teal-400"></i>
+                                    <span>Foto disarankan berasio persegi (1:1), berlatar belakang rapi, dan otomatis disimpan di cloud storage.</span>
+                                </div>
+                                <span class="hidden sm:inline text-[10px] opacity-80">Format: JPG, PNG, WEBP</span>
+                            </div>
+
+                            <!-- GRID CONTAINER KARTU PENGURUS DINAMIS -->
+                            <div id="container-pengurus" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                                <!-- Dinamis diisi lewat JavaScript renderPengurusFields() -->
+                            </div>
+
+                            <!-- Empty State Pengurus -->
+                            <div id="admin-pengurus-empty-state" class="hidden py-12 text-center text-xs text-slate-400 space-y-2">
+                                <i class="fa-solid fa-users-slash text-3xl text-slate-300 dark:text-slate-600"></i>
+                                <p class="font-medium">Belum ada pengurus yang terdaftar atau cocok dengan pencarian.</p>
                                 <button type="button" onclick="addPengurusField()"
-                                    class="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold rounded-lg transition active:scale-95 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-plus"></i> Tambah Pengurus
+                                    class="mt-2 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition active:scale-95">
+                                    <i class="fa-solid fa-plus text-xs"></i> Tambah Pengurus Pertama
                                 </button>
                             </div>
-                            <p class="text-[10px] text-slate-500 leading-relaxed">
-                                Foto disarankan berbentuk kotak (rasio 1:1) agar terlihat rapi.
-                            </p>
-                            
-                            <!-- Container untuk List Pengurus -->
-                            <div id="container-pengurus" class="space-y-3">
-                                <!-- Dinamis diisi lewat JS -->
-                            </div>
-                        </div>
+                        </section>
+                    </div>
 
-                        <div class="pt-4 flex justify-end">
+                    <!-- BOTTOM STICKY ACTION BAR -->
+                    <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in-up">
+                        <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <i class="fa-solid fa-shield-halved text-teal-600 dark:text-teal-400"></i>
+                            <span>Perubahan profil & kepengurusan akan langsung tampil di portal santri & beranda publik.</span>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
                             <button type="submit" id="btn-submit-profil-lembaga"
-                                class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition shadow-sm flex items-center active:scale-95">
-                                <i class="fa-solid fa-save mr-2"></i> Simpan Profil
+                                class="w-full sm:w-auto px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs md:text-sm rounded-xl shadow-md transition flex items-center justify-center space-x-2 active:scale-98">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Simpan Seluruh Profil</span>
                             </button>
                         </div>
-                    </form>
-                </section>
+                    </div>
+                </form>
             </div>
 
             <!-- ================= VIEW 4: MODUL DATA PENDAFTAR PPDB ================= -->

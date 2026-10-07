@@ -480,6 +480,17 @@
         }
         window.triggerGaleriStaggerAnimation = triggerGaleriStaggerAnimation;
 
+        function triggerProfilLembagaStaggerAnimation() {
+            const v = document.getElementById('admin-view-profil-lembaga');
+            if (!v) return;
+            v.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth;
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerProfilLembagaStaggerAnimation = triggerProfilLembagaStaggerAnimation;
+
         function triggerUnitKegiatanStaggerAnimation() {
             const v = document.getElementById('admin-view-unit-kegiatan');
             if (!v) return;
@@ -756,6 +767,9 @@
                 loadAdminProgramList();
             } else if (viewName === 'profil-lembaga') {
                 if (profilLembagaView) profilLembagaView.classList.remove('hidden');
+                if (typeof triggerProfilLembagaStaggerAnimation === 'function') {
+                    triggerProfilLembagaStaggerAnimation();
+                }
                 loadAdminProfilLembaga();
             } else if (viewName === 'unit-kegiatan') {
                 if (unitKegiatanView) unitKegiatanView.classList.remove('hidden');
@@ -936,67 +950,321 @@
 
         // ==================== DASHBOARD ADMIN: PROFIL LEMBAGA ====================
         let adminPengurusList = [];
+        let currentAdminProfilTab = 'sejarah';
 
-        function renderPengurusFields() {
+        function switchAdminProfilTab(tabName) {
+            currentAdminProfilTab = tabName;
+            const panels = {
+                'sejarah': document.getElementById('admin-profil-panel-sejarah'),
+                'visimisi': document.getElementById('admin-profil-panel-visimisi'),
+                'pengurus': document.getElementById('admin-profil-panel-pengurus')
+            };
+            const tabBtns = {
+                'sejarah': document.getElementById('tab-btn-profil-sejarah'),
+                'visimisi': document.getElementById('tab-btn-profil-visimisi'),
+                'pengurus': document.getElementById('tab-btn-profil-pengurus')
+            };
+
+            Object.keys(panels).forEach(key => {
+                if (panels[key]) {
+                    if (key === tabName) {
+                        panels[key].classList.remove('hidden');
+                    } else {
+                        panels[key].classList.add('hidden');
+                    }
+                }
+                if (tabBtns[key]) {
+                    if (key === tabName) {
+                        tabBtns[key].className = "admin-profil-nav-tab flex-1 min-w-[140px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-teal-600 text-white shadow-sm";
+                    } else {
+                        tabBtns[key].className = "admin-profil-nav-tab flex-1 min-w-[140px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447]";
+                    }
+                }
+            });
+        }
+        window.switchAdminProfilTab = switchAdminProfilTab;
+
+        function updateProfilLembagaKPIs() {
+            // 1. KPI Pengurus & Foto
+            const kpiPengurus = document.getElementById('admin-profil-kpi-pengurus');
+            const kpiFoto = document.getElementById('admin-profil-kpi-foto');
+            const kpiFotoSub = document.getElementById('admin-profil-kpi-foto-sub');
+            const tabBadge = document.getElementById('admin-profil-tab-pengurus-count');
+            const badgeList = document.getElementById('admin-profil-pengurus-count-badge');
+
+            const totalPengurus = Array.isArray(adminPengurusList) ? adminPengurusList.length : 0;
+            const fotoCount = Array.isArray(adminPengurusList) ? adminPengurusList.filter(p => p.foto && p.foto.trim() !== '').length : 0;
+
+            if (kpiPengurus) kpiPengurus.innerText = totalPengurus;
+            if (kpiFoto) kpiFoto.innerText = fotoCount;
+            if (kpiFotoSub) kpiFotoSub.innerText = `${fotoCount} dari ${totalPengurus} terpasang`;
+            if (tabBadge) tabBadge.innerText = totalPengurus;
+            if (badgeList) badgeList.innerText = `${totalPengurus} Orang`;
+
+            // 2. KPI Sejarah
+            const sejarahText = document.getElementById('input-profil-sejarah')?.value || "";
+            const sejarahWords = sejarahText.trim() ? sejarahText.trim().split(/\s+/).length : 0;
+            const sejarahParagraphs = sejarahText.split('\n').filter(p => p.trim() !== '').length;
+
+            const kpiKataSejarah = document.getElementById('admin-profil-kpi-kata-sejarah');
+            const kpiParagrafSejarah = document.getElementById('admin-profil-kpi-paragraf-sejarah');
+            const wordCountEl = document.getElementById('sejarah-word-count');
+            const charCountEl = document.getElementById('sejarah-char-count');
+
+            if (kpiKataSejarah) kpiKataSejarah.innerText = sejarahWords;
+            if (kpiParagrafSejarah) kpiParagrafSejarah.innerText = `${sejarahParagraphs} Paragraf`;
+            if (wordCountEl) wordCountEl.innerText = sejarahWords;
+            if (charCountEl) charCountEl.innerText = sejarahText.length;
+
+            // 3. KPI Visi Misi
+            const visiMisiText = document.getElementById('input-profil-visimisi')?.value || "";
+            const visiMisiWords = visiMisiText.trim() ? visiMisiText.trim().split(/\s+/).length : 0;
+            const visiMisiLines = visiMisiText.split('\n').filter(l => l.trim() !== '').length;
+
+            const kpiVisiMisiStatus = document.getElementById('admin-profil-kpi-visimisi-status');
+            const kpiPoinVisiMisi = document.getElementById('admin-profil-kpi-poin-visimisi');
+            const visimisiWordCountEl = document.getElementById('visimisi-word-count');
+            const visimisiPointsCountEl = document.getElementById('visimisi-points-count');
+
+            if (kpiVisiMisiStatus) kpiVisiMisiStatus.innerText = visiMisiWords > 0 ? "Siap" : "Kosong";
+            if (kpiPoinVisiMisi) kpiPoinVisiMisi.innerText = `${visiMisiLines} Butir Poin`;
+            if (visimisiWordCountEl) visimisiWordCountEl.innerText = visiMisiWords;
+            if (visimisiPointsCountEl) visimisiPointsCountEl.innerText = visiMisiLines;
+        }
+        window.updateProfilLembagaKPIs = updateProfilLembagaKPIs;
+
+        function updateSejarahLivePreview() {
+            const text = document.getElementById('input-profil-sejarah')?.value || "";
+            const preview = document.getElementById('preview-profil-sejarah');
+            if (!preview) return;
+
+            if (!text.trim()) {
+                preview.innerHTML = '<p class="text-slate-400 italic">Pratinjau narasi sejarah akan muncul di sini secara real-time.</p>';
+            } else {
+                const pTags = text.split('\n').filter(t => t.trim() !== '').map(p => `<p class="leading-relaxed">${escapeHtml(p)}</p>`).join('');
+                preview.innerHTML = pTags;
+            }
+            updateProfilLembagaKPIs();
+        }
+        window.updateSejarahLivePreview = updateSejarahLivePreview;
+
+        function updateVisiMisiLivePreview() {
+            const text = document.getElementById('input-profil-visimisi')?.value || "";
+            const preview = document.getElementById('preview-profil-visimisi');
+            if (!preview) return;
+
+            if (!text.trim()) {
+                preview.innerHTML = '<p class="text-slate-400 italic">Pratinjau visi dan misi akan muncul di sini secara real-time.</p>';
+            } else {
+                const lines = text.split('\n').filter(t => t.trim() !== '');
+                const formatted = lines.map(line => {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith('-') || trimmed.startsWith('•') || /^\d+[\.\)]/.test(trimmed)) {
+                        return `<li class="flex items-start gap-2"><span class="text-purple-600 dark:text-purple-400 font-bold">•</span><span>${escapeHtml(trimmed.replace(/^[-•\d+\.\)]\s*/, ''))}</span></li>`;
+                    } else if (trimmed.toLowerCase().includes('visi') || trimmed.toLowerCase().includes('misi') || trimmed.toLowerCase().includes('tujuan')) {
+                        return `<h5 class="font-bold text-xs uppercase tracking-wider pt-2 text-purple-700 dark:text-purple-400">${escapeHtml(trimmed)}</h5>`;
+                    } else {
+                        return `<p class="leading-relaxed">${escapeHtml(trimmed)}</p>`;
+                    }
+                }).join('');
+                preview.innerHTML = formatted;
+            }
+            updateProfilLembagaKPIs();
+        }
+        window.updateVisiMisiLivePreview = updateVisiMisiLivePreview;
+
+        function insertSejarahParagraphTemplate() {
+            const textarea = document.getElementById('input-profil-sejarah');
+            if (!textarea) return;
+            const template = "\n\nSeiring dengan perjalanan waktu, PPTQ Asnawiyyah terus berikhtiar membenahi sarana dan prasarana demi kenyamanan para santri dalam menghafal Al-Qur'an.";
+            textarea.value = (textarea.value.trim() ? textarea.value.trim() + template : template.trim());
+            updateSejarahLivePreview();
+            textarea.focus();
+        }
+        window.insertSejarahParagraphTemplate = insertSejarahParagraphTemplate;
+
+        function formatSejarahText() {
+            const textarea = document.getElementById('input-profil-sejarah');
+            if (!textarea) return;
+            textarea.value = textarea.value.replace(/\n{3,}/g, '\n\n').trim();
+            updateSejarahLivePreview();
+            showToast("✨ Format paragraf sejarah dirapikan.");
+        }
+        window.formatSejarahText = formatSejarahText;
+
+        function insertVisiMisiBullet() {
+            const textarea = document.getElementById('input-profil-visimisi');
+            if (!textarea) return;
+            const bullet = "\n• ";
+            textarea.value = (textarea.value.trim() ? textarea.value.trim() + bullet : "• ");
+            updateVisiMisiLivePreview();
+            textarea.focus();
+        }
+        window.insertVisiMisiBullet = insertVisiMisiBullet;
+
+        function formatVisiMisiText() {
+            const textarea = document.getElementById('input-profil-visimisi');
+            if (!textarea) return;
+            textarea.value = textarea.value.replace(/\n{3,}/g, '\n\n').trim();
+            updateVisiMisiLivePreview();
+            showToast("✨ Format visi & misi dirapikan.");
+        }
+        window.formatVisiMisiText = formatVisiMisiText;
+
+        function renderPengurusFields(filteredList = null) {
             const container = document.getElementById('container-pengurus');
+            const emptyState = document.getElementById('admin-pengurus-empty-state');
             if (!container) return;
             container.innerHTML = '';
-            
-            if (adminPengurusList.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 italic py-2 text-center">Belum ada data pengurus. Klik "Tambah Pengurus".</p>`;
+
+            const list = filteredList !== null ? filteredList : (adminPengurusList || []);
+
+            if (list.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                updateProfilLembagaKPIs();
                 return;
             }
 
-            adminPengurusList.forEach((pengurus, index) => {
+            if (emptyState) emptyState.classList.add('hidden');
+
+            list.forEach((pengurus, idx) => {
+                const originalIdx = adminPengurusList.findIndex(p => p === pengurus);
+                const actualIndex = originalIdx >= 0 ? originalIdx : idx;
+
                 const div = document.createElement('div');
-                div.className = "p-4 border border-slate-200 rounded-xl bg-slate-50 relative flex gap-4 items-start";
-                
-                const imgSrc = pengurus.foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(pengurus.nama || 'P') + '&background=e0e7ff&color=4f46e5';
-                
+                div.className = "p-3.5 md:p-4 rounded-2xl bg-slate-50 dark:bg-[#1a2634] border border-slate-200 dark:border-[#253447] flex flex-col justify-between gap-3 relative hover:shadow-md transition group animate-fade-in-up";
+
+                const imgSrc = pengurus.foto || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(pengurus.nama || 'P') + '&background=0d9488&color=ffffff&bold=true');
+
                 div.innerHTML = `
-                    <div class="flex-shrink-0 w-16 md:w-20">
-                        <div class="relative group aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300">
-                            <img id="preview-pengurus-${index}" src="${imgSrc}" class="w-full h-full object-cover" alt="Foto">
-                            <label class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer transition">
-                                <i class="fa-solid fa-camera text-sm mb-1"></i>
-                                <span class="text-[8px] font-bold">Ubah</span>
-                                <input type="file" accept="image/*" class="hidden" onchange="uploadPengurusFoto(event, ${index})">
+                    <div class="flex gap-3 items-start">
+                        <!-- 1:1 Square avatar foto -->
+                        <div class="relative group/photo aspect-square w-16 h-16 rounded-2xl overflow-hidden bg-slate-200 dark:bg-[#15202d] border border-slate-300 dark:border-[#2d4058] shrink-0 shadow-2xs">
+                            <img id="preview-pengurus-${actualIndex}" src="${imgSrc}" class="w-full h-full object-cover" alt="Foto">
+                            <label class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white opacity-0 group-hover/photo:opacity-100 cursor-pointer transition text-center p-1" title="Klik untuk mengunggah foto">
+                                <i class="fa-solid fa-camera text-xs mb-0.5"></i>
+                                <span class="text-[8px] font-bold">Ubah Foto</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="uploadPengurusFoto(event, ${actualIndex})">
                             </label>
                         </div>
-                        <input type="hidden" id="input-pengurus-foto-${index}" value="${pengurus.foto || ''}">
-                    </div>
-                    <div class="flex-1 space-y-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Lengkap</label>
-                            <input type="text" id="input-pengurus-nama-${index}" value="${pengurus.nama || ''}" 
-                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 text-sm outline-none" placeholder="Cth: KH. Fulan bin Fulan">
+                        <input type="hidden" id="input-pengurus-foto-${actualIndex}" value="${escapeHtml(pengurus.foto || '')}">
+
+                        <!-- Info Inputs -->
+                        <div class="flex-1 min-w-0 space-y-1.5">
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Jabatan / Amanah</label>
+                                <input type="text" id="input-pengurus-jabatan-${actualIndex}" value="${escapeHtml(pengurus.jabatan || '')}"
+                                    oninput="syncPengurusList()"
+                                    class="w-full px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 font-bold focus:ring-1 focus:ring-teal-500 focus:outline-none transition" placeholder="Cth: Pengasuh Pesantren">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nama Lengkap & Gelar</label>
+                                <input type="text" id="input-pengurus-nama-${actualIndex}" value="${escapeHtml(pengurus.nama || '')}"
+                                    oninput="syncPengurusList()"
+                                    class="w-full px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#253447] bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-teal-500 focus:outline-none transition" placeholder="Cth: KH. Fulan bin Fulan">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Jabatan</label>
-                            <input type="text" id="input-pengurus-jabatan-${index}" value="${pengurus.jabatan || ''}" 
-                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 text-sm outline-none" placeholder="Cth: Pengasuh Pesantren">
+                    </div>
+
+                    <!-- Bottom toolbar card -->
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-[#253447]/60 text-[11px]">
+                        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                            <i class="fa-solid fa-hashtag text-[9px]"></i> #${actualIndex + 1}
+                        </span>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="movePengurusOrder(${actualIndex}, -1)" ${actualIndex === 0 ? 'disabled' : ''}
+                                class="w-6 h-6 rounded-lg bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253447] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition shadow-2xs" title="Pindah Urutan ke Atas">
+                                <i class="fa-solid fa-chevron-up text-[10px]"></i>
+                            </button>
+                            <button type="button" onclick="movePengurusOrder(${actualIndex}, 1)" ${actualIndex === adminPengurusList.length - 1 ? 'disabled' : ''}
+                                class="w-6 h-6 rounded-lg bg-white dark:bg-[#15202d] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253447] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition shadow-2xs" title="Pindah Urutan ke Bawah">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </button>
+                            ${pengurus.foto ? `
+                            <button type="button" onclick="removePengurusFoto(${actualIndex})"
+                                class="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/60 flex items-center justify-center transition ml-1" title="Hapus Foto">
+                                <i class="fa-solid fa-image-slash text-[10px]"></i>
+                            </button>
+                            ` : ''}
+                            <button type="button" onclick="removePengurusField(${actualIndex})"
+                                class="w-6 h-6 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 flex items-center justify-center transition ml-1" title="Hapus Pengurus">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
+                            </button>
                         </div>
                     </div>
-                    <button type="button" onclick="removePengurusField(${index})" class="absolute top-3 right-3 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 w-7 h-7 rounded-lg flex items-center justify-center transition" title="Hapus">
-                        <i class="fa-solid fa-trash text-xs"></i>
-                    </button>
                 `;
                 container.appendChild(div);
             });
+
+            updateProfilLembagaKPIs();
         }
+        window.renderPengurusFields = renderPengurusFields;
 
         function addPengurusField() {
             syncPengurusList();
             adminPengurusList.push({ nama: "", jabatan: "", foto: "" });
             renderPengurusFields();
+
+            // Switch to pengurus tab if on other tab
+            switchAdminProfilTab('pengurus');
+
+            // Focus on newly added name input
+            const newIndex = adminPengurusList.length - 1;
+            setTimeout(() => {
+                const el = document.getElementById(`input-pengurus-nama-${newIndex}`);
+                if (el) {
+                    el.focus();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
         }
+        window.addPengurusField = addPengurusField;
 
         function removePengurusField(index) {
-            if(!confirm("Yakin ingin menghapus pengurus ini?")) return;
             syncPengurusList();
+            const p = adminPengurusList[index];
+            const name = p?.nama ? `"${p.nama}"` : "pengurus ini";
+            if (!confirm(`Yakin ingin menghapus ${name} dari daftar kepengurusan?`)) return;
             adminPengurusList.splice(index, 1);
             renderPengurusFields();
+            showToast("🗑️ Data pengurus dihapus.");
         }
+        window.removePengurusField = removePengurusField;
+
+        function removePengurusFoto(index) {
+            syncPengurusList();
+            if (adminPengurusList[index]) {
+                adminPengurusList[index].foto = "";
+                renderPengurusFields();
+                showToast("🗑️ Foto pengurus telah dihapus.");
+            }
+        }
+        window.removePengurusFoto = removePengurusFoto;
+
+        function movePengurusOrder(index, direction) {
+            syncPengurusList();
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= adminPengurusList.length) return;
+            const temp = adminPengurusList[index];
+            adminPengurusList[index] = adminPengurusList[targetIndex];
+            adminPengurusList[targetIndex] = temp;
+            renderPengurusFields();
+        }
+        window.movePengurusOrder = movePengurusOrder;
+
+        function filterAdminPengurusList() {
+            const q = (document.getElementById('admin-pengurus-search')?.value || '').toLowerCase().trim();
+            if (!q) {
+                renderPengurusFields();
+                return;
+            }
+            const filtered = adminPengurusList.filter(p => 
+                (p.nama || '').toLowerCase().includes(q) ||
+                (p.jabatan || '').toLowerCase().includes(q)
+            );
+            renderPengurusFields(filtered);
+        }
+        window.filterAdminPengurusList = filterAdminPengurusList;
 
         function syncPengurusList() {
             adminPengurusList = adminPengurusList.map((p, index) => {
@@ -1009,15 +1277,17 @@
                     foto: inputFoto ? inputFoto.value : p.foto
                 };
             });
+            updateProfilLembagaKPIs();
         }
+        window.syncPengurusList = syncPengurusList;
 
         async function uploadPengurusFoto(event, index) {
             const file = event.target.files[0];
             if (!file) return;
 
             const previewImg = document.getElementById(`preview-pengurus-${index}`);
-            const originalSrc = previewImg.src;
-            previewImg.src = "https://i.gifer.com/ZKZg.gif"; 
+            const originalSrc = previewImg ? previewImg.src : "";
+            if (previewImg) previewImg.src = "https://i.gifer.com/ZKZg.gif"; 
 
             try {
                 const token = getAdminSessionToken();
@@ -1030,34 +1300,39 @@
                     const uploadedUrl = response.url || response.fileUrl || (response.data && response.data.url) || "";
                     if (!uploadedUrl) throw new Error("Server tidak mengembalikan URL gambar.");
                     
-                    previewImg.src = uploadedUrl;
+                    if (previewImg) previewImg.src = uploadedUrl;
                     const hiddenInput = document.getElementById(`input-pengurus-foto-${index}`);
                     if (hiddenInput) hiddenInput.value = uploadedUrl;
+                    if (adminPengurusList[index]) adminPengurusList[index].foto = uploadedUrl;
                     syncPengurusList();
+                    renderPengurusFields();
                     showToast("✅ Foto berhasil diunggah ke Google Drive!");
                 } else {
                     throw new Error(response.message || "Gagal mengunggah foto.");
                 }
             } catch (err) {
                 console.error("Gagal upload foto pengurus:", err);
-                previewImg.src = originalSrc;
+                if (previewImg) previewImg.src = originalSrc;
                 showToast("❌ Gagal mengunggah foto pengurus.");
             }
         }
+        window.uploadPengurusFoto = uploadPengurusFoto;
 
         async function loadAdminProfilLembaga() {
             try {
                 const btnSubmit = document.getElementById('btn-submit-profil-lembaga');
                 if (btnSubmit) {
                     btnSubmit.disabled = true;
-                    btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat...`;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat Data...`;
                 }
 
                 const data = await apiGet("getPengaturan");
                 if (data && data.status === "success" && data.data) {
                     const config = data.data;
-                    document.getElementById('input-profil-sejarah').value = config.sejarah || "";
-                    document.getElementById('input-profil-visimisi').value = config.visi_misi || "";
+                    const sejarahInput = document.getElementById('input-profil-sejarah');
+                    const visiMisiInput = document.getElementById('input-profil-visimisi');
+                    if (sejarahInput) sejarahInput.value = config.sejarah || "";
+                    if (visiMisiInput) visiMisiInput.value = config.visi_misi || "";
                     
                     try {
                         const struct = config.struktur_kepengurusan;
@@ -1068,11 +1343,14 @@
                     }
                 }
                 
+                updateSejarahLivePreview();
+                updateVisiMisiLivePreview();
                 renderPengurusFields();
+                updateProfilLembagaKPIs();
 
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Simpan Profil`;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2"></i> Simpan Seluruh Profil`;
                 }
             } catch (err) {
                 console.error("Gagal memuat profil lembaga:", err);
@@ -1080,29 +1358,32 @@
                 const btnSubmit = document.getElementById('btn-submit-profil-lembaga');
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Simpan Profil`;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2"></i> Simpan Seluruh Profil`;
                 }
             }
         }
+        window.loadAdminProfilLembaga = loadAdminProfilLembaga;
 
         async function saveAdminProfilLembaga() {
             try {
                 const btnSubmit = document.getElementById('btn-submit-profil-lembaga');
-                const originalHtml = btnSubmit.innerHTML;
-                btnSubmit.disabled = true;
-                btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
+                const originalHtml = btnSubmit ? btnSubmit.innerHTML : "";
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
+                }
 
                 syncPengurusList(); 
 
                 const payload = {
-                    sejarah: document.getElementById('input-profil-sejarah').value,
-                    visi_misi: document.getElementById('input-profil-visimisi').value,
+                    sejarah: document.getElementById('input-profil-sejarah')?.value || "",
+                    visi_misi: document.getElementById('input-profil-visimisi')?.value || "",
                     struktur_kepengurusan: JSON.stringify(adminPengurusList)
                 };
 
                 const response = await apiPost("savePengaturan", payload);
                 if (response.success) {
-                    showToast("Profil Lembaga berhasil disimpan!");
+                    showToast("✅ Profil & Kepengurusan berhasil disimpan!");
                     
                     window.APP_CONFIG.sejarah = payload.sejarah;
                     window.APP_CONFIG.visi_misi = payload.visi_misi;
@@ -1111,19 +1392,26 @@
                     if (typeof renderPublicProfilLembaga === 'function') {
                         renderPublicProfilLembaga();
                     }
+                    updateProfilLembagaKPIs();
                 } else {
-                    showToast("Gagal menyimpan: " + (response.message || "Unknown error"));
+                    showToast("❌ Gagal menyimpan: " + (response.message || "Unknown error"));
                 }
 
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = originalHtml;
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = originalHtml;
+                }
             } catch (err) {
                 console.error(err);
                 showToast("❌ Terjadi kesalahan saat menyimpan.");
-                document.getElementById('btn-submit-profil-lembaga').disabled = false;
-                document.getElementById('btn-submit-profil-lembaga').innerHTML = `<i class="fa-solid fa-save mr-2"></i> Simpan Profil`;
+                const btnSubmit = document.getElementById('btn-submit-profil-lembaga');
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2"></i> Simpan Seluruh Profil`;
+                }
             }
         }
+        window.saveAdminProfilLembaga = saveAdminProfilLembaga;
 
         // ==================== DASHBOARD ADMIN: PENGATURAN PROFIL ====================
         async function loadAdminPengaturan() {
