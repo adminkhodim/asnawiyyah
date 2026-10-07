@@ -399,6 +399,30 @@
         }
         window.triggerKeaktifanStaggerAnimation = triggerKeaktifanStaggerAnimation;
 
+        function triggerUsersStaggerAnimation() {
+            const usersView = document.getElementById('admin-view-users');
+            if (!usersView) return;
+            const animatedElements = usersView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerUsersStaggerAnimation = triggerUsersStaggerAnimation;
+
+        function triggerRolesStaggerAnimation() {
+            const rolesView = document.getElementById('admin-view-roles');
+            if (!rolesView) return;
+            const animatedElements = rolesView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerRolesStaggerAnimation = triggerRolesStaggerAnimation;
+
         function refreshAdminAnalyticsData() {
             const refreshBtn = document.getElementById('admin-analytics-refresh-btn');
             const icon = refreshBtn ? refreshBtn.querySelector('i') : null;
@@ -547,9 +571,15 @@
                 renderAdminBannerList();
             } else if (viewName === 'users') {
                 if (usersView) usersView.classList.remove('hidden');
+                if (typeof triggerUsersStaggerAnimation === 'function') {
+                    triggerUsersStaggerAnimation();
+                }
                 loadAdminUsersData();
             } else if (viewName === 'roles') {
                 if (rolesView) rolesView.classList.remove('hidden');
+                if (typeof triggerRolesStaggerAnimation === 'function') {
+                    triggerRolesStaggerAnimation();
+                }
                 if (typeof loadAdminRolesData === 'function') {
                     loadAdminRolesData();
                 }
