@@ -655,6 +655,9 @@
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
+                if (typeof toggleAdminNewsForm === 'function' && !document.getElementById('admin-news-id')?.value) {
+                    toggleAdminNewsForm(false);
+                }
                 if (typeof triggerBeritaStaggerAnimation === 'function') {
                     triggerBeritaStaggerAnimation();
                 }
@@ -1463,58 +1466,173 @@
         let adminNewsInlineRawImage = null;
         let adminNewsInlineCurrentRatio = 'original'; // 'original' | '16:9' | '4:3' | '1:1'
 
-        function renderAdminNewsList() {
+        let isAdminNewsFormOpen = false;
+        let currentAdminNewsCategoryFilter = 'all';
+
+        function toggleAdminNewsForm(forceState = null) {
+            const formSection = document.getElementById('admin-news-form-section');
+            const toggleIcon = document.getElementById('admin-news-toggle-icon');
+            const toggleText = document.getElementById('admin-news-toggle-text');
+            const toggleBtn = document.getElementById('admin-news-toggle-btn');
+            if (!formSection) return;
+
+            if (forceState !== null) {
+                isAdminNewsFormOpen = forceState;
+            } else {
+                isAdminNewsFormOpen = !isAdminNewsFormOpen;
+            }
+
+            if (isAdminNewsFormOpen) {
+                formSection.classList.remove('hidden');
+                if (toggleIcon) toggleIcon.className = "fa-solid fa-chevron-up text-xs";
+                if (toggleText) toggleText.innerText = "Tutup Form Editor";
+                if (toggleBtn) {
+                    toggleBtn.className = "px-3.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95";
+                }
+                formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(() => {
+                    const judulInput = document.getElementById('admin-news-judul');
+                    if (judulInput) judulInput.focus();
+                }, 250);
+            } else {
+                formSection.classList.add('hidden');
+                if (toggleIcon) toggleIcon.className = "fa-solid fa-plus text-xs";
+                if (toggleText) toggleText.innerText = "Tulis Berita Baru";
+                if (toggleBtn) {
+                    toggleBtn.className = "px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95";
+                }
+            }
+        }
+        window.toggleAdminNewsForm = toggleAdminNewsForm;
+
+        function setAdminNewsCategoryFilter(kategori) {
+            currentAdminNewsCategoryFilter = kategori;
+            document.querySelectorAll('.admin-news-filter-chip').forEach(btn => {
+                const cat = btn.getAttribute('data-category');
+                if (cat === kategori) {
+                    btn.className = "admin-news-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm transition shrink-0";
+                } else {
+                    btn.className = "admin-news-filter-chip px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0";
+                }
+            });
+            filterAdminNewsList();
+        }
+        window.setAdminNewsCategoryFilter = setAdminNewsCategoryFilter;
+
+        function filterAdminNewsList() {
+            const searchInput = document.getElementById('admin-news-search');
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+            let filtered = mockNewsData || [];
+
+            if (currentAdminNewsCategoryFilter && currentAdminNewsCategoryFilter !== 'all') {
+                filtered = filtered.filter(n => (n.kategori || '').toLowerCase() === currentAdminNewsCategoryFilter.toLowerCase());
+            }
+
+            if (query) {
+                filtered = filtered.filter(n => 
+                    (n.judul || '').toLowerCase().includes(query) ||
+                    (n.penulis || '').toLowerCase().includes(query) ||
+                    (n.kategori || '').toLowerCase().includes(query) ||
+                    (n.ringkasan || '').toLowerCase().includes(query)
+                );
+            }
+
+            renderAdminNewsList(filtered);
+        }
+        window.filterAdminNewsList = filterAdminNewsList;
+
+        function renderAdminNewsList(itemsToRender = null) {
             const container = document.getElementById('admin-news-list');
             const totalBadge = document.getElementById('admin-total-news');
             const hubBadge = document.getElementById('admin-hub-news-count');
+            const emptyState = document.getElementById('admin-news-empty-state');
 
-            if (hubBadge) hubBadge.innerText = `${mockNewsData.length} Berita`;
-            if (totalBadge) totalBadge.innerText = `${mockNewsData.length} Berita`;
+            const totalCount = Array.isArray(mockNewsData) ? mockNewsData.length : 0;
+            if (hubBadge) hubBadge.innerText = `${totalCount} Berita`;
+            if (totalBadge) totalBadge.innerText = `${totalCount} Berita`;
 
             // Update KPI Cards
-            const kpiTotal = document.getElementById('admin-berita-kpi-total');
-            const kpiPublished = document.getElementById('admin-berita-kpi-published');
-            const kpiCategories = document.getElementById('admin-berita-kpi-categories');
-            const kpiViews = document.getElementById('admin-berita-kpi-views');
+            const kpiTotal = document.getElementById('admin-news-kpi-total') || document.getElementById('admin-berita-kpi-total');
+            const kpiViews = document.getElementById('admin-news-kpi-views') || document.getElementById('admin-berita-kpi-views');
+            const kpiCategories = document.getElementById('admin-news-kpi-categories') || document.getElementById('admin-berita-kpi-categories');
+            const kpiAuthors = document.getElementById('admin-news-kpi-authors') || document.getElementById('admin-berita-kpi-published');
 
-            if (kpiTotal) kpiTotal.innerText = mockNewsData.length;
-            if (kpiPublished) kpiPublished.innerText = mockNewsData.length;
+            if (kpiTotal) kpiTotal.innerText = totalCount;
+            if (kpiViews) {
+                const totalViews = (mockNewsData || []).reduce((acc, n) => acc + (parseInt(n.views) || 0), 0);
+                kpiViews.innerText = totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews;
+            }
             if (kpiCategories) {
-                const uniqueCats = new Set(mockNewsData.map(n => n.kategori).filter(Boolean));
+                const uniqueCats = new Set((mockNewsData || []).map(n => n.kategori).filter(Boolean));
                 kpiCategories.innerText = uniqueCats.size || 1;
             }
-            if (kpiViews) {
-                const totalViews = mockNewsData.reduce((acc, n) => acc + (parseInt(n.views) || 0), 0);
-                kpiViews.innerText = totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews;
+            if (kpiAuthors) {
+                const uniqueAuthors = new Set((mockNewsData || []).map(n => n.penulis).filter(Boolean));
+                kpiAuthors.innerText = uniqueAuthors.size || 1;
             }
 
             if (!container) return;
 
-            container.innerHTML = "";
-            mockNewsData.forEach((news, idx) => {
-                const item = document.createElement('div');
-                item.className = "flex items-center justify-between p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/70 dark:border-[#253447] gap-3";
-                const viewsBadge = (typeof news.views !== 'undefined') ? `<span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold ml-1.5"><i class="fa-solid fa-eye mr-0.5"></i>${news.views}</span>` : '';
-                item.innerHTML = `
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center flex-wrap gap-1">
-                            <span class="text-[9px] font-bold text-brand-700 dark:text-emerald-300 bg-brand-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md uppercase">${news.kategori}</span>
-                            ${viewsBadge}
+            const list = itemsToRender !== null ? itemsToRender : (mockNewsData || []);
+
+            if (list.length === 0) {
+                container.innerHTML = "";
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            container.innerHTML = list.map((news) => {
+                const thumbUrl = news.gambar && news.gambar.trim() !== '' 
+                    ? news.gambar 
+                    : 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=600&auto=format&fit=crop';
+                
+                const viewsCount = typeof news.views !== 'undefined' ? Number(news.views).toLocaleString('id-ID') : '0';
+                const ringkasanText = news.ringkasan || (news.isi ? news.isi.replace(/<[^>]*>/g, '').slice(0, 110) : '-');
+
+                // Dynamic badge color based on kategori
+                let badgeColor = "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40";
+                const katLower = (news.kategori || '').toLowerCase();
+                if (katLower.includes('prestasi')) badgeColor = "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40";
+                else if (katLower.includes('kegiatan')) badgeColor = "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/40";
+                else if (katLower.includes('artikel')) badgeColor = "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40";
+                else if (katLower.includes('kajian')) badgeColor = "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/40";
+
+                return `
+                    <div class="p-3.5 bg-slate-50/80 dark:bg-[#1a2634] hover:bg-white dark:hover:bg-[#1e2c3c] rounded-2xl border border-slate-200/80 dark:border-[#253447] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 transition-all duration-200 hover:shadow-md">
+                        <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                            <div class="w-24 sm:w-28 h-16 sm:h-18 rounded-xl overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-[#253447] relative group">
+                                <img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(news.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=600&auto=format&fit=crop'">
+                            </div>
+                            <div class="min-w-0 flex-1 space-y-1">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${badgeColor}">${escapeHtml(news.kategori || 'Umum')}</span>
+                                    <span class="text-[10px] text-slate-400 font-medium flex items-center gap-1"><i class="fa-regular fa-calendar text-[9px]"></i> ${escapeHtml(news.tanggal || '-')}</span>
+                                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 bg-emerald-50/80 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md"><i class="fa-solid fa-eye text-[9px]"></i> ${viewsCount} views</span>
+                                </div>
+                                <h4 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1 leading-snug hover:text-emerald-600 transition cursor-pointer" onclick="editAdminNews('${news.news_id}')" title="${escapeHtml(news.judul)}">${escapeHtml(news.judul)}</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">${escapeHtml(ringkasanText)}</p>
+                                <p class="text-[10px] text-slate-400 font-medium flex items-center gap-1"><i class="fa-solid fa-feather-pointed text-[9px]"></i> Penulis: <strong class="text-slate-600 dark:text-slate-300 font-semibold">${escapeHtml(news.penulis || 'Redaksi')}</strong></p>
+                            </div>
                         </div>
-                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate mt-1">${news.judul}</h4>
-                        <p class="text-[10px] text-slate-400">${news.tanggal} • Oleh: ${news.penulis}</p>
-                    </div>
-                    <div class="flex items-center space-x-1.5 shrink-0">
-                        <button onclick="editAdminNews('${news.news_id}')" class="w-8 h-8 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-400 rounded-lg flex items-center justify-center text-xs transition" title="Edit">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteAdminNews('${news.news_id}')" class="w-8 h-8 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-400 rounded-lg flex items-center justify-center text-xs transition" title="Hapus">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <div class="flex items-center space-x-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-[#253447] w-full sm:w-auto justify-end">
+                            <button type="button" onclick="bacaBerita('${news.news_id || news.slug}')" class="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95" title="Lihat Tampilan Web Publik">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                <span class="text-[10px] hidden md:inline">Pratinjau</span>
+                            </button>
+                            <button type="button" onclick="editAdminNews('${news.news_id}')" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95" title="Edit Berita">
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                                <span class="text-[10px]">Edit</span>
+                            </button>
+                            <button type="button" onclick="deleteAdminNews('${news.news_id}')" class="w-8 h-8 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-400 rounded-xl flex items-center justify-center text-xs transition active:scale-95" title="Hapus Berita">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
-                container.appendChild(item);
-            });
+            }).join('');
         }
 
         // ---------- SINKRONISASI & FORMATTING RICH TEXT CONTENT EDITOR ----------
@@ -2237,7 +2355,7 @@
             document.getElementById('admin-submit-text').innerText = "Simpan Perubahan Berita";
             document.getElementById('admin-cancel-edit-btn').classList.remove('hidden');
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toggleAdminNewsForm(true);
         }
 
         function resetAdminNewsForm() {
@@ -2251,7 +2369,7 @@
 
             clearAdminNewsPhoto();
 
-            document.getElementById('admin-form-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-brand-700 mr-2"></i> Tambah Berita Baru`;
+            document.getElementById('admin-form-title').innerHTML = `Tambah Berita Baru`;
             document.getElementById('admin-submit-text').innerText = "Publikasikan Berita";
             document.getElementById('admin-cancel-edit-btn').classList.add('hidden');
         }
