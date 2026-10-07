@@ -240,6 +240,7 @@
                     'alumni': 'Rekap Alumni',
                     'program': 'Manajemen Program',
                     'pegawai': 'Data Pegawai & Asatidz',
+                    'keaktifan-asatidz': 'Keaktifan Asatidz',
                     'berita': 'Manajemen Berita',
                     'banner': 'Banner Slider',
                     'galeri': 'Manajemen Galeri',
@@ -266,6 +267,7 @@
             const bannerView = document.getElementById('admin-view-banner');
             const santriView = document.getElementById('admin-view-santri');
             const tahfidzView = document.getElementById('admin-view-tahfidz');
+            const keaktifanView = document.getElementById('admin-view-keaktifan-asatidz');
             const ppdbView = document.getElementById('admin-view-ppdb');
             const programView = document.getElementById('admin-view-program');
             const galeriView = document.getElementById('admin-view-galeri');
@@ -286,6 +288,7 @@
             bannerView.classList.add('hidden');
             if (santriView) santriView.classList.add('hidden');
             if (tahfidzView) tahfidzView.classList.add('hidden');
+            if (keaktifanView) keaktifanView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
             if (programView) programView.classList.add('hidden');
             if (galeriView) galeriView.classList.add('hidden');
@@ -337,6 +340,11 @@
                     document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
                         el.style.display = (isPengasuh || isAsatidz) ? 'none' : '';
                     });
+                }
+            } else if (viewName === 'keaktifan-asatidz') {
+                if (keaktifanView) keaktifanView.classList.remove('hidden');
+                if (typeof loadAdminKeaktifanAsatidz === 'function') {
+                    loadAdminKeaktifanAsatidz();
                 }
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');

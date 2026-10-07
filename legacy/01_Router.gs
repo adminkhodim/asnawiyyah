@@ -328,6 +328,18 @@ function doPost(e) {
       return createJsonResponse(cleanTahfidzCapaianDuplicates(token));
     }
 
+    if (action === "getKeaktifanAsatidz" || action === "keaktifan.getAsatidz" || action === "auth.keaktifan.getAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      const dataPayload = payload.payload || payload.data || payload;
+      return createJsonResponse(getKeaktifanAsatidz(dataPayload, token));
+    }
+
     // ========================================================
     // MANAJEMEN PERAN & HAK AKSES (RBAC) ACTIONS (doPost)
     // ========================================================

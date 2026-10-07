@@ -177,7 +177,8 @@
                 { key: 'tahfidz.target', label: 'Mengatur Target Tahfidz', desc: 'Izin menentukan target capaian juz santri' },
                 { key: 'tahfidz.halaqah', label: 'Kelola Halaqah & Plotting', desc: 'Izin mengelola kelompok halaqah & plotting santri binaan' },
                 { key: 'presensi.view', label: 'Melihat Rekap Presensi', desc: 'Akses memantau grafik kehadiran kegiatan santri' },
-                { key: 'presensi.entry', label: 'Checklist & Scan QR Presensi', desc: 'Izin melakukan absensi live kegiatan & sholat' }
+                { key: 'presensi.entry', label: 'Checklist & Scan QR Presensi', desc: 'Izin melakukan absensi live kegiatan & sholat' },
+                { key: 'keaktifan.view', label: 'Monitoring Keaktifan Asatidz', desc: 'Hak eksklusif Super Admin & Pengasuh untuk memantau kepatuhan sesi, presensi & setoran asatidz' }
             ]
         },
         {
@@ -226,6 +227,7 @@
         'santri': ['santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export'],
         'alumni': ['alumni.view', 'alumni.manage', 'santri.view'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
+        'keaktifan-asatidz': ['keaktifan.view'],
         'presensi': ['presensi.view', 'presensi.entry'],
         'ppdb': ['ppdb.manage', 'keuangan.verify'],
         'program': ['program.manage'],
@@ -267,7 +269,7 @@
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'presensi.view',
+            'santri.view', 'tahfidz.view', 'presensi.view', 'keaktifan.view',
             'unit.manage', 'jadwal.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
         ],
         'WALI_SANTRI': [
@@ -336,6 +338,21 @@
                 PENGURUS: 'read',
                 BENDAHARA: 'none',
                 WALI_SANTRI: 'read_own'
+            }
+        },
+        {
+            category: 'Kesiswaan & Akademik',
+            module: 'Keaktifan Asatidz',
+            icon: 'fa-user-clock',
+            desc: 'Monitoring kepatuhan sesi, presensi & setoran tahfidz asatidz realtime khusus Super Admin & Pengasuh.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'none',
+                PENGASUH: 'read',
+                ASATIDZ: 'none',
+                PENGURUS: 'none',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'none'
             }
         },
         {
@@ -1475,6 +1492,11 @@
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
+
+        // Hak Akses Khusus Keaktifan Asatidz: Hanya Super Admin dan Pengasuh
+        if (moduleKey === 'keaktifan-asatidz') {
+            return roleKey === 'SUPER_ADMIN' || roleKey === 'PENGASUH';
+        }
 
         // Cek izin khusus pengguna (user-level override) jika tersedia
         let rolePerms = null;

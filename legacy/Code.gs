@@ -1101,6 +1101,18 @@ function doPost(e) {
       return createJsonResponse(cleanTahfidzCapaianDuplicates(token));
     }
 
+    if (action === "getKeaktifanAsatidz" || action === "keaktifan.getAsatidz" || action === "auth.keaktifan.getAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      const dataPayload = payload.payload || payload.data || payload;
+      return createJsonResponse(getKeaktifanAsatidz(dataPayload, token));
+    }
+
     // ========================================================
     // MANAJEMEN PERAN & HAK AKSES (RBAC) ACTIONS (doPost)
     // ========================================================
@@ -8727,8 +8739,426 @@ function getTahfidzPresensi(params, token) {
   }
 }
 
-// ====================================================================
-// MODUL BACKEND: DATA PEGAWAI (ASATIDZ, MUHAFIZ, GURU, KARYAWAN)
+/**
+ * 12. Monitoring Keaktifan Asatidz & Sesi Tahfidz
+ * Hak Akses Khusus: SUPER_ADMIN dan PENGASUH
+ * Deteksi otomatis siapa saja yang menjalankan presensi tahfidz dan catat setoran tahfidz
+ * Patokan jam deadline harian berdasarkan Jadwal & Sesi Tahfidz
+ * Mendukung timeframe: 1 hari (hari ini / realtime), 7 hari terakhir, 1 bulan (30 hari) terakhir
+ */
+function getKeaktifanAsatidz(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) throw new Error("Spreadsheet database tidak ditemukan.");
+
+    const now = new Date();
+    const todayStr = Utilities.formatDate(now, "GMT+7", "yyyy-MM-dd");
+    const currentTimeStr = Utilities.formatDate(now, "GMT+7", "HH:mm");
+    
+    // Map hari dalam bahasa Indonesia / singkatan sesi (Sen, Sel, Rab, Kam, Jum, Sab, Min)
+    const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const currentDayCode = dayNames[now.getDay()];
+
+    // 1. Ambil Sesi Tahfidz Aktif
+    const sesiRes = getTahfidzSesiList(token);
+    const rawSesiList = (sesiRes && sesiRes.data) || [];
+    const activeSesiList = rawSesiList.filter(s => s.status === "Aktif Digunakan");
+
+    // Evaluasi status timeline sesi untuk hari ini
+    const todaySessions = activeSesiList.map(sesi => {
+      const isDayActive = !sesi.hariList || sesi.hariList.length === 0 || sesi.hariList.includes(currentDayCode);
+      const jamMulai = sesi.jamMulai || "00:00";
+      const jamSelesai = sesi.jamSelesai || "23:59";
+      
+      let timelineStatus = "UPCOMING"; // UPCOMING, IN_PROGRESS, PASSED_DEADLINE
+      if (currentTimeStr < jamMulai) {
+        timelineStatus = "UPCOMING";
+      } else if (currentTimeStr >= jamMulai && currentTimeStr <= jamSelesai) {
+        timelineStatus = "IN_PROGRESS";
+      } else {
+        timelineStatus = "PASSED_DEADLINE";
+      }
+
+      return {
+        sesiId: sesi.sesiId,
+        namaSesi: sesi.namaSesi,
+        jenisSesi: sesi.jenisSesi,
+        jamMulai: jamMulai,
+        jamSelesai: jamSelesai,
+        isDayActive: isDayActive,
+        timelineStatus: timelineStatus
+      };
+    });
+
+    // 2. Ambil Master Halaqah
+    const halaqahSheet = ss.getSheetByName(SHEET_TAHFIDZ_HALAQAH);
+    let halaqahRows = [];
+    if (halaqahSheet && halaqahSheet.getLastRow() > 1) {
+      const hData = halaqahSheet.getDataRange().getValues();
+      const colMap = getHalaqahColumnIndexes(hData[0]);
+      for (let i = 1; i < hData.length; i++) {
+        const r = hData[i];
+        const hId = colMap.id !== -1 ? String(r[colMap.id] || "").trim() : "";
+        const hMuh = colMap.muhafiz !== -1 ? String(r[colMap.muhafiz] || "").trim() : "";
+        if (!hId && !hMuh) continue;
+        const rawSt = colMap.studentIds !== -1 ? String(r[colMap.studentIds] || "") : "";
+        const stIds = rawSt ? rawSt.split(",").map(x => x.trim()).filter(Boolean) : [];
+        halaqahRows.push({
+          halaqahId: hId,
+          namaHalaqah: colMap.nama !== -1 && r[colMap.nama] ? String(r[colMap.nama]).trim() : ("Halaqah " + hMuh),
+          muhafiz: hMuh || "Ustadz Pembina",
+          studentIds: stIds,
+          targetKurikulum: colMap.target !== -1 ? String(r[colMap.target] || "") : "Tahfidz 30 Juz"
+        });
+      }
+    }
+
+    // Default Fallback Teachers jika halaqah sheet belum diisi
+    if (halaqahRows.length === 0) {
+      const defaultTeachers = [
+        "Ustadz Faiz", "Ustadz Halim", "Ustadz Iqbal", "Ustadz Pendi",
+        "Ustadzah Alfi", "Ustadzah Angelia", "Ustadzah Aya", "Ustadzah Fadhilah",
+        "Ustadzah Fatim", "Ustadzah Iis", "Ustadzah Luthfi", "Ustadzah Mufti",
+        "Ustadzah Muhim", "Ustadzah Shabrina", "Ustadzah Shofi", "Ustadzah Yusita"
+      ];
+      defaultTeachers.forEach((muh, idx) => {
+        halaqahRows.push({
+          halaqahId: "HLQ-" + (idx < 9 ? "0" + (idx + 1) : (idx + 1)),
+          namaHalaqah: "Halaqah " + muh,
+          muhafiz: muh,
+          studentIds: [],
+          targetKurikulum: "Tahfidz 30 Juz"
+        });
+      });
+    }
+
+    // 3. Ambil Data Pegawai untuk nomor kontak / WhatsApp
+    let employeeMap = {};
+    try {
+      const empRes = getAllEmployeesData(token);
+      const employees = (empRes && empRes.data) || [];
+      employees.forEach(emp => {
+        const n = String(emp.nama || "").trim().toLowerCase();
+        if (n) {
+          employeeMap[n] = {
+            telepon: emp.telepon || emp.no_hp || emp.phone || "",
+            email: emp.email || "",
+            foto: emp.foto || emp.photo_url || ""
+          };
+        }
+      });
+    } catch (eEmp) {}
+
+    // 4. Hitung Tanggal Batas: 30 hari yang lalu & 7 hari yang lalu
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const thirtyDaysAgoStr = Utilities.formatDate(thirtyDaysAgo, "GMT+7", "yyyy-MM-dd");
+    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const sevenDaysAgoStr = Utilities.formatDate(sevenDaysAgo, "GMT+7", "yyyy-MM-dd");
+
+    // 5. Baca Sheet Tahfidz_Presensi (30 hari terakhir)
+    const presensiSheet = ss.getSheetByName(SHEET_TAHFIDZ_PRESENSI);
+    const presensiRecords = [];
+    if (presensiSheet && presensiSheet.getLastRow() > 1) {
+      const pData = presensiSheet.getDataRange().getValues();
+      const pHeaders = pData[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+      const pColMap = {};
+      HEADERS_TAHFIDZ_PRESENSI.forEach(dh => {
+        pColMap[dh] = pHeaders.indexOf(dh.toLowerCase().replace(/[\s\-_]+/g, ""));
+      });
+      for (let i = 1; i < pData.length; i++) {
+        const r = pData[i];
+        const rTgl = String(r[pColMap["tanggal"]] || "").trim();
+        if (rTgl && rTgl >= thirtyDaysAgoStr) {
+          presensiRecords.push({
+            tanggal: rTgl,
+            sesi: String(r[pColMap["sesi"]] || "").trim(),
+            halaqahId: String(r[pColMap["halaqah_id"]] || "").trim(),
+            studentId: String(r[pColMap["student_id"]] || "").trim(),
+            status: String(r[pColMap["status"]] || "HADIR").trim().toUpperCase(),
+            muhafiz: String(r[pColMap["muhafiz"]] || "").trim(),
+            updatedAt: String(r[pColMap["updated_at"]] || "")
+          });
+        }
+      }
+    }
+
+    // 6. Baca Sheet Tahfidz_Logs (Setoran 30 hari terakhir)
+    const logsSheet = ss.getSheetByName(SHEET_TAHFIDZ_LOGS);
+    const logsRecords = [];
+    if (logsSheet && logsSheet.getLastRow() > 1) {
+      const lData = logsSheet.getDataRange().getValues();
+      const lHeaders = lData[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+      const lCol = {
+        tanggal: lHeaders.indexOf("tanggal"),
+        sesi: lHeaders.indexOf("sesi"),
+        muhafiz: lHeaders.indexOf("muhafiz"),
+        studentId: lHeaders.indexOf("studentid"),
+        totalHalaman: lHeaders.indexOf("totalhalaman"),
+        nilai: lHeaders.indexOf("nilai"),
+        createdAt: lHeaders.indexOf("createdat")
+      };
+      for (let i = 1; i < lData.length; i++) {
+        const r = lData[i];
+        const rTgl = lCol.tanggal !== -1 ? String(r[lCol.tanggal] || "").trim() : "";
+        if (rTgl && rTgl >= thirtyDaysAgoStr) {
+          logsRecords.push({
+            tanggal: rTgl,
+            sesi: lCol.sesi !== -1 ? String(r[lCol.sesi] || "").trim() : "",
+            muhafiz: lCol.muhafiz !== -1 ? String(r[lCol.muhafiz] || "").trim() : "",
+            studentId: lCol.studentId !== -1 ? String(r[lCol.studentId] || "").trim() : "",
+            totalHalaman: lCol.totalHalaman !== -1 ? Number(r[lCol.totalHalaman] || 1) : 1,
+            nilai: lCol.nilai !== -1 ? String(r[lCol.nilai] || "MUMTAZ").trim() : "MUMTAZ",
+            createdAt: lCol.createdAt !== -1 ? String(r[lCol.createdAt] || "") : ""
+          });
+        }
+      }
+    }
+
+    // Helper untuk pencocokan nama ustadz fleksibel
+    function cleanTeacherName(name) {
+      return String(name || "").trim().toLowerCase()
+        .replace(/^(ustadz|ustadzah|ust\.|ustd\.|kyai|nyai|gus|ning)\s+/i, "")
+        .trim();
+    }
+
+    // 7. Agregasi Keaktifan per Ustadz
+    const asatidzList = halaqahRows.map((hlq, idx) => {
+      const muhName = hlq.muhafiz;
+      const cleanMuh = cleanTeacherName(muhName);
+      
+      const empContact = employeeMap[cleanMuh] || employeeMap[muhName.toLowerCase()] || {};
+
+      // Filter presensi ustadz ini
+      const uPresensi = presensiRecords.filter(p => {
+        const pClean = cleanTeacherName(p.muhafiz);
+        return (pClean && cleanMuh && (pClean === cleanMuh || pClean.includes(cleanMuh) || cleanMuh.includes(pClean))) ||
+               (p.halaqahId && p.halaqahId === hlq.halaqahId);
+      });
+
+      // Filter setoran ustadz ini
+      const uLogs = logsRecords.filter(l => {
+        const lClean = cleanTeacherName(l.muhafiz);
+        return (lClean && cleanMuh && (lClean === cleanMuh || lClean.includes(cleanMuh) || cleanMuh.includes(lClean)));
+      });
+
+      // Perhitungan HARI INI (Realtime)
+      const todayPresensi = uPresensi.filter(p => p.tanggal === todayStr);
+      const todayLogs = uLogs.filter(l => l.tanggal === todayStr);
+
+      const todayPresensiSantriCount = todayPresensi.length;
+      const todayHadirSantriCount = todayPresensi.filter(p => p.status === "HADIR").length;
+      const todaySetoranCount = todayLogs.length;
+      const todayHalamanCount = todayLogs.reduce((acc, curr) => acc + (curr.totalHalaman || 1), 0);
+
+      // Cari timestamp terakhir aktif hari ini
+      let lastActiveTime = "";
+      todayPresensi.forEach(p => {
+        if (p.updatedAt && (!lastActiveTime || p.updatedAt > lastActiveTime)) lastActiveTime = p.updatedAt;
+      });
+      todayLogs.forEach(l => {
+        if (l.createdAt && (!lastActiveTime || l.createdAt > lastActiveTime)) lastActiveTime = l.createdAt;
+      });
+
+      // Evaluasi Kepatuhan per Sesi Hari Ini Berdasarkan Deadline Jadwal
+      let sesiSummary = [];
+      let totalSesiHariIni = 0;
+      let totalSesiTuntas = 0;
+      let totalSesiLewatDeadline = 0;
+
+      todaySessions.forEach(ts => {
+        if (!ts.isDayActive) return;
+        totalSesiHariIni++;
+
+        const presensiInSesi = todayPresensi.filter(p => p.sesi === ts.namaSesi || (ts.namaSesi && p.sesi && (p.sesi.includes(ts.namaSesi) || ts.namaSesi.includes(p.sesi))));
+        const logsInSesi = todayLogs.filter(l => l.sesi === ts.namaSesi || (ts.namaSesi && l.sesi && (l.sesi.includes(ts.namaSesi) || ts.namaSesi.includes(l.sesi))));
+
+        const hasPresensi = presensiInSesi.length > 0;
+        const hasSetoran = logsInSesi.length > 0;
+
+        let statusKepatuhan = "WAITING";
+        let inputTimestamp = "";
+
+        if (hasPresensi) inputTimestamp = presensiInSesi[0].updatedAt;
+        if (hasSetoran && (!inputTimestamp || logsInSesi[0].createdAt < inputTimestamp)) inputTimestamp = logsInSesi[0].createdAt;
+
+        let inputTimeOnly = "";
+        if (inputTimestamp) {
+          try {
+            const dt = new Date(inputTimestamp);
+            inputTimeOnly = Utilities.formatDate(dt, "GMT+7", "HH:mm");
+          } catch(e) {}
+        }
+
+        if (hasPresensi && hasSetoran) {
+          if (inputTimeOnly && inputTimeOnly <= ts.jamSelesai) {
+            statusKepatuhan = "ON_TIME";
+            totalSesiTuntas++;
+          } else {
+            statusKepatuhan = "LATE";
+            totalSesiTuntas++;
+          }
+        } else if (hasPresensi || hasSetoran) {
+          statusKepatuhan = "PARTIAL";
+        } else {
+          if (ts.timelineStatus === "PASSED_DEADLINE") {
+            statusKepatuhan = "MISSED_DEADLINE";
+            totalSesiLewatDeadline++;
+          } else if (ts.timelineStatus === "IN_PROGRESS") {
+            statusKepatuhan = "IN_PROGRESS";
+          } else {
+            statusKepatuhan = "WAITING";
+          }
+        }
+
+        sesiSummary.push({
+          sesiId: ts.sesiId,
+          namaSesi: ts.namaSesi,
+          jamMulai: ts.jamMulai,
+          jamSelesai: ts.jamSelesai,
+          timelineStatus: ts.timelineStatus,
+          hasPresensi: hasPresensi,
+          hasSetoran: hasSetoran,
+          statusKepatuhan: statusKepatuhan,
+          inputTime: inputTimeOnly,
+          presensiCount: presensiInSesi.length,
+          setoranCount: logsInSesi.length
+        });
+      });
+
+      let statusHariIni = "BELUM_MULAI";
+      if (todayPresensiSantriCount > 0 && todaySetoranCount > 0) {
+        statusHariIni = totalSesiLewatDeadline === 0 ? "AKTIF_LENGKAP" : "AKTIF_SEBAGIAN_TERLEWAT";
+      } else if (todayPresensiSantriCount > 0 || todaySetoranCount > 0) {
+        statusHariIni = "AKTIF_PARSIAL";
+      } else if (totalSesiLewatDeadline > 0) {
+        statusHariIni = "LEWAT_DEADLINE";
+      } else {
+        statusHariIni = "MENUNGGU_SESI";
+      }
+
+      // Perhitungan 7 HARI TERAKHIR
+      const activeDays7d = new Set();
+      let setoranCount7d = 0;
+      let halamanCount7d = 0;
+      let presensiCount7d = 0;
+
+      uPresensi.forEach(p => {
+        if (p.tanggal >= sevenDaysAgoStr && p.tanggal <= todayStr) {
+          activeDays7d.add(p.tanggal);
+          presensiCount7d++;
+        }
+      });
+      uLogs.forEach(l => {
+        if (l.tanggal >= sevenDaysAgoStr && l.tanggal <= todayStr) {
+          activeDays7d.add(l.tanggal);
+          setoranCount7d++;
+          halamanCount7d += (l.totalHalaman || 1);
+        }
+      });
+
+      // Perhitungan 30 HARI TERAKHIR
+      const activeDays30d = new Set();
+      let setoranCount30d = 0;
+      let halamanCount30d = 0;
+      let presensiCount30d = 0;
+
+      uPresensi.forEach(p => {
+        if (p.tanggal >= thirtyDaysAgoStr && p.tanggal <= todayStr) {
+          activeDays30d.add(p.tanggal);
+          presensiCount30d++;
+        }
+      });
+      uLogs.forEach(l => {
+        if (l.tanggal >= thirtyDaysAgoStr && l.tanggal <= todayStr) {
+          activeDays30d.add(l.tanggal);
+          setoranCount30d++;
+          halamanCount30d += (l.totalHalaman || 1);
+        }
+      });
+
+      return {
+        id: "AST-" + (idx + 1),
+        muhafiz: muhName,
+        halaqahId: hlq.halaqahId,
+        namaHalaqah: hlq.namaHalaqah,
+        targetKurikulum: hlq.targetKurikulum,
+        totalBinaan: hlq.studentIds ? hlq.studentIds.length : 0,
+        telepon: empContact.telepon || "",
+        email: empContact.email || "",
+        hariIni: {
+          status: statusHariIni,
+          lastActiveTime: lastActiveTime,
+          presensiSantriCount: todayPresensiSantriCount,
+          hadirSantriCount: todayHadirSantriCount,
+          setoranCount: todaySetoranCount,
+          halamanCount: todayHalamanCount,
+          sesiSummary: sesiSummary,
+          totalSesiHariIni: totalSesiHariIni,
+          totalSesiTuntas: totalSesiTuntas,
+          totalSesiLewatDeadline: totalSesiLewatDeadline
+        },
+        pekanan: {
+          activeDaysCount: activeDays7d.size,
+          activePercentage: Math.round((activeDays7d.size / 7) * 100),
+          presensiCount: presensiCount7d,
+          setoranCount: setoranCount7d,
+          halamanCount: halamanCount7d
+        },
+        bulanan: {
+          activeDaysCount: activeDays30d.size,
+          activePercentage: Math.round((activeDays30d.size / 30) * 100),
+          presensiCount: presensiCount30d,
+          setoranCount: setoranCount30d,
+          halamanCount: halamanCount30d
+        }
+      };
+    });
+
+    const totalUstadz = asatidzList.length;
+    const ustadzAktifHariIni = asatidzList.filter(a => a.hariIni.presensiSantriCount > 0 || a.hariIni.setoranCount > 0).length;
+    const ustadzLewatDeadline = asatidzList.filter(a => a.hariIni.status === "LEWAT_DEADLINE" || a.hariIni.totalSesiLewatDeadline > 0).length;
+    const totalSetoranHariIni = asatidzList.reduce((acc, a) => acc + a.hariIni.setoranCount, 0);
+    const totalHalamanHariIni = asatidzList.reduce((acc, a) => acc + a.hariIni.halamanCount, 0);
+
+    return {
+      status: "success",
+      success: true,
+      data: {
+        serverTime: currentTimeStr,
+        serverDate: todayStr,
+        serverDay: currentDayCode,
+        summary: {
+          totalUstadz: totalUstadz,
+          ustadzAktifHariIni: ustadzAktifHariIni,
+          persenAktifHariIni: totalUstadz > 0 ? Math.round((ustadzAktifHariIni / totalUstadz) * 100) : 0,
+          ustadzLewatDeadline: ustadzLewatDeadline,
+          totalSetoranHariIni: totalSetoranHariIni,
+          totalHalamanHariIni: totalHalamanHariIni,
+          totalSesiAktifHariIni: todaySessions.filter(s => s.isDayActive).length
+        },
+        todaySessions: todaySessions,
+        asatidzList: asatidzList
+      }
+    };
+  } catch (err) {
+    console.error("[GET KEAKTIFAN ASATIDZ ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memproses data keaktifan asatidz: " + err.message
+    };
+  }
+}
 
 // >>>>>>>>>>>>>>>>>> END FILE: 04_Tahfidz.gs <<<<<<<<<<<<<<<<<<
 
