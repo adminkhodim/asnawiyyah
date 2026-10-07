@@ -1497,64 +1497,348 @@
     }
 
     /**
-     * Ekspor Data Keaktifan ke Excel / CSV
+     * Helper Memastikan SheetJS (XLSX) Siap Digunakan
      */
-    function exportKeaktifanToExcel() {
+    async function ensureXLSX() {
+        if (typeof window.XLSX !== 'undefined') return window.XLSX;
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+            script.onload = () => resolve(window.XLSX);
+            script.onerror = () => {
+                const s2 = document.createElement('script');
+                s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+                s2.onload = () => resolve(window.XLSX);
+                s2.onerror = reject;
+                document.head.appendChild(s2);
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    /**
+     * Ekspor Laporan Keaktifan dalam Format .XLSX Asli
+     * Disesuaikan dengan Periode Data dan Filter Aktif
+     */
+    async function exportKeaktifanToExcel(isPrintMode = false) {
         const list = ASNKeaktifan.filteredAsatidz || [];
         if (list.length === 0) {
             if (typeof showToast === 'function') showToast("Tidak ada data untuk diekspor.");
             return;
         }
 
-        const tf = ASNKeaktifan.timeframe;
-        const isDaily = ['today', 'yesterday', 'by_day'].includes(tf);
-        const isWeekly = ['7d', 'by_week'].includes(tf);
-        const tfLabel = (ASNKeaktifan.periodLabel && ASNKeaktifan.periodLabel.type) ? ASNKeaktifan.periodLabel.type.replace(/[\s\W]+/g, '_') : 'Periode';
-        const dateStr = (ASNKeaktifan.data && ASNKeaktifan.data.serverDate) || new Date().toISOString().split('T')[0];
+        try {
+            if (typeof showToast === 'function') {
+                showToast(isPrintMode ? "Menyiapkan lembar cetak Excel (.xlsx)..." : "Mempersiapkan ekspor file .xlsx...");
+            }
 
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "No,Nama Asatidz,Halaqah,Target Kurikulum,Santri Binaan,Status Keaktifan,Presensi Santri,Setoran Disimak (Santri),Total Halaman\r\n";
+            const XLSXLib = await ensureXLSX();
+            if (!XLSXLib) {
+                throw new Error("Library XLSX tidak tersedia.");
+            }
 
-        list.forEach((ast, idx) => {
-            const statHari = ast.hariIni;
-            const statPkn = ast.pekanan;
-            const statBln = ast.bulanan;
-            
-            const statusTxt = isDaily ? statHari.status : ((isWeekly ? statPkn.activePercentage : statBln.activePercentage) + '% Aktif');
-            const presensiTxt = isDaily ? statHari.presensiSantriCount : (isWeekly ? statPkn.presensiCount : statBln.presensiCount);
-            const setoranTxt = isDaily ? statHari.setoranCount : (isWeekly ? statPkn.setoranCount : statBln.setoranCount);
-            const hlmTxt = isDaily ? statHari.halamanCount : (isWeekly ? statPkn.halamanCount : statBln.halamanCount);
+            const tf = ASNKeaktifan.timeframe;
+            const isDaily = ['today', 'yesterday', 'by_day'].includes(tf);
+            const isWeekly = ['7d', 'by_week'].includes(tf);
 
-            const row = [
-                idx + 1,
-                `"${ast.muhafiz}"`,
-                `"${ast.namaHalaqah}"`,
-                `"${ast.targetKurikulum}"`,
-                ast.totalBinaan,
-                `"${statusTxt}"`,
-                presensiTxt,
-                setoranTxt,
-                hlmTxt
-            ].join(",");
-            csvContent += row + "\r\n";
-        });
+            const periodType = (ASNKeaktifan.periodLabel && ASNKeaktifan.periodLabel.type) || 'Real-time';
+            const periodDetail = (ASNKeaktifan.periodLabel && ASNKeaktifan.periodLabel.detail) || '';
+            const periodFullLabel = `${periodType} (${periodDetail})`;
+            const cleanPeriodName = periodType.replace(/[\s\W]+/g, '_');
 
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Rekap_Keaktifan_Asatidz_${tfLabel}_${dateStr}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            const now = new Date();
+            const dateStr = (ASNKeaktifan.data && ASNKeaktifan.data.serverDate) || now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
 
-        if (typeof showToast === 'function') showToast("Berhasil mengunduh rekapitulasi data keaktifan.");
+            // Filter aktif text
+            let filterDesc = [];
+            if (ASNKeaktifan.filter.status) filterDesc.push(`Status: ${ASNKeaktifan.filter.status}`);
+            if (ASNKeaktifan.filter.sesi) filterDesc.push(`Sesi: ${ASNKeaktifan.filter.sesi}`);
+            if (ASNKeaktifan.filter.gender) filterDesc.push(`Kategori: ${ASNKeaktifan.filter.gender}`);
+            if (ASNKeaktifan.filter.search) filterDesc.push(`Cari: "${ASNKeaktifan.filter.search}"`);
+            const filterSummaryText = filterDesc.length > 0 ? filterDesc.join(', ') : 'Semua Data (Tanpa Filter)';
+
+            // Data array of arrays (AOA)
+            const aoa = [];
+
+            // 1. Header Instansi & Laporan
+            aoa.push(['PPTQ ASNAWIYYAH PILANGWETAN DEMAK']);
+            aoa.push([isPrintMode ? 'LEMBAR CETAK AUDIT KEAKTIFAN & KEDISIPLINAN ASATIDZ / MUHAFIZ' : 'LAPORAN REKAPITULASI KEAKTIFAN & KEDISIPLINAN ASATIDZ / MUHAFIZ']);
+            aoa.push(['Periode Data:', periodFullLabel]);
+            aoa.push(['Waktu Generate:', `${dateStr} Pk ${timeStr}`]);
+            aoa.push(['Kriteria Filter:', filterSummaryText]);
+            aoa.push([]); // Baris kosong pemisah
+
+            // 2. Baris Header Tabel
+            let tableHeaders = [];
+            let colWidths = [];
+
+            if (isDaily) {
+                tableHeaders = [
+                    'NO',
+                    'NAMA ASATIDZ / MUHAFIZ',
+                    'KONTAK WA',
+                    'HALAQAH BINAAN',
+                    'KATEGORI',
+                    'TARGET KURIKULUM',
+                    'SANTRI BINAAN',
+                    'STATUS PRESENSI',
+                    'SANTRI HADIR',
+                    'SETORAN SANTRI',
+                    'TOTAL HALAMAN',
+                    'STATUS SESI JADWAL',
+                    'STATUS KEPATUHAN'
+                ];
+                colWidths = [
+                    { wch: 6 },
+                    { wch: 26 },
+                    { wch: 16 },
+                    { wch: 24 },
+                    { wch: 12 },
+                    { wch: 20 },
+                    { wch: 15 },
+                    { wch: 16 },
+                    { wch: 14 },
+                    { wch: 15 },
+                    { wch: 14 },
+                    { wch: 36 },
+                    { wch: 20 }
+                ];
+            } else if (isWeekly) {
+                tableHeaders = [
+                    'NO',
+                    'NAMA ASATIDZ / MUHAFIZ',
+                    'KONTAK WA',
+                    'HALAQAH BINAAN',
+                    'KATEGORI',
+                    'TARGET KURIKULUM',
+                    'SANTRI BINAAN',
+                    'HARI AKTIF (7 HARI)',
+                    '% KEAKTIFAN PEKANAN',
+                    'TOTAL PRESENSI SANTRI',
+                    'TOTAL SETORAN DISIMAK',
+                    'TOTAL HALAMAN DISIMAK',
+                    'KATEGORI KEDISIPLINAN'
+                ];
+                colWidths = [
+                    { wch: 6 },
+                    { wch: 26 },
+                    { wch: 16 },
+                    { wch: 24 },
+                    { wch: 12 },
+                    { wch: 20 },
+                    { wch: 15 },
+                    { wch: 20 },
+                    { wch: 22 },
+                    { wch: 22 },
+                    { wch: 22 },
+                    { wch: 22 },
+                    { wch: 22 }
+                ];
+            } else {
+                tableHeaders = [
+                    'NO',
+                    'NAMA ASATIDZ / MUHAFIZ',
+                    'KONTAK WA',
+                    'HALAQAH BINAAN',
+                    'KATEGORI',
+                    'TARGET KURIKULUM',
+                    'SANTRI BINAAN',
+                    'HARI AKTIF (30 HARI)',
+                    '% KEAKTIFAN BULANAN',
+                    'TOTAL PRESENSI SANTRI',
+                    'TOTAL SETORAN DISIMAK',
+                    'TOTAL HALAMAN DISIMAK',
+                    'KATEGORI KEDISIPLINAN'
+                ];
+                colWidths = [
+                    { wch: 6 },
+                    { wch: 26 },
+                    { wch: 16 },
+                    { wch: 24 },
+                    { wch: 12 },
+                    { wch: 20 },
+                    { wch: 15 },
+                    { wch: 20 },
+                    { wch: 22 },
+                    { wch: 22 },
+                    { wch: 22 },
+                    { wch: 22 },
+                    { wch: 22 }
+                ];
+            }
+
+            aoa.push(tableHeaders);
+
+            // 3. Baris Data Asatidz
+            let totalBinaanAll = 0;
+            let totalPresensiAll = 0;
+            let totalSetoranAll = 0;
+            let totalHalamanAll = 0;
+
+            list.forEach((ast, idx) => {
+                totalBinaanAll += (ast.totalBinaan || 0);
+
+                if (isDaily) {
+                    const h = ast.hariIni;
+                    totalPresensiAll += (h.hadirSantriCount || 0);
+                    totalSetoranAll += (h.setoranCount || 0);
+                    totalHalamanAll += (h.halamanCount || 0);
+
+                    const presensiTxt = h.presensiSantriCount > 0 ? `Sudah Input (${h.hadirSantriCount} Hadir)` : 'Belum Ada';
+                    const sesiSummaryTxt = (h.sesiSummary || []).map(s => {
+                        let st = 'Menunggu';
+                        if (s.statusKepatuhan === 'ON_TIME') st = 'Tepat Waktu';
+                        else if (s.statusKepatuhan === 'LATE') st = 'Terlambat';
+                        else if (s.statusKepatuhan === 'MISSED_DEADLINE') st = 'Lewat Deadline';
+                        else if (s.statusKepatuhan === 'IN_PROGRESS') st = 'Berjalan';
+                        return `${s.namaSesi.split(' ')[0]}: ${st}`;
+                    }).join(' | ') || '-';
+
+                    let kepatuhanTxt = 'Menunggu Sesi';
+                    if (h.status === 'AKTIF_LENGKAP') kepatuhanTxt = 'Tepat Waktu';
+                    else if (h.status === 'AKTIF_SEBAGIAN_TERLEWAT') kepatuhanTxt = 'Ada Terlewat';
+                    else if (h.status === 'LEWAT_DEADLINE') kepatuhanTxt = 'Lewat Deadline';
+                    else if (h.status === 'SEDANG_SESI') kepatuhanTxt = 'Sesi Berjalan';
+
+                    aoa.push([
+                        idx + 1,
+                        ast.muhafiz || '',
+                        ast.telepon || '-',
+                        ast.namaHalaqah || '',
+                        ast.gender || 'PUTRA',
+                        ast.targetKurikulum || '',
+                        ast.totalBinaan || 0,
+                        presensiTxt,
+                        h.hadirSantriCount || 0,
+                        h.setoranCount || 0,
+                        h.halamanCount || 0,
+                        sesiSummaryTxt,
+                        kepatuhanTxt
+                    ]);
+                } else if (isWeekly) {
+                    const p = ast.pekanan;
+                    totalPresensiAll += (p.presensiCount || 0);
+                    totalSetoranAll += (p.setoranCount || 0);
+                    totalHalamanAll += (p.halamanCount || 0);
+
+                    let katDisiplin = 'Kurang Aktif';
+                    if (p.activePercentage >= 75) katDisiplin = 'Sangat Disiplin';
+                    else if (p.activePercentage >= 50) katDisiplin = 'Cukup Aktif';
+
+                    aoa.push([
+                        idx + 1,
+                        ast.muhafiz || '',
+                        ast.telepon || '-',
+                        ast.namaHalaqah || '',
+                        ast.gender || 'PUTRA',
+                        ast.targetKurikulum || '',
+                        ast.totalBinaan || 0,
+                        `${p.activeDaysCount || 0} / 7 Hari`,
+                        `${p.activePercentage || 0}%`,
+                        p.presensiCount || 0,
+                        p.setoranCount || 0,
+                        p.halamanCount || 0,
+                        katDisiplin
+                    ]);
+                } else {
+                    const b = ast.bulanan;
+                    totalPresensiAll += (b.presensiCount || 0);
+                    totalSetoranAll += (b.setoranCount || 0);
+                    totalHalamanAll += (b.halamanCount || 0);
+
+                    let katDisiplin = 'Kurang Aktif';
+                    if (b.activePercentage >= 75) katDisiplin = 'Sangat Disiplin';
+                    else if (b.activePercentage >= 50) katDisiplin = 'Cukup Aktif';
+
+                    aoa.push([
+                        idx + 1,
+                        ast.muhafiz || '',
+                        ast.telepon || '-',
+                        ast.namaHalaqah || '',
+                        ast.gender || 'PUTRA',
+                        ast.targetKurikulum || '',
+                        ast.totalBinaan || 0,
+                        `${b.activeDaysCount || 0} / 30 Hari`,
+                        `${b.activePercentage || 0}%`,
+                        b.presensiCount || 0,
+                        b.setoranCount || 0,
+                        b.halamanCount || 0,
+                        katDisiplin
+                    ]);
+                }
+            });
+
+            // 4. Baris Total / Akumulasi di bagian bawah
+            aoa.push([]); // baris kosong
+            if (isDaily) {
+                aoa.push([
+                    'TOTAL',
+                    `${list.length} Asatidz`,
+                    '',
+                    '',
+                    '',
+                    '',
+                    totalBinaanAll,
+                    '',
+                    totalPresensiAll,
+                    totalSetoranAll,
+                    totalHalamanAll,
+                    '',
+                    ''
+                ]);
+            } else {
+                aoa.push([
+                    'TOTAL',
+                    `${list.length} Asatidz`,
+                    '',
+                    '',
+                    '',
+                    '',
+                    totalBinaanAll,
+                    '',
+                    '',
+                    totalPresensiAll,
+                    totalSetoranAll,
+                    totalHalamanAll,
+                    ''
+                ]);
+            }
+
+            // 5. Buat Workbook SheetJS
+            const wb = XLSXLib.utils.book_new();
+            const ws = XLSXLib.utils.aoa_to_sheet(aoa);
+
+            // Terapkan lebar kolom
+            ws['!cols'] = colWidths;
+
+            // Tambahkan worksheet ke workbook
+            XLSXLib.utils.book_append_sheet(wb, ws, "Keaktifan Asatidz");
+
+            // 6. Tentukan Nama File .xlsx
+            const prefix = isPrintMode ? 'Lembar_Cetak' : 'Laporan';
+            const fileName = `${prefix}_Keaktifan_Asatidz_${cleanPeriodName}_${dateStr}.xlsx`;
+
+            // Tulis & Unduh file .xlsx
+            XLSXLib.writeFile(wb, fileName);
+
+            if (typeof showToast === 'function') {
+                showToast(`Berhasil mengunduh file Excel (.xlsx): ${fileName}`);
+            }
+        } catch (err) {
+            console.error("[EXPORT EXCEL ERROR]", err);
+            if (typeof showToast === 'function') {
+                showToast("Gagal memproses ekspor .xlsx: " + (err.message || "Kesalahan sistem"));
+            }
+        }
     }
 
     /**
-     * Cetak Laporan Keaktifan
+     * Cetak Laporan Keaktifan dalam Bentuk File .xlsx
+     * Mengikuti preferensi ekspor & cetak dalam format file .xlsx sesuai filter periode terpilih
      */
     function printKeaktifanReport() {
-        window.print();
+        exportKeaktifanToExcel(true);
     }
 
     // Expose Global Functions
