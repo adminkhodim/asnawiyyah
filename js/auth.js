@@ -103,15 +103,31 @@ async function authApiPost(action, payload = {}) {
         }
     }
 
-    const targetUrl = ASN_PHASE2B_AUTH_URL || (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
+    const targetUrl = (typeof getApiUrl === 'function' && getApiUrl()) || 
+                      (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG && window.ASNAWIYYAH_CONFIG.apiUrl) || 
+                      ASN_PHASE2B_AUTH_URL || 
+                      (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
     if (!targetUrl) throw new Error("Endpoint autentikasi belum dikonfigurasi.");
 
-    const token = payload.token || 
-                  (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : (sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN))) || 
-                  sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || 
-                  localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
-                  sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) ||
-                  localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || "";
+    // Jangan menyisipkan token lama untuk aksi publik/pra-autentikasi (mencegah token pollution)
+    const unauthenticatedActions = [
+        'auth.admin.requestOtp',
+        'auth.admin.verifyOtp',
+        'auth.parent.requestOtp',
+        'auth.parent.verifyOtp',
+        'auth.wali.requestOtp',
+        'auth.wali.verifyOtp',
+        'auth.sso.google'
+    ];
+
+    let token = payload.token || "";
+    if (!token && !unauthenticatedActions.includes(action)) {
+        token = (typeof getAdminSessionToken === "function" ? getAdminSessionToken() : (sessionStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN))) || 
+                sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) || 
+                localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
+                sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) ||
+                localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || "";
+    }
 
     const bodyPayload = { action, ...payload };
     if (token && !bodyPayload.token) {
@@ -121,14 +137,20 @@ async function authApiPost(action, payload = {}) {
     const response = await fetch(targetUrl, {
         method: "POST",
         headers: {
-            "Content-Type": "text/plain;charset=utf-8",
-            "Accept": "application/json"
+            "Content-Type": "text/plain;charset=utf-8"
         },
         body: JSON.stringify(bodyPayload)
     });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const resJson = await response.json();
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Layanan server sedang mengalami kendala.`);
+    const rawText = await response.text();
+    let resJson;
+    try {
+        resJson = JSON.parse(rawText);
+    } catch (parseErr) {
+        console.warn('[authApiPost] Gagal parse JSON respons:', rawText);
+        throw new Error('Respons dari server tidak berformat valid.');
+    }
     if (resJson && (resJson.success || resJson.status === "success") && typeof window.syncToSupabaseOnWrite === "function") {
         window.syncToSupabaseOnWrite(action, payload, resJson).catch(e => console.warn("[AUTH DUAL-WRITE CATCH]", e));
     }
@@ -164,10 +186,11 @@ const ASNAuthAPI = {
             };
         } catch (err) {
             console.warn('[ASNAuthAPI] requestAdminOtp error:', err);
+            const detailMsg = (err && err.message) ? err.message : 'Pastikan koneksi internet stabil.';
             return {
                 success: false,
                 unavailable: true,
-                message: 'Gagal menghubungi server autentikasi. Pastikan koneksi internet stabil.'
+                message: `Gagal mengirimkan kode OTP ke email pengelola (${detailMsg})`
             };
         }
     },
@@ -207,10 +230,11 @@ const ASNAuthAPI = {
             };
         } catch (err) {
             console.warn('[ASNAuthAPI] verifyAdminOtp error:', err);
+            const detailMsg = (err && err.message) ? err.message : 'Terjadi kendala komunikasi ke server.';
             return {
                 success: false,
                 unavailable: true,
-                message: 'Verifikasi OTP gagal. Terjadi kendala komunikasi ke server.'
+                message: `Verifikasi OTP gagal. ${detailMsg}`
             };
         }
     },
@@ -240,10 +264,11 @@ const ASNAuthAPI = {
             };
         } catch (err) {
             console.warn('[ASNAuthAPI] requestParentOtp error:', err);
+            const detailMsg = (err && err.message) ? err.message : 'Pastikan koneksi internet stabil.';
             return {
                 success: false,
                 unavailable: true,
-                message: 'Gagal menghubungi server autentikasi Email OTP.'
+                message: `Gagal menghubungi server autentikasi Email OTP (${detailMsg})`
             };
         }
     },
@@ -287,10 +312,11 @@ const ASNAuthAPI = {
             };
         } catch (err) {
             console.warn('[ASNAuthAPI] verifyParentOtp error:', err);
+            const detailMsg = (err && err.message) ? err.message : 'Terjadi kendala komunikasi ke server.';
             return {
                 success: false,
                 unavailable: true,
-                message: 'Verifikasi Email OTP gagal. Terjadi kendala komunikasi ke server.'
+                message: `Verifikasi Email OTP gagal. ${detailMsg}`
             };
         }
     },

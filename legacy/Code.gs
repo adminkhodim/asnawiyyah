@@ -296,19 +296,19 @@ function setupPhase2BScriptProperties(forceRegenerate = false) {
  */
 // ==================== SESSION TTL CONFIGURATION ====================
 // Role-specific bounded session lifetimes (Kebijakan Operasional Pesantren)
-const SESSION_TTL_SUPER_ADMIN_HOURS = 24;      // 1 x 24 Jam
-const SESSION_TTL_ADMIN_HOURS = 24;            // 1 x 24 Jam
-const SESSION_TTL_EDITOR_HOURS = 24;           // 1 x 24 Jam (Editor / Pengurus / Bendahara)
-const SESSION_TTL_PENGASUH_HOURS = 24;         // 1 x 24 Jam
-const SESSION_TTL_ASATIDZ_HOURS = 168;         // 7 x 24 Jam (Asatidz / Muhafiz)
-const SESSION_TTL_WALI_HOURS = 168;            // 7 x 24 Jam (Wali Santri)
-const SESSION_TTL_DEFAULT_HOURS = 24;          // 24 Jam Default Fallback
+const SESSION_TTL_SUPER_ADMIN_HOURS = 720;     // 30 Hari (720 Jam)
+const SESSION_TTL_ADMIN_HOURS = 720;           // 30 Hari (720 Jam)
+const SESSION_TTL_EDITOR_HOURS = 720;          // 30 Hari (720 Jam) (Editor / Pengurus / Bendahara / Pegawai)
+const SESSION_TTL_PENGASUH_HOURS = 2160;       // 90 Hari (~3 Bulan / 2.160 Jam)
+const SESSION_TTL_ASATIDZ_HOURS = 720;         // 30 Hari (720 Jam) (Asatidz / Muhafiz)
+const SESSION_TTL_WALI_HOURS = 2160;           // 90 Hari (~3 Bulan / 2.160 Jam) (Wali Santri)
+const SESSION_TTL_DEFAULT_HOURS = 720;         // 30 Hari (720 Jam) Default Fallback
 
 function getSessionTtlHoursForRole(role) {
   const r = String(role || "").trim().toUpperCase();
   if (r === "SUPER_ADMIN") return SESSION_TTL_SUPER_ADMIN_HOURS;
   if (r === "ADMIN") return SESSION_TTL_ADMIN_HOURS;
-  if (r === "EDITOR" || r === "PENGURUS" || r === "BENDAHARA") return SESSION_TTL_EDITOR_HOURS;
+  if (r === "EDITOR" || r === "PENGURUS" || r === "BENDAHARA" || r === "PEGAWAI") return SESSION_TTL_EDITOR_HOURS;
   if (r === "ASATIDZ" || r === "MUHAFIZ") return SESSION_TTL_ASATIDZ_HOURS;
   if (r === "PENGASUH") return SESSION_TTL_PENGASUH_HOURS;
   if (r === "WALI_SANTRI") return SESSION_TTL_WALI_HOURS;
