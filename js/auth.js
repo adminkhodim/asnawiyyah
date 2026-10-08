@@ -90,12 +90,12 @@ const ASN_PHASE2B_AUTH_URL = (typeof ASNAWIYYAH_CONFIG !== 'undefined' && ASNAWI
     : (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : "https://script.google.com/macros/s/AKfycbxIz6j4rpOTzR5JrLURjC17TZ8QNKtTIcEtOQRRsSrmKT8phmj0eq6Dfo6q_7tVlLEXZA/exec");
 
 async function authApiPost(action, payload = {}) {
-    // Akselerasi Cepat via Supabase Cloud DB untuk Read User List (<50ms)
-    const fastReadActions = ['auth.admin.userList', 'admin.users.list', 'admin.userList', 'getUsers'];
+    // Akselerasi Cepat via Supabase Cloud DB untuk Read User List & Role Permissions (<50ms)
+    const fastReadActions = ['auth.admin.userList', 'admin.users.list', 'admin.userList', 'getUsers', 'auth.admin.getRolePermissions', 'getRolePermissions'];
     if (fastReadActions.includes(action) && typeof fetchFromSupabase === 'function') {
         try {
             const sbData = await fetchFromSupabase(action, payload);
-            if (sbData && (sbData.success || sbData.status === 'success') && Array.isArray(sbData.users)) {
+            if (sbData && (sbData.success || sbData.status === 'success') && (Array.isArray(sbData.users) || sbData.permissions)) {
                 return sbData;
             }
         } catch (sbErr) {

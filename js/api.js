@@ -158,6 +158,24 @@
                     };
                 }
 
+                if (action === "auth.admin.getRolePermissions" || action === "getRolePermissions" || action === "admin.getRolePermissions") {
+                    const res = await fetch(`${sbUrl}/rest/v1/roles_permissions?select=*`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    const permissionsMap = {};
+                    rows.forEach(r => {
+                        if (r.role_key && Array.isArray(r.active_permissions_json)) {
+                            permissionsMap[r.role_key] = r.active_permissions_json;
+                        }
+                    });
+                    return {
+                        status: "success",
+                        success: true,
+                        permissions: permissionsMap,
+                        source: "supabase"
+                    };
+                }
+
                 if (action === "program.listPublished") {
                     const res = await fetch(`${sbUrl}/rest/v1/programs?status=eq.published&order=sort_order.asc`, { headers });
                     if (!res.ok) return null;
@@ -2424,6 +2442,33 @@
                             method: 'PATCH',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
                             body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+                }
+
+                // ==================== 14. ROLE PERMISSIONS & MATRIX RBAC ====================
+                else if (action === 'auth.admin.saveRolePermissions' || action === 'admin.saveRolePermissions' || action === 'saveRolePermissions') {
+                    const roleKey = String(payload.roleKey || payload.role_key || '').trim().toUpperCase();
+                    if (roleKey) {
+                        const perms = Array.isArray(payload.permissions) ? payload.permissions : (Array.isArray(payload.active_permissions_json) ? payload.active_permissions_json : []);
+                        const countActive = perms.includes('*') ? 28 : perms.length;
+                        const roleDef = (window.ROLE_DEFINITIONS && window.ROLE_DEFINITIONS[roleKey]) || {};
+                        const roleName = roleDef.name || roleKey;
+                        const actorEmail = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.email) || 'ADMIN_USER';
+
+                        const row = {
+                            role_key: roleKey,
+                            role_name: roleName,
+                            total_active: countActive,
+                            active_permissions_json: perms,
+                            updated_at: new Date().toISOString(),
+                            updated_by: actorEmail
+                        };
+
+                        await fetch(`${sbUrl}/rest/v1/roles_permissions?role_key=eq.${encodeURIComponent(roleKey)}`, {
+                            method: 'PATCH',
+                            headers,
+                            body: JSON.stringify(row)
                         });
                     }
                 }

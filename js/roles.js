@@ -225,14 +225,14 @@
     // Pemetaan Modul Sistem ke Izin Terkait
     const MODULE_TO_PERMISSIONS = {
         'santri': ['santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export'],
-        'alumni': ['alumni.view', 'alumni.manage', 'santri.view'],
+        'alumni': ['alumni.view', 'alumni.manage'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
         'keaktifan-asatidz': ['keaktifan.view'],
         'presensi': ['presensi.view', 'presensi.entry'],
-        'ppdb': ['ppdb.manage', 'keuangan.verify'],
+        'ppdb': ['ppdb.manage'],
         'program': ['program.manage'],
         'unit-kegiatan': ['unit.manage'],
-        'jadwal-kegiatan': ['jadwal.manage', 'unit.manage'],
+        'jadwal-kegiatan': ['jadwal.manage'],
         'users': ['users.manage'],
         'roles': ['roles.manage'],
         'pegawai': ['pegawai.manage'],
@@ -269,8 +269,7 @@
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'keaktifan.view',
-            'jadwal.manage', 'alumni.view', 'keuangan.view', 'berita.manage', 'banner.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage', 'notifikasi.broadcast', 'system.config'
+            'santri.view', 'tahfidz.view', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view'
@@ -501,7 +500,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'full',
                 BENDAHARA: 'none',
@@ -517,7 +516,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'full',
                 BENDAHARA: 'none',
@@ -535,7 +534,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'read',
                 PENGURUS: 'read',
                 BENDAHARA: 'read',
@@ -551,7 +550,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
                 BENDAHARA: 'none',
@@ -569,7 +568,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'none',
+                PENGASUH: 'read',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
                 BENDAHARA: 'none',
@@ -601,7 +600,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'full',
                 BENDAHARA: 'write',
@@ -619,7 +618,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
                 BENDAHARA: 'full',
@@ -662,6 +661,50 @@
     }
 
     /**
+     * Rekonstruksi SAVED_MATRIX_STATE dari active permissions di ROLE_PERMISSIONS_STATE (Cloud DB Supabase & Spreadsheet)
+     */
+    function reconstructSavedMatrixFromRolePerms() {
+        if (!ROLE_PERMISSIONS_STATE || typeof ROLE_PERMISSIONS_STATE !== 'object') return;
+        const roleKeys = Object.keys(ROLE_PERMISSIONS_STATE);
+        if (roleKeys.length === 0) return;
+
+        roleKeys.forEach(rKey => {
+            if (rKey === 'SUPER_ADMIN') return;
+            const perms = ROLE_PERMISSIONS_STATE[rKey];
+            if (!Array.isArray(perms)) return;
+
+            const isAll = perms.includes('*');
+            MODULE_PERMISSIONS_MATRIX.forEach(m => {
+                const cellKey = `${m.key}___${rKey}`;
+                if (isAll) {
+                    SAVED_MATRIX_STATE[cellKey] = 'full';
+                } else {
+                    const reqPerms = MODULE_TO_PERMISSIONS[m.key] || [];
+                    const hasPerm = reqPerms.some(pk => perms.includes(pk));
+                    if (!hasPerm) {
+                        SAVED_MATRIX_STATE[cellKey] = 'none';
+                    } else {
+                        if (!SAVED_MATRIX_STATE[cellKey] || SAVED_MATRIX_STATE[cellKey] === 'none') {
+                            const baseline = (m.permissions && m.permissions[rKey]) || 'read';
+                            SAVED_MATRIX_STATE[cellKey] = baseline !== 'none' ? baseline : 'read';
+                        }
+                    }
+                }
+            });
+        });
+
+        try {
+            const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
+            if (ls) ls.setItem('ASNAWIYYAH_ROLE_MATRIX_STATE', JSON.stringify(SAVED_MATRIX_STATE));
+        } catch (e) {}
+    }
+
+    // Jalankan rekonstruksi inisial agar SAVED_MATRIX_STATE langsung sinkron dengan ROLE_PERMISSIONS_STATE
+    try {
+        reconstructSavedMatrixFromRolePerms();
+    } catch (e) {}
+
+    /**
      * Dapatkan level izin saat ini untuk kombinasi modul & peran
      */
     function getMatrixPermission(moduleKey, roleKey) {
@@ -672,6 +715,14 @@
         }
         if (SAVED_MATRIX_STATE[cellKey] !== undefined) {
             return SAVED_MATRIX_STATE[cellKey];
+        }
+        // Jika data izin dari Cloud DB (Supabase / Spreadsheet) sudah termuat
+        if (ROLE_PERMISSIONS_STATE && Array.isArray(ROLE_PERMISSIONS_STATE[roleKey])) {
+            const perms = ROLE_PERMISSIONS_STATE[roleKey];
+            if (perms.includes('*')) return 'full';
+            const reqPerms = MODULE_TO_PERMISSIONS[moduleKey] || [];
+            const hasPerm = reqPerms.some(pk => perms.includes(pk));
+            if (!hasPerm) return 'none';
         }
         const found = MODULE_PERMISSIONS_MATRIX.find(m => m.key === moduleKey);
         return (found && found.permissions && found.permissions[roleKey]) || 'none';
@@ -798,12 +849,15 @@
      */
     async function saveMatrixPermissionsChanges() {
         const changedKeys = Object.keys(MATRIX_PENDING_CHANGES);
-        if (changedKeys.length === 0) return;
+        if (changedKeys.length === 0) {
+            if (typeof showToast === 'function') showToast('ℹ️ Tidak ada perubahan matriks yang tertunda.');
+            return;
+        }
 
         const btnSave = document.getElementById('btn-save-role-matrix');
         if (btnSave) {
             btnSave.disabled = true;
-            btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Menyimpan...</span>`;
+            btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Menyimpan ke Cloud DB...</span>`;
         }
 
         try {
@@ -821,6 +875,12 @@
             } catch (e) {}
 
             // 2. Sinkronkan ke granular permissions per role yang terpengaruh
+            const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            const actorEmail = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && ASNIdentity.currentUser.email) || 'ADMIN_USER';
+            const syncPromises = [];
+
             for (const rKey of affectedRoles) {
                 if (rKey === 'SUPER_ADMIN') continue;
                 const newPermSet = new Set();
@@ -832,34 +892,71 @@
 
                 ROLE_PERMISSIONS_STATE[rKey] = Array.from(newPermSet);
 
-                // Kirim ke backend API jika tersedia
+                const countActive = ROLE_PERMISSIONS_STATE[rKey].includes('*') ? 28 : ROLE_PERMISSIONS_STATE[rKey].length;
+                const roleDef = ROLE_DEFINITIONS[rKey] || {};
+                const roleName = roleDef.name || rKey;
+
+                // A. Direct Fast-Write ke Supabase Cloud DB (Tabel roles_permissions)
+                if (sbUrl && sbKey) {
+                    const sbRow = {
+                        role_key: rKey,
+                        role_name: roleName,
+                        total_active: countActive,
+                        active_permissions_json: ROLE_PERMISSIONS_STATE[rKey],
+                        updated_at: new Date().toISOString(),
+                        updated_by: actorEmail
+                    };
+                    const sbP = fetch(`${sbUrl}/rest/v1/roles_permissions?role_key=eq.${encodeURIComponent(rKey)}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(sbRow)
+                    }).catch(errSb => console.warn(`[SUPABASE ROLES_PERMISSIONS WRITE ERROR ${rKey}]`, errSb));
+                    syncPromises.push(sbP);
+                }
+
+                // B. Write ke Google Apps Script (Spreadsheet Roles_Permissions & ScriptProperties)
                 if (typeof authApiPost === 'function') {
-                    try {
-                        await authApiPost('auth.admin.saveRolePermissions', {
-                            roleKey: rKey,
-                            permissions: ROLE_PERMISSIONS_STATE[rKey]
-                        });
-                    } catch (errApi) {
-                        console.warn(`[SAVE ROLE PERMS API ERROR ${rKey}]`, errApi);
-                    }
+                    const gasP = authApiPost('auth.admin.saveRolePermissions', {
+                        roleKey: rKey,
+                        permissions: ROLE_PERMISSIONS_STATE[rKey]
+                    }).catch(errApi => console.warn(`[SAVE ROLE PERMS GAS ERROR ${rKey}]`, errApi));
+                    syncPromises.push(gasP);
                 }
             }
 
+            // Tunggu seluruh sinkronisasi selesai
+            await Promise.allSettled(syncPromises);
+
             // 3. Cache role permissions
-            localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
+            try {
+                localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
+            } catch (e) {}
 
             MATRIX_PENDING_CHANGES = {};
             updateMatrixFloatingBar();
             renderRolesMatrixTable();
             renderRoleCardsGrid();
 
-            // Terapkan visibilitas peran aktif jika sedang mempratinjau peran
+            // Terapkan visibilitas peran aktif & grid mobile pusat kontrol
             const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
                               sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
             applyAdminRoleVisibility(activeRole);
 
             if (typeof showToast === 'function') {
-                showToast(`✅ Matriks hak akses untuk ${affectedRoles.size} peran berhasil disimpan & aktif!`);
+                showToast(`✅ Matriks hak akses ${affectedRoles.size} peran berhasil disimpan ke Spreadsheet & Supabase Cloud DB!`);
+            } else if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Matriks Berhasil Disimpan',
+                    text: `Konfigurasi hak akses tersimpan ke Spreadsheet & Supabase. Pusat kontrol mobile otomatis membaca menu aktif.`,
+                    timer: 2500,
+                    showConfirmButton: false
+                });
             }
         } catch (err) {
             console.error('[SAVE MATRIX ERROR]', err);
@@ -1562,16 +1659,55 @@
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
             } catch (e) {}
 
-            // Kirim ke backend Google Sheets / Script Properties
+            // Kirim ke Supabase Cloud DB & Google Apps Script secara paralel
+            const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            const actorEmail = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && ASNIdentity.currentUser.email) || 'ADMIN_USER';
+            const countActive = permsToSave.includes('*') ? 28 : permsToSave.length;
+            const roleName = role ? role.name : roleKey;
+            const syncPromises = [];
+
+            // A. Direct Supabase Cloud DB Write
+            if (sbUrl && sbKey) {
+                const sbRow = {
+                    role_key: roleKey,
+                    role_name: roleName,
+                    total_active: countActive,
+                    active_permissions_json: permsToSave,
+                    updated_at: new Date().toISOString(),
+                    updated_by: actorEmail
+                };
+                const sbP = fetch(`${sbUrl}/rest/v1/roles_permissions?role_key=eq.${encodeURIComponent(roleKey)}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': sbKey,
+                        'Authorization': `Bearer ${sbKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(sbRow)
+                }).catch(errSb => console.warn(`[SUPABASE ROLE PERMS WRITE ERROR ${roleKey}]`, errSb));
+                syncPromises.push(sbP);
+            }
+
+            // B. Google Apps Script Write (Spreadsheet & Script Properties)
             if (typeof authApiPost === 'function') {
-                try {
-                    await authApiPost('auth.admin.saveRolePermissions', {
-                        roleKey: roleKey,
-                        permissions: permsToSave
-                    });
-                } catch (netErr) {
-                    console.warn('[SAVE ROLE PERMS BACKEND WARN]', netErr);
-                }
+                const gasP = authApiPost('auth.admin.saveRolePermissions', {
+                    roleKey: roleKey,
+                    permissions: permsToSave
+                }).catch(netErr => console.warn('[SAVE ROLE PERMS BACKEND WARN]', netErr));
+                syncPromises.push(gasP);
+            }
+
+            await Promise.allSettled(syncPromises);
+
+            // Rekonstruksi status matriks agar sinkron seketika
+            if (typeof reconstructSavedMatrixFromRolePerms === 'function') {
+                reconstructSavedMatrixFromRolePerms();
+            }
+            if (typeof renderRolesMatrixTable === 'function') {
+                renderRolesMatrixTable();
             }
 
             // Perbarui UI katalog kartu peran
@@ -1587,12 +1723,12 @@
             closeRolePermissionsModal();
 
             if (typeof showToast === 'function') {
-                showToast(`Izin peran ${role ? role.name : roleKey} berhasil diperbarui!`);
+                showToast(`Izin peran ${role ? role.name : roleKey} berhasil diperbarui & disimpan ke Cloud!`);
             } else if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
                     title: 'Izin Disimpan',
-                    text: `Konfigurasi izin untuk peran ${role ? role.name : roleKey} berhasil disimpan dan langsung diterapkan ke dashboard.`,
+                    text: `Konfigurasi izin untuk peran ${role ? role.name : roleKey} berhasil disimpan ke Spreadsheet & Supabase dan langsung diterapkan ke dashboard.`,
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -1611,18 +1747,64 @@
     }
 
     /**
-     * Ambil Konfigurasi Izin dari Backend Google Sheets
+     * Ambil Konfigurasi Izin dari Cloud DB (Supabase / Google Sheets)
      */
     async function fetchRolePermissionsFromBackend() {
-        if (typeof authApiPost !== 'function') return;
         try {
-            const res = await authApiPost('auth.admin.getRolePermissions', {});
-            if (res && res.success && res.permissions) {
-                ROLE_PERMISSIONS_STATE = res.permissions;
+            let permissionsMap = null;
+
+            // 1. Coba langsung via Supabase Cloud DB (Ultra Cepat < 50ms)
+            const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (sbUrl && sbKey) {
+                try {
+                    const sbRes = await fetch(`${sbUrl}/rest/v1/roles_permissions?select=*`, {
+                        headers: {
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`
+                        }
+                    });
+                    if (sbRes.ok) {
+                        const rows = await sbRes.json();
+                        if (Array.isArray(rows) && rows.length > 0) {
+                            permissionsMap = {};
+                            rows.forEach(r => {
+                                if (r.role_key && Array.isArray(r.active_permissions_json)) {
+                                    permissionsMap[r.role_key] = r.active_permissions_json;
+                                }
+                            });
+                        }
+                    }
+                } catch (sbErr) {
+                    console.warn('[FETCH ROLE PERMS SUPABASE WARN]', sbErr);
+                }
+            }
+
+            // 2. Fallback via authApiPost (Google Apps Script / Spreadsheet)
+            if (!permissionsMap && typeof authApiPost === 'function') {
+                const res = await authApiPost('auth.admin.getRolePermissions', {});
+                if (res && res.success && res.permissions) {
+                    permissionsMap = res.permissions;
+                }
+            }
+
+            if (permissionsMap && Object.keys(permissionsMap).length > 0) {
+                ROLE_PERMISSIONS_STATE = permissionsMap;
                 try {
                     localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
                 } catch (e) {}
+
+                // Rekonstruksi state matriks
+                if (typeof reconstructSavedMatrixFromRolePerms === 'function') {
+                    reconstructSavedMatrixFromRolePerms();
+                }
+
                 renderRoleCardsGrid();
+                if (typeof renderRolesMatrixTable === 'function') {
+                    renderRolesMatrixTable();
+                }
+
                 const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
                                   sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
                 applyAdminRoleVisibility(activeRole);
@@ -1903,12 +2085,7 @@
             }
         }
 
-        // 2. Hak Akses Khusus Keaktifan Asatidz (Hanya Super Admin dan Pengasuh)
-        if (moduleKey === 'keaktifan-asatidz') {
-            return roleKey === 'SUPER_ADMIN' || roleKey === 'PENGASUH';
-        }
-
-        // 3. Fallback: Cek izin khusus pengguna (user-level override) jika tersedia
+        // 2. Fallback: Cek izin khusus pengguna (user-level override) jika tersedia
         let rolePerms = null;
         if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && Array.isArray(ASNIdentity.currentUser.permissions) && ASNIdentity.currentUser.permissions.length > 0) {
             rolePerms = ASNIdentity.currentUser.permissions;
@@ -2244,11 +2421,13 @@
         let visibleMobileCount = 0;
         let visiblePengasuhCount = 0;
         mobileButtons.forEach(btn => {
+            const isPengasuhGrid = !!btn.closest('#pengasuh-control-center-grid');
+            const targetRole = isPengasuhGrid ? 'PENGASUH' : roleKey;
             const modKey = btn.dataset.adminModule || btn.dataset.roleModule;
-            const isAllowed = isModuleAllowedForRole(modKey, roleKey);
+            const isAllowed = isModuleAllowedForRole(modKey, targetRole);
             if (isAllowed) {
                 btn.classList.remove('hidden');
-                if (btn.closest('#pengasuh-control-center-grid')) {
+                if (isPengasuhGrid) {
                     visiblePengasuhCount++;
                 } else {
                     visibleMobileCount++;
@@ -2599,7 +2778,19 @@
     window.cancelMatrixPermissionsChanges = cancelMatrixPermissionsChanges;
     window.getMatrixPermission = getMatrixPermission;
     window.convertMatrixLevelToPermissions = convertMatrixLevelToPermissions;
+    window.reconstructSavedMatrixFromRolePerms = reconstructSavedMatrixFromRolePerms;
     window.SAVED_MATRIX_STATE = SAVED_MATRIX_STATE;
     window.MATRIX_PENDING_CHANGES = MATRIX_PENDING_CHANGES;
+
+    // Auto-fetch konfigurasi hak akses dari Cloud DB (Supabase/GAS) saat startup
+    try {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                fetchRolePermissionsFromBackend();
+            });
+        } else {
+            setTimeout(fetchRolePermissionsFromBackend, 30);
+        }
+    } catch (e) {}
 
 })(window, document);
