@@ -1817,14 +1817,14 @@
     // Mapping Modul yang Boleh Diakses per Peran
     const ROLE_ALLOWED_MODULES = {
         'SUPER_ADMIN': [
-            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan',
+            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni',
             'keuangan',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ADMIN': [
-            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan',
+            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni',
             'keuangan',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
@@ -1834,13 +1834,13 @@
             'tahfidz', 'presensi', 'santri', 'pegawai', 'profil-lembaga'
         ],
         'BENDAHARA': [
-            'keuangan', 'santri', 'ppdb', 'notifikasi', 'pegawai', 'profil-lembaga'
+            'keuangan', 'santri', 'ppdb', 'notifikasi', 'pegawai', 'profil-lembaga', 'alumni'
         ],
         'PENGURUS': [
-            'presensi', 'unit-kegiatan', 'ppdb', 'santri', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
+            'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'ppdb', 'santri', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
         ],
         'PENGASUH': [
-            'santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'ppdb', 'pegawai', 'berita', 'galeri', 'profil-lembaga'
+            'santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'ppdb', 'pegawai', 'berita', 'galeri', 'profil-lembaga', 'users'
         ],
         'WALI_SANTRI': [
             'santri', 'tahfidz', 'presensi', 'berita', 'galeri', 'profil-lembaga'

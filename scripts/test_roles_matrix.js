@@ -107,15 +107,29 @@ mockWindow.batchResetRoleMatrix('WALI_SANTRI');
 assert.strictEqual(Object.keys(mockWindow.MATRIX_PENDING_CHANGES).length, 0, 'Reset harus mengosongkan pending changes');
 console.log('✅ Reset matriks berhasil memulihkan state awal');
 
-// 7. Verifikasi Sinkronisasi Dinamis Pusat Kontrol Pengasuh (isModuleAllowedForRole)
+// 7. Verifikasi Sinkronisasi Dinamis Pusat Kontrol Pengasuh & Admin (isModuleAllowedForRole)
 assert(typeof mockWindow.isModuleAllowedForRole === 'function', 'isModuleAllowedForRole harus didefinisikan');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('santri', 'PENGASUH'), true, 'Modul Santri harus boleh diakses (Lihat Saja)');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('tahfidz', 'PENGASUH'), true, 'Modul Tahfidz harus boleh diakses (Lihat Saja)');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('alumni', 'PENGASUH'), true, 'Modul Alumni harus boleh diakses (Lihat Saja)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('alumni', 'ADMIN'), true, 'Modul Alumni harus boleh diakses oleh ADMIN');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('ppdb', 'PENGASUH'), false, 'Modul PPDB harus disembunyikan/tutup (none)');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('program', 'PENGASUH'), false, 'Modul Program harus disembunyikan/tutup (none)');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('unit-kegiatan', 'PENGASUH'), false, 'Modul Unit Kegiatan harus disembunyikan/tutup (none)');
 assert.strictEqual(mockWindow.isModuleAllowedForRole('presensi', 'PENGASUH'), false, 'Modul Presensi harus disembunyikan/tutup (none)');
+
+// 8. Verifikasi Keberadaan Tombol Alumni di Kedua Grid (Admin & Pengasuh) pada index.html
+const indexHtmlContent = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+const adminGridStart = indexHtmlContent.indexOf('id="admin-control-center-grid"');
+const adminGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card -->', adminGridStart);
+const adminGridHtml = indexHtmlContent.substring(adminGridStart, adminGridEnd);
+assert(adminGridHtml.includes('data-admin-module="alumni"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="alumni"');
+
+const pengasuhGridStart = indexHtmlContent.indexOf('id="pengasuh-control-center-grid"');
+const pengasuhGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card', pengasuhGridStart);
+const pengasuhGridHtml = indexHtmlContent.substring(pengasuhGridStart, pengasuhGridEnd);
+assert(pengasuhGridHtml.includes('data-admin-module="alumni"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="alumni"');
+console.log('✅ Verifikasi tombol modul Alumni di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
 
 // Uji coba toggle dinamis realtime lewat matriks
 mockWindow.handleMatrixCellChange('ppdb', 'PENGASUH', 'read');
