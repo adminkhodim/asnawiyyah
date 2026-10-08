@@ -310,7 +310,7 @@
                 return;
             }
 
-            if (tabId === 'pengaturan' && window.innerWidth >= 768) {
+            if (tabId === 'pengaturan' && window.innerWidth >= 1024) {
                 const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || 
                                 (typeof ASNIdentity !== 'undefined' && (ASNIdentity.currentRole === 'admin' || ASNIdentity.currentRole === 'editor' || ASNIdentity.currentRole === 'PENGASUH' || (typeof isAsnAdminRole === 'function' && isAsnAdminRole(ASNIdentity.currentRole))));
                 if (isAdmin) {
@@ -320,7 +320,7 @@
             }
 
             // Pada mobile, navigasi ke tab 'pengaturan' tidak memodifikasi URL browser (tetap di URL saat ini / bersih tanpa /pengaturan)
-            if (tabId === 'pengaturan' && window.innerWidth < 768) {
+            if (tabId === 'pengaturan' && window.innerWidth < 1024) {
                 updateUrl = false;
             }
 

@@ -822,23 +822,27 @@
 
         /**
          * Navigasi Kembali Pintar untuk Sub-View Admin:
-         * - Pada layar ponsel (< 1024px), kembali langsung ke Pusat Kontrol Tab Pengaturan
-         * - Pada desktop, kembali ke Hub Menu Admin
+         * - KHUSUS TAMPILAN MOBILE (< 1024px atau perangkat ponsel):
+         *   Tombol kembali di SETIAP menu langsung mengembalikan pengguna ke Halaman Pengaturan (Tab Pengaturan / Pusat Kontrol),
+         *   TIDAK diarahkan ke Dashboard Utama.
+         * - Pada desktop (>= 1024px):
+         *   Kembali ke Dashboard Utama Admin (Hub Menu).
          */
         function backFromAdminModule() {
-            const currentRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                                sessionStorage.getItem('asnawiyyah_admin_role') || '';
-            if (currentRole === 'PENGASUH') {
-                showAdminView('hub');
-                return;
-            }
-            if (window.innerWidth < 1024) {
+            const isMobile = window.innerWidth < 1024 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                if (typeof showAdminView === 'function') {
+                    showAdminView('hub');
+                }
                 if (typeof switchTab === 'function') {
-                    switchTab('pengaturan');
+                    switchTab('pengaturan', false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
                 }
             }
+            // Tampilan Desktop (>= 1024px): Kembali ke Dashboard Utama Admin
             showAdminView('hub');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         window.backFromAdminModule = backFromAdminModule;
 
