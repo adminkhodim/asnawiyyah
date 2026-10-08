@@ -269,8 +269,8 @@
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'presensi.view', 'keaktifan.view',
-            'unit.manage', 'jadwal.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage', 'notifikasi.broadcast', 'system.config'
+            'santri.view', 'tahfidz.view', 'keaktifan.view',
+            'jadwal.manage', 'alumni.view', 'keuangan.view', 'berita.manage', 'banner.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage', 'notifikasi.broadcast', 'system.config'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view'
@@ -353,7 +353,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'write',
                 PENGURUS: 'full',
                 BENDAHARA: 'none',
@@ -369,7 +369,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'write',
                 BENDAHARA: 'write',
@@ -385,7 +385,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'read',
                 PENGURUS: 'full',
                 BENDAHARA: 'none',
@@ -433,7 +433,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'read',
                 PENGURUS: 'read',
                 BENDAHARA: 'read',
@@ -569,7 +569,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
                 BENDAHARA: 'none',
@@ -585,7 +585,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'read',
-                PENGASUH: 'read',
+                PENGASUH: 'none',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
                 BENDAHARA: 'none',
@@ -695,6 +695,13 @@
 
         updateMatrixFloatingBar();
         renderRolesMatrixTable();
+
+        // Segarkan visibilitas menu bila peran yang diubah sedang aktif dipratinjau
+        const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                          (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ASN_ADMIN_ROLE') : null) || 'SUPER_ADMIN';
+        if (activeRole === roleKey) {
+            applyAdminRoleVisibility(activeRole);
+        }
     }
 
     /**
@@ -1850,54 +1857,58 @@
     }
 
     /**
-     * Dapatkan daftar modul yang boleh diakses berdasarkan izin yang dicentang pada Konfigurasi Izin
+     * Dapatkan daftar modul yang boleh diakses berdasarkan izin yang dicentang pada Konfigurasi Izin & Matriks RBAC
      */
     function getAllowedModulesForRole(roleKey) {
         if (!roleKey) {
-            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+            const ssRole = (typeof sessionStorage !== 'undefined') ? (sessionStorage.getItem('ASN_ADMIN_ROLE') || sessionStorage.getItem('asnawiyyah_admin_role')) : null;
+            const lsRole = (typeof localStorage !== 'undefined') ? (localStorage.getItem('asnawiyyah_admin_role') || (localStorage.getItem('ASN_PENGASUH_TOKEN') ? 'PENGASUH' : null)) : null;
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || ssRole || lsRole || 'ADMIN';
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
 
-        let rolePerms = null;
-        if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && Array.isArray(ASNIdentity.currentUser.permissions) && ASNIdentity.currentUser.permissions.length > 0) {
-            rolePerms = ASNIdentity.currentUser.permissions;
-        } else {
-            rolePerms = ROLE_PERMISSIONS_STATE[roleKey] || DEFAULT_ROLE_PERMISSIONS_MAP[roleKey] || [];
-        }
-
-        if (rolePerms.includes('*')) return Object.keys(MODULE_TO_PERMISSIONS);
+        if (roleKey === 'SUPER_ADMIN') return Object.keys(MODULE_TO_PERMISSIONS);
 
         return Object.keys(MODULE_TO_PERMISSIONS).filter(modKey => {
-            const reqPerms = MODULE_TO_PERMISSIONS[modKey];
-            if (!reqPerms || reqPerms.length === 0) return true;
-            return reqPerms.some(pk => rolePerms.includes(pk));
+            return isModuleAllowedForRole(modKey, roleKey);
         });
     }
 
     /**
-     * Cek apakah sebuah modul boleh diakses oleh peran tertentu (Dinamis dari Konfigurasi Izin)
+     * Cek apakah sebuah modul boleh diakses oleh peran tertentu (Dinamis dari Matriks RBAC & Konfigurasi Izin)
      */
     function isModuleAllowedForRole(moduleKey, roleKey) {
         if (!moduleKey) return false;
         if (moduleKey === 'hub') return true;
 
         if (!roleKey) {
-            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+            const ssRole = (typeof sessionStorage !== 'undefined') ? (sessionStorage.getItem('ASN_ADMIN_ROLE') || sessionStorage.getItem('asnawiyyah_admin_role')) : null;
+            const lsRole = (typeof localStorage !== 'undefined') ? (localStorage.getItem('asnawiyyah_admin_role') || (localStorage.getItem('ASN_PENGASUH_TOKEN') ? 'PENGASUH' : null)) : null;
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || ssRole || lsRole || 'ADMIN';
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
 
-        // Hak Akses Khusus Keaktifan Asatidz: Hanya Super Admin dan Pengasuh
+        if (roleKey === 'SUPER_ADMIN') return true;
+
+        // 1. Prioritas Utama: Evaluasi Langsung dari Matriks Hak Akses (RBAC Matrix Table)
+        if (typeof getMatrixPermission === 'function') {
+            const matrixLevel = getMatrixPermission(moduleKey, roleKey);
+            if (matrixLevel === 'none') {
+                return false; // Akses DITUTUP -> Sembunyikan modul secara mutlak
+            }
+            if (['full', 'read', 'write', 'read_own'].includes(matrixLevel)) {
+                return true; // Akses DIBERIKAN (Penuh/Lihat Saja/Input/Milik Sendiri) -> Tampilkan modul
+            }
+        }
+
+        // 2. Hak Akses Khusus Keaktifan Asatidz (Hanya Super Admin dan Pengasuh)
         if (moduleKey === 'keaktifan-asatidz') {
             return roleKey === 'SUPER_ADMIN' || roleKey === 'PENGASUH';
         }
 
-        // Cek izin khusus pengguna (user-level override) jika tersedia
+        // 3. Fallback: Cek izin khusus pengguna (user-level override) jika tersedia
         let rolePerms = null;
         if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && Array.isArray(ASNIdentity.currentUser.permissions) && ASNIdentity.currentUser.permissions.length > 0) {
             rolePerms = ASNIdentity.currentUser.permissions;
@@ -2254,7 +2265,7 @@
 
         const pengasuhCountEl = document.getElementById('pengasuh-control-center-count');
         if (pengasuhCountEl) {
-            pengasuhCountEl.innerText = `${visiblePengasuhCount || visibleMobileCount} Modul Aktif`;
+            pengasuhCountEl.innerText = `${visiblePengasuhCount} Modul Aktif`;
         }
 
         const mobileTitleText = document.getElementById('admin-control-center-title-text');

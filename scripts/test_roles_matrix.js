@@ -9,14 +9,17 @@ const assert = require('assert');
 console.log('🧪 Menguji Logika Matriks Izin RBAC (19 Modul x 7 Peran)...');
 
 // Mock browser environment for roles.js
+const mockStorage = {
+    _data: {},
+    getItem: function(k) { return this._data[k] || null; },
+    setItem: function(k, v) { this._data[k] = String(v); },
+    removeItem: function(k) { delete this._data[k]; }
+};
+
 const mockWindow = {
     addEventListener: () => {},
-    localStorage: {
-        _data: {},
-        getItem: function(k) { return this._data[k] || null; },
-        setItem: function(k, v) { this._data[k] = String(v); },
-        removeItem: function(k) { delete this._data[k]; }
-    },
+    localStorage: { ...mockStorage, _data: {} },
+    sessionStorage: { ...mockStorage, _data: {} },
     ASNAWIYYAH_CONFIG: { supabaseUrl: '', supabaseKey: '' }
 };
 
@@ -31,6 +34,8 @@ const rolesCode = fs.readFileSync(path.join(__dirname, '../js/roles.js'), 'utf8'
 const context = vm.createContext({
     window: mockWindow,
     document: mockDocument,
+    localStorage: mockWindow.localStorage,
+    sessionStorage: mockWindow.sessionStorage,
     console: console,
     setTimeout: setTimeout,
     clearTimeout: clearTimeout,
@@ -101,6 +106,24 @@ console.log('✅ Guardrail proteksi batch Wali Santri bekerja dengan sempurna');
 mockWindow.batchResetRoleMatrix('WALI_SANTRI');
 assert.strictEqual(Object.keys(mockWindow.MATRIX_PENDING_CHANGES).length, 0, 'Reset harus mengosongkan pending changes');
 console.log('✅ Reset matriks berhasil memulihkan state awal');
+
+// 7. Verifikasi Sinkronisasi Dinamis Pusat Kontrol Pengasuh (isModuleAllowedForRole)
+assert(typeof mockWindow.isModuleAllowedForRole === 'function', 'isModuleAllowedForRole harus didefinisikan');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('santri', 'PENGASUH'), true, 'Modul Santri harus boleh diakses (Lihat Saja)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('tahfidz', 'PENGASUH'), true, 'Modul Tahfidz harus boleh diakses (Lihat Saja)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('alumni', 'PENGASUH'), true, 'Modul Alumni harus boleh diakses (Lihat Saja)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('ppdb', 'PENGASUH'), false, 'Modul PPDB harus disembunyikan/tutup (none)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('program', 'PENGASUH'), false, 'Modul Program harus disembunyikan/tutup (none)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('unit-kegiatan', 'PENGASUH'), false, 'Modul Unit Kegiatan harus disembunyikan/tutup (none)');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('presensi', 'PENGASUH'), false, 'Modul Presensi harus disembunyikan/tutup (none)');
+
+// Uji coba toggle dinamis realtime lewat matriks
+mockWindow.handleMatrixCellChange('ppdb', 'PENGASUH', 'read');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('ppdb', 'PENGASUH'), true, 'Saat PPDB dibuka di matriks, menu harus otomatis muncul');
+
+mockWindow.handleMatrixCellChange('ppdb', 'PENGASUH', 'none');
+assert.strictEqual(mockWindow.isModuleAllowedForRole('ppdb', 'PENGASUH'), false, 'Saat PPDB ditutup di matriks, menu harus otomatis disembunyikan');
+console.log('✅ Sinkronisasi visibilitas menu Pusat Kontrol Pengasuh dengan Matriks RBAC berhasil!');
 
 console.log('🎉 SEMUA PENGUJIAN MATRIKS IZIN RBAC 100% SUKSES!');
 process.exit(0);
