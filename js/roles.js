@@ -2614,8 +2614,10 @@
         
         const startTime = performance.now();
         try {
-            const testUrl = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : 'https://tkjhfhyabacbyknwrysh.supabase.co') + '/rest/v1/';
-            const apiKey = (typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '');
+            const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
+            const sbUrl = config.supabaseUrl || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : 'https://tkjhfhyabacbyknwrysh.supabase.co');
+            const apiKey = config.supabaseKey || (typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '');
+            const testUrl = `${sbUrl}/rest/v1/roles_permissions?select=role_key&limit=1`;
             
             const response = await fetch(testUrl, {
                 method: 'GET',

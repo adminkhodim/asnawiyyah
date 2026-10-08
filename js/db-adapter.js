@@ -81,9 +81,9 @@
     getHeaders(token) {
       const headers = {
         'apikey': this.supabaseKey,
+        'Authorization': `Bearer ${this.supabaseKey}`,
         'Content-Type': 'application/json'
       };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
       return headers;
     }
 
