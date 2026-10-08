@@ -270,7 +270,7 @@
         ],
         'PENGASUH': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keaktifan.view',
-            'unit.manage', 'jadwal.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage'
+            'unit.manage', 'jadwal.manage', 'ppdb.manage', 'keuangan.view', 'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'profil.manage', 'pegawai.manage', 'notifikasi.broadcast', 'system.config'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view'
@@ -2228,15 +2228,20 @@
             }
         });
 
-        // 8. Filter Mobile Control Center Grid (Pusat Kontrol Admin di Tab Profil/Akun)
-        const mobileButtons = document.querySelectorAll('#admin-control-center-grid [data-admin-module], #admin-control-center-grid [data-role-module]');
+        // 8. Filter Mobile Control Center Grid (Pusat Kontrol Admin & Pengasuh di Tab Profil/Akun)
+        const mobileButtons = document.querySelectorAll('#admin-control-center-grid [data-admin-module], #admin-control-center-grid [data-role-module], #pengasuh-control-center-grid [data-admin-module], #pengasuh-control-center-grid [data-role-module]');
         let visibleMobileCount = 0;
+        let visiblePengasuhCount = 0;
         mobileButtons.forEach(btn => {
             const modKey = btn.dataset.adminModule || btn.dataset.roleModule;
             const isAllowed = isModuleAllowedForRole(modKey, roleKey);
             if (isAllowed) {
                 btn.classList.remove('hidden');
-                visibleMobileCount++;
+                if (btn.closest('#pengasuh-control-center-grid')) {
+                    visiblePengasuhCount++;
+                } else {
+                    visibleMobileCount++;
+                }
             } else {
                 btn.classList.add('hidden');
             }
@@ -2245,6 +2250,11 @@
         const mobileCountEl = document.getElementById('admin-control-center-count');
         if (mobileCountEl) {
             mobileCountEl.innerText = `${visibleMobileCount} Modul Aktif`;
+        }
+
+        const pengasuhCountEl = document.getElementById('pengasuh-control-center-count');
+        if (pengasuhCountEl) {
+            pengasuhCountEl.innerText = `${visiblePengasuhCount || visibleMobileCount} Modul Aktif`;
         }
 
         const mobileTitleText = document.getElementById('admin-control-center-title-text');

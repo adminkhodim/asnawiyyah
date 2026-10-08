@@ -2237,6 +2237,11 @@ function openAdminModuleFromControlCenter(viewName) {
         }
         return;
     }
+    if ((currentRole === 'PENGASUH' || currentRole === 'pengasuh') && viewName === 'tahfidz' && typeof openTahfidzPengasuhView === 'function') {
+        openTahfidzPengasuhView();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
     if (typeof switchTab === 'function') {
         switchTab('admin', false);
     }
