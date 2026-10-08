@@ -1786,16 +1786,16 @@
             desc: 'Ahlan wa Sahlan. Supervisi makro capaian Tahfidz Al-Qur\'an, ketertiban santri, dan laporan pesantren (Mode Aman Read-Only).',
             gradientClass: 'from-emerald-950 via-[#0a2318] to-amber-950 border-amber-400/40',
             bgIcon: 'fa-kaaba',
-            noticeTitle: 'Supervisi Eksekutif Dewan Masyayikh (Read-Only Aman)',
-            noticeText: 'Akses pengawasan makro aktif untuk memantau capaian Al-Qur\'an santri, presensi, pegawai, dan kabar pondok. Form hapus/edit dinonaktifkan demi perlindungan data.',
+            noticeTitle: 'Supervisi Eksekutif Dewan Masyayikh (Mode Aman)',
+            noticeText: 'Akses pengawasan makro aktif untuk memantau capaian Al-Qur\'an santri, presensi, pegawai, dan kabar pondok tanpa risiko perubahan data.',
             noticeBoxClass: 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40 text-amber-950 dark:text-amber-200',
             noticeIconClass: 'fa-kaaba text-amber-600 dark:text-amber-400',
             noticeBadgeClass: 'bg-amber-200/70 text-amber-900 dark:bg-amber-900 dark:text-amber-200',
             kpis: [
-                { label: 'Total Santriwan & Santriwati', icon: 'fa-users', color: 'amber', valueKey: 'santri', sub: 'Santri Aktif' },
-                { label: 'Pantauan Tahfidz Al-Qur\'an', icon: 'fa-book-quran', color: 'emerald', value: '30 Juz', sub: 'Supervisi Makro' },
-                { label: 'Presensi & Disiplin Santri', icon: 'fa-clipboard-check', color: 'teal', value: 'Terdata', sub: 'Evaluasi Mutu' },
-                { label: 'Dewan Asatidz & Pengurus', icon: 'fa-user-tie', color: 'sky', valueKey: 'users', sub: 'Staf & Pembina' }
+                { label: 'Total Santri', icon: 'fa-users', color: 'emerald', valueKey: 'santri', sub: 'Santri Mukim', chipText: 'Aktif' },
+                { label: 'Tahfidz 30 Juz', icon: 'fa-book-quran', color: 'teal', valueKey: 'tahfidz', sub: 'Target Mushaf', chipText: '30 Juz' },
+                { label: 'Presensi Santri', icon: 'fa-clipboard-check', color: 'amber', valueKey: 'presensi', sub: 'Kedisiplinan', chipText: 'Terdata' },
+                { label: 'Dewan Asatidz', icon: 'fa-user-tie', color: 'sky', valueKey: 'pegawai', sub: 'Staf & Muhafiz', chipText: 'Pengajar' }
             ]
         },
         'WALI_SANTRI': {
@@ -1938,7 +1938,7 @@
             }
             return `30 <span class="text-xs font-semibold text-white/90">Juz</span>`;
         }
-        if (valueKey === 'pegawai' || valueKey === 'pegawai_count') {
+        if (valueKey === 'pegawai' || valueKey === 'pegawai_count' || valueKey === 'users' || valueKey === 'users_count') {
             if (window.ASNPegawai && Array.isArray(window.ASNPegawai.list) && window.ASNPegawai.list.length > 0) {
                 return `${window.ASNPegawai.list.length} <span class="text-xs font-semibold text-white/90">Staf</span>`;
             }
@@ -2003,6 +2003,40 @@
             banner.style.display = 'none';
         }
 
+        // 1b. Perbarui Sapaan Dinamis & Badge Berdasarkan Role
+        const greetingTitle = document.getElementById('admin-hub-greeting-title');
+        const greetingBadge = document.getElementById('admin-hub-greeting-badge');
+        if (greetingTitle) {
+            let userName = '';
+            try {
+                if (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && ASNIdentity.currentUser.name) {
+                    userName = ASNIdentity.currentUser.name;
+                } else if (sessionStorage.getItem('asnawiyyah_admin_name')) {
+                    userName = sessionStorage.getItem('asnawiyyah_admin_name');
+                }
+            } catch(e) {}
+
+            if (roleKey === 'PENGASUH') {
+                greetingTitle.innerText = userName ? `Ahlan wa Sahlan, ${userName}` : 'Ahlan wa Sahlan, Pengasuh / Romo Kyai';
+                if (greetingBadge) {
+                    greetingBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>Supervisi Makro`;
+                    greetingBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800';
+                }
+            } else if (roleKey === 'SUPER_ADMIN') {
+                greetingTitle.innerText = userName ? `Selamat Bertugas, ${userName}` : 'Selamat Datang, Super Administrator';
+                if (greetingBadge) {
+                    greetingBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Full Access`;
+                    greetingBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-300/60 dark:border-emerald-800';
+                }
+            } else {
+                greetingTitle.innerText = userName ? `Selamat Datang, ${userName}` : `Selamat Datang, ${profile.shortName || 'Administrator'}`;
+                if (greetingBadge) {
+                    greetingBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Live System`;
+                    greetingBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-300/60 dark:border-emerald-800';
+                }
+            }
+        }
+
         // 2. Perbarui Scope Notice Bar & Quick Toolbar
         const noticeBar = document.getElementById('admin-hub-role-scope-notice');
         if (noticeBar) {
@@ -2038,14 +2072,13 @@
             }
         }
 
-        // 3. Render 4 Dynamic KPI Cards
-        // 3. Render 4 Vibrant Pastel Gradient KPI Cards (Mengadopsi Desain Referensi)
+        // 3. Render 4 Dynamic KPI Cards (Vibrant Pastel Gradients)
         const kpiGrid = document.getElementById('admin-hub-kpi-grid');
         if (kpiGrid && Array.isArray(profile.kpis)) {
             const vibrantGradientMap = {
                 emerald: {
                     card: 'bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white shadow-lg shadow-emerald-500/20',
-                    chip: 'bg-white text-rose-600 font-black shadow-xs',
+                    chip: 'bg-white text-emerald-800 font-black shadow-xs',
                     iconBg: 'bg-white/20 text-white'
                 },
                 indigo: {
@@ -2060,7 +2093,7 @@
                 },
                 amber: {
                     card: 'bg-gradient-to-br from-[#f59e0b] to-[#ea580c] text-white shadow-lg shadow-amber-500/20',
-                    chip: 'bg-white text-amber-700 font-black shadow-xs',
+                    chip: 'bg-white text-amber-800 font-black shadow-xs',
                     iconBg: 'bg-white/20 text-white'
                 },
                 cyan: {
@@ -2075,12 +2108,12 @@
                 },
                 teal: {
                     card: 'bg-gradient-to-br from-teal-500 via-emerald-600 to-green-600 text-white shadow-md shadow-teal-900/15',
-                    chip: 'bg-white/20 text-white font-bold',
+                    chip: 'bg-white text-teal-800 font-black shadow-xs',
                     iconBg: 'bg-white/20 text-white'
                 },
                 sky: {
                     card: 'bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white shadow-md shadow-sky-900/15',
-                    chip: 'bg-white/20 text-white font-bold',
+                    chip: 'bg-white text-sky-800 font-black shadow-xs',
                     iconBg: 'bg-white/20 text-white'
                 }
             };
@@ -2091,11 +2124,11 @@
                 const clickAttr = kpi.action ? `onclick="${kpi.action}" style="cursor: pointer;"` : '';
                 const valIdAttr = kpi.valueKey ? `id="kpi-val-${kpi.valueKey}"` : '';
                 const hoverClass = kpi.action ? 'hover:scale-[1.02] active:scale-[0.98]' : '';
-                const chipLabel = kpi.chipText || (kpi.sub ? kpi.sub : 'Aktif');
+                const chipLabel = kpi.chipText || 'Terpantau';
                 return `
                     <div ${clickAttr} class="${theme.card} p-3 md:p-3.5 rounded-2xl flex flex-col justify-between space-y-1.5 transition-all duration-300 ${hoverClass}">
-                        <div class="flex items-start justify-between">
-                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">${kpi.label}</span>
+                        <div class="flex items-start justify-between gap-1">
+                            <span class="text-[11px] md:text-xs font-bold text-white/95 block truncate drop-shadow-2xs leading-snug">${kpi.label}</span>
                             <div class="w-6 h-6 rounded-full ${theme.iconBg} flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                 <i class="fa-solid ${kpi.icon}"></i>
                             </div>
@@ -2106,9 +2139,9 @@
                                 <span class="text-xs font-bold text-white/80">↑</span>
                             </h4>
                         </div>
-                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
-                            <span class="truncate font-normal text-[10px] opacity-90">${kpi.sub}</span>
-                            <span class="px-2 py-0.5 rounded-full ${theme.chip} shrink-0 text-[9px]">${chipLabel}</span>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10 gap-1">
+                            <span class="truncate font-medium text-[10px] opacity-90">${kpi.sub || ''}</span>
+                            <span class="px-2 py-0.5 rounded-full ${theme.chip} shrink-0 text-[9px] font-bold">${chipLabel}</span>
                         </div>
                     </div>
                 `;
