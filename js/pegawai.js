@@ -108,6 +108,11 @@ async function loadAdminEmployeesData() {
         ASNPegawai.list = employees;
         ASNPegawai.filtered = [...employees];
 
+        // Simpan jumlah pegawai ke localStorage cache agar KPI Dashboard Utama langsung aktual
+        try {
+            localStorage.setItem('ASNAWIYYAH_PEGAWAI_CACHE', JSON.stringify(employees.length));
+        } catch(cacheErr) { /* quota exceeded — abaikan */ }
+
         // Update Counter Statistik
         updatePegawaiStatistics(employees);
 

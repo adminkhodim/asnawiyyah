@@ -2116,7 +2116,7 @@
                 const cached = JSON.parse(localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE') || '[]');
                 if (cached.length > 0) return `${cached.length} <span class="text-xs font-semibold text-white/90">Santri</span>`;
             } catch(e) {}
-            return `186 <span class="text-xs font-semibold text-white/90">Santri</span>`;
+            return `<span class="opacity-60 animate-pulse">—</span> <span class="text-xs font-semibold text-white/90">Santri</span>`;
         }
         if (valueKey === 'tahfidz' || valueKey === 'tahfidz_count') {
             const list = (typeof adminTahfidzList !== 'undefined' && Array.isArray(adminTahfidzList) && adminTahfidzList.length > 0) ? adminTahfidzList : [];
@@ -2134,7 +2134,11 @@
                 const asatidz = adminUsersList.filter(u => u.role === 'ASATIDZ' || u.role === 'PEGAWAI' || u.role === 'EDITOR');
                 if (asatidz.length > 0) return `${asatidz.length} <span class="text-xs font-semibold text-white/90">Asatidz</span>`;
             }
-            return `24 <span class="text-xs font-semibold text-white/90">Asatidz</span>`;
+            try {
+                const cachedPegawai = JSON.parse(localStorage.getItem('ASNAWIYYAH_PEGAWAI_CACHE') || '0');
+                if (cachedPegawai > 0) return `${cachedPegawai} <span class="text-xs font-semibold text-white/90">Asatidz</span>`;
+            } catch(e) {}
+            return `<span class="opacity-60 animate-pulse">—</span> <span class="text-xs font-semibold text-white/90">Asatidz</span>`;
         }
         if (valueKey === 'presensi' || valueKey === 'presensi_rate') {
             return `98.5<span class="text-xs font-semibold text-white/90">%</span>`;

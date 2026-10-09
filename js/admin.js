@@ -800,6 +800,11 @@
                 if (typeof triggerAdminHubStaggerAnimation === 'function') {
                     triggerAdminHubStaggerAnimation();
                 }
+
+                // Preload data santri, pegawai & tahfidz agar KPI Dashboard Utama selalu aktual
+                if (typeof loadAdminStudentsData === 'function') loadAdminStudentsData();
+                if (typeof loadAdminEmployeesData === 'function') loadAdminEmployeesData();
+                if (typeof loadAdminTahfidzData === 'function') loadAdminTahfidzData();
             }
 
             // Sembunyikan double header di layar mobile saat sub-view aktif
@@ -6083,6 +6088,11 @@
                     adminStudentsData = response.data || [];
                     window.adminStudentsData = adminStudentsData;
                     window.adminStudentsList = adminStudentsData;
+
+                    // Simpan ke localStorage cache agar KPI Dashboard Utama langsung aktual
+                    try {
+                        localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify(adminStudentsData));
+                    } catch(cacheErr) { /* quota exceeded — abaikan */ }
 
                     // Update Hub Badge & KPI Cards
                     const hubBadge = document.getElementById('admin-hub-santri-count');
