@@ -524,11 +524,35 @@
                 const response = await apiGet("getKabar");
                 if (response && response.status === "success" &&
                     Array.isArray(response.data) && response.data.length > 0) {
-                    const newDataStr = JSON.stringify(response.data);
+                    
+                    // Proteksi Monotonik Views: Nilai views tidak boleh turun jika cache lokal/memori memiliki nilai lebih tinggi
+                    const localViewsMap = new Map();
+                    if (Array.isArray(mockNewsData)) {
+                        mockNewsData.forEach(item => {
+                            const key1 = String(item.news_id || item.id || '');
+                            const key2 = String(item.slug || '');
+                            const v = Number(item.views) || 0;
+                            if (key1) localViewsMap.set(key1, Math.max(localViewsMap.get(key1) || 0, v));
+                            if (key2) localViewsMap.set(key2, Math.max(localViewsMap.get(key2) || 0, v));
+                        });
+                    }
+
+                    const mergedNews = response.data.map(serverItem => {
+                        const key1 = String(serverItem.news_id || serverItem.id || '');
+                        const key2 = String(serverItem.slug || '');
+                        const localV = Math.max(localViewsMap.get(key1) || 0, localViewsMap.get(key2) || 0);
+                        const serverV = Number(serverItem.views) || 0;
+                        return {
+                            ...serverItem,
+                            views: Math.max(localV, serverV)
+                        };
+                    });
+
+                    const newDataStr = JSON.stringify(mergedNews);
                     const oldDataStr = localStorage.getItem(NEWS_CACHE_KEY);
 
                     localStorage.setItem(NEWS_CACHE_KEY, newDataStr);
-                    mockNewsData = response.data;
+                    mockNewsData = mergedNews;
 
                     if (newDataStr !== oldDataStr) {
                         renderAllNewsViews(mockNewsData);
@@ -878,11 +902,19 @@
                 el.innerText = formatted;
             });
 
+            // Perbarui cache lokal seketika agar saat reload sebelum server sync selesai, angka tidak kembali turun
+            try {
+                if (Array.isArray(mockNewsData)) {
+                    localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(mockNewsData));
+                }
+            } catch (e) {}
+
             // Sync ke backend GAS & Supabase secara asinkron tanpa memblokir pembaca
             if (isApiConfigured()) {
                 apiPost("recordNewsView", {
                     news_id: news.news_id,
-                    slug: news.slug
+                    slug: news.slug,
+                    views: Number(news.views) || 0
                 }).catch(err => {
                     console.warn("recordNewsView background sync failed:", err);
                 });
@@ -901,7 +933,13 @@
                 const rows = await res.json();
                 if (Array.isArray(rows) && rows.length > 0) {
                     const row = rows[0];
-                    row.views = Number(row.views) || 0;
+                    const serverViews = Number(row.views) || 0;
+                    let localViews = 0;
+                    if (Array.isArray(mockNewsData)) {
+                        const localItem = mockNewsData.find(n => n.news_id === row.news_id || n.slug === row.slug);
+                        if (localItem) localViews = Number(localItem.views) || 0;
+                    }
+                    row.views = Math.max(localViews, serverViews);
                     return row;
                 }
             } catch (err) {

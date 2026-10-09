@@ -2565,6 +2565,14 @@
                     };
                 }
 
+                let existingViews = 0;
+                if (formId && Array.isArray(mockNewsData)) {
+                    const exItem = mockNewsData.find(n => String(n.news_id) === String(formId) || String(n.id) === String(formId));
+                    if (exItem && typeof exItem.views !== 'undefined') {
+                        existingViews = Number(exItem.views) || 0;
+                    }
+                }
+
                 const token = getAdminSessionToken();
                 const payload = {
                     news_id: formId,
@@ -2574,7 +2582,8 @@
                     ringkasan: document.getElementById('admin-news-ringkasan').value.trim(),
                     isi: isiKonten,
                     gambarLama: adminNewsExistingGambar || '',
-                    file: fileData
+                    file: fileData,
+                    views: existingViews
                 };
 
                 if (!isApiConfigured()) {

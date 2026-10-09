@@ -2017,6 +2017,7 @@
                         tglVal = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
                     }
 
+                    const isUpdate = action === 'updateBerita' || Boolean(d.news_id);
                     const newsRow = {
                         news_id: newsId,
                         slug: slugVal,
@@ -2028,17 +2029,43 @@
                         gambar_url: imgUrl,
                         foto_url: imgUrl,
                         penulis: d.penulis || 'Admin',
-                        status: d.status || 'Publish',
-                        views: Number(d.views) || 0
+                        status: d.status || 'Publish'
                     };
-                    if (action === 'saveBerita' || !d.news_id) {
+
+                    if (isUpdate) {
+                        // Jangan sertakan kolom 'views' saat update agar views yang sudah berjalan tidak ter-reset ke 0!
+                        if (typeof d.views !== 'undefined' && Number(d.views) > 0) {
+                            try {
+                                const curRes = await fetch(`${sbUrl}/rest/v1/berita?news_id=eq.${encodeURIComponent(newsId)}&select=views&limit=1`, {
+                                    headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                                });
+                                if (curRes.ok) {
+                                    const cRows = await curRes.json();
+                                    const currentDbViews = (cRows && cRows[0] && Number(cRows[0].views)) || 0;
+                                    newsRow.views = Math.max(currentDbViews, Number(d.views) || 0);
+                                }
+                            } catch(e) {}
+                        }
+
+                        await fetch(`${sbUrl}/rest/v1/berita?news_id=eq.${encodeURIComponent(newsId)}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'apikey': sbKey,
+                                'Authorization': `Bearer ${sbKey}`,
+                                'Content-Type': 'application/json',
+                                'Prefer': 'return=representation'
+                            },
+                            body: JSON.stringify(newsRow)
+                        });
+                    } else {
+                        newsRow.views = 0;
                         newsRow.created_at = new Date().toISOString();
+                        await fetch(`${sbUrl}/rest/v1/berita`, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(newsRow)
+                        });
                     }
-                    await fetch(`${sbUrl}/rest/v1/berita`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(newsRow)
-                    });
                 }
                 else if (action === 'deleteBerita') {
                     const newsId = (payload.data && (payload.data.news_id || payload.data.id)) || payload.news_id || payload.id;
@@ -2061,11 +2088,13 @@
                             if (gRes.ok) {
                                 const rows = await gRes.json();
                                 if (rows && rows.length > 0) {
+                                    const clientV = Number(payload.views || (payload.data && payload.data.views) || 0);
                                     const currentV = Number(rows[0].views) || 0;
+                                    const targetV = Math.max(currentV + 1, clientV);
                                     await fetch(`${sbUrl}/rest/v1/berita?news_id=eq.${encodeURIComponent(rows[0].news_id)}`, {
                                         method: 'PATCH',
                                         headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ views: currentV + 1 })
+                                        body: JSON.stringify({ views: targetV })
                                     });
                                 }
                             }
