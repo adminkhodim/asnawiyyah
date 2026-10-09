@@ -2005,13 +2005,6 @@
 
                     let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || respData.url || fileBase64 || d.gambar || d.gambar_url || d.gambarLama || '';
                     
-                    // Jika cover gambar kosong atau link placeholder kopi lama, auto-ekstrak gambar dari isi berita
-                    if ((!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) && d.isi) {
-                        const inlineMatch = String(d.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
-                        if (inlineMatch && inlineMatch[1] && !inlineMatch[1].includes('photo-1584286595398-a59f21d313f5')) {
-                            imgUrl = inlineMatch[1];
-                        }
-                    }
                     if (!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) {
                         imgUrl = 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop';
                     }

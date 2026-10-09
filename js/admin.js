@@ -2549,13 +2549,8 @@
                     }
                 }
 
-                // Jika foto utama kosong namun ada gambar yang disisipkan di isi berita, gunakan sebagai foto utama
-                if (!fileData && isiKonten) {
-                    const inlineMatch = isiKonten.match(/<img[^>]+src=["']([^"']+)["']/i);
-                    if (inlineMatch && inlineMatch[1]) {
-                        fileData = inlineMatch[1];
-                    }
-                }
+                // Foto sisipan di tengah berita (inline) TIDAK BOLEH menimpa foto utama.
+                // fileData hanya berisi foto jika pengguna memilih/mengunggah foto utama baru.
 
                 // Normalisasi fileData menjadi object { base64, mimeType, name }
                 if (fileData && typeof fileData === 'string' && fileData.startsWith('data:')) {
@@ -2627,6 +2622,11 @@
             // Jika konten lama berupa teks polos tanpa HTML tag, konversi newline ke <p> / <br>
             if (contentHtml && !/<[a-z][\s\S]*>/i.test(contentHtml)) {
                 contentHtml = contentHtml.split('\n\n').map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+            }
+            // Bersihkan inline style warna teks gelap/hitam statis agar adaptif & kontras tinggi di dark mode
+            if (contentHtml) {
+                contentHtml = contentHtml.replace(/style\s*=\s*["'][^"']*color\s*:\s*(?:#000000|#000|#111|#222|#333|black|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\))[^"']*["']/gi, '');
+                contentHtml = contentHtml.replace(/<font\s+color=["'](?:#000000|#000|#111|#222|#333|black)["']>([\s\S]*?)<\/font>/gi, '$1');
             }
             if (editor) editor.innerHTML = contentHtml;
             if (textarea) textarea.value = contentHtml;

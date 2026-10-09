@@ -9616,13 +9616,7 @@ function updateBerita(formData) {
       isi = processNewsInlineImages(folder, isi);
     }
 
-    // Jika cover kosong atau placeholder kopi lama, gunakan gambar pertama dari artikel
-    if ((!fileUrl || fileUrl.indexOf('photo-1584286595398-a59f21d313f5') > -1) && isi) {
-      var inlineMatch = isi.match(/<img[^>]+src=["']([^"']+)["']/i);
-      if (inlineMatch && inlineMatch[1] && inlineMatch[1].indexOf('photo-1584286595398-a59f21d313f5') === -1) {
-        fileUrl = inlineMatch[1];
-      }
-    }
+
 
     // Array to update: D to I (Judul, Kategori, Penulis, Gambar_URL, Ringkasan, Isi)
     sheet.getRange(targetRow, 4, 1, 6).setValues([[judul, kategori, penulis, fileUrl, ringkasan, isi]]);

@@ -83,6 +83,34 @@
             display: inline-block;
         }
 
+        /* Kontras Tinggi Editor Berita & Teks di Mode Gelap (Dark Mode) */
+        #admin-news-editor {
+            color: #1e293b;
+        }
+        html.dark #admin-news-editor,
+        html.dark #admin-news-editor p,
+        html.dark #admin-news-editor span,
+        html.dark #admin-news-editor div,
+        html.dark #admin-news-editor font,
+        html.dark #admin-news-editor b,
+        html.dark #admin-news-editor strong,
+        html.dark #admin-news-editor i,
+        html.dark #admin-news-editor em,
+        html.dark #admin-news-editor u,
+        html.dark #admin-news-editor li,
+        html.dark #admin-news-editor h1,
+        html.dark #admin-news-editor h2,
+        html.dark #admin-news-editor h3,
+        html.dark #admin-news-editor h4 {
+            color: #f1f5f9 !important;
+        }
+        html.dark #admin-news-editor a {
+            color: #34d399 !important;
+        }
+        html.dark #admin-news-editor figcaption {
+            color: #94a3b8 !important;
+        }
+
         /* Proteksi Mutlak Isolasi Header: Cegah Header Desktop Bocor ke Mobile */
         @media (max-width: 767.98px) {
             #main-desktop-header {
@@ -5624,10 +5652,10 @@
                             <!-- Rich Content Editor Artikel Berita -->
                             <div class="md:col-span-2 space-y-1.5">
                                 <div class="flex items-center justify-between">
-                                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                    <label class="block text-[11px] font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
                                         Isi Berita Lengkap & Pemformatan Tulisan <span class="text-rose-500">*</span>
                                     </label>
-                                    <span class="text-[10px] text-slate-400">Dukungan: Bold, Italic, Rata Kanan-Kiri & Sisipkan Foto</span>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-300 font-medium">Dukungan: Bold, Italic, Rata Kanan-Kiri & Sisipkan Foto</span>
                                 </div>
 
                                 <!-- Toolbar Formatting -->
