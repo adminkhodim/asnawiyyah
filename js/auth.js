@@ -912,6 +912,13 @@ const ASNIdentity = {
         }
     },
 
+    activeStudentFilter: 'ALL',
+
+    setStudentFilter(filterId) {
+        this.activeStudentFilter = filterId || 'ALL';
+        this.renderLinkedStudents();
+    },
+
     renderLinkedStudents() {
         const listContainer = document.getElementById('parent-linked-students-list');
         if (!listContainer) return;
@@ -950,6 +957,52 @@ const ASNIdentity = {
             }
         }
 
+        // Update badge jumlah santri terhubung
+        const badgeEl = document.getElementById('parent-linked-count-badge');
+        if (badgeEl) {
+            badgeEl.innerText = `${(students || []).length} Santri`;
+        }
+
+        // Render Child Switcher Tabs jika memiliki 2 atau lebih santri
+        const switcherEl = document.getElementById('parent-child-switcher');
+        if (switcherEl) {
+            if (Array.isArray(students) && students.length > 1) {
+                switcherEl.classList.remove('hidden');
+                const curFilter = this.activeStudentFilter || 'ALL';
+                const allBtnClass = curFilter === 'ALL'
+                    ? 'bg-emerald-600 text-white font-black shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 font-semibold';
+
+                let switcherHtml = `
+                    <button type="button" onclick="ASNIdentity.setStudentFilter('ALL')" class="px-2.5 py-1 rounded-lg text-[10px] shrink-0 transition flex items-center gap-1 cursor-pointer ${allBtnClass}">
+                        <i class="fa-solid fa-users text-[9px]"></i>
+                        <span>Semua Anak (${students.length})</span>
+                    </button>
+                `;
+
+                students.forEach((s) => {
+                    const sId = s.studentId || s.student_id || s.id || s.nis;
+                    const sName = s.name || s.nama || 'Santri';
+                    const sNis = s.nis || '-';
+                    const isSelected = curFilter === String(sId);
+                    const btnClass = isSelected
+                        ? 'bg-emerald-600 text-white font-black shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 font-semibold';
+                    switcherHtml += `
+                        <button type="button" onclick="ASNIdentity.setStudentFilter('${escapeHtml(String(sId))}')" class="px-2.5 py-1 rounded-lg text-[10px] shrink-0 transition flex items-center gap-1 cursor-pointer ${btnClass}">
+                            <i class="fa-solid fa-user-graduate text-[9px]"></i>
+                            <span>${escapeHtml(sName)}</span>
+                            <span class="opacity-70 text-[9px]">(${escapeHtml(sNis)})</span>
+                        </button>
+                    `;
+                });
+                switcherEl.innerHTML = switcherHtml;
+            } else {
+                switcherEl.classList.add('hidden');
+                switcherEl.innerHTML = '';
+            }
+        }
+
         if (!Array.isArray(students) || students.length === 0) {
             listContainer.innerHTML = `
                 <div class="p-5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-1.5">
@@ -963,8 +1016,16 @@ const ASNIdentity = {
             return;
         }
 
+        // Saring daftar santri sesuai tab filter aktif
+        const displayedStudents = (this.activeStudentFilter && this.activeStudentFilter !== 'ALL')
+            ? students.filter(s => {
+                const sId = s.studentId || s.student_id || s.id || s.nis;
+                return String(sId) === String(this.activeStudentFilter);
+            })
+            : students;
+
         // Render Kartu Digital Santri (KTS Digital) & Kotak Indikator Tahfidz Terpisah
-        listContainer.innerHTML = students.map((s, idx) => {
+        listContainer.innerHTML = displayedStudents.map((s, idx) => {
             let studentPhoto = s.photoUrl || s.photo_url || '';
             let thumbnailFallback = '';
             if (studentPhoto) {
@@ -2802,3 +2863,235 @@ window.resendAdminOtp = resendAdminOtp;
 window.startParentOtpCooldown = startParentOtpCooldown;
 window.stopParentOtpCooldown = stopParentOtpCooldown;
 window.resendParentOtp = resendParentOtp;
+
+// ============================================================================
+// SELF-SERVICE CONNECT STUDENT (OPSI B: HUBUNGKAN ANAK LAIN DI DASHBOARD WALI)
+// ============================================================================
+
+function openSelfServiceConnectStudentModal() {
+    const modal = document.getElementById('modal-self-service-connect-student');
+    const alertBox = document.getElementById('self-connect-alert');
+    if (alertBox) alertBox.classList.add('hidden');
+    const nisInput = document.getElementById('self-connect-nis');
+    const birthInput = document.getElementById('self-connect-birthdate');
+    if (nisInput) nisInput.value = '';
+    if (birthInput) birthInput.value = '';
+    if (modal) modal.classList.remove('hidden');
+    if (nisInput) setTimeout(() => nisInput.focus(), 150);
+}
+
+function closeSelfServiceConnectStudentModal() {
+    const modal = document.getElementById('modal-self-service-connect-student');
+    if (modal) modal.classList.add('hidden');
+}
+
+function normalizeBirthDate(d) {
+    if (!d) return '';
+    const str = String(d).trim();
+    // Format YYYY-MM-DD
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(str)) {
+        const parts = str.split('-');
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    }
+    // Format DD/MM/YYYY atau DD-MM-YYYY
+    const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (match) {
+        return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+    }
+    try {
+        const dt = new Date(str);
+        if (!isNaN(dt.getTime())) {
+            const yr = dt.getFullYear();
+            const mo = String(dt.getMonth() + 1).padStart(2, '0');
+            const day = String(dt.getDate()).padStart(2, '0');
+            return `${yr}-${mo}-${day}`;
+        }
+    } catch (e) {}
+    return str.replace(/[^0-9]/g, '');
+}
+
+async function handleSelfServiceConnectStudent(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-self-connect-submit');
+    const alertBox = document.getElementById('self-connect-alert');
+    const alertText = document.getElementById('self-connect-alert-text');
+    const nisInput = document.getElementById('self-connect-nis');
+    const birthInput = document.getElementById('self-connect-birthdate');
+    const relInput = document.getElementById('self-connect-relationship');
+
+    const nis = (nisInput?.value || '').trim();
+    const birthDate = (birthInput?.value || '').trim();
+    const relationship = (relInput?.value || 'GUARDIAN').trim();
+
+    if (!nis || !birthDate) {
+        if (alertBox && alertText) {
+            alertText.innerText = 'NIS dan Tanggal Lahir santri wajib diisi.';
+            alertBox.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i><span>Memverifikasi Identitas...</span>`;
+    }
+    if (alertBox) alertBox.classList.add('hidden');
+
+    try {
+        const config = window.ASNAWIYYAH_CONFIG || {};
+        const sbUrl = config.supabaseUrl;
+        const sbKey = config.supabaseKey;
+        if (!sbUrl || !sbKey) throw new Error('Konfigurasi database server tidak tersedia.');
+
+        const headers = {
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`,
+            'Content-Type': 'application/json'
+        };
+
+        // 1. Cari data santri dari memori / database resmi
+        let student = null;
+        let localList = [];
+        if (typeof window.adminStudentsData !== 'undefined' && Array.isArray(window.adminStudentsData)) {
+            localList = window.adminStudentsData;
+        } else {
+            try {
+                const cached = localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE');
+                if (cached) localList = JSON.parse(cached);
+            } catch(e) {}
+        }
+
+        const cleanNis = nis.toLowerCase();
+        student = localList.find(s => {
+            const sNis = String(s.nis || s.nisn || '').toLowerCase().trim();
+            const sId = String(s.studentId || s.student_id || '').toLowerCase().trim();
+            return sNis === cleanNis || sId === cleanNis;
+        });
+
+        // Jika belum ada di memori, query ke Supabase REST API
+        if (!student) {
+            const encNis = encodeURIComponent(nis);
+            const queryUrl = `${sbUrl}/rest/v1/students?or=(nis.eq.${encNis},student_id.eq.${encNis},nisn.eq.${encNis})&limit=1`;
+            const sRes = await fetch(queryUrl, { headers });
+            if (sRes.ok) {
+                const resArr = await sRes.json();
+                if (Array.isArray(resArr) && resArr.length > 0) {
+                    student = resArr[0];
+                }
+            }
+        }
+
+        if (!student) {
+            throw new Error(`Santri dengan NIS "${nis}" tidak ditemukan di database resmi madrasah.`);
+        }
+
+        // 2. Verifikasi PIN Tanggal Lahir Santri
+        const rawStudentBirth = student.birthDate || student.birth_date || student.tanggal_lahir || '';
+        if (rawStudentBirth) {
+            const normInput = normalizeBirthDate(birthDate);
+            const normDb = normalizeBirthDate(rawStudentBirth);
+            if (normInput && normDb && normInput !== normDb) {
+                throw new Error('Tanggal Lahir santri tidak sesuai dengan catatan madrasah. Pastikan PIN tanggal lahir tepat.');
+            }
+        }
+
+        // 3. Cek apakah santri sudah terhubung ke akun ini
+        const studentId = student.studentId || student.student_id || student.id || student.nis;
+        const currentLinked = Array.isArray(ASNIdentity.linkedStudents) ? ASNIdentity.linkedStudents : [];
+        const isAlreadyLinked = currentLinked.some(s => {
+            const existingId = s.studentId || s.student_id || s.id || s.nis;
+            return String(existingId).toLowerCase() === String(studentId).toLowerCase() ||
+                   (s.nis && String(s.nis).toLowerCase() === cleanNis);
+        });
+
+        if (isAlreadyLinked) {
+            throw new Error(`Ananda "${student.name || nis}" sudah terhubung di dalam akun Anda.`);
+        }
+
+        // 4. Dapatkan Wali ID dari sesi login aktif
+        const currentUser = ASNIdentity.currentUser || {};
+        const waliId = currentUser.userId || currentUser.identityId || currentUser.id || 
+                       sessionStorage.getItem('asn_temp_parent_id') || 
+                       (currentUser.email ? `USR_WLI_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '')}` : '');
+
+        if (!waliId) {
+            throw new Error('Sesi akun wali tidak valid. Silakan muat ulang halaman atau login kembali.');
+        }
+
+        // 5. Simpan relasi ke public.wali_santri_map Supabase Cloud
+        const nowIso = new Date().toISOString();
+        const mapId = `MAP_${waliId.replace(/[^a-zA-Z0-9]/g, '')}_${String(studentId).replace(/[^a-zA-Z0-9]/g, '')}`;
+
+        const saveMapRes = await fetch(`${sbUrl}/rest/v1/wali_santri_map`, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                map_id: mapId,
+                wali_id: waliId,
+                student_id: studentId,
+                relationship: relationship,
+                status: 'VERIFIED',
+                created_at: nowIso
+            })
+        });
+
+        if (!saveMapRes.ok) {
+            const errJson = await saveMapRes.json().catch(() => ({}));
+            throw new Error(errJson.message || `Gagal menyimpan tautan anak ke database (${saveMapRes.status})`);
+        }
+
+        // 6. Update state sesi lokal (Memori + Storage)
+        const newStudentObj = {
+            studentId: studentId,
+            student_id: studentId,
+            name: student.name || 'Santri',
+            nis: student.nis || student.nisn || nis,
+            gender: student.gender || 'L',
+            program: student.program || student.kelas || 'Reguler',
+            relationship: relationship,
+            photoUrl: student.photoUrl || student.photo_url || ''
+        };
+
+        ASNIdentity.linkedStudents.push(newStudentObj);
+        sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(ASNIdentity.linkedStudents));
+        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(ASNIdentity.linkedStudents));
+
+        // 7. Render ulang KTS Digital & Pelacak Perpulangan
+        ASNIdentity.setStudentFilter('ALL');
+
+        try {
+            if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadWaliPerpulanganData === 'function') {
+                window.ASNPerpulangan.loadWaliPerpulanganData();
+            } else if (typeof window.loadWaliPerpulanganData === 'function') {
+                window.loadWaliPerpulanganData();
+            }
+        } catch (e) {}
+
+        closeSelfServiceConnectStudentModal();
+
+        if (typeof showToast === 'function') {
+            showToast(`Alhamdulillah! Ananda ${student.name || 'Santri'} berhasil dihubungkan ke akun Anda.`);
+        }
+
+    } catch (err) {
+        console.warn('[SelfServiceConnectStudent Error]', err);
+        if (alertBox && alertText) {
+            alertText.innerText = err.message || 'Terjadi kesalahan saat memverifikasi santri.';
+            alertBox.classList.remove('hidden');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-link text-xs mr-1"></i><span>Verifikasi & Hubungkan Santri</span>`;
+        }
+    }
+}
+
+// Window exports
+window.openSelfServiceConnectStudentModal = openSelfServiceConnectStudentModal;
+window.closeSelfServiceConnectStudentModal = closeSelfServiceConnectStudentModal;
+window.normalizeBirthDate = normalizeBirthDate;
+window.handleSelfServiceConnectStudent = handleSelfServiceConnectStudent;

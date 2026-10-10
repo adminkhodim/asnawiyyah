@@ -7987,19 +7987,41 @@
             if (studentSelect) {
                 studentSelect.innerHTML = '<option value="">Memuat data santri...</option>';
                 let students = [];
-                if (typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList) && adminStudentsList.length > 0) {
-                    students = adminStudentsList;
+                if (typeof adminStudentsData !== 'undefined' && Array.isArray(adminStudentsData) && adminStudentsData.length > 0) {
+                    students = adminStudentsData;
+                } else if (typeof window.adminStudentsData !== 'undefined' && Array.isArray(window.adminStudentsData) && window.adminStudentsData.length > 0) {
+                    students = window.adminStudentsData;
                 } else {
                     try {
-                        const config = window.ASNAWIYYAH_CONFIG || {};
-                        const headers = { 'apikey': config.supabaseKey, 'Authorization': `Bearer ${config.supabaseKey}` };
-                        const sRes = await fetch(`${config.supabaseUrl}/rest/v1/students?select=student_id,name,nis,kelas&order=name.asc`, { headers });
-                        if (sRes.ok) students = await sRes.json();
+                        const cached = localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE');
+                        if (cached) students = JSON.parse(cached);
                     } catch (e) {}
+                    if (!students || students.length === 0) {
+                        try {
+                            const config = window.ASNAWIYYAH_CONFIG || {};
+                            const headers = { 'apikey': config.supabaseKey, 'Authorization': `Bearer ${config.supabaseKey}` };
+                            const sRes = await fetch(`${config.supabaseUrl}/rest/v1/students?select=*&order=name.asc`, { headers });
+                            if (sRes.ok) students = await sRes.json();
+                        } catch (e) {}
+                    }
+                    if (!students || students.length === 0) {
+                        try {
+                            if (typeof apiGet === 'function') {
+                                const resp = await apiGet('getStudents');
+                                if (resp && (resp.data || resp.students)) students = resp.data || resp.students;
+                            }
+                        } catch (e) {}
+                    }
                 }
 
                 studentSelect.innerHTML = '<option value="">-- Pilih Santri dari Database --</option>' +
-                    students.map(s => `<option value="${s.student_id}">${escapeUserHtml(s.name)} (NIS: ${escapeUserHtml(s.nis || '-')}) - Kelas ${escapeUserHtml(s.kelas || '-')}</option>`).join('');
+                    (students || []).map(s => {
+                        const sId = s.studentId || s.student_id;
+                        const sName = s.name || 'Tanpa Nama';
+                        const sNis = s.nis || s.nisn || '-';
+                        const sProg = s.program || s.kelas || '-';
+                        return `<option value="${sId}">${escapeUserHtml(sName)} (NIS: ${escapeUserHtml(sNis)}) - ${escapeUserHtml(sProg)}</option>`;
+                    }).join('');
             }
 
             if (modal) modal.classList.remove('hidden');

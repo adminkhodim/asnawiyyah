@@ -1991,13 +1991,27 @@
 
                     <!-- Linked Students Section / Kartu Digital Santri -->
                     <div class="bg-white dark:bg-[#15202d] p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3.5 transition-colors">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest flex items-center">
-                                <span class="w-1.5 h-4 bg-emerald-600 rounded-full mr-2"></span> Kartu Santri Terhubung
-                            </h3>
-                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                                <i class="fa-solid fa-shield-halved text-[11px]"></i> Terverifikasi Resmi
-                            </span>
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
+                                <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">
+                                    Kartu Santri Terhubung
+                                </h3>
+                                <span id="parent-linked-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                                    1 Santri
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="openSelfServiceConnectStudentModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-95 inline-flex items-center gap-1.5 cursor-pointer" title="Hubungkan anak lain ke akun ini">
+                                    <i class="fa-solid fa-user-plus text-[11px]"></i>
+                                    <span>+ Hubungkan Anak Lain</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Child Switcher Tabs (Aktif otomatis jika ada >= 2 santri) -->
+                        <div id="parent-child-switcher" class="hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                            <!-- Populated dynamically via JS -->
                         </div>
 
                         <!-- Dynamic Digital Student Cards Container -->
@@ -10632,6 +10646,68 @@
                             Ubah Data Santri
                         </button>
                         <span class="text-slate-400">OTP berlaku 5 menit</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL HUBUNGKAN ANAK LAIN (SELF-SERVICE OPSI B) ==================== -->
+    <div id="modal-self-service-connect-student" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 dark:border-[#253447] transform transition-all duration-300 relative">
+            <!-- Close button -->
+            <button type="button" onclick="closeSelfServiceConnectStudentModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-[#1c2836] hover:bg-rose-100 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 rounded-full transition cursor-pointer">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <div class="p-6 md:p-8 space-y-4">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-emerald-200/60 dark:border-emerald-800/40">
+                        <i class="fa-solid fa-people-arrows"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800 dark:text-slate-100 text-base md:text-lg">Hubungkan Anak Lain</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Tautkan kakak/adik ke akun wali santri Anda.</p>
+                    </div>
+                </div>
+
+                <!-- Alert Message -->
+                <div id="self-connect-alert" class="hidden p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-xs font-semibold rounded-xl border border-rose-100 dark:border-rose-900/50 flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-rose-600"></i>
+                    <span id="self-connect-alert-text">Pesan kesalahan</span>
+                </div>
+
+                <!-- Form Verifikasi Mandiri -->
+                <form id="form-self-connect-student" onsubmit="handleSelfServiceConnectStudent(event)" class="space-y-3.5">
+                    <!-- 1. NIS Santri -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">NIS Santri (Anak ke-2 / Berikutnya) *</label>
+                        <input type="text" id="self-connect-nis" required placeholder="Contoh: 202409012 atau STD-032" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">NIS tercantum pada kartu santri atau kwitansi resmi santri.</p>
+                    </div>
+
+                    <!-- 2. PIN Tanggal Lahir Santri -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Tanggal Lahir Santri (PIN Verifikasi) *</label>
+                        <input type="date" id="self-connect-birthdate" required class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Digunakan sebagai PIN verifikasi orang tua kandung/wali sah.</p>
+                    </div>
+
+                    <!-- 3. Hubungan Keluarga -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">Hubungan dengan Santri</label>
+                        <select id="self-connect-relationship" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                            <option value="MOTHER" selected>Ibu Kandung</option>
+                            <option value="FATHER">Ayah Kandung</option>
+                            <option value="GUARDIAN">Wali / Keluarga</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" id="btn-self-connect-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2 active:scale-95 cursor-pointer">
+                            <i class="fa-solid fa-link text-xs"></i>
+                            <span>Verifikasi & Hubungkan Santri</span>
+                        </button>
                     </div>
                 </form>
             </div>
