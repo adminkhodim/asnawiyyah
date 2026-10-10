@@ -71,6 +71,8 @@
             { view: 'hub', name: 'Dashboard Utama', category: 'Ringkasan', icon: 'fa-gauge-high' },
             { view: 'tahfidz', name: 'Tahfidz Qur\'an', category: 'Kesantrian', icon: 'fa-book-quran' },
             { view: 'santri', name: 'Data Santri', category: 'Kesantrian', icon: 'fa-id-card-clip' },
+            { view: 'wali-santri', name: 'Data Wali Santri', category: 'Kesantrian', icon: 'fa-user-group' },
+            { view: 'perpulangan', name: 'Izin & Perpulangan', category: 'Kesantrian', icon: 'fa-person-walking-luggage' },
             { view: 'ppdb', name: 'Pendaftar PPDB', category: 'Kesantrian', icon: 'fa-user-graduate' },
             { view: 'unit-kegiatan', name: 'Unit Kegiatan (UKS)', category: 'Kesantrian', icon: 'fa-people-roof' },
             { view: 'jadwal-kegiatan', name: 'Jadwal Kegiatan', category: 'Kesantrian', icon: 'fa-calendar-check' },

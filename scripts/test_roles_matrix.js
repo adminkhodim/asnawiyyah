@@ -156,12 +156,14 @@ const adminGridStart = indexHtmlContent.indexOf('id="admin-control-center-grid"'
 const adminGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card -->', adminGridStart);
 const adminGridHtml = indexHtmlContent.substring(adminGridStart, adminGridEnd);
 assert(adminGridHtml.includes('data-admin-module="alumni"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="alumni"');
+assert(adminGridHtml.includes('data-admin-module="wali-santri"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
 
 const pengasuhGridStart = indexHtmlContent.indexOf('id="pengasuh-control-center-grid"');
 const pengasuhGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card', pengasuhGridStart);
 const pengasuhGridHtml = indexHtmlContent.substring(pengasuhGridStart, pengasuhGridEnd);
 assert(pengasuhGridHtml.includes('data-admin-module="alumni"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="alumni"');
-console.log('✅ Verifikasi tombol modul Alumni di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
+assert(pengasuhGridHtml.includes('data-admin-module="wali-santri"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
+console.log('✅ Verifikasi tombol modul Alumni & Wali Santri di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
 
 // Uji coba toggle dinamis realtime lewat matriks (PPDB & Wali Santri)
 mockWindow.handleMatrixCellChange('ppdb', 'PENGASUH', 'read');
