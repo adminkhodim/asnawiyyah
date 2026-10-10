@@ -35,6 +35,7 @@ const ASN_STATES = Object.freeze({
     WALI_ACTIVATION_OTP: 'WALI_ACTIVATION_OTP',
     WALI_HYDRATING: 'WALI_HYDRATING',
     WALI_AUTH_ACTIVE: 'WALI_AUTH_ACTIVE',
+    PARENT_AUTH_ACTIVE: 'WALI_AUTH_ACTIVE', // Alias backward-compatibility
     ADMIN_LOGIN: 'ADMIN_LOGIN',
     ADMIN_OTP: 'ADMIN_OTP',
     ADMIN_AUTH_ACTIVE: 'ADMIN_AUTH_ACTIVE',
@@ -323,6 +324,26 @@ const ASNAuthAPI = {
 
     async verifySession(token) {
         if (!token) return { success: false, valid: false };
+
+        // Support Zero-OTP Quick Login Tokens (WALI_QUICK_TOKEN_...)
+        if (typeof token === 'string' && (token.startsWith('WALI_QUICK_') || token.startsWith('WALI_NIS_'))) {
+            const parts = token.split('_');
+            const tokenTime = parseInt(parts[3] || parts[2], 10);
+            const maxAge = 30 * 24 * 60 * 60 * 1000; // Sesi aktif 30 hari
+            if (!tokenTime || (Date.now() - tokenTime < maxAge)) {
+                let localParent = null;
+                try {
+                    localParent = JSON.parse(localStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA) || sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA));
+                } catch(e) {}
+                return {
+                    success: true,
+                    valid: true,
+                    role: 'WALI_SANTRI',
+                    identity: localParent || { name: 'Wali Santri', role: 'WALI_SANTRI' }
+                };
+            }
+        }
+
         try {
             const response = await authApiPost(ASN_AUTH_ACTIONS.SESSION_VERIFY, { token: token });
             if (response && response.success && response.valid) {
@@ -342,6 +363,13 @@ const ASNAuthAPI = {
 
     async getParentProfile(token) {
         if (!token) return { success: false };
+        if (typeof token === 'string' && (token.startsWith('WALI_QUICK_') || token.startsWith('WALI_NIS_'))) {
+            let parent = null;
+            try {
+                parent = JSON.parse(localStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA) || sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA));
+            } catch(e) {}
+            if (parent) return { success: true, parent: parent };
+        }
         try {
             const response = await authApiPost(ASN_AUTH_ACTIONS.PARENT_ME, { token: token });
             if (response && response.success && response.parent) {
@@ -356,6 +384,13 @@ const ASNAuthAPI = {
 
     async getParentStudents(token) {
         if (!token) return { success: false, students: [] };
+        if (typeof token === 'string' && (token.startsWith('WALI_QUICK_') || token.startsWith('WALI_NIS_'))) {
+            let students = [];
+            try {
+                students = JSON.parse(localStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS) || sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS));
+            } catch(e) {}
+            if (Array.isArray(students) && students.length > 0) return { success: true, students: students };
+        }
         try {
             const response = await authApiPost(ASN_AUTH_ACTIONS.PARENT_STUDENTS, { token: token });
             if (response && response.success && Array.isArray(response.students)) {
@@ -479,7 +514,7 @@ const ASNIdentity = {
             if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
         } else if (parentToken) {
             this.currentRole = ASN_ROLES.WALI_SANTRI;
-            this.currentState = ASN_STATES.PARENT_AUTH_ACTIVE;
+            this.currentState = ASN_STATES.WALI_AUTH_ACTIVE;
             try {
                 const saved = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA);
                 if (saved) this.currentUser = JSON.parse(saved);
@@ -610,14 +645,16 @@ const ASNIdentity = {
                     this.currentUser = verifyRes.identity;
                 }
 
-                if (studRes.success && Array.isArray(studRes.students)) {
+                if (studRes.success && Array.isArray(studRes.students) && studRes.students.length > 0) {
                     this.linkedStudents = studRes.students;
                     sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
                     localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
                     this.studentsLoadFailed = false;
-                } else {
+                } else if (!this.linkedStudents || this.linkedStudents.length === 0) {
                     console.warn('[ASNIdentity] Gagal memuat daftar santri terhubung.');
                     this.studentsLoadFailed = true;
+                } else {
+                    this.studentsLoadFailed = false;
                 }
 
                 this.currentState = ASN_STATES.WALI_AUTH_ACTIVE;

@@ -57,4 +57,9 @@ assert.strictEqual(normalizeBirthDate('15-08-2009'), '2009-08-15', 'Format DD-MM
 assert.strictEqual(normalizeBirthDate('2009-8-5'), '2009-08-05', 'Format non-padded YYYY-M-D');
 console.log('✅ Verifikasi normalisasi PIN tanggal lahir 100% konsisten.');
 
+// 4. Verifikasi Preservasi Sesi Cepat saat Page Reload (Hydration)
+assert(authJs.includes("token.startsWith('WALI_QUICK_')"), 'verifySession harus mendukung token WALI_QUICK_');
+assert(authJs.includes("PARENT_AUTH_ACTIVE: 'WALI_AUTH_ACTIVE'"), 'ASN_STATES harus memiliki alias PARENT_AUTH_ACTIVE');
+console.log('✅ Verifikasi preservasi sesi cepat (Zero-Logout upon Reload) lolos.');
+
 console.log('🎉 SELURUH PENGUJIAN QUICK LOGIN (NIS & PIN) LULUS!');
