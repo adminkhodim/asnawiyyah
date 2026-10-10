@@ -712,20 +712,21 @@
                 const plainExcerpt = (news.ringkasan || news.isi || '').replace(/<[^>]*>?/gm, '').trim();
 
                 const el = document.createElement('article');
-                el.className = `group cursor-pointer flex flex-col gap-1.5 ${!isLast ? 'border-b border-dashed border-slate-200 dark:border-[#253447] pb-3' : ''}`;
+                el.className = `group cursor-pointer flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-3 lg:gap-1.5 ${!isLast ? 'border-b border-dashed border-slate-200 dark:border-[#253447] pb-3' : ''}`;
                 el.onclick = () => bacaBerita(news.news_id || news.slug);
 
                 el.innerHTML = `
-                    <div class="w-full aspect-[16/10] h-28 sm:h-32 rounded-lg overflow-hidden relative bg-slate-100 dark:bg-[#1c2836]">
+                    <div class="order-2 lg:order-1 w-24 h-20 sm:w-28 sm:h-24 lg:w-full lg:h-32 rounded-lg overflow-hidden relative bg-slate-100 dark:bg-[#1c2836] shrink-0">
                         <img src="${thumb}" alt="${escapeHtml(news.judul)}"
                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                             onerror="this.onerror=null;this.src='${defaultNewsImage}';">
-                        <span class="absolute top-1.5 left-1.5 bg-emerald-800/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider backdrop-blur-xs">
+                        <span class="hidden lg:inline-block absolute top-1.5 left-1.5 bg-emerald-800/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider backdrop-blur-xs">
                             ${escapeHtml(news.kategori)}
                         </span>
                     </div>
-                    <div class="space-y-0.5">
-                        <div class="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-400 font-medium">
+                    <div class="order-1 lg:order-2 flex-1 min-w-0 space-y-1">
+                        <div class="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-400 font-medium flex-wrap">
+                            <span class="inline-block lg:hidden bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">${escapeHtml(news.kategori)}</span>
                             <span>${news.tanggal}</span>
                             <span>•</span>
                             <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
@@ -733,10 +734,10 @@
                                 <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
                             </span>
                         </div>
-                        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
+                        <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                             ${news.judul}
                         </h4>
-                        <p class="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-tight">
+                        <p class="hidden sm:line-clamp-2 text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
                             ${plainExcerpt}
                         </p>
                     </div>
@@ -816,7 +817,7 @@
 
                 remainingNews.forEach(news => {
                     const card = document.createElement('article');
-                    card.className = "bg-slate-50 dark:bg-[#1c2836] hover:bg-emerald-50/50 dark:hover:bg-[#253447] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] hover:border-emerald-200 dark:hover:border-emerald-500/40 flex flex-col gap-3 cursor-pointer group transition duration-200";
+                    card.className = "bg-slate-50 dark:bg-[#1c2836] hover:bg-emerald-50/50 dark:hover:bg-[#253447] p-3 md:p-4 rounded-xl border border-slate-100 dark:border-[#253447] hover:border-emerald-200 dark:hover:border-emerald-500/40 flex flex-row md:flex-col items-center md:items-stretch justify-between gap-3 cursor-pointer group transition duration-200";
                     card.onclick = () => bacaBerita(news.news_id || news.slug);
 
                     const imgSource = getNewsThumbnail(news);
@@ -824,29 +825,30 @@
                     const excerpt = (news.ringkasan || news.isi || '').replace(/<[^>]*>?/gm, '').trim();
 
                     card.innerHTML = `
-                        <div class="w-full h-40 rounded-xl relative flex items-center justify-center overflow-hidden bg-slate-200 dark:bg-slate-800">
+                        <div class="order-2 md:order-1 w-24 h-20 sm:w-28 sm:h-24 md:w-full md:h-40 rounded-lg relative flex items-center justify-center overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0">
                             <img src="${imgSource}" alt="${escapeHtml(news.judul)}"
                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                                 onerror="this.onerror=null;this.src='${defaultNewsImage}';">
-                            <span class="absolute top-2.5 left-2.5 bg-emerald-800 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">
+                            <span class="hidden md:inline-block absolute top-2.5 left-2.5 bg-emerald-800 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">
                                 ${escapeHtml(news.kategori)}
                             </span>
                         </div>
-                        <div class="space-y-1.5">
+                        <div class="order-1 md:order-2 flex-1 min-w-0 space-y-1">
                             <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-400 dark:text-slate-400">
+                                <span class="inline-block md:hidden bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">${escapeHtml(news.kategori)}</span>
                                 <span><i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal}</span>
-                                <span>•</span>
-                                <span class="text-emerald-700 dark:text-emerald-400 font-semibold">${escapeHtml(news.penulis || 'Admin')}</span>
+                                <span class="hidden sm:inline">•</span>
+                                <span class="hidden sm:inline text-emerald-700 dark:text-emerald-400 font-semibold">${escapeHtml(news.penulis || 'Admin')}</span>
                                 <span>•</span>
                                 <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
                                     <i class="fa-regular fa-eye mr-1"></i>
                                     <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
                                 </span>
                             </div>
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                                 ${news.judul}
                             </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                            <p class="hidden sm:line-clamp-2 text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
                                 ${excerpt}
                             </p>
                         </div>
