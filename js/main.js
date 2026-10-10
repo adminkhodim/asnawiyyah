@@ -712,31 +712,31 @@
                 const plainExcerpt = (news.ringkasan || news.isi || '').replace(/<[^>]*>?/gm, '').trim();
 
                 const el = document.createElement('article');
-                el.className = `group cursor-pointer flex flex-col gap-2.5 ${!isLast ? 'border-b border-dashed border-slate-200 dark:border-[#253447] pb-5' : ''}`;
+                el.className = `group cursor-pointer flex flex-col gap-1.5 ${!isLast ? 'border-b border-dashed border-slate-200 dark:border-[#253447] pb-3' : ''}`;
                 el.onclick = () => bacaBerita(news.news_id || news.slug);
 
                 el.innerHTML = `
-                    <div class="w-full aspect-[16/10] rounded-xl overflow-hidden relative bg-slate-100 dark:bg-[#1c2836]">
+                    <div class="w-full aspect-[16/10] h-28 sm:h-32 rounded-lg overflow-hidden relative bg-slate-100 dark:bg-[#1c2836]">
                         <img src="${thumb}" alt="${escapeHtml(news.judul)}"
                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                             onerror="this.onerror=null;this.src='${defaultNewsImage}';">
-                        <span class="absolute top-2 left-2 bg-emerald-800/90 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider backdrop-blur-xs">
+                        <span class="absolute top-1.5 left-1.5 bg-emerald-800/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider backdrop-blur-xs">
                             ${escapeHtml(news.kategori)}
                         </span>
                     </div>
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-400 font-medium">
-                            <span><i class="fa-regular fa-clock mr-1"></i>${news.tanggal}</span>
+                    <div class="space-y-0.5">
+                        <div class="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-400 font-medium">
+                            <span>${news.tanggal}</span>
                             <span>•</span>
                             <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
                                 <i class="fa-regular fa-eye mr-1"></i>
                                 <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
                             </span>
                         </div>
-                        <h4 class="text-xs md:text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                             ${news.judul}
                         </h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-tight">
                             ${plainExcerpt}
                         </p>
                     </div>
@@ -752,21 +752,21 @@
                 const mainPlain = (mainNews.ringkasan || mainNews.isi || '').replace(/<[^>]*>?/gm, '').trim();
 
                 const centerEl = document.createElement('article');
-                centerEl.className = "group cursor-pointer flex flex-col gap-3.5";
+                centerEl.className = "group cursor-pointer flex flex-col gap-2";
                 centerEl.onclick = () => bacaBerita(mainNews.news_id || mainNews.slug);
 
                 centerEl.innerHTML = `
-                    <div class="w-full aspect-[16/9] max-h-80 rounded-2xl overflow-hidden relative bg-slate-900 shadow-md">
+                    <div class="w-full aspect-[16/10] sm:h-52 md:h-60 max-h-64 rounded-xl overflow-hidden relative bg-slate-900 shadow-sm">
                         <img src="${mainThumb}" alt="${escapeHtml(mainNews.judul)}"
                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                             onerror="this.onerror=null;this.src='${defaultNewsImage}';">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
-                        <span class="absolute top-3 left-3 bg-emerald-700 text-white text-[10px] md:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
+                        <span class="absolute top-2.5 left-2.5 bg-emerald-700 text-white text-[10px] md:text-xs font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
                             ${escapeHtml(mainNews.kategori)}
                         </span>
                     </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center flex-wrap gap-2 text-xs text-slate-400 dark:text-slate-400">
+                    <div class="space-y-1">
+                        <div class="flex items-center flex-wrap gap-2 text-[11px] text-slate-400 dark:text-slate-400">
                             <span class="text-emerald-700 dark:text-emerald-400 font-bold"><i class="fa-solid fa-pen-nib mr-1"></i>${escapeHtml(mainNews.penulis || 'Redaksi Asnawiyyah')}</span>
                             <span>•</span>
                             <span><i class="fa-regular fa-calendar mr-1"></i>${mainNews.tanggal}</span>
@@ -776,13 +776,13 @@
                                 <span data-news-views-id="${mainNews.news_id || mainNews.slug}">${mainViews}</span>
                             </span>
                         </div>
-                        <h2 class="text-lg md:text-2xl font-serif font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition leading-snug line-clamp-3">
+                        <h2 class="text-base sm:text-lg md:text-xl lg:text-2xl font-serif font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition leading-snug line-clamp-2">
                             ${mainNews.judul}
                         </h2>
-                        <p class="text-xs md:text-sm text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                        <p class="text-xs md:text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                             ${mainPlain}
                         </p>
-                        <div class="pt-1">
+                        <div class="pt-0.5">
                             <span class="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 group-hover:gap-2 transition-all">
                                 Baca Selengkapnya <i class="fa-solid fa-arrow-right text-[10px]"></i>
                             </span>
