@@ -610,7 +610,8 @@
                     'pengaturan': 'Tautan & Sosmed',
                     'users': 'Manajemen Pengguna',
                     'roles': 'Manajemen Peran',
-                    'notifikasi': 'Notifikasi Broadcast'
+                    'notifikasi': 'Notifikasi Broadcast',
+                    'perpulangan': 'Izin & Perpulangan Santri'
                 };
                 breadcrumbEl.innerText = viewLabels[viewName] || 'Panel Admin';
             }
@@ -642,6 +643,7 @@
             const pegawaiView = document.getElementById('admin-view-pegawai');
             const usersView = document.getElementById('admin-view-users');
             const rolesView = document.getElementById('admin-view-roles');
+            const perpulanganView = document.getElementById('admin-view-perpulangan');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -663,6 +665,7 @@
             if (pegawaiView) pegawaiView.classList.add('hidden');
             if (usersView) usersView.classList.add('hidden');
             if (rolesView) rolesView.classList.add('hidden');
+            if (perpulanganView) perpulanganView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -789,6 +792,11 @@
                     triggerAlumniStaggerAnimation();
                 }
                 loadAdminAlumniData();
+            } else if (viewName === 'perpulangan') {
+                if (perpulanganView) perpulanganView.classList.remove('hidden');
+                if (typeof loadPerpulanganData === 'function') {
+                    loadPerpulanganData();
+                }
             } else {
                 hubView.classList.remove('hidden');
                 if (typeof applyAdminRoleVisibility === 'function') {

@@ -1739,6 +1739,15 @@
                                 <span class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Data Santri</span>
                             </button>
 
+                            <!-- 4.1 Izin & Perpulangan Santri -->
+                            <button type="button" data-admin-module="perpulangan" onclick="openAdminModuleFromControlCenter('perpulangan')"
+                                class="flex flex-col items-center group transition active:scale-95 text-center">
+                                <div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                    <i class="fa-solid fa-person-walking-luggage"></i>
+                                </div>
+                                <span class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Perpulangan</span>
+                            </button>
+
                             <!-- 5. Pegawai (Dewan Asatidz) -->
                             <button type="button" data-admin-module="pegawai" onclick="openAdminModuleFromControlCenter('pegawai')"
                                 class="flex flex-col items-center group transition active:scale-95 text-center">
@@ -2045,6 +2054,17 @@
                                 </div>
                                 <span
                                     class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Data Santri</span>
+                            </button>
+
+                            <!-- 4.1 Izin & Perpulangan Santri -->
+                            <button type="button" data-admin-module="perpulangan" onclick="openAdminModuleFromControlCenter('perpulangan')"
+                                class="flex flex-col items-center group transition active:scale-95 text-center">
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                    <i class="fa-solid fa-person-walking-luggage"></i>
+                                </div>
+                                <span
+                                    class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Perpulangan</span>
                             </button>
 
                             <!-- 5. Data Pegawai (Asatidz & Staf) -->
@@ -4575,6 +4595,12 @@
                             </button>
                         </li>
                         <li>
+                            <button onclick="showAdminView('perpulangan')" data-view="perpulangan" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Izin Santri & Perpulangan">
+                                <i class="fa-solid fa-person-walking-luggage w-5 text-center text-sm"></i>
+                                <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Izin & Perpulangan</span>
+                            </button>
+                        </li>
+                        <li>
                             <button onclick="showAdminView('ppdb')" data-view="ppdb" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Data Pendaftar PPDB">
                                 <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pendaftar PPDB</span>
@@ -6887,6 +6913,185 @@
                             pendaftar PPDB.</p>
                     </div>
                 </section>
+            </div>
+
+            <!-- ================= VIEW: MODUL 20 - IZIN & PERPULANGAN SANTRI ================= -->
+            <div id="admin-view-perpulangan" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in-up stagger-1">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-teal-700 dark:text-teal-400 uppercase tracking-widest block">Kesantrian & Keamanan</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Izin Santri & Perpulangan</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <button type="button" onclick="window.ASNPerpulangan.openModalFormIzin()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Ajukan Izin</span>
+                        </button>
+                        <button type="button" onclick="window.ASNPerpulangan.loadData(true)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Muat Ulang Data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SCANNER / PENCARIAN CEPAT POS GERBANG -->
+                <div class="bg-gradient-to-r from-teal-900 via-emerald-900 to-slate-900 p-3.5 md:p-4 rounded-2xl text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3 w-full md:w-auto">
+                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400 text-lg shrink-0">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-teal-200">Pos Gerbang Keamanan & Piket</h3>
+                            <p class="text-[11px] text-emerald-100/80">Scan QR Surat Jalan atau ketik ID Izin / NIS Santri untuk Check-Out & Check-In cepat.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center w-full md:w-80 gap-2">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-qrcode absolute left-3 top-1/2 -translate-y-1/2 text-teal-300 text-xs"></i>
+                            <input type="text" id="perpulangan-quick-scan-input" placeholder="Ketik ID Izin / NIS..." 
+                                onkeydown="if(event.key === 'Enter') window.ASNPerpulangan.handleQuickGateSearch(this.value)" 
+                                class="w-full bg-white/10 border border-white/20 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-teal-200/60 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs transition">
+                        </div>
+                        <button type="button" onclick="window.ASNPerpulangan.handleQuickGateSearch(document.getElementById('perpulangan-quick-scan-input').value)" 
+                            class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition shrink-0 active:scale-95">
+                            Validasi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUMMARY METRIC CARDS (BERWARNA VIBRANT & INFORMATIF) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 md:gap-2.5">
+                    <!-- Total -->
+                    <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs text-center cursor-pointer hover:border-emerald-500 transition" onclick="window.ASNPerpulangan.setFilter('ALL')">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Izin</div>
+                        <div id="perpulangan-metric-total" class="text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">0</div>
+                    </div>
+                    <!-- Menunggu Pengurus (Tier 1) -->
+                    <div class="bg-amber-50/70 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 shadow-xs text-center cursor-pointer hover:border-amber-500 transition" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGURUS')">
+                        <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider truncate">Tier 1 Pengurus</div>
+                        <div id="perpulangan-metric-pengurus" class="text-lg font-black text-amber-700 dark:text-amber-400 mt-0.5">0</div>
+                    </div>
+                    <!-- Menunggu Pengasuh (Tier 2) -->
+                    <div class="bg-purple-50/70 dark:bg-purple-950/30 p-3 rounded-2xl border border-purple-200/60 dark:border-purple-800/40 shadow-xs text-center cursor-pointer hover:border-purple-500 transition" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGASUH')">
+                        <div class="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider truncate">Tier 2 Pengasuh</div>
+                        <div id="perpulangan-metric-pengasuh" class="text-lg font-black text-purple-700 dark:text-purple-400 mt-0.5">0</div>
+                    </div>
+                    <!-- Disetujui (Siap Berangkat) -->
+                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-3 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs text-center cursor-pointer hover:border-emerald-500 transition" onclick="window.ASNPerpulangan.setFilter('DISETUJUI')">
+                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider truncate">Disetujui</div>
+                        <div id="perpulangan-metric-disetujui" class="text-lg font-black text-emerald-700 dark:text-emerald-400 mt-0.5">0</div>
+                    </div>
+                    <!-- Keluar (Di Luar Pondok) -->
+                    <div class="bg-sky-50/70 dark:bg-sky-950/30 p-3 rounded-2xl border border-sky-200/60 dark:border-sky-800/40 shadow-xs text-center cursor-pointer hover:border-sky-500 transition" onclick="window.ASNPerpulangan.setFilter('KELUAR')">
+                        <div class="text-[10px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-wider truncate">Di Luar Pondok</div>
+                        <div id="perpulangan-metric-keluar" class="text-lg font-black text-sky-700 dark:text-sky-400 mt-0.5">0</div>
+                    </div>
+                    <!-- Selesai (Kembali Tepat Waktu) -->
+                    <div class="bg-teal-50/70 dark:bg-teal-950/30 p-3 rounded-2xl border border-teal-200/60 dark:border-teal-800/40 shadow-xs text-center cursor-pointer hover:border-teal-500 transition" onclick="window.ASNPerpulangan.setFilter('KEMBALI')">
+                        <div class="text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider truncate">Kembali</div>
+                        <div id="perpulangan-metric-kembali" class="text-lg font-black text-teal-700 dark:text-teal-400 mt-0.5">0</div>
+                    </div>
+                    <!-- Terlambat -->
+                    <div class="bg-rose-50/70 dark:bg-rose-950/30 p-3 rounded-2xl border border-rose-200/60 dark:border-rose-800/40 shadow-xs text-center cursor-pointer hover:border-rose-500 transition" onclick="window.ASNPerpulangan.setFilter('TERLAMBAT')">
+                        <div class="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider truncate">Terlambat</div>
+                        <div id="perpulangan-metric-terlambat" class="text-lg font-black text-rose-700 dark:text-rose-400 mt-0.5">0</div>
+                    </div>
+                    <!-- Ditolak -->
+                    <div class="bg-red-50/70 dark:bg-red-950/30 p-3 rounded-2xl border border-red-200/60 dark:border-red-800/40 shadow-xs text-center cursor-pointer hover:border-red-500 transition" onclick="window.ASNPerpulangan.setFilter('DITOLAK')">
+                        <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider truncate">Ditolak</div>
+                        <div id="perpulangan-metric-ditolak" class="text-lg font-black text-red-700 dark:text-red-400 mt-0.5">0</div>
+                    </div>
+                </div>
+
+                <!-- FILTER TABS & SEARCH BAR -->
+                <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <!-- Filter Tabs -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 custom-scrollbar text-xs">
+                        <button type="button" data-filter="ALL" onclick="window.ASNPerpulangan.setFilter('ALL')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm transition active:scale-95 shrink-0">
+                            Semua
+                        </button>
+                        <button type="button" data-filter="MENUNGGU_PENGURUS" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGURUS')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95 shrink-0">
+                            Tier 1 (Pengurus)
+                        </button>
+                        <button type="button" data-filter="MENUNGGU_PENGASUH" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGASUH')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95 shrink-0">
+                            Tier 2 (Pengasuh)
+                        </button>
+                        <button type="button" data-filter="DISETUJUI" onclick="window.ASNPerpulangan.setFilter('DISETUJUI')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95 shrink-0">
+                            Disetujui
+                        </button>
+                        <button type="button" data-filter="KELUAR" onclick="window.ASNPerpulangan.setFilter('KELUAR')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95 shrink-0">
+                            Di Luar Pondok
+                        </button>
+                        <button type="button" data-filter="KEMBALI" onclick="window.ASNPerpulangan.setFilter('KEMBALI')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95 shrink-0">
+                            Kembali
+                        </button>
+                        <button type="button" data-filter="TERLAMBAT" onclick="window.ASNPerpulangan.setFilter('TERLAMBAT')" 
+                            class="perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95 shrink-0">
+                            Terlambat
+                        </button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative w-full md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" oninput="window.ASNPerpulangan.handleSearch(this.value)" placeholder="Cari santri, NIS, penjemput..." 
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                    </div>
+                </div>
+
+                <!-- TABEL DATA PERIZINAN -->
+                <div class="bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs overflow-hidden">
+                    <div class="p-3 border-b border-slate-100 dark:border-[#223142] flex items-center justify-between text-xs">
+                        <span id="perpulangan-table-count" class="font-bold text-slate-500 dark:text-slate-400">0 Data Ditampilkan</span>
+                        <span class="text-[11px] text-slate-400">Two-Tier Dual-Sync: Supabase & Google Sheets</span>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-50/80 dark:bg-[#1a2634] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#223142]">
+                                <tr>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">No & ID Izin</th>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Data Santri</th>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Kategori & Alasan</th>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Penjemput</th>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Jadwal Izin</th>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Status Izin</th>
+                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="perpulangan-table-body" class="divide-y divide-slate-100 dark:divide-[#223142]">
+                                <!-- Diisi secara dinamis oleh js/perpulangan.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Loading Skeleton -->
+                    <div id="perpulangan-loading-skeleton" class="p-8 text-center space-y-2">
+                        <div class="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        <p class="text-xs text-slate-400 font-semibold">Memuat data perizinan santri...</p>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="perpulangan-empty-state" class="hidden p-12 text-center space-y-2">
+                        <div class="w-12 h-12 bg-slate-100 dark:bg-[#1c2836] text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg">
+                            <i class="fa-solid fa-person-walking-luggage"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-600 dark:text-slate-300">Tidak ada permohonan perizinan santri.</p>
+                        <p class="text-[11px] text-slate-400">Silakan sesuaikan filter atau ajukan izin perpulangan baru.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- ================= VIEW: MODUL MANAJEMEN PENGGUNA ================= -->
@@ -10189,6 +10394,290 @@
     </div>
 
 
+
+    <!-- ========================================================================= -->
+    <!-- MODAL-MODAL MODUL 20: IZIN & PERPULANGAN SANTRI                           -->
+    <!-- ========================================================================= -->
+
+    <!-- 1. MODAL FORM PENGAJUAN / INPUT IZIN SANTRI -->
+    <div id="modal-perpulangan-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Header Modal -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-person-walking-luggage"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Ajukan Izin Santri / Perpulangan</h3>
+                        <p class="text-[10px] text-slate-400">Persetujuan Two-Tier: Pengurus Keamanan & Dewan Pengasuh</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.ASNPerpulangan.closeModalFormIzin()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Body Form Modal -->
+            <form id="form-perpulangan-input" onsubmit="window.ASNPerpulangan.submitFormIzin(event)" class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                <!-- Pilihan Santri -->
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Pilih Santri Terdaftar</label>
+                    <select id="perpulangan-form-student-select" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">-- Pilih dari Master Santri --</option>
+                    </select>
+                </div>
+
+                <!-- Input Santri Manual (Alternatif) -->
+                <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-[#1a2634] rounded-2xl border border-slate-200/80 dark:border-[#25374a]">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">Atau Ketik Nama Santri</label>
+                        <input type="text" id="perpulangan-form-student-name" placeholder="Nama lengkap santri" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">Nomor Induk (NIS)</label>
+                        <input type="text" id="perpulangan-form-student-nis" placeholder="NIS (jika ada)" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Kategori & Alasan Izin -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Kategori Izin</label>
+                        <select id="perpulangan-form-kategori" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Sakit / Berobat">Sakit / Rawat Medis</option>
+                            <option value="Acara Keluarga Penting">Acara Keluarga Penting (Pernikahan/Takziah)</option>
+                            <option value="Tugas Lembaga / Pondok">Tugas Lembaga / Pondok</option>
+                            <option value="Libur Pesantren Resmi">Libur Pesantren Resmi</option>
+                            <option value="Keperluan Khusus">Keperluan Khusus</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Alasan / Keperluan Lengkap</label>
+                        <input type="text" id="perpulangan-form-alasan" required placeholder="Contoh: Menghadiri walimah paman kandung" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Data Penjemput -->
+                <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-2xl border border-slate-200/80 dark:border-[#25374a] space-y-3">
+                    <div class="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-shield text-emerald-500"></i>
+                        <span>Data Penjemput / Wali Bertanggung Jawab</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">Nama Penjemput</label>
+                            <input type="text" id="perpulangan-form-penjemput-nama" required placeholder="Nama wali/penjemput" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">Hubungan Santri</label>
+                            <select id="perpulangan-form-penjemput-hubungan" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="Ayah Kandung">Ayah Kandung</option>
+                                <option value="Ibu Kandung">Ibu Kandung</option>
+                                <option value="Wali Santri">Wali Santri</option>
+                                <option value="Kakak Kandung">Kakak Kandung</option>
+                                <option value="Kakek/Nenek">Kakek / Nenek</option>
+                                <option value="Paman/Bibi">Paman / Bibi</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">No. WhatsApp / HP</label>
+                            <input type="tel" id="perpulangan-form-penjemput-kontak" placeholder="08xxxxxxxxxx" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jadwal Izin: Tanggal & Jam Keluar s/d Kembali -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Keluar -->
+                    <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 space-y-2">
+                        <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider block">Waktu Keluar Pondok</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="perpulangan-form-tgl-mulai" required class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            <input type="time" id="perpulangan-form-jam-mulai" required value="08:00" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+                    </div>
+                    <!-- Kembali -->
+                    <div class="p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 space-y-2">
+                        <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider block">Batas Wajib Kembali</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="perpulangan-form-tgl-kembali" required class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            <input type="time" id="perpulangan-form-jam-kembali" required value="17:00" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Modal -->
+                <div class="pt-3 border-t border-slate-100 dark:border-[#253447] flex justify-end space-x-2">
+                    <button type="button" onclick="window.ASNPerpulangan.closeModalFormIzin()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition active:scale-95">
+                        Batal
+                    </button>
+                    <button type="submit" id="perpulangan-btn-submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center shadow-sm active:scale-95">
+                        <i class="fa-solid fa-paper-plane mr-1.5"></i>
+                        <span>Ajukan Izin Santri</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. MODAL APPROVAL TWO-TIER (PENGURUS / PENGASUH) -->
+    <div id="modal-perpulangan-approval" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-signature"></i>
+                    </div>
+                    <div>
+                        <h3 id="perpulangan-approval-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Persetujuan Perizinan</h3>
+                        <span id="perpulangan-approval-tier-badge" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Tier 1</span>
+                    </div>
+                </div>
+                <button type="button" onclick="window.ASNPerpulangan.closeModalApproval()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs">
+                <div id="perpulangan-approval-details"></div>
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Catatan / Arahan Khusus (Opsional):</label>
+                    <textarea id="perpulangan-approval-catatan" rows="2" placeholder="Tuliskan catatan kepulangan atau pesan khusus..." class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-[#253447] flex justify-end space-x-2">
+                    <button type="button" onclick="window.ASNPerpulangan.closeModalApproval()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition active:scale-95">
+                        Batal
+                    </button>
+                    <button type="button" id="perpulangan-approval-btn-confirm" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-95">
+                        Setujui Permohonan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MODAL REJECT / TOLAK PERIZINAN -->
+    <div id="modal-perpulangan-reject" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <div class="px-5 py-4 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-100 dark:border-rose-900/60 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-800 dark:text-rose-300">Tolak Permohonan Izin</h3>
+                        <p class="text-[10px] text-rose-600/80">Berikan alasan jelas kepada santri/wali</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.ASNPerpulangan.closeModalReject()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs">
+                <p id="perpulangan-reject-info" class="text-slate-600 dark:text-slate-300 font-semibold"></p>
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Alasan Penolakan <span class="text-rose-500">*</span></label>
+                    <textarea id="perpulangan-reject-alasan" required rows="3" placeholder="Contoh: Bertepatan dengan ujian tasmi' tahfidz pondok..." class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-[#253447] flex justify-end space-x-2">
+                    <button type="button" onclick="window.ASNPerpulangan.closeModalReject()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition active:scale-95">
+                        Batal
+                    </button>
+                    <button type="button" id="perpulangan-reject-btn-confirm" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-95">
+                        Tolak Izin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. MODAL POS GERBANG KEAMANAN (CHECK-OUT / CHECK-IN) -->
+    <div id="modal-perpulangan-gate" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-door-open"></i>
+                    </div>
+                    <div>
+                        <h3 id="perpulangan-gate-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Pos Gerbang Keamanan</h3>
+                        <p class="text-[10px] text-slate-400">Verifikasi Check-Out & Check-In Santri</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.ASNPerpulangan.closeModalGateCheck()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs">
+                <div id="perpulangan-gate-details"></div>
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Catatan Petugas Gerbang (Opsional):</label>
+                    <input type="text" id="perpulangan-gate-catatan" placeholder="Kondisi barang bawaan, dijemput dengan kendaraan..." class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-[#253447] flex justify-end space-x-2">
+                    <button type="button" onclick="window.ASNPerpulangan.closeModalGateCheck()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition active:scale-95">
+                        Batal
+                    </button>
+                    <button type="button" id="perpulangan-gate-btn-confirm" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-95">
+                        Konfirmasi Pos Gerbang
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. MODAL PRATINJAU CETAK SURAT JALAN & QR RESMI -->
+    <div id="modal-perpulangan-print" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[95vh] transform transition-all">
+            <!-- Header Kontrol Pratinjau (Hidden saat print) -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0 print:hidden">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Pratinjau Surat Jalan & Kartu Izin Santri</h3>
+                        <p class="text-[10px] text-slate-400">Format Resmi PPTQ Asnawiyyah Ber-QR Code</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.ASNPerpulangan.printSuratIzinDocument()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                        <i class="fa-solid fa-print text-xs"></i>
+                        <span>Cetak Dokumen</span>
+                    </button>
+                    <button type="button" onclick="window.ASNPerpulangan.closeModalPrintSuratIzin()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area Lembar Surat Resmi -->
+            <div id="perpulangan-print-document" class="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-100/70 dark:bg-[#0c1622]">
+                <!-- Konten Surat Jalan dimasukkan dinamis oleh js/perpulangan.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MODAL DETAIL & RIWAYAT AUDIT PERIZINAN -->
+    <div id="modal-perpulangan-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-timeline"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Riwayat & Timeline Izin</h3>
+                        <p class="text-[10px] text-slate-400">Jejak audit persetujuan dan pos gerbang</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.ASNPerpulangan.closeModalDetail()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div id="perpulangan-detail-content" class="p-5 overflow-y-auto custom-scrollbar"></div>
+        </div>
+    </div>
 
     <!-- ==================== MODAL TAMBAH / EDIT DATA PENGGUNA ==================== -->
     <div id="modal-admin-user-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
@@ -14339,6 +14828,7 @@
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
+    <script src="js/perpulangan.js"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>

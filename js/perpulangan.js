@@ -1,0 +1,1239 @@
+/**
+ * Asnawiyyah - Modul 20: Izin Santri & Perpulangan
+ * Author: Antigravity IDE / PPTQ Asnawiyyah
+ * Description: Controller lengkap untuk alur perizinan santri:
+ *              1. Pengajuan Izin (Wali / Admin / Pengurus)
+ *              2. Two-Tier Approval (Tier 1 Pengurus -> Tier 2 Dewan Pengasuh)
+ *              3. Pos Gerbang Keamanan (QR Check-Out & Check-In dengan deteksi keterlambatan)
+ *              4. Cetak Surat Jalan & Kartu Izin Resmi (Kop Pesantren & QR Verifikasi)
+ */
+
+(function (window, document) {
+    'use strict';
+
+    // State Management Modul Perpulangan
+    const ASNPerpulangan = {
+        list: [],
+        filteredList: [],
+        activeFilter: 'ALL',
+        searchQuery: '',
+        isLoading: false,
+        selectedIzin: null,
+        stats: {
+            total: 0,
+            menungguPengurus: 0,
+            menungguPengasuh: 0,
+            disetujui: 0,
+            keluar: 0,
+            kembali: 0,
+            terlambat: 0,
+            ditolak: 0
+        }
+    };
+
+    window.ASNPerpulangan = ASNPerpulangan;
+
+    // Helper: Dapatkan Role Pengguna Aktif
+    function getCurrentUserRole() {
+        if (window.ASNIdentity && window.ASNIdentity.currentRole) {
+            return String(window.ASNIdentity.currentRole).toUpperCase();
+        }
+        const saved = sessionStorage.getItem('ASN_ADMIN_ROLE') || sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+        return String(saved).toUpperCase();
+    }
+
+    // Helper: Format Tanggal Indonesia
+    function formatDateIndo(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const parts = String(dateStr).split('T')[0].split('-');
+            if (parts.length === 3) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const day = parseInt(parts[2], 10);
+                const month = months[parseInt(parts[1], 10) - 1] || parts[1];
+                const year = parts[0];
+                return `${day} ${month} ${year}`;
+            }
+            return dateStr;
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    // Helper: Format Jam
+    function formatTimeIndo(timeStr) {
+        if (!timeStr) return '';
+        const parts = String(timeStr).split(':');
+        if (parts.length >= 2) {
+            return `${parts[0]}:${parts[1]} WIB`;
+        }
+        return `${timeStr} WIB`;
+    }
+
+    // Helper: Dapatkan Badge Status dengan Warna Harmonis
+    function getStatusBadgeConfig(status) {
+        const s = String(status || '').toUpperCase();
+        switch (s) {
+            case 'MENUNGGU_PENGURUS':
+                return {
+                    label: 'Menunggu Pengurus (Tier 1)',
+                    bg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60',
+                    dot: 'bg-amber-500',
+                    icon: 'fa-user-clock'
+                };
+            case 'MENUNGGU_PENGASUH':
+                return {
+                    label: 'Menunggu Pengasuh (Tier 2)',
+                    bg: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60',
+                    dot: 'bg-indigo-500',
+                    icon: 'fa-hands-praying'
+                };
+            case 'DISETUJUI':
+                return {
+                    label: 'Disetujui (Siap Berangkat)',
+                    bg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60',
+                    dot: 'bg-emerald-500',
+                    icon: 'fa-circle-check'
+                };
+            case 'KELUAR':
+                return {
+                    label: 'Santri di Luar Pondok',
+                    bg: 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60',
+                    dot: 'bg-sky-500 animate-pulse',
+                    icon: 'fa-person-walking-luggage'
+                };
+            case 'KEMBALI':
+                return {
+                    label: 'Kembali (Selesai Tepat Waktu)',
+                    bg: 'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border-teal-200/80 dark:border-teal-800/60',
+                    dot: 'bg-teal-500',
+                    icon: 'fa-circle-check'
+                };
+            case 'TERLAMBAT':
+                return {
+                    label: 'Terlambat Masuk',
+                    bg: 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60',
+                    dot: 'bg-rose-500 animate-ping',
+                    icon: 'fa-triangle-exclamation'
+                };
+            case 'DITOLAK':
+                return {
+                    label: 'Permohonan Ditolak',
+                    bg: 'bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300 border-red-200/80 dark:border-red-800/60',
+                    dot: 'bg-red-500',
+                    icon: 'fa-circle-xmark'
+                };
+            default:
+                return {
+                    label: s || 'Draft',
+                    bg: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+                    dot: 'bg-slate-400',
+                    icon: 'fa-clock'
+                };
+        }
+    }
+
+    /**
+     * Memuat Seluruh Data Perizinan Perpulangan
+     */
+    async function loadPerpulanganData(forceRefresh = false) {
+        const tableBody = document.getElementById('perpulangan-table-body');
+        const emptyState = document.getElementById('perpulangan-empty-state');
+        const loadingSkeleton = document.getElementById('perpulangan-loading-skeleton');
+
+        ASNPerpulangan.isLoading = true;
+        if (loadingSkeleton) loadingSkeleton.classList.remove('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
+        if (tableBody) tableBody.innerHTML = '';
+
+        try {
+            if (typeof window.getIzinPerpulanganList !== 'function') {
+                throw new Error('Fungsi API getIzinPerpulanganList belum tersedia.');
+            }
+
+            const response = await window.getIzinPerpulanganList();
+            let rawList = [];
+
+            if (response && response.status === 'success' && Array.isArray(response.data)) {
+                rawList = response.data;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                rawList = response.data;
+            } else if (Array.isArray(response)) {
+                rawList = response;
+            }
+
+            ASNPerpulangan.list = rawList;
+            calculatePerpulanganMetrics(rawList);
+            renderPerpulanganMetrics();
+            applyPerpulanganFilterAndSearch();
+
+            if (typeof showToast === 'function' && forceRefresh) {
+                showToast('Data perizinan santri berhasil diperbarui.', 'success');
+            }
+        } catch (error) {
+            console.error('[ASNPerpulangan] Gagal memuat data:', error);
+            if (typeof showToast === 'function') {
+                showToast(`Gagal memuat data izin: ${error.message}`, 'error');
+            }
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-xs text-rose-500 dark:text-rose-400">
+                            <i class="fa-solid fa-triangle-exclamation text-xl mb-2 block"></i>
+                            Gagal memuat data perizinan santri. Silakan klik tombol "Refresh".
+                        </td>
+                    </tr>
+                `;
+            }
+        } finally {
+            ASNPerpulangan.isLoading = false;
+            if (loadingSkeleton) loadingSkeleton.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Hitung Angka Ringkasan Metrics
+     */
+    function calculatePerpulanganMetrics(list) {
+        const stats = {
+            total: list.length,
+            menungguPengurus: 0,
+            menungguPengasuh: 0,
+            disetujui: 0,
+            keluar: 0,
+            kembali: 0,
+            terlambat: 0,
+            ditolak: 0
+        };
+
+        list.forEach(item => {
+            const st = String(item.status || '').toUpperCase();
+            if (st === 'MENUNGGU_PENGURUS') stats.menungguPengurus++;
+            else if (st === 'MENUNGGU_PENGASUH') stats.menungguPengasuh++;
+            else if (st === 'DISETUJUI') stats.disetujui++;
+            else if (st === 'KELUAR') stats.keluar++;
+            else if (st === 'KEMBALI') stats.kembali++;
+            else if (st === 'TERLAMBAT') stats.terlambat++;
+            else if (st === 'DITOLAK') stats.ditolak++;
+        });
+
+        ASNPerpulangan.stats = stats;
+    }
+
+    /**
+     * Tampilkan Statistik pada Card UI
+     */
+    function renderPerpulanganMetrics() {
+        const s = ASNPerpulangan.stats;
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
+        };
+
+        setVal('perpulangan-metric-total', s.total);
+        setVal('perpulangan-metric-pengurus', s.menungguPengurus);
+        setVal('perpulangan-metric-pengasuh', s.menungguPengasuh);
+        setVal('perpulangan-metric-disetujui', s.disetujui);
+        setVal('perpulangan-metric-keluar', s.keluar);
+        setVal('perpulangan-metric-kembali', s.kembali);
+        setVal('perpulangan-metric-terlambat', s.terlambat);
+        setVal('perpulangan-metric-ditolak', s.ditolak);
+    }
+
+    /**
+     * Ganti Filter Tab Status
+     */
+    function setPerpulanganFilter(filterKey) {
+        ASNPerpulangan.activeFilter = filterKey;
+
+        // Update styling tombol tab filter
+        document.querySelectorAll('.perpulangan-filter-btn').forEach(btn => {
+            const key = btn.dataset.filter;
+            if (key === filterKey) {
+                btn.className = 'perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm transition active:scale-95';
+            } else {
+                btn.className = 'perpulangan-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95';
+            }
+        });
+
+        applyPerpulanganFilterAndSearch();
+    }
+
+    /**
+     * Handler Pencarian
+     */
+    function handlePerpulanganSearch(query) {
+        ASNPerpulangan.searchQuery = String(query || '').trim().toLowerCase();
+        applyPerpulanganFilterAndSearch();
+    }
+
+    /**
+     * Terapkan Filter & Pencarian ke Tabel
+     */
+    function applyPerpulanganFilterAndSearch() {
+        let result = [...ASNPerpulangan.list];
+
+        // 1. Filter Status
+        const filter = ASNPerpulangan.activeFilter;
+        if (filter !== 'ALL') {
+            result = result.filter(item => String(item.status || '').toUpperCase() === filter);
+        }
+
+        // 2. Pencarian
+        const q = ASNPerpulangan.searchQuery;
+        if (q) {
+            result = result.filter(item => {
+                const sName = String(item.student_name || item.nama_santri || '').toLowerCase();
+                const sNis = String(item.student_nis || item.nis || '').toLowerCase();
+                const idIzin = String(item.id_izin || item.id || '').toLowerCase();
+                const alasan = String(item.alasan || '').toLowerCase();
+                const wali = String(item.wali_name || item.penjemput_nama || '').toLowerCase();
+                return sName.includes(q) || sNis.includes(q) || idIzin.includes(q) || alasan.includes(q) || wali.includes(q);
+            });
+        }
+
+        ASNPerpulangan.filteredList = result;
+        renderPerpulanganTable();
+    }
+
+    /**
+     * Render Baris Tabel Perizinan Santri
+     */
+    function renderPerpulanganTable() {
+        const tableBody = document.getElementById('perpulangan-table-body');
+        const emptyState = document.getElementById('perpulangan-empty-state');
+        const counterEl = document.getElementById('perpulangan-table-count');
+
+        if (!tableBody) return;
+
+        const list = ASNPerpulangan.filteredList;
+        if (counterEl) counterEl.innerText = `${list.length} Data Ditampilkan`;
+
+        if (list.length === 0) {
+            tableBody.innerHTML = '';
+            if (emptyState) emptyState.classList.remove('hidden');
+            return;
+        }
+
+        if (emptyState) emptyState.classList.add('hidden');
+
+        const role = getCurrentUserRole();
+        const isSuperAdmin = role === 'SUPER_ADMIN';
+        const isAdmin = role === 'ADMIN';
+        const isPengurus = role === 'PENGURUS';
+        const isPengasuh = role === 'PENGASUH';
+
+        let html = '';
+        list.forEach((item, index) => {
+            const idIzin = item.id_izin || item.id || `IZN-${index + 1}`;
+            const studentName = item.student_name || item.nama_santri || 'Santri';
+            const studentNis = item.student_nis || item.nis || '-';
+            const kategori = item.kategori || 'Izin Biasa';
+            const alasan = item.alasan || '-';
+            const penjemput = item.penjemput_nama || item.wali_name || '-';
+            const hubungan = item.penjemput_hubungan || 'Keluarga';
+            const noHp = item.penjemput_kontak || item.wali_phone || '';
+            const tglMulai = formatDateIndo(item.tgl_mulai);
+            const jamMulai = formatTimeIndo(item.jam_mulai);
+            const tglKembali = formatDateIndo(item.tgl_kembali);
+            const jamKembali = formatTimeIndo(item.jam_kembali);
+            const status = String(item.status || 'MENUNGGU_PENGURUS').toUpperCase();
+            const badgeCfg = getStatusBadgeConfig(status);
+
+            // Logika Akses Aksi Berdasarkan Peran & Status Izin
+            let actionButtons = `
+                <button type="button" onclick="window.ASNPerpulangan.openModalDetail('${idIzin}')" 
+                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95" 
+                    title="Lihat Detail & Timeline Izin">
+                    <i class="fa-solid fa-eye text-xs"></i>
+                </button>
+            `;
+
+            // Cetak Surat Izin (Hanya jika disetujui / keluar / kembali / terlambat)
+            if (['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status)) {
+                actionButtons += `
+                    <button type="button" onclick="window.ASNPerpulangan.openModalPrintSuratIzin('${idIzin}')" 
+                        class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 dark:text-indigo-300 transition active:scale-95" 
+                        title="Cetak Surat Jalan & QR Code">
+                        <i class="fa-solid fa-print text-xs"></i>
+                    </button>
+                `;
+            }
+
+            // Aksi Tier 1: Persetujuan Pengurus Keamanan / Piket
+            if (status === 'MENUNGGU_PENGURUS' && (isSuperAdmin || isAdmin || isPengurus)) {
+                actionButtons += `
+                    <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGURUS')" 
+                        class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        title="Setujui Tier 1 (Pengurus)">
+                        <i class="fa-solid fa-check text-[11px]"></i>
+                        <span>Tier 1</span>
+                    </button>
+                    <button type="button" onclick="window.ASNPerpulangan.openModalReject('${idIzin}')" 
+                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
+                        title="Tolak Permohonan Izin">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+            }
+
+            // Aksi Tier 2: Persetujuan Dewan Pengasuh / Masyayikh
+            if (status === 'MENUNGGU_PENGASUH' && (isSuperAdmin || isPengasuh)) {
+                actionButtons += `
+                    <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGASUH')" 
+                        class="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        title="Persetujuan Akhir Dewan Pengasuh">
+                        <i class="fa-solid fa-hands-praying text-[11px]"></i>
+                        <span>Tier 2 (Pengasuh)</span>
+                    </button>
+                    <button type="button" onclick="window.ASNPerpulangan.openModalReject('${idIzin}')" 
+                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
+                        title="Tolak Permohonan Izin">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+            }
+
+            // Aksi Pos Gerbang: Check-Out (Santri Keluar Gerbang)
+            if (status === 'DISETUJUI' && (isSuperAdmin || isAdmin || isPengurus)) {
+                actionButtons += `
+                    <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'OUT')" 
+                        class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        title="Check-Out Pos Gerbang (Santri Keluar)">
+                        <i class="fa-solid fa-door-open text-[11px]"></i>
+                        <span>Check-Out</span>
+                    </button>
+                `;
+            }
+
+            // Aksi Pos Gerbang: Check-In (Santri Masuk Kembali ke Pondok)
+            if (status === 'KELUAR' && (isSuperAdmin || isAdmin || isPengurus)) {
+                actionButtons += `
+                    <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'IN')" 
+                        class="px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        title="Check-In Pos Gerbang (Santri Tiba di Pondok)">
+                        <i class="fa-solid fa-right-to-bracket text-[11px]"></i>
+                        <span>Check-In</span>
+                    </button>
+                `;
+            }
+
+            // WhatsApp Penjemput Action
+            let waButton = '';
+            if (noHp) {
+                const cleanPhone = noHp.replace(/\D/g, '').replace(/^0/, '62');
+                waButton = `
+                    <a href="https://wa.me/${cleanPhone}?text=Assalamu%27alaikum%20Warahmatullah%2C%20terkait%20izin%20santri%20${encodeURIComponent(studentName)}" 
+                        target="_blank" rel="noopener noreferrer" 
+                        class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 text-[11px] ml-1" 
+                        title="Hubungi via WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-xs text-emerald-500"></i> ${noHp}
+                    </a>
+                `;
+            }
+
+            html += `
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1a2634] transition-colors border-b border-slate-100 dark:border-[#223142]">
+                    <!-- No & ID Izin -->
+                    <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                        <span class="font-bold text-slate-700 dark:text-slate-200">#${index + 1}</span>
+                        <div class="font-mono text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">${idIzin}</div>
+                    </td>
+
+                    <!-- Data Santri -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0 border border-emerald-200 dark:border-emerald-800">
+                                ${studentName.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="min-w-0">
+                                <span class="font-bold text-xs text-slate-800 dark:text-slate-100 block truncate">${studentName}</span>
+                                <span class="text-[11px] text-slate-400 dark:text-slate-300">NIS: ${studentNis}</span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Kategori & Alasan -->
+                    <td class="px-4 py-3 text-xs max-w-xs">
+                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-700 dark:bg-[#1c2836] dark:text-slate-300 mb-1 border border-slate-200/60 dark:border-slate-700/60">
+                            ${kategori}
+                        </span>
+                        <p class="text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed" title="${alasan}">
+                            ${alasan}
+                        </p>
+                    </td>
+
+                    <!-- Penjemput & Kontak -->
+                    <td class="px-4 py-3 text-xs whitespace-nowrap">
+                        <div class="font-semibold text-slate-700 dark:text-slate-200">${penjemput}</div>
+                        <div class="text-[11px] text-slate-400 dark:text-slate-300">Hubungan: ${hubungan}</div>
+                        ${waButton}
+                    </td>
+
+                    <!-- Waktu Izin & Batas Kembali -->
+                    <td class="px-4 py-3 text-xs whitespace-nowrap">
+                        <div class="text-slate-700 dark:text-slate-200">
+                            <span class="text-slate-400 dark:text-slate-300">Keluar:</span> ${tglMulai} ${jamMulai}
+                        </div>
+                        <div class="font-semibold text-amber-700 dark:text-amber-400 mt-0.5">
+                            <span class="text-slate-400 dark:text-slate-300">Kembali:</span> ${tglKembali} ${jamKembali}
+                        </div>
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td class="px-4 py-3 whitespace-nowrap text-xs">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeCfg.bg}">
+                            <span class="w-1.5 h-1.5 rounded-full ${badgeCfg.dot}"></span>
+                            <i class="fa-solid ${badgeCfg.icon} text-[10px]"></i>
+                            <span>${badgeCfg.label}</span>
+                        </span>
+                    </td>
+
+                    <!-- Aksi -->
+                    <td class="px-4 py-3 whitespace-nowrap text-xs text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            ${actionButtons}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableBody.innerHTML = html;
+    }
+
+    /**
+     * Modal Form Pengajuan / Input Izin Santri Baru
+     */
+    function openModalFormIzin(prefill = {}) {
+        const modal = document.getElementById('modal-perpulangan-form');
+        const form = document.getElementById('form-perpulangan-input');
+        if (!modal || !form) return;
+
+        form.reset();
+
+        // Mengisi pilihan santri dari cache master jika ada
+        populateStudentSelect();
+
+        // Default tanggal hari ini dan besok
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const toInputDate = d => d.toISOString().split('T')[0];
+        const dateStartInput = document.getElementById('perpulangan-form-tgl-mulai');
+        const dateEndInput = document.getElementById('perpulangan-form-tgl-kembali');
+        const timeStartInput = document.getElementById('perpulangan-form-jam-mulai');
+        const timeEndInput = document.getElementById('perpulangan-form-jam-kembali');
+
+        if (dateStartInput) dateStartInput.value = toInputDate(now);
+        if (dateEndInput) dateEndInput.value = toInputDate(tomorrow);
+        if (timeStartInput) timeStartInput.value = '08:00';
+        if (timeEndInput) timeEndInput.value = '17:00';
+
+        if (prefill.student_id) {
+            const selectEl = document.getElementById('perpulangan-form-student-select');
+            if (selectEl) selectEl.value = prefill.student_id;
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModalFormIzin() {
+        const modal = document.getElementById('modal-perpulangan-form');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    /**
+     * Isi Opsi Dropdown Santri dari Master Data
+     */
+    function populateStudentSelect() {
+        const select = document.getElementById('perpulangan-form-student-select');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">-- Pilih Santri --</option>';
+
+        let students = [];
+        if (window.ASNStudents && Array.isArray(window.ASNStudents.list)) {
+            students = window.ASNStudents.list;
+        } else if (window.santriData && Array.isArray(window.santriData)) {
+            students = window.santriData;
+        }
+
+        students.forEach(s => {
+            const nis = s.nis || s.NIS || '';
+            const name = s.nama || s.Nama || s.nama_santri || 'Santri';
+            const id = s.id || s.ID || nis;
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.dataset.nis = nis;
+            opt.dataset.name = name;
+            opt.innerText = `${name} (${nis || 'Tanpa NIS'})`;
+            select.appendChild(opt);
+        });
+    }
+
+    /**
+     * Submit Form Pengajuan Izin
+     */
+    async function submitFormIzin(event) {
+        if (event) event.preventDefault();
+
+        const selectStudent = document.getElementById('perpulangan-form-student-select');
+        const manualName = document.getElementById('perpulangan-form-student-name');
+        const manualNis = document.getElementById('perpulangan-form-student-nis');
+        const kategori = document.getElementById('perpulangan-form-kategori')?.value;
+        const alasan = document.getElementById('perpulangan-form-alasan')?.value;
+        const penjemputNama = document.getElementById('perpulangan-form-penjemput-nama')?.value;
+        const penjemputHubungan = document.getElementById('perpulangan-form-penjemput-hubungan')?.value;
+        const penjemputKontak = document.getElementById('perpulangan-form-penjemput-kontak')?.value;
+        const tglMulai = document.getElementById('perpulangan-form-tgl-mulai')?.value;
+        const jamMulai = document.getElementById('perpulangan-form-jam-mulai')?.value;
+        const tglKembali = document.getElementById('perpulangan-form-tgl-kembali')?.value;
+        const jamKembali = document.getElementById('perpulangan-form-jam-kembali')?.value;
+
+        let studentId = '';
+        let studentName = '';
+        let studentNis = '';
+
+        if (selectStudent && selectStudent.value) {
+            studentId = selectStudent.value;
+            const selectedOpt = selectStudent.selectedOptions[0];
+            studentName = selectedOpt.dataset.name || selectedOpt.innerText;
+            studentNis = selectedOpt.dataset.nis || '';
+        } else if (manualName && manualName.value) {
+            studentName = manualName.value.trim();
+            studentNis = manualNis ? manualNis.value.trim() : '';
+            studentId = 'STU_' + Date.now();
+        }
+
+        if (!studentName) {
+            if (typeof showToast === 'function') showToast('Nama Santri wajib dipilih atau diisi.', 'warning');
+            return;
+        }
+
+        if (!alasan || !penjemputNama || !tglMulai || !tglKembali) {
+            if (typeof showToast === 'function') showToast('Harap lengkapi alasan, nama penjemput, serta tanggal izin.', 'warning');
+            return;
+        }
+
+        const payload = {
+            student_id: studentId,
+            student_nis: studentNis,
+            student_name: studentName,
+            kategori: kategori || 'Izin Biasa',
+            alasan: alasan,
+            penjemput_nama: penjemputNama,
+            penjemput_hubungan: penjemputHubungan || 'Keluarga',
+            penjemput_kontak: penjemputKontak || '',
+            tgl_mulai: tglMulai,
+            jam_mulai: jamMulai || '08:00',
+            tgl_kembali: tglKembali,
+            jam_kembali: jamKembali || '17:00'
+        };
+
+        const submitBtn = document.getElementById('perpulangan-btn-submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Menyimpan...';
+        }
+
+        try {
+            if (typeof window.submitPermohonanIzin !== 'function') {
+                throw new Error('Fungsi submitPermohonanIzin belum terhubung.');
+            }
+
+            const res = await window.submitPermohonanIzin(payload);
+            if (res && (res.success || res.status === 'success')) {
+                if (typeof showToast === 'function') {
+                    showToast('Permohonan izin santri berhasil diajukan! Menunggu persetujuan Pengurus.', 'success');
+                }
+                closeModalFormIzin();
+                await loadPerpulanganData(true);
+            } else {
+                throw new Error(res?.message || 'Gagal menyimpan permohonan izin.');
+            }
+        } catch (error) {
+            console.error('[ASNPerpulangan] Gagal submit izin:', error);
+            if (typeof showToast === 'function') {
+                showToast(`Gagal: ${error.message}`, 'error');
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Ajukan Izin Santri';
+            }
+        }
+    }
+
+    /**
+     * Modal Approval Two-Tier (Tier 1 Pengurus -> Tier 2 Pengasuh)
+     */
+    function openModalApproval(idIzin, tier) {
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        if (!item) return;
+
+        ASNPerpulangan.selectedIzin = item;
+
+        const modal = document.getElementById('modal-perpulangan-approval');
+        if (!modal) return;
+
+        const titleEl = document.getElementById('perpulangan-approval-title');
+        const badgeEl = document.getElementById('perpulangan-approval-tier-badge');
+        const detailsEl = document.getElementById('perpulangan-approval-details');
+        const catatanInput = document.getElementById('perpulangan-approval-catatan');
+        const confirmBtn = document.getElementById('perpulangan-approval-btn-confirm');
+
+        if (catatanInput) catatanInput.value = '';
+
+        if (tier === 'PENGASUH') {
+            if (titleEl) titleEl.innerText = 'Persetujuan Dewan Pengasuh (Tier 2)';
+            if (badgeEl) {
+                badgeEl.innerText = 'Tier 2 - Otoritas Masyayikh';
+                badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
+            }
+            if (confirmBtn) {
+                confirmBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition active:scale-95';
+                confirmBtn.onclick = () => submitApprovalDecision('PENGASUH', idIzin);
+            }
+        } else {
+            if (titleEl) titleEl.innerText = 'Persetujuan Pengurus Keamanan / Piket (Tier 1)';
+            if (badgeEl) {
+                badgeEl.innerText = 'Tier 1 - Verifikasi Pengurus';
+                badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+            }
+            if (confirmBtn) {
+                confirmBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition active:scale-95';
+                confirmBtn.onclick = () => submitApprovalDecision('PENGURUS', idIzin);
+            }
+        }
+
+        if (detailsEl) {
+            detailsEl.innerHTML = `
+                <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1.5 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-300">Nama Santri:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-100">${item.student_name || item.nama_santri} (${item.student_nis || item.nis || '-'})</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-300">Kategori & Alasan:</span>
+                        <span class="font-semibold text-slate-700 dark:text-slate-200 text-right">${item.kategori} - ${item.alasan}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-300">Penjemput:</span>
+                        <span class="font-semibold text-slate-700 dark:text-slate-200">${item.penjemput_nama} (${item.penjemput_hubungan})</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-300">Jadwal Izin:</span>
+                        <span class="font-bold text-amber-600 dark:text-amber-400">
+                            ${formatDateIndo(item.tgl_mulai)} s/d ${formatDateIndo(item.tgl_kembali)}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModalApproval() {
+        const modal = document.getElementById('modal-perpulangan-approval');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    /**
+     * Eksekusi Keputusan Approval
+     */
+    async function submitApprovalDecision(tier, idIzin) {
+        const catatanInput = document.getElementById('perpulangan-approval-catatan');
+        const catatan = catatanInput ? catatanInput.value.trim() : '';
+
+        const confirmBtn = document.getElementById('perpulangan-approval-btn-confirm');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Memproses...';
+        }
+
+        try {
+            let res;
+            if (tier === 'PENGASUH') {
+                res = await window.approveIzinPengasuh(idIzin, catatan);
+            } else {
+                res = await window.approveIzinPengurus(idIzin, catatan);
+            }
+
+            if (res && (res.success || res.status === 'success')) {
+                const msg = tier === 'PENGASUH'
+                    ? 'Izin disetujui penuh oleh Dewan Pengasuh! Santri siap cetak surat jalan.'
+                    : 'Persetujuan Tier 1 tersimpan. Izin diteruskan ke antrean Dewan Pengasuh.';
+                if (typeof showToast === 'function') showToast(msg, 'success');
+                closeModalApproval();
+                await loadPerpulanganData(true);
+            } else {
+                throw new Error(res?.message || 'Gagal menyimpan persetujuan.');
+            }
+        } catch (error) {
+            console.error('[ASNPerpulangan] Approval error:', error);
+            if (typeof showToast === 'function') showToast(`Gagal: ${error.message}`, 'error');
+        } finally {
+            if (confirmBtn) confirmBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Modal Penolakan Izin
+     */
+    function openModalReject(idIzin) {
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        if (!item) return;
+
+        ASNPerpulangan.selectedIzin = item;
+
+        const modal = document.getElementById('modal-perpulangan-reject');
+        if (!modal) return;
+
+        const infoEl = document.getElementById('perpulangan-reject-info');
+        const alasanInput = document.getElementById('perpulangan-reject-alasan');
+        const confirmBtn = document.getElementById('perpulangan-reject-btn-confirm');
+
+        if (alasanInput) alasanInput.value = '';
+        if (infoEl) {
+            infoEl.innerText = `Menolak permohonan izin atas nama: ${item.student_name || item.nama_santri} (${item.kategori})`;
+        }
+        if (confirmBtn) {
+            confirmBtn.onclick = () => submitRejectDecision(idIzin);
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModalReject() {
+        const modal = document.getElementById('modal-perpulangan-reject');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    /**
+     * Eksekusi Penolakan Izin
+     */
+    async function submitRejectDecision(idIzin) {
+        const alasanInput = document.getElementById('perpulangan-reject-alasan');
+        const alasan = alasanInput ? alasanInput.value.trim() : '';
+
+        if (!alasan) {
+            if (typeof showToast === 'function') showToast('Alasan penolakan wajib diisi.', 'warning');
+            return;
+        }
+
+        const confirmBtn = document.getElementById('perpulangan-reject-btn-confirm');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyimpan...';
+        }
+
+        try {
+            const res = await window.rejectPermohonanIzin(idIzin, alasan);
+            if (res && (res.success || res.status === 'success')) {
+                if (typeof showToast === 'function') showToast('Permohonan izin santri ditolak.', 'info');
+                closeModalReject();
+                await loadPerpulanganData(true);
+            } else {
+                throw new Error(res?.message || 'Gagal menolak izin.');
+            }
+        } catch (error) {
+            console.error('[ASNPerpulangan] Reject error:', error);
+            if (typeof showToast === 'function') showToast(`Gagal: ${error.message}`, 'error');
+        } finally {
+            if (confirmBtn) confirmBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Modal Pos Gerbang Keamanan (Check-Out / Check-In)
+     */
+    function openModalGateCheck(idIzin, mode = 'OUT') {
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        if (!item) return;
+
+        ASNPerpulangan.selectedIzin = item;
+
+        const modal = document.getElementById('modal-perpulangan-gate');
+        if (!modal) return;
+
+        const titleEl = document.getElementById('perpulangan-gate-title');
+        const detailsEl = document.getElementById('perpulangan-gate-details');
+        const catatanInput = document.getElementById('perpulangan-gate-catatan');
+        const confirmBtn = document.getElementById('perpulangan-gate-btn-confirm');
+
+        if (catatanInput) catatanInput.value = '';
+
+        const isOut = mode === 'OUT';
+        if (titleEl) {
+            titleEl.innerText = isOut ? 'Pos Gerbang: Check-Out (Santri Keluar)' : 'Pos Gerbang: Check-In (Santri Kembali)';
+        }
+
+        if (confirmBtn) {
+            confirmBtn.innerText = isOut ? 'Konfirmasi Santri Keluar' : 'Konfirmasi Santri Kembali';
+            confirmBtn.className = isOut
+                ? 'px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition active:scale-95'
+                : 'px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition active:scale-95';
+            confirmBtn.onclick = () => submitGateCheckDecision(idIzin, mode);
+        }
+
+        // Cek keterlambatan potensial jika check-in
+        let lateNotice = '';
+        if (!isOut && item.tgl_kembali) {
+            const returnTarget = new Date(`${item.tgl_kembali}T${item.jam_kembali || '17:00'}:00`);
+            const now = new Date();
+            if (now > returnTarget) {
+                const diffHours = Math.round((now - returnTarget) / (1000 * 60 * 60));
+                lateNotice = `
+                    <div class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                        <span><strong>Peringatan:</strong> Santri melewati batas waktu kembali (+/- ${diffHours} jam). Sistem akan menandai sebagai status TERLAMBAT.</span>
+                    </div>
+                `;
+            }
+        }
+
+        if (detailsEl) {
+            detailsEl.innerHTML = `
+                <div class="space-y-2 text-xs">
+                    <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1">
+                        <div class="font-bold text-sm text-slate-800 dark:text-slate-100">${item.student_name || item.nama_santri}</div>
+                        <div class="text-slate-500 dark:text-slate-300">NIS: ${item.student_nis || item.nis || '-'} | ID Izin: ${idIzin}</div>
+                        <div class="text-slate-600 dark:text-slate-300 pt-1">Penjemput: <strong>${item.penjemput_nama}</strong> (${item.penjemput_hubungan})</div>
+                        <div class="text-amber-700 dark:text-amber-400 font-semibold">Batas Kembali: ${formatDateIndo(item.tgl_kembali)} pukul ${formatTimeIndo(item.jam_kembali)}</div>
+                    </div>
+                    ${lateNotice}
+                </div>
+            `;
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModalGateCheck() {
+        const modal = document.getElementById('modal-perpulangan-gate');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    /**
+     * Eksekusi Pos Gerbang (Check-Out / Check-In)
+     */
+    async function submitGateCheckDecision(idIzin, mode) {
+        const catatanInput = document.getElementById('perpulangan-gate-catatan');
+        const catatan = catatanInput ? catatanInput.value.trim() : '';
+
+        const confirmBtn = document.getElementById('perpulangan-gate-btn-confirm');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyimpan Log...';
+        }
+
+        try {
+            const res = await window.gateCheckIzin(idIzin, mode, catatan);
+            if (res && (res.success || res.status === 'success')) {
+                const msg = mode === 'OUT'
+                    ? 'Check-Out berhasil dicatat. Status santri kini: KELUAR PONDOK.'
+                    : 'Check-In berhasil dicatat. Santri telah kembali ke pondok.';
+                if (typeof showToast === 'function') showToast(msg, 'success');
+                closeModalGateCheck();
+                await loadPerpulanganData(true);
+            } else {
+                throw new Error(res?.message || 'Gagal memproses pos gerbang.');
+            }
+        } catch (error) {
+            console.error('[ASNPerpulangan] Gate error:', error);
+            if (typeof showToast === 'function') showToast(`Gagal: ${error.message}`, 'error');
+        } finally {
+            if (confirmBtn) confirmBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Quick Gate Search / Scan (Input Cepat NIS atau ID Izin di Pos Gerbang)
+     */
+    function handleQuickGateSearch(query) {
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) return;
+
+        const found = ASNPerpulangan.list.find(x => {
+            const id = String(x.id_izin || x.id || '').toLowerCase();
+            const nis = String(x.student_nis || x.nis || '').toLowerCase();
+            return id === q || nis === q;
+        });
+
+        if (!found) {
+            if (typeof showToast === 'function') showToast(`Data santri / ID izin "${query}" tidak ditemukan.`, 'warning');
+            return;
+        }
+
+        const status = String(found.status || '').toUpperCase();
+        if (status === 'DISETUJUI') {
+            openModalGateCheck(found.id_izin || found.id, 'OUT');
+        } else if (status === 'KELUAR') {
+            openModalGateCheck(found.id_izin || found.id, 'IN');
+        } else {
+            openModalDetail(found.id_izin || found.id);
+        }
+    }
+
+    /**
+     * Modal Pratinjau Surat Jalan & Kartu Izin Digital Resmi
+     */
+    function openModalPrintSuratIzin(idIzin) {
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        if (!item) return;
+
+        ASNPerpulangan.selectedIzin = item;
+
+        const modal = document.getElementById('modal-perpulangan-print');
+        if (!modal) return;
+
+        const container = document.getElementById('perpulangan-print-document');
+        if (!container) return;
+
+        const qrData = `ASNAWIYYAH-IZIN|${idIzin}|${item.student_nis || '-'}|${item.student_name || '-'}|${item.status || 'DISETUJUI'}|VERIFIED`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}`;
+
+        container.innerHTML = `
+            <div class="bg-white text-slate-900 p-6 sm:p-8 rounded-2xl max-w-2xl mx-auto border border-slate-200 shadow-sm print:shadow-none print:border-none print:p-0 font-sans">
+                <!-- KOP SURAT RESMI PESANTREN -->
+                <div class="border-b-2 border-emerald-800 pb-4 mb-5 flex items-center justify-between gap-4">
+                    <img src="/assets/img/logo-asnawiyyah.jpg" alt="Logo PPTQ Asnawiyyah" class="w-16 h-16 object-contain rounded-full shadow-xs shrink-0" onerror="this.style.display='none'">
+                    <div class="text-center flex-1">
+                        <div class="font-serif font-bold text-xs tracking-widest text-emerald-900 uppercase">Pondok Pesantren Tahfidzul Qur'an</div>
+                        <h1 class="font-serif font-black text-lg sm:text-xl text-emerald-950 tracking-wide uppercase">ASNAWIYYAH</h1>
+                        <p class="text-[11px] text-slate-600 leading-tight">
+                            Pilangwetan RT 03 RW 02, Kebonagung, Demak, Jawa Tengah 59582<br>
+                            Website: asnawiyyah.or.id | WhatsApp Khodim: 0812-3456-7890
+                        </p>
+                    </div>
+                    <div class="w-16 hidden sm:block shrink-0 text-right">
+                        <span class="inline-block px-2 py-1 text-[9px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded">RESMI</span>
+                    </div>
+                </div>
+
+                <!-- JUDUL SURAT -->
+                <div class="text-center my-4">
+                    <h2 class="font-bold text-sm sm:text-base text-slate-900 underline uppercase tracking-wider">SURAT JALAN & IZIN PERPULANGAN SANTRI</h2>
+                    <p class="text-xs text-slate-500 font-mono mt-0.5">Nomor: ${idIzin}/PPTQ-ASN/IZN/${new Date().getFullYear()}</p>
+                </div>
+
+                <!-- ISI SURAT -->
+                <p class="text-xs text-slate-700 leading-relaxed mb-3">
+                    Pengurus Pondok Pesantren Tahfidzul Qur'an (PPTQ) Asnawiyyah menerangkan bahwa santri berikut telah memperoleh izin resmi untuk meninggalkan lingkungan pesantren:
+                </p>
+
+                <!-- TABEL DATA SANTRI -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs mb-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Nama Santri</span>
+                        <span class="col-span-2 font-bold text-slate-800">: ${item.student_name || item.nama_santri}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Nomor Induk (NIS)</span>
+                        <span class="col-span-2 font-medium text-slate-800">: ${item.student_nis || item.nis || '-'}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Kategori Izin</span>
+                        <span class="col-span-2 font-bold text-emerald-800">: ${item.kategori}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Keperluan / Alasan</span>
+                        <span class="col-span-2 text-slate-800">: ${item.alasan}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Penjemput Resmi</span>
+                        <span class="col-span-2 text-slate-800">: ${item.penjemput_nama} (${item.penjemput_hubungan}) - HP: ${item.penjemput_kontak || '-'}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Waktu Keluar</span>
+                        <span class="col-span-2 text-slate-800">: ${formatDateIndo(item.tgl_mulai)} pukul ${formatTimeIndo(item.jam_mulai)}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <span class="text-slate-500">Wajib Kembali</span>
+                        <span class="col-span-2 font-bold text-rose-700">: ${formatDateIndo(item.tgl_kembali)} pukul ${formatTimeIndo(item.jam_kembali)}</span>
+                    </div>
+                </div>
+
+                <!-- TATA TERTIB SINGKAT -->
+                <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200/60 text-[11px] text-amber-900 space-y-1 mb-6">
+                    <span class="font-bold block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Ketentuan Selama Izin:</span>
+                    <ol class="list-decimal pl-4 space-y-0.5 text-slate-700">
+                        <li>Santri wajib menjaga nama baik almamater, akhlakul karimah, dan shalat berjamaah.</li>
+                        <li>Wajib kembali ke pondok tepat waktu sesuai batas jam di atas. Keterlambatan dikenakan ta'zir tata tertib.</li>
+                        <li>Surat jalan ini wajib ditunjukkan dan divalidasi ke Pos Gerbang Keamanan saat keluar & kembali.</li>
+                    </ol>
+                </div>
+
+                <!-- TANDA TANGAN & QR CODE VERIFIKASI -->
+                <div class="grid grid-cols-3 gap-4 text-center items-end text-xs pt-2">
+                    <!-- Tanda Tangan Penjemput -->
+                    <div class="space-y-12">
+                        <div>Penjemput / Wali Santri,</div>
+                        <div class="font-bold underline text-slate-800 pt-4">${item.penjemput_nama || 'Wali Santri'}</div>
+                    </div>
+
+                    <!-- QR Code Validasi Pos Gerbang -->
+                    <div class="flex flex-col items-center justify-center space-y-1">
+                        <img src="${qrUrl}" alt="QR Validasi" class="w-24 h-24 border border-slate-300 p-1 rounded-lg bg-white shadow-xs">
+                        <span class="text-[9px] font-mono text-slate-500">Scan Validasi Gerbang</span>
+                    </div>
+
+                    <!-- Tanda Tangan Masyayikh / Pengurus -->
+                    <div class="space-y-12">
+                        <div>Pilangwetan, ${formatDateIndo(new Date().toISOString().split('T')[0])}<br>Dewan Pengasuh / Pengurus,</div>
+                        <div class="font-bold underline text-slate-800 pt-4">${item.pengasuh_approved_by || item.pengurus_approved_by || 'Khodim Pesantren'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModalPrintSuratIzin() {
+        const modal = document.getElementById('modal-perpulangan-print');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function printSuratIzinDocument() {
+        window.print();
+    }
+
+    /**
+     * Modal Detail & Riwayat Audit Izin
+     */
+    function openModalDetail(idIzin) {
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        if (!item) return;
+
+        ASNPerpulangan.selectedIzin = item;
+
+        const modal = document.getElementById('modal-perpulangan-detail');
+        if (!modal) return;
+
+        const contentEl = document.getElementById('perpulangan-detail-content');
+        if (!contentEl) return;
+
+        const statusCfg = getStatusBadgeConfig(item.status);
+
+        contentEl.innerHTML = `
+            <div class="space-y-4 text-xs">
+                <!-- Header Info -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-[#1a2634] rounded-2xl border border-slate-200/80 dark:border-[#25374a]">
+                    <div>
+                        <div class="font-mono text-[10px] text-slate-400">ID Izin: ${idIzin}</div>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">${item.student_name || item.nama_santri}</h3>
+                        <div class="text-[11px] text-slate-500">NIS: ${item.student_nis || item.nis || '-'}</div>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusCfg.bg}">
+                        <span class="w-2 h-2 rounded-full ${statusCfg.dot}"></span>
+                        <span>${statusCfg.label}</span>
+                    </span>
+                </div>
+
+                <!-- Timeline Persetujuan & Pos Gerbang -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-slate-400">Timeline Proses Perizinan</h4>
+                    <div class="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-[#25374a]">
+                        <!-- 1. Pengajuan -->
+                        <div class="relative">
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </span>
+                            <div class="font-bold text-slate-700 dark:text-slate-200">Pengajuan Izin Diajukan</div>
+                            <div class="text-slate-500 text-[11px]">Kategori: ${item.kategori} | Alasan: ${item.alasan}</div>
+                            <div class="text-slate-400 text-[10px]">${item.created_at || '-'}</div>
+                        </div>
+
+                        <!-- 2. Tier 1 Pengurus -->
+                        <div class="relative">
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.pengurus_approved_at ? 'bg-emerald-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid fa-user-check"></i>
+                            </span>
+                            <div class="font-bold text-slate-700 dark:text-slate-200">Tier 1: Verifikasi Pengurus Keamanan</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${item.pengurus_approved_by ? `Disetujui oleh: ${item.pengurus_approved_by}` : 'Menunggu persetujuan pengurus'}
+                                ${item.pengurus_catatan ? `<br>Catatan: "${item.pengurus_catatan}"` : ''}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${item.pengurus_approved_at || '-'}</div>
+                        </div>
+
+                        <!-- 3. Tier 2 Dewan Pengasuh -->
+                        <div class="relative">
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.pengasuh_approved_at ? 'bg-purple-600 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid fa-hands-praying"></i>
+                            </span>
+                            <div class="font-bold text-slate-700 dark:text-slate-200">Tier 2: Otorisasi Dewan Pengasuh</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${item.pengasuh_approved_by ? `Disetujui oleh: ${item.pengasuh_approved_by}` : 'Menunggu otorisasi dewan pengasuh'}
+                                ${item.pengasuh_catatan ? `<br>Catatan: "${item.pengasuh_catatan}"` : ''}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${item.pengasuh_approved_at || '-'}</div>
+                        </div>
+
+                        <!-- 4. Pos Gerbang Check-Out -->
+                        <div class="relative">
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.checkout_at ? 'bg-sky-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid fa-door-open"></i>
+                            </span>
+                            <div class="font-bold text-slate-700 dark:text-slate-200">Pos Gerbang: Check-Out (Keluar Pondok)</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${item.checkout_petugas ? `Petugas: ${item.checkout_petugas}` : 'Belum check-out'}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${item.checkout_at || '-'}</div>
+                        </div>
+
+                        <!-- 5. Pos Gerbang Check-In -->
+                        <div class="relative">
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.checkin_at ? 'bg-teal-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid fa-right-to-bracket"></i>
+                            </span>
+                            <div class="font-bold text-slate-700 dark:text-slate-200">Pos Gerbang: Check-In (Kembali ke Pondok)</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${item.checkin_petugas ? `Petugas: ${item.checkin_petugas}` : 'Belum check-in'}
+                                ${item.catatan_keterlambatan ? `<br><span class="text-rose-500 font-bold">Keterlambatan: ${item.catatan_keterlambatan}</span>` : ''}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${item.checkin_at || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModalDetail() {
+        const modal = document.getElementById('modal-perpulangan-detail');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    // Export API ke Objek Global
+    ASNPerpulangan.loadData = loadPerpulanganData;
+    ASNPerpulangan.setFilter = setPerpulanganFilter;
+    ASNPerpulangan.handleSearch = handlePerpulanganSearch;
+    ASNPerpulangan.openModalFormIzin = openModalFormIzin;
+    ASNPerpulangan.closeModalFormIzin = closeModalFormIzin;
+    ASNPerpulangan.submitFormIzin = submitFormIzin;
+    ASNPerpulangan.openModalApproval = openModalApproval;
+    ASNPerpulangan.closeModalApproval = closeModalApproval;
+    ASNPerpulangan.openModalReject = openModalReject;
+    ASNPerpulangan.closeModalReject = closeModalReject;
+    ASNPerpulangan.openModalGateCheck = openModalGateCheck;
+    ASNPerpulangan.closeModalGateCheck = closeModalGateCheck;
+    ASNPerpulangan.handleQuickGateSearch = handleQuickGateSearch;
+    ASNPerpulangan.openModalPrintSuratIzin = openModalPrintSuratIzin;
+    ASNPerpulangan.closeModalPrintSuratIzin = closeModalPrintSuratIzin;
+    ASNPerpulangan.printSuratIzinDocument = printSuratIzinDocument;
+    ASNPerpulangan.openModalDetail = openModalDetail;
+    ASNPerpulangan.closeModalDetail = closeModalDetail;
+
+    // Export window level alias untuk kemudahan integrasi event handler onclick
+    window.loadPerpulanganData = loadPerpulanganData;
+    window.openModalFormIzin = openModalFormIzin;
+    window.closeModalFormIzin = closeModalFormIzin;
+
+})(window, document);
