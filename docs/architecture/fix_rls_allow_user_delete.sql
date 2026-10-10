@@ -1,16 +1,16 @@
 -- ============================================================================
--- SQL PERBAIKAN: IZINKAN HAPUS PENGGUNA UNTUK SUPER ADMIN (DUAL SYNC DELETE)
+-- SQL PERBAIKAN: AKTIFKAN HAK HAPUS PENGGUNA UNTUK SUPER ADMIN (RLS DELETE)
 -- PPTQ ASNAWIYYAH - CLOUD DATABASE SUPABASE (POSTGRESQL)
 -- Project: tkjhfhyabacbyknwrysh
 -- ============================================================================
 -- Penjelasan:
--- Tombol Hapus Pengguna hanya dapat diakses oleh SUPER_ADMIN pada dashboard.
--- Agar pembersihan akun spam/bot tersinkronisasi tuntas di Supabase Cloud DB,
--- policy DELETE pada tabel public.users dan public.wali_santri_map diaktifkan.
--- Disertakan juga query untuk langsung membersihkan 4 akun spam bot seketika.
+-- Supabase saat ini menolak operasi DELETE dari client karena RLS belum memiliki
+-- policy DELETE untuk role anon. Script ini membuka izin DELETE agar tombol hapus
+-- di web dashboard Super Admin berfungsi nyata, sekaligus langsung memusnahkan
+-- ke-4 akun bot spam tersebut dari Supabase.
 -- ============================================================================
 
--- 1. Policy DELETE untuk tabel Users
+-- 1. Berikan Policy DELETE pada tabel public.users
 DROP POLICY IF EXISTS "Anon Delete Users" ON public.users;
 
 CREATE POLICY "Anon Delete Users" ON public.users
@@ -18,7 +18,7 @@ CREATE POLICY "Anon Delete Users" ON public.users
     TO anon, authenticated
     USING (true);
 
--- 2. Policy DELETE untuk tabel Wali Santri Map (Relasi Wali - Santri)
+-- 2. Berikan Policy DELETE pada tabel public.wali_santri_map
 DROP POLICY IF EXISTS "Anon Delete Wali Santri Map" ON public.wali_santri_map;
 
 CREATE POLICY "Anon Delete Wali Santri Map" ON public.wali_santri_map
@@ -26,24 +26,22 @@ CREATE POLICY "Anon Delete Wali Santri Map" ON public.wali_santri_map
     TO anon, authenticated
     USING (true);
 
--- 3. Bersihkan langsung 4 akun anomali / spam bot dari Supabase Cloud DB
+-- 3. Hapus langsung 4 akun spam bot anomali berdasarkan user_id tepatnya
 DELETE FROM public.wali_santri_map
 WHERE wali_id IN (
-    SELECT user_id FROM public.users 
-    WHERE name IN ('hSnVzdQSGcvCcZxoKzC', 'alOFajadzRdfLpWbYI', 'pEeuvqHBqojCMSkejS', 'cmdduJPofyHxoLWKNQvqwhPf')
-       OR email IN (
-           'o.qi.ze.p.ejac1.9@gmail.com',
-           'a.da.m.s.n.atal.ie.a.lg.gp.m.1@gmail.com',
-           'pat.ri.ci.ae.dwa.r.dseir.vjv.kr5@gmail.com',
-           'c.a.wp.be.l.l.t.y.l.e.r.x.g.iy.7.u.l.q.p6@gmail.com'
-       )
+    'USR_8d08aabefd7b',
+    'USR_75264a66d03a',
+    'USR_21e9c148a5e0',
+    'USR_fa37d8196188'
 );
 
 DELETE FROM public.users 
-WHERE name IN ('hSnVzdQSGcvCcZxoKzC', 'alOFajadzRdfLpWbYI', 'pEeuvqHBqojCMSkejS', 'cmdduJPofyHxoLWKNQvqwhPf')
-   OR email IN (
-       'o.qi.ze.p.ejac1.9@gmail.com',
-       'a.da.m.s.n.atal.ie.a.lg.gp.m.1@gmail.com',
-       'pat.ri.ci.ae.dwa.r.dseir.vjv.kr5@gmail.com',
-       'c.a.wp.be.l.l.t.y.l.e.r.x.g.iy.7.u.l.q.p6@gmail.com'
-   );
+WHERE user_id IN (
+    'USR_8d08aabefd7b',
+    'USR_75264a66d03a',
+    'USR_21e9c148a5e0',
+    'USR_fa37d8196188'
+);
+
+-- 4. Verifikasi sisa data (seharusnya menjadi 27 akun pengguna valid)
+SELECT COUNT(*) AS total_pengguna_aktif FROM public.users;
