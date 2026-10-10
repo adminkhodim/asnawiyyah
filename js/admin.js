@@ -6899,6 +6899,7 @@
 
             if (emptyEl) emptyEl.classList.add('hidden');
 
+            const canManageUsers = typeof window.hasPermission === 'function' ? window.hasPermission('users.manage') : true;
             const currentActorRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
                                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 'ADMIN';
             const isSuperAdminActor = currentActorRole === 'SUPER_ADMIN';
