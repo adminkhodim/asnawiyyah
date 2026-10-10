@@ -596,6 +596,7 @@
                     'hub': 'Dashboard Utama',
                     'tahfidz': 'Tahfidz Qur\'an',
                     'santri': 'Data Santri',
+                    'wali-santri': 'Data Wali Santri',
                     'ppdb': 'Pendaftar PPDB',
                     'unit-kegiatan': 'Unit Kegiatan (UKS)',
                     'jadwal-kegiatan': 'Jadwal Kegiatan',
@@ -642,6 +643,7 @@
             const notifikasiView = document.getElementById('admin-view-notifikasi');
             const pegawaiView = document.getElementById('admin-view-pegawai');
             const usersView = document.getElementById('admin-view-users');
+            const waliSantriView = document.getElementById('admin-view-wali-santri');
             const rolesView = document.getElementById('admin-view-roles');
             const perpulanganView = document.getElementById('admin-view-perpulangan');
 
@@ -651,6 +653,7 @@
             beritaView.classList.add('hidden');
             bannerView.classList.add('hidden');
             if (santriView) santriView.classList.add('hidden');
+            if (waliSantriView) waliSantriView.classList.add('hidden');
             if (tahfidzView) tahfidzView.classList.add('hidden');
             if (keaktifanView) keaktifanView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
@@ -691,6 +694,11 @@
                     triggerUsersStaggerAnimation();
                 }
                 loadAdminUsersData();
+            } else if (viewName === 'wali-santri') {
+                if (waliSantriView) waliSantriView.classList.remove('hidden');
+                if (typeof loadAdminWaliSantriData === 'function') {
+                    loadAdminWaliSantriData();
+                }
             } else if (viewName === 'roles') {
                 if (rolesView) rolesView.classList.remove('hidden');
                 if (typeof triggerRolesStaggerAnimation === 'function') {
@@ -7658,6 +7666,438 @@
         window.handleSelectPegawaiForUser = handleSelectPegawaiForUser;
         window.populatePegawaiDropdownInUserModal = populatePegawaiDropdownInUserModal;
         window.handleAdminUserSubmit = handleAdminUserSubmit;
+
+        // =====================================================================
+        // CONTROLLER KHUSUS: DATA WALI SANTRI & KELUARGA (MULTI-SANTRI)
+        // =====================================================================
+        let adminWaliList = [];
+        let adminWaliFilterType = 'ALL';
+        let adminWaliSearchQuery = '';
+
+        async function loadAdminWaliSantriData() {
+            const loadingEl = document.getElementById('admin-wali-loading');
+            const emptyEl = document.getElementById('admin-wali-empty');
+            const tbody = document.getElementById('admin-wali-table-body');
+
+            if (loadingEl) loadingEl.classList.remove('hidden');
+            if (emptyEl) emptyEl.classList.add('hidden');
+            if (tbody) tbody.innerHTML = '';
+
+            try {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const sbUrl = config.supabaseUrl;
+                const sbKey = config.supabaseKey;
+
+                let users = [];
+                let maps = [];
+                let students = [];
+
+                if (sbUrl && sbKey) {
+                    const headers = { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` };
+                    
+                    // 1. Ambil data wali santri dari users & wali_identities
+                    try {
+                        const uRes = await fetch(`${sbUrl}/rest/v1/users?role=eq.WALI_SANTRI&order=created_at.desc`, { headers });
+                        if (uRes.ok) users = await uRes.json();
+                    } catch (e) { console.warn('Fetch users fail:', e); }
+
+                    // 2. Ambil data pemetaan wali ke santri
+                    try {
+                        const mRes = await fetch(`${sbUrl}/rest/v1/wali_santri_map?select=*`, { headers });
+                        if (mRes.ok) maps = await mRes.json();
+                    } catch (e) { console.warn('Fetch map fail:', e); }
+
+                    // 3. Ambil data master santri untuk me-resolve nama & NIS anak
+                    try {
+                        const sRes = await fetch(`${sbUrl}/rest/v1/students?select=student_id,name,nis,kelas,status`, { headers });
+                        if (sRes.ok) students = await sRes.json();
+                    } catch (e) { console.warn('Fetch students fail:', e); }
+                }
+
+                // Fallback jika users kosong (misal lewat authApiPost atau adminUsersList)
+                if (users.length === 0 && typeof adminUsersList !== 'undefined' && adminUsersList.length > 0) {
+                    users = adminUsersList.filter(u => u.role === 'WALI_SANTRI');
+                }
+
+                // Buat lookup dictionary santri
+                const studentDict = {};
+                (students || []).forEach(s => {
+                    studentDict[s.student_id] = s;
+                });
+
+                // Pasangkan santri yang terhubung ke setiap akun wali
+                adminWaliList = users.map(u => {
+                    const uId = u.user_id || u.identity_id;
+                    const userMaps = maps.filter(m => m.wali_id === uId);
+                    const linked = userMaps.map(m => {
+                        const sData = studentDict[m.student_id] || {};
+                        return {
+                            mapId: m.map_id,
+                            studentId: m.student_id,
+                            name: sData.name || m.student_id,
+                            nis: sData.nis || '',
+                            kelas: sData.kelas || '',
+                            relationship: m.relationship || 'GUARDIAN'
+                        };
+                    });
+
+                    return {
+                        userId: uId,
+                        name: u.name || 'Wali Santri',
+                        email: u.email || '',
+                        phone: u.phone || '',
+                        status: u.status || 'ACTIVE',
+                        created_at: u.created_at,
+                        linkedStudents: linked,
+                        studentCount: linked.length
+                    };
+                });
+
+                // Update Metric Cards
+                const totalWali = adminWaliList.length;
+                const totalStudents = adminWaliList.reduce((acc, curr) => acc + curr.studentCount, 0);
+                const multiWali = adminWaliList.filter(w => w.studentCount >= 2).length;
+                const singleWali = adminWaliList.filter(w => w.studentCount === 1).length;
+                const activeWali = adminWaliList.filter(w => w.status === 'ACTIVE').length;
+
+                const metricTotal = document.getElementById('wali-metric-total');
+                const metricStudents = document.getElementById('wali-metric-students');
+                const metricMulti = document.getElementById('wali-metric-multi');
+                const metricActive = document.getElementById('wali-metric-active');
+
+                if (metricTotal) metricTotal.innerText = totalWali;
+                if (metricStudents) metricStudents.innerText = totalStudents;
+                if (metricMulti) metricMulti.innerText = multiWali;
+                if (metricActive) metricActive.innerText = activeWali;
+
+                const pillAll = document.getElementById('count-pill-wali-all');
+                const pillMulti = document.getElementById('count-pill-wali-multi');
+                const pillSingle = document.getElementById('count-pill-wali-single');
+                if (pillAll) pillAll.innerText = totalWali;
+                if (pillMulti) pillMulti.innerText = multiWali;
+                if (pillSingle) pillSingle.innerText = singleWali;
+
+                // Render tabel
+                renderAdminWaliSantriTable();
+            } catch (err) {
+                console.error('[LOAD WALI SANTRI ERROR]', err);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-rose-500">Gagal memuat data: ${err.message}</td></tr>`;
+            } finally {
+                if (loadingEl) loadingEl.classList.add('hidden');
+            }
+        }
+
+        function renderAdminWaliSantriTable() {
+            const tbody = document.getElementById('admin-wali-table-body');
+            const emptyEl = document.getElementById('admin-wali-empty');
+            if (!tbody) return;
+
+            let list = adminWaliList || [];
+
+            // Filter Pill Type
+            if (adminWaliFilterType === 'MULTI') {
+                list = list.filter(w => w.studentCount >= 2);
+            } else if (adminWaliFilterType === 'SINGLE') {
+                list = list.filter(w => w.studentCount === 1);
+            }
+
+            // Search Filter
+            if (adminWaliSearchQuery) {
+                const q = adminWaliSearchQuery.toLowerCase().trim();
+                list = list.filter(w => {
+                    const matchWali = String(w.name || '').toLowerCase().includes(q) ||
+                                      String(w.email || '').toLowerCase().includes(q) ||
+                                      String(w.phone || '').toLowerCase().includes(q) ||
+                                      String(w.userId || '').toLowerCase().includes(q);
+                    const matchStudent = (w.linkedStudents || []).some(s => 
+                        String(s.name || '').toLowerCase().includes(q) ||
+                        String(s.nis || '').toLowerCase().includes(q)
+                    );
+                    return matchWali || matchStudent;
+                });
+            }
+
+            if (list.length === 0) {
+                tbody.innerHTML = '';
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            const relationshipLabels = {
+                'MOTHER': 'Ibu',
+                'FATHER': 'Ayah',
+                'GUARDIAN': 'Wali'
+            };
+
+            tbody.innerHTML = list.map(w => {
+                const initial = (w.name || 'W').charAt(0).toUpperCase();
+                const safeName = escapeUserHtml(w.name || 'Wali Santri');
+                const safeEmail = escapeUserHtml(w.email || '-');
+                const rawPhone = String(w.phone || '').replace(/[^0-9]/g, '');
+                
+                // Format nomor WhatsApp untuk direct link
+                let waLink = '';
+                let waDisplay = '-';
+                if (rawPhone) {
+                    let formattedPhone = rawPhone;
+                    if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.substring(1);
+                    else if (!formattedPhone.startsWith('62')) formattedPhone = '62' + formattedPhone;
+                    waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(`Assalamu'alaikum Wr. Wb. Bapak/Ibu ${w.name}, kami dari Sekretariat PPTQ Asnawiyyah...`)}`;
+                    waDisplay = rawPhone;
+                }
+
+                // Render badge anak-anak yang terhubung
+                let studentsHtml = '';
+                if (w.linkedStudents && w.linkedStudents.length > 0) {
+                    const isMulti = w.linkedStudents.length >= 2;
+                    const multiBadge = isMulti ? `
+                        <div class="mb-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/60 shadow-2xs">
+                            <i class="fa-solid fa-people-arrows text-[8px]"></i>
+                            <span>${w.linkedStudents.length} Santri (Kakak-Beradik)</span>
+                        </div>
+                    ` : '';
+
+                    const chips = w.linkedStudents.map((s) => {
+                        const rel = relationshipLabels[s.relationship] || s.relationship || 'Wali';
+                        const nisStr = s.nis ? `<span class="text-slate-400 font-normal">(${escapeUserHtml(s.nis)})</span>` : '';
+                        return `
+                            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                                <i class="fa-solid fa-user-graduate text-[9px] text-emerald-600"></i>
+                                <span class="font-bold">${escapeUserHtml(s.name)}</span>
+                                ${nisStr}
+                                <span class="px-1 py-0.2 rounded bg-white dark:bg-emerald-900 text-[8px] font-extrabold text-emerald-700 dark:text-emerald-200">${rel}</span>
+                            </div>
+                        `;
+                    }).join(' ');
+
+                    studentsHtml = `
+                        <div class="flex flex-col items-start gap-1">
+                            ${multiBadge}
+                            <div class="flex flex-wrap gap-1">
+                                ${chips}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    studentsHtml = `
+                        <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 italic">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Belum ada santri terhubung
+                        </span>
+                    `;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50/70 dark:hover:bg-[#1a2533]/50 transition">
+                        <!-- Profil Wali -->
+                        <td class="py-3 px-3.5 align-middle">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                    ${initial}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-slate-800 dark:text-slate-100 truncate">${safeName}</div>
+                                    <div class="text-[10px] text-slate-400 truncate">${safeEmail}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- WhatsApp / HP -->
+                        <td class="py-3 px-3.5 align-middle whitespace-nowrap">
+                            ${rawPhone ? `
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="font-mono text-slate-700 dark:text-slate-200 font-medium">${escapeUserHtml(waDisplay)}</span>
+                                    <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-400 flex items-center justify-center text-xs transition" title="Kirim Pesan WhatsApp">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                    </a>
+                                </div>
+                            ` : `<span class="text-slate-400 italic">-</span>`}
+                        </td>
+
+                        <!-- Santri Terhubung -->
+                        <td class="py-3 px-3.5 align-middle">
+                            ${studentsHtml}
+                        </td>
+
+                        <!-- Status Akun -->
+                        <td class="py-3 px-3.5 align-middle text-center whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Aktif</span>
+                            </span>
+                        </td>
+
+                        <!-- Aksi -->
+                        <td class="py-3 px-3.5 align-middle text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end space-x-1">
+                                <button type="button" onclick="openAdminConnectStudentModal('${w.userId}', '${safeName.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 dark:text-emerald-300 rounded-lg text-[10px] font-bold transition flex items-center space-x-1 active:scale-95" title="Hubungkan Santri Baru ke Wali Ini">
+                                    <i class="fa-solid fa-plus text-[9px]"></i>
+                                    <span>Tambah Anak</span>
+                                </button>
+                                ${rawPhone ? `
+                                    <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-[#1c2836] rounded-lg transition" title="Chat WhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-sm text-emerald-500"></i>
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function handleAdminWaliSearch(query) {
+            adminWaliSearchQuery = query || '';
+            renderAdminWaliSantriTable();
+        }
+
+        function setAdminWaliFilter(filterType) {
+            adminWaliFilterType = filterType || 'ALL';
+
+            const btnAll = document.getElementById('filter-wali-all');
+            const btnMulti = document.getElementById('filter-wali-multi');
+            const btnSingle = document.getElementById('filter-wali-single');
+
+            [btnAll, btnMulti, btnSingle].forEach(b => {
+                if (!b) return;
+                b.className = 'px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 transition';
+            });
+
+            const activeBtn = filterType === 'MULTI' ? btnMulti : (filterType === 'SINGLE' ? btnSingle : btnAll);
+            if (activeBtn) {
+                activeBtn.className = 'px-3 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow-xs transition';
+            }
+
+            renderAdminWaliSantriTable();
+        }
+
+        async function openAdminConnectStudentModal(targetWaliId = '', targetWaliName = '') {
+            const modal = document.getElementById('modal-admin-connect-student');
+            const waliSelect = document.getElementById('connect-wali-select');
+            const studentSelect = document.getElementById('connect-student-select');
+            const alertBox = document.getElementById('connect-student-alert');
+            if (alertBox) alertBox.classList.add('hidden');
+
+            if (waliSelect) {
+                waliSelect.innerHTML = '<option value="">-- Pilih Akun Wali Santri --</option>' +
+                    adminWaliList.map(w => `<option value="${w.userId}" ${w.userId === targetWaliId ? 'selected' : ''}>${escapeUserHtml(w.name)} (${escapeUserHtml(w.phone || w.email || '-')})</option>`).join('');
+            }
+
+            if (studentSelect) {
+                studentSelect.innerHTML = '<option value="">Memuat data santri...</option>';
+                let students = [];
+                if (typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList) && adminStudentsList.length > 0) {
+                    students = adminStudentsList;
+                } else {
+                    try {
+                        const config = window.ASNAWIYYAH_CONFIG || {};
+                        const headers = { 'apikey': config.supabaseKey, 'Authorization': `Bearer ${config.supabaseKey}` };
+                        const sRes = await fetch(`${config.supabaseUrl}/rest/v1/students?select=student_id,name,nis,kelas&order=name.asc`, { headers });
+                        if (sRes.ok) students = await sRes.json();
+                    } catch (e) {}
+                }
+
+                studentSelect.innerHTML = '<option value="">-- Pilih Santri dari Database --</option>' +
+                    students.map(s => `<option value="${s.student_id}">${escapeUserHtml(s.name)} (NIS: ${escapeUserHtml(s.nis || '-')}) - Kelas ${escapeUserHtml(s.kelas || '-')}</option>`).join('');
+            }
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeAdminConnectStudentModal() {
+            const modal = document.getElementById('modal-admin-connect-student');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleSaveConnectStudent(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-connect-student');
+            const alertBox = document.getElementById('connect-student-alert');
+            const alertText = document.getElementById('connect-student-alert-text');
+            const waliSelect = document.getElementById('connect-wali-select');
+            const studentSelect = document.getElementById('connect-student-select');
+            const relSelect = document.getElementById('connect-relationship-select');
+
+            const waliId = waliSelect ? waliSelect.value : '';
+            const studentId = studentSelect ? studentSelect.value : '';
+            const relationship = relSelect ? relSelect.value : 'GUARDIAN';
+
+            if (!waliId || !studentId) {
+                if (alertBox && alertText) {
+                    alertText.innerText = 'Pilih Wali Santri dan Santri terlebih dahulu.';
+                    alertBox.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Menghubungkan...</span>`;
+            }
+            if (alertBox) alertBox.classList.add('hidden');
+
+            try {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const sbUrl = config.supabaseUrl;
+                const sbKey = config.supabaseKey;
+
+                if (!sbUrl || !sbKey) throw new Error('Konfigurasi database Supabase tidak ditemukan.');
+
+                const headers = {
+                    'apikey': sbKey,
+                    'Authorization': `Bearer ${sbKey}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'resolution=merge-duplicates'
+                };
+
+                const nowIso = new Date().toISOString();
+                const mapId = `MAP_${waliId.replace(/[^a-zA-Z0-9]/g, '')}_${studentId.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+                const res = await fetch(`${sbUrl}/rest/v1/wali_santri_map`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        map_id: mapId,
+                        wali_id: waliId,
+                        student_id: studentId,
+                        relationship: relationship,
+                        status: 'VERIFIED',
+                        created_at: nowIso
+                    })
+                });
+
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => ({}));
+                    throw new Error(errBody.message || `Gagal menyimpan pemetaan santri (${res.status})`);
+                }
+
+                closeAdminConnectStudentModal();
+                if (typeof showToast === 'function') {
+                    showToast('Santri berhasil dihubungkan ke akun Wali Santri!');
+                }
+                await loadAdminWaliSantriData();
+            } catch (err) {
+                if (alertBox && alertText) {
+                    alertText.innerText = err.message || 'Terjadi kesalahan saat menghubungkan santri.';
+                    alertBox.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-check text-xs"></i><span>Hubungkan Santri</span>`;
+                }
+            }
+        }
+
+        // Window exports
+        window.loadAdminWaliSantriData = loadAdminWaliSantriData;
+        window.renderAdminWaliSantriTable = renderAdminWaliSantriTable;
+        window.handleAdminWaliSearch = handleAdminWaliSearch;
+        window.setAdminWaliFilter = setAdminWaliFilter;
+        window.openAdminConnectStudentModal = openAdminConnectStudentModal;
+        window.closeAdminConnectStudentModal = closeAdminConnectStudentModal;
+        window.handleSaveConnectStudent = handleSaveConnectStudent;
 
         // Jadwal Kegiatan exports
         window.loadJadwalKegiatan = loadJadwalKegiatan;

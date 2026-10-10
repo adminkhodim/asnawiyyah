@@ -2175,6 +2175,8 @@ async function handleParentActivationVerify(e) {
         if (result && result.success && result.token) {
             sessionStorage.removeItem('asn_temp_activation_data');
             ASNIdentity.setParentSession(result.token, result.parent || result.identity, result.students);
+            // Real-time Dual-Write ke Supabase Cloud DB
+            syncWaliActivationToSupabase(result, payload);
             closeParentActivationModal();
             if (typeof showToast === 'function') {
                 showToast(result.message || 'Akun Wali Santri berhasil diaktifkan!');
@@ -2193,6 +2195,107 @@ async function handleParentActivationVerify(e) {
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<span>Selesaikan Aktivasi</span><i class="fa-solid fa-circle-check"></i>`;
+    }
+}
+
+/**
+ * Sinkronisasi Real-Time (Dual-Write) Aktivasi Wali Santri & Relasi Santri ke Supabase Cloud
+ */
+async function syncWaliActivationToSupabase(result, payload = {}) {
+    try {
+        const config = window.ASNAWIYYAH_CONFIG || {};
+        const sbUrl = config.supabaseUrl;
+        const sbKey = config.supabaseKey;
+        if (!sbUrl || !sbKey) return;
+
+        const headers = {
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+        };
+
+        const wali = result.parent || result.identity || {};
+        const waliId = wali.userId || wali.identityId || "";
+        if (!waliId) return;
+
+        const nowIso = new Date().toISOString();
+        const email = wali.email || payload.waliEmail || null;
+        const phone = wali.phone || payload.waliPhone || null;
+        const name = wali.name || payload.waliName || 'Wali Santri';
+        const rel = payload.relationship || 'GUARDIAN';
+
+        // 1. Simpan ke public.users
+        const userRow = {
+            user_id: waliId,
+            email: email,
+            phone: phone,
+            name: name,
+            role: 'WALI_SANTRI',
+            status: 'ACTIVE',
+            created_at: nowIso
+        };
+        await fetch(`${sbUrl}/rest/v1/users`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(userRow)
+        });
+
+        // 2. Simpan ke public.wali_identities
+        const waliRow = {
+            identity_id: waliId,
+            email: email,
+            phone: phone,
+            name: name,
+            role: 'WALI_SANTRI',
+            status: 'ACTIVE',
+            created_at: nowIso
+        };
+        await fetch(`${sbUrl}/rest/v1/wali_identities`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(waliRow)
+        });
+
+        // 3. Simpan ke public.wali_santri_map untuk semua santri yang terhubung
+        const students = Array.isArray(result.students) ? result.students : [];
+        if (students.length > 0) {
+            for (const s of students) {
+                const sId = s.studentId || s.student_id;
+                if (!sId) continue;
+                const mapId = `MAP_${waliId.replace(/[^a-zA-Z0-9]/g, '')}_${sId.replace(/[^a-zA-Z0-9]/g, '')}`;
+                await fetch(`${sbUrl}/rest/v1/wali_santri_map`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        map_id: mapId,
+                        wali_id: waliId,
+                        student_id: sId,
+                        relationship: s.relationship || rel,
+                        status: 'VERIFIED',
+                        created_at: nowIso
+                    })
+                });
+            }
+        } else if (payload.studentId || payload.student_id) {
+            const sId = payload.studentId || payload.student_id;
+            const mapId = `MAP_${waliId.replace(/[^a-zA-Z0-9]/g, '')}_${sId.replace(/[^a-zA-Z0-9]/g, '')}`;
+            await fetch(`${sbUrl}/rest/v1/wali_santri_map`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    map_id: mapId,
+                    wali_id: waliId,
+                    student_id: sId,
+                    relationship: rel,
+                    status: 'VERIFIED',
+                    created_at: nowIso
+                })
+            });
+        }
+        console.log('[SUPABASE SYNC] Berhasil sinkronisasi aktivasi wali santri:', waliId);
+    } catch (syncErr) {
+        console.warn('[SUPABASE SYNC WARN] Gagal sinkronisasi ke Supabase:', syncErr);
     }
 }
 

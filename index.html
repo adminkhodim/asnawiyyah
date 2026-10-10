@@ -4688,6 +4688,12 @@
                             </button>
                         </li>
                         <li>
+                            <button onclick="showAdminView('wali-santri')" data-view="wali-santri" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Data Wali Santri">
+                                <i class="fa-solid fa-users-viewfinder w-5 text-center text-sm"></i>
+                                <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Wali Santri</span>
+                            </button>
+                        </li>
+                        <li>
                             <button onclick="showAdminView('perpulangan')" data-view="perpulangan" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Izin Santri & Perpulangan">
                                 <i class="fa-solid fa-person-walking-luggage w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Izin & Perpulangan</span>
@@ -5263,6 +5269,21 @@
                                 <div>
                                     <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 transition">Data Santri</h4>
                                     <p class="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">Kelola data master santri, NIS, NIK, foto & status.</p>
+                                </div>
+                            </div>
+
+                            <!-- 2b. Data Wali Santri -->
+                            <div data-role-module="santri" onclick="showAdminView('wali-santri')"
+                                class="bg-slate-50/70 hover:bg-emerald-50/70 dark:bg-[#1c2836]/60 dark:hover:bg-[#223347]/80 p-3.5 md:p-4 rounded-xl md:rounded-2xl border border-slate-200/60 hover:border-emerald-300 dark:border-[#2b3b4f] dark:hover:border-emerald-500/50 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                                <div class="flex justify-between items-start">
+                                    <div class="w-10 h-10 md:w-11 md:h-11 bg-emerald-100/70 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white rounded-xl md:rounded-2xl flex items-center justify-center text-base md:text-lg shadow-2xs transition-all duration-300">
+                                        <i class="fa-solid fa-people-roof"></i>
+                                    </div>
+                                    <span id="admin-hub-wali-count" class="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-md uppercase">Wali Santri</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">Data Wali Santri</h4>
+                                    <p class="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">Kelola akun wali, WhatsApp direct, dan relasi multi-santri.</p>
                                 </div>
                             </div>
 
@@ -7186,6 +7207,232 @@
                         <p class="text-xs font-bold text-slate-600 dark:text-slate-300">Tidak ada permohonan perizinan santri.</p>
                         <p class="text-[11px] text-slate-400">Silakan sesuaikan filter atau ajukan izin perpulangan baru.</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: MODUL DATA WALI SANTRI ================= -->
+            <div id="admin-view-wali-santri" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in-up stagger-1">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block">Kesantrian & Kesiswaan</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Data Wali Santri & Keluarga</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="openAdminConnectStudentModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-link text-xs"></i>
+                            <span>Hubungkan Santri</span>
+                        </button>
+                        <button type="button" onclick="loadAdminWaliSantriData()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Refresh Data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARDS RINGKASAN METRIK WALI SANTRI -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    <!-- 1. Total Wali Terdaftar -->
+                    <div class="bg-gradient-to-br from-[#10b981] to-[#059669] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">WALI TERDAFTAR</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-user-group"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="wali-metric-total">0</span>
+                                <span class="text-xs font-bold text-white/80">Wali</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Akun orang tua terdaftar</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-800 font-black shadow-xs shrink-0 text-[9px]">Terverifikasi</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Total Santri Terhubung -->
+                    <div class="bg-gradient-to-br from-[#06b6d4] to-[#0891b2] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-cyan-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">SANTRI TERHUBUNG</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="wali-metric-students">0</span>
+                                <span class="text-xs font-bold text-white/80">Anak</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Terkoneksi ke akun wali</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-cyan-800 font-black shadow-xs shrink-0 text-[9px]">Relasi Aktif</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Wali Multi-Santri (Kakak-Beradik) -->
+                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">WALI MULTI-SANTRI</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-people-arrows"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="wali-metric-multi">0</span>
+                                <span class="text-xs font-bold text-white/80">Keluarga</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Memiliki ≥ 2 santri</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-amber-800 font-black shadow-xs shrink-0 text-[9px]">Kakak-Adik</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Akun Aktif -->
+                    <div class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">STATUS AKUN</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="wali-metric-active">0</span>
+                                <span class="text-xs font-bold text-white/80">Aktif</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Dapat login & memantau</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-indigo-800 font-black shadow-xs shrink-0 text-[9px]">100% Siap</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PENCARIAN & FILTER TABEL -->
+                <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                        <!-- Search Box -->
+                        <div class="relative w-full sm:w-80">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="admin-wali-search" oninput="handleAdminWaliSearch(this.value)" placeholder="Cari nama wali, WA, email, nama santri..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+
+                        <!-- Filter Type Pills -->
+                        <div class="flex items-center space-x-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                            <button type="button" onclick="setAdminWaliFilter('ALL')" id="filter-wali-all" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow-xs transition">Semua (<span id="count-pill-wali-all">0</span>)</button>
+                            <button type="button" onclick="setAdminWaliFilter('MULTI')" id="filter-wali-multi" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 transition">Multi-Santri (≥2 Anak) (<span id="count-pill-wali-multi">0</span>)</button>
+                            <button type="button" onclick="setAdminWaliFilter('SINGLE')" id="filter-wali-single" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 transition">1 Santri (<span id="count-pill-wali-single">0</span>)</button>
+                        </div>
+                    </div>
+
+                    <!-- TABEL DATA WALI SANTRI -->
+                    <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-[#253447]">
+                        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                            <thead class="bg-slate-50/80 dark:bg-[#1a2533] text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#253447]">
+                                <tr>
+                                    <th class="py-3 px-3.5">Wali Santri</th>
+                                    <th class="py-3 px-3.5">WhatsApp / HP</th>
+                                    <th class="py-3 px-3.5">Santri Terhubung (Anak Asuhan)</th>
+                                    <th class="py-3 px-3.5 text-center">Status</th>
+                                    <th class="py-3 px-3.5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-wali-table-body" class="divide-y divide-slate-100 dark:divide-[#253447]">
+                                <!-- Data rendered via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="admin-wali-empty" class="hidden p-8 text-center space-y-2">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#1c2836] text-slate-400 flex items-center justify-center mx-auto text-lg">
+                            <i class="fa-solid fa-users-slash"></i>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200">Tidak Ada Data Wali Santri</h4>
+                        <p class="text-[10px] text-slate-400 max-w-xs mx-auto">Silakan sesuaikan kata kunci pencarian atau hubungkan santri baru.</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="admin-wali-loading" class="p-8 text-center space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-emerald-600 text-xl"></i>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Memuat data wali santri dari Cloud Database...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: HUBUNGKAN SANTRI KE WALI SANTRI -->
+            <div id="modal-admin-connect-student" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+                <div class="bg-white dark:bg-[#15202d] w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-[#253447] overflow-hidden transform transition-all duration-300">
+                    <!-- Modal Header -->
+                    <div class="p-4 border-b border-slate-100 dark:border-[#253447] flex items-center justify-between bg-slate-50/50 dark:bg-[#1a2533]">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-link"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Hubungkan Santri ke Wali</h3>
+                                <p class="text-[10px] text-slate-400">Tautkan santri asuhan (anak ke-1, ke-2, dst)</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeAdminConnectStudentModal()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-[#1c2836] flex items-center justify-center transition">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body Form -->
+                    <form id="form-connect-student" onsubmit="handleSaveConnectStudent(event)" class="p-4 space-y-3.5">
+                        <!-- Alert Container -->
+                        <div id="connect-student-alert" class="hidden p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                            <span id="connect-student-alert-text"></span>
+                        </div>
+
+                        <!-- 1. Pilih / Target Wali Santri -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1">Wali Santri (Akun Induk)</label>
+                            <select id="connect-wali-select" required class="w-full px-3 py-2 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="">-- Pilih Akun Wali Santri --</option>
+                            </select>
+                        </div>
+
+                        <!-- 2. Pilih Santri yang Akan Dihubungkan -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1">Pilih Santri (Anak)</label>
+                            <select id="connect-student-select" required class="w-full px-3 py-2 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="">-- Pilih Santri dari Database --</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400 mt-1">Santri akan langsung muncul di dashboard wali terkait.</p>
+                        </div>
+
+                        <!-- 3. Hubungan Keluarga -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1">Hubungan Keluarga</label>
+                            <select id="connect-relationship-select" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="MOTHER">Ibu Kandung (Mother)</option>
+                                <option value="FATHER">Ayah Kandung (Father)</option>
+                                <option value="GUARDIAN">Wali / Keluarga (Guardian)</option>
+                            </select>
+                        </div>
+
+                        <!-- Modal Actions -->
+                        <div class="pt-3 flex items-center justify-end space-x-2 border-t border-slate-100 dark:border-[#253447]">
+                            <button type="button" onclick="closeAdminConnectStudentModal()" class="px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] rounded-xl transition">Batal</button>
+                            <button type="submit" id="btn-save-connect-student" class="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition flex items-center space-x-1.5 active:scale-95">
+                                <i class="fa-solid fa-check text-xs"></i>
+                                <span>Hubungkan Santri</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 

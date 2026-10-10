@@ -1607,6 +1607,11 @@ function doPost(e) {
       return handleAuthApiAction(action, payload, e);
     }
 
+    if (action === "exportWaliMigrationSql") {
+      const sql = generateWaliMigrationSql();
+      return ContentService.createTextOutput(sql).setMimeType(ContentService.MimeType.TEXT);
+    }
+
     if (action === "request_otp") {
       return createJsonResponse(handleRequestOTP(payload));
     }
@@ -1821,6 +1826,11 @@ function doGet(e) {
     // ========================================================
     if (action.startsWith("program.")) {
       return handleProgramApiAction(action, null, e);
+    }
+
+    if (action === "exportWaliMigrationSql") {
+      const sql = generateWaliMigrationSql();
+      return ContentService.createTextOutput(sql).setMimeType(ContentService.MimeType.TEXT);
     }
 
     return createJsonResponse({
@@ -5815,6 +5825,11 @@ function handleAuthApiAction(action, payload, e) {
       return createJsonResponse(deleteEmployeeData(employeeId, token));
     }
 
+    if (action === "exportWaliMigrationSql" || action === "auth.exportWaliMigrationSql") {
+      const sql = generateWaliMigrationSql();
+      return ContentService.createTextOutput(sql).setMimeType(ContentService.MimeType.TEXT);
+    }
+
     return createJsonResponse({
       success: false,
       message: `Action '${action}' tidak dikenali pada modul autentikasi Phase 2B.`,
@@ -5832,7 +5847,215 @@ function handleAuthApiAction(action, payload, e) {
   }
 }
 
-// ====================================================================
+/**
+ * ============================================================================
+ * GENERATOR MIGRASI SQL: SINKRONISASI DATA WALI SANTRI DARI SPREADSHEET KE SUPABASE
+ * ============================================================================
+ * Menghasilkan query SQL INSERT/UPSERT lengkap untuk:
+ * 1. public.users
+ * 2. public.wali_identities
+ * 3. public.wali_santri_map
+ * Disertai penyesuaian policy RLS Supabase agar sinkron dan tampil di dashboard Admin.
+ */
+function generateWaliMigrationSql() {
+  const ss = getDatabaseSpreadsheet();
+  if (!ss) {
+    Logger.log("❌ Error: Spreadsheet tidak dapat diakses.");
+    return "/* Error: Spreadsheet tidak dapat diakses */";
+  }
+
+  const escapeSql = (val) => {
+    if (val === null || val === undefined || String(val).trim() === "") return "NULL";
+    return "'" + String(val).replace(/'/g, "''").trim() + "'";
+  };
+
+  const escapeDateSql = (val) => {
+    if (!val) return "NOW()";
+    try {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return "NOW()";
+      return "'" + d.toISOString() + "'";
+    } catch (e) {
+      return "NOW()";
+    }
+  };
+
+  let sql = `-- ============================================================================
+-- SINKRONISASI & MIGRASI DATA WALI SANTRI (GOOGLE SHEETS -> SUPABASE)
+-- PPTQ ASNAWIYYAH CLOUD DATABASE (POSTGRESQL)
+-- Dihasilkan Otomatis pada: ${new Date().toISOString()}
+-- ============================================================================
+
+-- 1. Pastikan Kebijakan RLS (Row Level Security) Mengizinkan Pembacaan Publik/Admin
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anon Read Users" ON public.users;
+CREATE POLICY "Anon Read Users" ON public.users FOR SELECT TO anon, authenticated USING (true);
+
+ALTER TABLE IF EXISTS public.wali_identities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anon Read Wali Identities" ON public.wali_identities;
+CREATE POLICY "Anon Read Wali Identities" ON public.wali_identities FOR SELECT TO anon, authenticated USING (true);
+
+ALTER TABLE IF EXISTS public.wali_santri_map ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anon Read Wali Santri Map" ON public.wali_santri_map;
+CREATE POLICY "Anon Read Wali Santri Map" ON public.wali_santri_map FOR SELECT TO anon, authenticated USING (true);
+
+-- ============================================================================
+-- 2. MIGRASI DATA PENGGUNA (public.users & public.wali_identities)
+-- ============================================================================
+`;
+
+  // 1. Baca Sheet Wali_Identities & Users
+  const waliSheet = ss.getSheetByName("Wali_Identities");
+  const usersSheet = ss.getSheetByName("Users");
+  
+  const waliList = [];
+  const seenIds = {};
+
+  // Prioritas 1: Baca Wali_Identities
+  if (waliSheet && waliSheet.getLastRow() > 1) {
+    const data = waliSheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("identity_id") !== -1 ? headers.indexOf("identity_id") : headers.indexOf("user_id");
+    const emailIdx = headers.indexOf("email");
+    const phoneIdx = headers.indexOf("phone");
+    const nameIdx = headers.indexOf("name");
+    const roleIdx = headers.indexOf("role");
+    const statusIdx = headers.indexOf("status");
+    const createdIdx = headers.indexOf("created_at");
+    const photoIdx = headers.indexOf("photo_url");
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const id = String(row[idIdx] || "").trim();
+      if (!id || seenIds[id]) continue;
+      seenIds[id] = true;
+
+      waliList.push({
+        id: id,
+        email: emailIdx !== -1 ? String(row[emailIdx] || "").trim() : "",
+        phone: phoneIdx !== -1 ? String(row[phoneIdx] || "").trim() : "",
+        name: nameIdx !== -1 ? String(row[nameIdx] || "").trim() : "Wali Santri",
+        role: roleIdx !== -1 && String(row[roleIdx]).trim() ? String(row[roleIdx]).trim().toUpperCase() : "WALI_SANTRI",
+        status: statusIdx !== -1 && String(row[statusIdx]).trim() ? String(row[statusIdx]).trim().toUpperCase() : "ACTIVE",
+        createdAt: createdIdx !== -1 ? row[createdIdx] : null,
+        photoUrl: photoIdx !== -1 ? String(row[photoIdx] || "").trim() : ""
+      });
+    }
+  }
+
+  // Prioritas 2: Baca Users (khusus role WALI_SANTRI yang mungkin belum ada di Wali_Identities)
+  if (usersSheet && usersSheet.getLastRow() > 1) {
+    const data = usersSheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const idIdx = headers.indexOf("user_id") !== -1 ? headers.indexOf("user_id") : headers.indexOf("identity_id");
+    const emailIdx = headers.indexOf("email");
+    const phoneIdx = headers.indexOf("phone");
+    const nameIdx = headers.indexOf("name");
+    const roleIdx = headers.indexOf("role");
+    const statusIdx = headers.indexOf("status");
+    const createdIdx = headers.indexOf("created_at");
+    const photoIdx = headers.indexOf("photo_url");
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const role = roleIdx !== -1 ? String(row[roleIdx] || "").trim().toUpperCase() : "";
+      if (role !== "WALI_SANTRI") continue;
+
+      const id = String(row[idIdx] || "").trim();
+      if (!id || seenIds[id]) continue;
+      seenIds[id] = true;
+
+      waliList.push({
+        id: id,
+        email: emailIdx !== -1 ? String(row[emailIdx] || "").trim() : "",
+        phone: phoneIdx !== -1 ? String(row[phoneIdx] || "").trim() : "",
+        name: nameIdx !== -1 ? String(row[nameIdx] || "").trim() : "Wali Santri",
+        role: "WALI_SANTRI",
+        status: statusIdx !== -1 && String(row[statusIdx]).trim() ? String(row[statusIdx]).trim().toUpperCase() : "ACTIVE",
+        createdAt: createdIdx !== -1 ? row[createdIdx] : null,
+        photoUrl: photoIdx !== -1 ? String(row[photoIdx] || "").trim() : ""
+      });
+    }
+  }
+
+  // Generate SQL Users & Wali_Identities
+  waliList.forEach(w => {
+    sql += `INSERT INTO public.users (user_id, email, phone, name, role, status, created_at, photo_url)
+VALUES (${escapeSql(w.id)}, ${escapeSql(w.email)}, ${escapeSql(w.phone)}, ${escapeSql(w.name)}, ${escapeSql(w.role)}, ${escapeSql(w.status)}, ${escapeDateSql(w.createdAt)}, ${escapeSql(w.photoUrl)})
+ON CONFLICT (user_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  email = COALESCE(EXCLUDED.email, public.users.email),
+  phone = COALESCE(EXCLUDED.phone, public.users.phone),
+  status = EXCLUDED.status,
+  photo_url = COALESCE(EXCLUDED.photo_url, public.users.photo_url);
+
+INSERT INTO public.wali_identities (identity_id, email, phone, name, role, status, created_at, photo_url)
+VALUES (${escapeSql(w.id)}, ${escapeSql(w.email)}, ${escapeSql(w.phone)}, ${escapeSql(w.name)}, ${escapeSql(w.role)}, ${escapeSql(w.status)}, ${escapeDateSql(w.createdAt)}, ${escapeSql(w.photoUrl)})
+ON CONFLICT (identity_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  email = COALESCE(EXCLUDED.email, public.wali_identities.email),
+  phone = COALESCE(EXCLUDED.phone, public.wali_identities.phone),
+  status = EXCLUDED.status;
+
+`;
+  });
+
+  // 2. Baca Sheet Wali_Santri_Map
+  sql += `-- ============================================================================
+-- 3. MIGRASI DATA RELASI WALI KE SANTRI (public.wali_santri_map)
+-- ============================================================================
+`;
+  const mapSheet = ss.getSheetByName("Wali_Santri_Map");
+  let mapCount = 0;
+  if (mapSheet && mapSheet.getLastRow() > 1) {
+    const data = mapSheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const mapIdIdx = headers.indexOf("map_id");
+    const waliIdIdx = headers.indexOf("wali_id");
+    const studentIdIdx = headers.indexOf("student_id");
+    const relIdx = headers.indexOf("relationship");
+    const statusIdx = headers.indexOf("status");
+    const createdIdx = headers.indexOf("created_at");
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const mapId = String(row[mapIdIdx] || "").trim();
+      const waliId = String(row[waliIdIdx] || "").trim();
+      const studentId = String(row[studentIdIdx] || "").trim();
+      if (!mapId || !waliId || !studentId) continue;
+
+      const rel = relIdx !== -1 && String(row[relIdx]).trim() ? String(row[relIdx]).trim() : "Wali";
+      const status = statusIdx !== -1 && String(row[statusIdx]).trim() ? String(row[statusIdx]).trim().toUpperCase() : "ACTIVE";
+      const createdAt = createdIdx !== -1 ? row[createdIdx] : null;
+
+      sql += `INSERT INTO public.wali_santri_map (map_id, wali_id, student_id, relationship, status, created_at)
+VALUES (${escapeSql(mapId)}, ${escapeSql(waliId)}, ${escapeSql(studentId)}, ${escapeSql(rel)}, ${escapeSql(status)}, ${escapeDateSql(createdAt)})
+ON CONFLICT (map_id) DO UPDATE SET
+  wali_id = EXCLUDED.wali_id,
+  student_id = EXCLUDED.student_id,
+  relationship = EXCLUDED.relationship,
+  status = EXCLUDED.status;
+`;
+      mapCount++;
+    }
+  }
+
+  // Buat file di Google Drive agar tidak terpotong oleh logger limit
+  try {
+    const fileName = "MIGRASI_WALI_SANTRI_SUPABASE_" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd_HHmmss") + ".sql";
+    const driveFile = DriveApp.createFile(fileName, sql, "text/plain");
+    Logger.log(`====================================================================`);
+    Logger.log(`✅ File SQL Berhasil dibuat di Google Drive!`);
+    Logger.log(`📁 Nama File: ${fileName}`);
+    Logger.log(`🔗 Link Download/Buka: ${driveFile.getUrl()}`);
+    Logger.log(`📊 Statistik: ${waliList.length} Wali Santri, ${mapCount} Relasi Santri.`);
+    Logger.log(`====================================================================`);
+  } catch (driveErr) {
+    Logger.log("⚠️ Catatan Drive: " + driveErr.message);
+  }
+
+  return sql;
+}
 
 // >>>>>>>>>>>>>>>>>> END FILE: 02_Auth_RBAC.gs <<<<<<<<<<<<<<<<<<
 

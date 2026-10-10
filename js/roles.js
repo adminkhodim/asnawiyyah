@@ -2087,6 +2087,7 @@
     function isModuleAllowedForRole(moduleKey, roleKey) {
         if (!moduleKey) return false;
         if (moduleKey === 'hub') return true;
+        if (moduleKey === 'wali-santri') moduleKey = 'santri';
 
         if (!roleKey) {
             const ssRole = (typeof sessionStorage !== 'undefined') ? (sessionStorage.getItem('ASN_ADMIN_ROLE') || sessionStorage.getItem('asnawiyyah_admin_role')) : null;
