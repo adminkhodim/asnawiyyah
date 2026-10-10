@@ -1,12 +1,12 @@
 /**
- * Unit Test: RBAC Matrix 19 Modules x 7 Roles
+ * Unit Test: RBAC Matrix 20 Modules x 7 Roles
  */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-console.log('🧪 Menguji Logika Matriks Izin RBAC (19 Modul x 7 Peran)...');
+console.log('🧪 Menguji Logika Matriks Izin RBAC (20 Modul x 7 Peran)...');
 
 // Mock browser environment for roles.js
 const mockStorage = {
@@ -47,11 +47,11 @@ const context = vm.createContext({
 
 vm.runInContext(rolesCode, context);
 
-// 1. Verifikasi 19 Modul
+// 1. Verifikasi 20 Modul
 const matrix = mockWindow.MODULE_PERMISSIONS_MATRIX;
 assert(Array.isArray(matrix), 'MODULE_PERMISSIONS_MATRIX harus berupa array');
 console.log(`✅ Jumlah modul terdaftar: ${matrix.length}`);
-assert.strictEqual(matrix.length, 19, `Harus ada tepat 19 modul, ditemukan ${matrix.length}`);
+assert.strictEqual(matrix.length, 20, `Harus ada tepat 20 modul, ditemukan ${matrix.length}`);
 
 // Validasi struktur tiap modul
 matrix.forEach((mod, idx) => {
@@ -60,7 +60,19 @@ matrix.forEach((mod, idx) => {
     assert(mod.category, `Modul ${mod.key} harus punya category`);
     assert(mod.permissions, `Modul ${mod.key} harus punya baseline permissions`);
 });
-console.log('✅ Semua 19 modul memiliki struktur dan baseline izin yang valid');
+console.log('✅ Semua 20 modul memiliki struktur dan baseline izin yang valid');
+
+// Validasi Modul ke-20: perpulangan
+const perpulanganMod = matrix.find(m => m.key === 'perpulangan');
+assert(perpulanganMod, 'Modul perpulangan harus terdaftar dalam matriks');
+assert.strictEqual(perpulanganMod.permissions.SUPER_ADMIN, 'full');
+assert.strictEqual(perpulanganMod.permissions.ADMIN, 'full');
+assert.strictEqual(perpulanganMod.permissions.PENGASUH, 'full');
+assert.strictEqual(perpulanganMod.permissions.ASATIDZ, 'read');
+assert.strictEqual(perpulanganMod.permissions.PENGURUS, 'full');
+assert.strictEqual(perpulanganMod.permissions.BENDAHARA, 'none');
+assert.strictEqual(perpulanganMod.permissions.WALI_SANTRI, 'write');
+console.log('✅ Modul Izin & Perpulangan (Modul ke-20) terverifikasi dengan RBAC 2-Tier');
 
 // 2. Verifikasi 7 Peran
 const roles = Object.keys(mockWindow.ROLE_DEFINITIONS);

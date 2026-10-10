@@ -201,6 +201,38 @@ function doPost(e) {
     }
 
     // ========================================================
+    // MODUL KE-20: IZIN SANTRI & PERPULANGAN ACTIONS (doPost)
+    // ========================================================
+    if (action === "initIzinPerpulangan" || action === "perpulangan.initSheet") {
+      return createJsonResponse(initIzinPerpulanganSheet());
+    }
+
+    if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getIzinPerpulanganData(payload.data || payload, token));
+    }
+
+    if (action === "submitIzinPerpulangan" || action === "perpulangan.submit") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(submitIzinPerpulangan(payload.data || payload, token));
+    }
+
+    if (action === "approveIzinPengurus" || action === "perpulangan.approvePengurus") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(approveIzinPengurus(payload.data || payload, token));
+    }
+
+    if (action === "approveIzinPengasuh" || action === "perpulangan.approvePengasuh") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(approveIzinPengasuh(payload.data || payload, token));
+    }
+
+    if (action === "gateCheckIzin" || action === "perpulangan.gateCheck") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(gateCheckIzin(payload.data || payload, token));
+    }
+
+    // ========================================================
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
     // ========================================================
@@ -945,6 +977,18 @@ function doGet(e) {
       return createJsonResponse(
         getAllEmployeesData(token)
       );
+    }
+
+    // ========================================================
+    // MODUL KE-20: IZIN SANTRI & PERPULANGAN ACTIONS (doGet)
+    // ========================================================
+    if (action === "initIzinPerpulangan" || action === "perpulangan.initSheet") {
+      return createJsonResponse(initIzinPerpulanganSheet());
+    }
+
+    if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getIzinPerpulanganData(e.parameter, token));
     }
 
     // ========================================================

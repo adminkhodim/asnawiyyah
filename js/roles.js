@@ -163,7 +163,9 @@
                 { key: 'santri.export', label: 'Import Excel / Massal', desc: 'Izin mengimpor dan mengekspor data santri dari file .xlsx' },
                 { key: 'alumni.view', label: 'Melihat Rekap Alumni (IKASAPNA)', desc: 'Akses melihat direktori data alumni dan sebaran wilayah' },
                 { key: 'alumni.manage', label: 'Kelola & Ekspor Data Alumni', desc: 'Izin manajemen status, hapus, dan unduh data alumni' },
-                { key: 'unit.manage', label: 'Unit Kegiatan Santri (UKS)', desc: 'Akses mengelola ekstrakurikuler & kegiatan asrama' }
+                { key: 'unit.manage', label: 'Unit Kegiatan Santri (UKS)', desc: 'Akses mengelola ekstrakurikuler & kegiatan asrama' },
+                { key: 'perpulangan.view', label: 'Melihat Data Izin & Perpulangan', desc: 'Akses melihat daftar permohonan izin santri dan status di luar pondok' },
+                { key: 'perpulangan.manage', label: 'Kelola & Validasi Perpulangan', desc: 'Izin pengajuan izin, approval 2-tier (pengurus/pengasuh), dan scan pos gerbang' }
             ]
         },
         {
@@ -242,7 +244,8 @@
         'notifikasi': ['notifikasi.broadcast'],
         'profil-lembaga': ['profil.manage'],
         'pengaturan': ['system.config'],
-        'keuangan': ['keuangan.view', 'keuangan.spp', 'keuangan.verify']
+        'keuangan': ['keuangan.view', 'keuangan.spp', 'keuangan.verify'],
+        'perpulangan': ['perpulangan.view', 'perpulangan.manage']
     };
 
     // Default Baseline Permissions per Role (Isolasi Ketat Sesuai Ranah Tanggung Jawab)
@@ -253,26 +256,31 @@
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah', 'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
-            'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config'
+            'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config',
+            'perpulangan.view', 'perpulangan.manage'
         ],
         'ASATIDZ': [
             'santri.view',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah',
             'presensi.view', 'presensi.entry',
-            'pegawai.manage', 'profil.manage'
+            'pegawai.manage', 'profil.manage',
+            'perpulangan.view'
         ],
         'BENDAHARA': [
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'notifikasi.broadcast'
         ],
         'PENGURUS': [
             'presensi.view', 'presensi.entry', 'alumni.view', 'unit.manage', 'jadwal.manage', 'ppdb.manage',
-            'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast'
+            'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
+            'perpulangan.view', 'perpulangan.manage'
         ],
         'PENGASUH': [
-            'santri.view', 'tahfidz.view', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage'
+            'santri.view', 'tahfidz.view', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage',
+            'perpulangan.view', 'perpulangan.manage'
         ],
         'WALI_SANTRI': [
-            'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view'
+            'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view',
+            'perpulangan.view', 'perpulangan.manage'
         ]
     };
 
@@ -307,10 +315,10 @@
     let currentModalPermissions = [];
 
     // Matriks Hak Akses per Modul Sistem (CRUD & Permissions)
-    // 19 Modul Lengkap Aplikasi PPTQ Asnawiyyah
+    // 20 Modul Lengkap Aplikasi PPTQ Asnawiyyah
     // Nilai akses: 'full' (CRUD Lengkap), 'read' (Lihat Saja), 'write' (Entri/Input), 'read_own' (Milik Sendiri), 'none' (Tutup)
     const MODULE_PERMISSIONS_MATRIX = [
-        // 1. Kesantrian & Kesiswaan (8 Modul)
+        // 1. Kesantrian & Kesiswaan (9 Modul)
         {
             key: 'santri',
             category: 'Kesantrian & Pendidikan',
@@ -437,6 +445,22 @@
                 PENGURUS: 'read',
                 BENDAHARA: 'read',
                 WALI_SANTRI: 'read'
+            }
+        },
+        {
+            key: 'perpulangan',
+            category: 'Kesantrian & Pendidikan',
+            module: 'Izin Santri & Perpulangan',
+            icon: 'fa-person-walking-luggage',
+            desc: 'Pengajuan izin santri, persetujuan 2-tier (pengurus & pengasuh), surat jalan, dan pos gerbang.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'full',
+                ASATIDZ: 'read',
+                PENGURUS: 'full',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'write'
             }
         },
 
@@ -1084,7 +1108,7 @@
     }
 
     /**
-     * Render Matriks Tabel RBAC Interaktif (19 Modul x 7 Peran)
+     * Render Matriks Tabel RBAC Interaktif (20 Modul x 7 Peran)
      */
     function renderRolesMatrixTable() {
         const tbody = document.getElementById('admin-roles-matrix-body');
@@ -1817,33 +1841,33 @@
     // Mapping Modul yang Boleh Diakses per Peran
     const ROLE_ALLOWED_MODULES = {
         'SUPER_ADMIN': [
-            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni',
+            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
             'keuangan',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ADMIN': [
-            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni',
+            'santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
             'keuangan',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ASATIDZ': [
-            'tahfidz', 'presensi', 'santri', 'pegawai', 'profil-lembaga'
+            'tahfidz', 'presensi', 'santri', 'pegawai', 'profil-lembaga', 'perpulangan'
         ],
         'BENDAHARA': [
             'keuangan', 'santri', 'ppdb', 'notifikasi', 'pegawai', 'profil-lembaga', 'alumni'
         ],
         'PENGURUS': [
-            'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'ppdb', 'santri', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
+            'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'ppdb', 'santri', 'perpulangan', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
         ],
         'PENGASUH': [
-            'santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'ppdb', 'pegawai', 'berita', 'galeri', 'profil-lembaga', 'users'
+            'santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'ppdb', 'pegawai', 'perpulangan', 'berita', 'galeri', 'profil-lembaga', 'users'
         ],
         'WALI_SANTRI': [
-            'santri', 'tahfidz', 'presensi', 'berita', 'galeri', 'profil-lembaga'
+            'santri', 'tahfidz', 'presensi', 'perpulangan', 'berita', 'galeri', 'profil-lembaga'
         ]
     };
 

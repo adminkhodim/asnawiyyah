@@ -2606,17 +2606,24 @@ async function sendUserPresenceHeartbeat() {
     if (!currentId && !currentEmail && !currentPhone) {
         try {
             const adminData = JSON.parse(sessionStorage.getItem('asnawiyyah_admin_data') || localStorage.getItem('asnawiyyah_admin_data') || '{}');
-            currentId = adminData.userId || adminData.id;
+            currentId = adminData.userId || adminData.id || adminData.user_id;
             currentEmail = adminData.email;
+            currentPhone = adminData.phone;
         } catch (e) {}
     }
 
     if (!currentId && !currentEmail && !currentPhone) return;
 
     let filterParam = '';
-    if (currentId) filterParam = `user_id=eq.${encodeURIComponent(currentId)}`;
-    else if (currentEmail) filterParam = `email=eq.${encodeURIComponent(currentEmail)}`;
-    else if (currentPhone) filterParam = `phone=eq.${encodeURIComponent(currentPhone)}`;
+    if (currentId && currentEmail) {
+        filterParam = `or=(user_id.eq.${encodeURIComponent(currentId)},email.eq.${encodeURIComponent(currentEmail)})`;
+    } else if (currentId) {
+        filterParam = `user_id=eq.${encodeURIComponent(currentId)}`;
+    } else if (currentEmail) {
+        filterParam = `email=eq.${encodeURIComponent(currentEmail)}`;
+    } else if (currentPhone) {
+        filterParam = `phone=eq.${encodeURIComponent(currentPhone)}`;
+    }
 
     try {
         const deviceInfo = detectClientDeviceInfo();
@@ -2648,9 +2655,10 @@ function startUserPresenceHeartbeat() {
 function calculateUserOnlineStatus(lastSeenAt) {
     if (!lastSeenAt) return { status: 'offline', label: 'Offline', color: 'slate', text: 'Belum aktif', isOnline: false };
     const diffMs = Date.now() - new Date(lastSeenAt).getTime();
+    if (isNaN(diffMs) || diffMs < 0) return { status: 'online', label: 'Online', color: 'emerald', text: 'Online sekarang', isOnline: true };
     const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins <= 3) return { status: 'online', label: 'Online', color: 'emerald', text: 'Online sekarang', isOnline: true };
-    if (diffMins <= 7) return { status: 'idle', label: 'Idle', color: 'amber', text: `${diffMins} mnt lalu (Idle)`, isOnline: true };
+    if (diffMins <= 5) return { status: 'online', label: 'Online', color: 'emerald', text: 'Online sekarang', isOnline: true };
+    if (diffMins <= 10) return { status: 'idle', label: 'Idle', color: 'amber', text: `${diffMins} mnt lalu (Idle)`, isOnline: true };
     if (diffMins < 60) return { status: 'offline', label: 'Offline', color: 'slate', text: `${diffMins} mnt lalu`, isOnline: false };
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return { status: 'offline', label: 'Offline', color: 'slate', text: `${diffHours} jam lalu`, isOnline: false };

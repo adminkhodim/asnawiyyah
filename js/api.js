@@ -140,9 +140,10 @@
                 }
 
                 if (action === "getJadwalKegiatan") {
-                    const res = await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan?order=urutan.asc`, { headers });
+                    const res = await fetch(`${sbUrl}/rest/v1/jadwal_kegiatan?status=eq.Aktif&order=urutan.asc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
                     return {
                         status: "success",
                         data: rows.map(j => ({
@@ -387,6 +388,7 @@
                     const res = await fetch(`${sbUrl}/rest/v1/users?order=created_at.desc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
 
                     let mapRows = [];
                     try {
@@ -441,6 +443,7 @@
                     const res = await fetch(`${sbUrl}/rest/v1/students?order=name.asc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
                     const students = rows.map(s => ({
                         id: s.student_id,
                         student_id: s.student_id,
@@ -472,6 +475,7 @@
                     const res = await fetch(`${sbUrl}/rest/v1/pegawai?order=nama.asc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
                     return {
                         success: true,
                         status: "success",
@@ -1729,6 +1733,22 @@
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
                             body: JSON.stringify({ status: newStatus })
                         });
+                    }
+                }
+                else if (action === 'auth.admin.userDelete' || action === 'admin.users.delete' || action === 'admin.userDelete') {
+                    const userId = payload.userId || payload.user_id;
+                    if (userId) {
+                        // 1. Hapus relasi wali di wali_santri_map jika ada
+                        await fetch(`${sbUrl}/rest/v1/wali_santri_map?wali_id=eq.${encodeURIComponent(userId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        }).catch(e => console.warn('[SB DELETE WALI MAP WARN]', e));
+
+                        // 2. Hapus baris user di tabel users
+                        await fetch(`${sbUrl}/rest/v1/users?user_id=eq.${encodeURIComponent(userId)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        }).catch(e => console.warn('[SB DELETE USER WARN]', e));
                     }
                 }
 

@@ -2185,6 +2185,128 @@ function toggleUserStatus(payload, token) {
   }
 }
 
+/**
+ * Menghapus akun pengguna secara permanen (Khusus SUPER_ADMIN)
+ */
+function deleteAdminUserData(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+        if (!actor || actor.role !== "SUPER_ADMIN") {
+          return {
+            success: false,
+            status: "forbidden",
+            message: "Hanya Super Administrator yang berhak menghapus akun pengguna secara permanen."
+          };
+        }
+      }
+    } else {
+      return {
+        success: false,
+        status: "unauthorized",
+        message: "Sesi autentikasi Super Admin diperlukan."
+      };
+    }
+
+    const userId = String(payload.userId || payload.user_id || payload.id || "").trim();
+    if (!userId) {
+      return { success: false, message: "User ID target wajib disertakan." };
+    }
+
+    // Proteksi self-deletion (Super admin tidak boleh menghapus dirinya sendiri)
+    if (actor && (actor.userId === userId || actor.id === userId || (actor.email && payload.email && actor.email.toLowerCase() === String(payload.email).toLowerCase()))) {
+      return {
+        success: false,
+        status: "error",
+        message: "Ditolak: Anda tidak dapat menghapus akun Super Admin yang sedang aktif digunakan!"
+      };
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) return { success: false, message: "Spreadsheet database tidak dapat diakses." };
+
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return { success: false, message: "Sheet Users tidak ditemukan." };
+
+    const uData = usersSheet.getDataRange().getValues();
+    const uHeaders = uData[0].map(h => String(h || "").trim().toLowerCase());
+    let idIdx = uHeaders.indexOf("user_id");
+    if (idIdx === -1) idIdx = uHeaders.indexOf("id");
+    const emailIdx = uHeaders.indexOf("email");
+
+    let deletedUserName = "";
+    let deletedUserEmail = "";
+    let userRowDeleted = false;
+
+    for (let i = 1; i < uData.length; i++) {
+      const rowId = idIdx !== -1 ? String(uData[i][idIdx] || "").trim() : "";
+      if (rowId === userId) {
+        const nameIdx = uHeaders.indexOf("name") !== -1 ? uHeaders.indexOf("name") : uHeaders.indexOf("nama");
+        deletedUserName = nameIdx !== -1 ? String(uData[i][nameIdx] || "") : "";
+        deletedUserEmail = emailIdx !== -1 ? String(uData[i][emailIdx] || "") : "";
+        
+        usersSheet.deleteRow(i + 1);
+        userRowDeleted = true;
+        break;
+      }
+    }
+
+    // Hapus juga pemetaan dari sheet Wali_Santri_Map jika ada
+    try {
+      const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+      if (mapSheet) {
+        const mData = mapSheet.getDataRange().getValues();
+        for (let m = mData.length - 1; m >= 1; m--) {
+          const mapWaliId = String(mData[m][1] || "").trim();
+          if (mapWaliId === userId) {
+            mapSheet.deleteRow(m + 1);
+          }
+        }
+      }
+    } catch (mapErr) {
+      console.warn("[DELETE USER MAP ERROR]", mapErr);
+    }
+
+    // Hapus dari sheet identitas legacy jika ada
+    try {
+      ["Admin_Identities", "Pengasuh_Identities", "Wali_Identities"].forEach(sheetName => {
+        const idSheet = ss.getSheetByName(sheetName);
+        if (idSheet) {
+          const idData = idSheet.getDataRange().getValues();
+          for (let r = idData.length - 1; r >= 1; r--) {
+            if (String(idData[r][0] || "").trim() === userId || (deletedUserEmail && String(idData[r][1] || "").trim().toLowerCase() === deletedUserEmail.toLowerCase())) {
+              idSheet.deleteRow(r + 1);
+            }
+          }
+        }
+      });
+    } catch (identErr) {
+      console.warn("[DELETE USER IDENTITIES ERROR]", identErr);
+    }
+
+    return {
+      success: true,
+      status: "success",
+      deletedUserId: userId,
+      message: userRowDeleted 
+        ? `Akun pengguna ${deletedUserName ? `"${deletedUserName}"` : userId} berhasil dihapus permanen.`
+        : `Akun ${userId} telah dibersihkan dari sistem.`
+    };
+  } catch (err) {
+    console.error("[DELETE USER ERROR]", err);
+    return {
+      success: false,
+      status: "error",
+      message: "Gagal menghapus pengguna: " + err.message
+    };
+  }
+}
+
 // ============================================================
 // MANAJEMEN PERAN & HAK AKSES SISTEM (RBAC)
 // Terintegrasi dengan Sheet Roles_Permissions & Fast Cache
@@ -3785,6 +3907,11 @@ function handleAuthApiAction(action, payload, e) {
     if (action === "auth.admin.userToggleStatus" || action === "admin.users.toggleStatus" || action === "admin.userToggleStatus") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       return createJsonResponse(toggleUserStatus(payload.data || payload, token));
+    }
+
+    if (action === "auth.admin.userDelete" || action === "admin.users.delete" || action === "admin.userDelete") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(deleteAdminUserData(payload.data || payload, token));
     }
 
     // ----------------------------------------------------

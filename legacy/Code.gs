@@ -978,6 +978,38 @@ function doPost(e) {
     }
 
     // ========================================================
+    // MODUL KE-20: IZIN SANTRI & PERPULANGAN ACTIONS (doPost)
+    // ========================================================
+    if (action === "initIzinPerpulangan" || action === "perpulangan.initSheet") {
+      return createJsonResponse(initIzinPerpulanganSheet());
+    }
+
+    if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getIzinPerpulanganData(payload.data || payload, token));
+    }
+
+    if (action === "submitIzinPerpulangan" || action === "perpulangan.submit") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(submitIzinPerpulangan(payload.data || payload, token));
+    }
+
+    if (action === "approveIzinPengurus" || action === "perpulangan.approvePengurus") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(approveIzinPengurus(payload.data || payload, token));
+    }
+
+    if (action === "approveIzinPengasuh" || action === "perpulangan.approvePengasuh") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(approveIzinPengasuh(payload.data || payload, token));
+    }
+
+    if (action === "gateCheckIzin" || action === "perpulangan.gateCheck") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(gateCheckIzin(payload.data || payload, token));
+    }
+
+    // ========================================================
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
     // ========================================================
@@ -1722,6 +1754,18 @@ function doGet(e) {
       return createJsonResponse(
         getAllEmployeesData(token)
       );
+    }
+
+    // ========================================================
+    // MODUL KE-20: IZIN SANTRI & PERPULANGAN ACTIONS (doGet)
+    // ========================================================
+    if (action === "initIzinPerpulangan" || action === "perpulangan.initSheet") {
+      return createJsonResponse(initIzinPerpulanganSheet());
+    }
+
+    if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getIzinPerpulanganData(e.parameter, token));
     }
 
     // ========================================================
@@ -3941,6 +3985,128 @@ function toggleUserStatus(payload, token) {
   }
 }
 
+/**
+ * Menghapus akun pengguna secara permanen (Khusus SUPER_ADMIN)
+ */
+function deleteAdminUserData(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+        if (!actor || actor.role !== "SUPER_ADMIN") {
+          return {
+            success: false,
+            status: "forbidden",
+            message: "Hanya Super Administrator yang berhak menghapus akun pengguna secara permanen."
+          };
+        }
+      }
+    } else {
+      return {
+        success: false,
+        status: "unauthorized",
+        message: "Sesi autentikasi Super Admin diperlukan."
+      };
+    }
+
+    const userId = String(payload.userId || payload.user_id || payload.id || "").trim();
+    if (!userId) {
+      return { success: false, message: "User ID target wajib disertakan." };
+    }
+
+    // Proteksi self-deletion (Super admin tidak boleh menghapus dirinya sendiri)
+    if (actor && (actor.userId === userId || actor.id === userId || (actor.email && payload.email && actor.email.toLowerCase() === String(payload.email).toLowerCase()))) {
+      return {
+        success: false,
+        status: "error",
+        message: "Ditolak: Anda tidak dapat menghapus akun Super Admin yang sedang aktif digunakan!"
+      };
+    }
+
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) return { success: false, message: "Spreadsheet database tidak dapat diakses." };
+
+    const usersSheet = getAuthSheet(ss, SHEET_USERS);
+    if (!usersSheet) return { success: false, message: "Sheet Users tidak ditemukan." };
+
+    const uData = usersSheet.getDataRange().getValues();
+    const uHeaders = uData[0].map(h => String(h || "").trim().toLowerCase());
+    let idIdx = uHeaders.indexOf("user_id");
+    if (idIdx === -1) idIdx = uHeaders.indexOf("id");
+    const emailIdx = uHeaders.indexOf("email");
+
+    let deletedUserName = "";
+    let deletedUserEmail = "";
+    let userRowDeleted = false;
+
+    for (let i = 1; i < uData.length; i++) {
+      const rowId = idIdx !== -1 ? String(uData[i][idIdx] || "").trim() : "";
+      if (rowId === userId) {
+        const nameIdx = uHeaders.indexOf("name") !== -1 ? uHeaders.indexOf("name") : uHeaders.indexOf("nama");
+        deletedUserName = nameIdx !== -1 ? String(uData[i][nameIdx] || "") : "";
+        deletedUserEmail = emailIdx !== -1 ? String(uData[i][emailIdx] || "") : "";
+        
+        usersSheet.deleteRow(i + 1);
+        userRowDeleted = true;
+        break;
+      }
+    }
+
+    // Hapus juga pemetaan dari sheet Wali_Santri_Map jika ada
+    try {
+      const mapSheet = getAuthSheet(ss, SHEET_WALI_SANTRI_MAP);
+      if (mapSheet) {
+        const mData = mapSheet.getDataRange().getValues();
+        for (let m = mData.length - 1; m >= 1; m--) {
+          const mapWaliId = String(mData[m][1] || "").trim();
+          if (mapWaliId === userId) {
+            mapSheet.deleteRow(m + 1);
+          }
+        }
+      }
+    } catch (mapErr) {
+      console.warn("[DELETE USER MAP ERROR]", mapErr);
+    }
+
+    // Hapus dari sheet identitas legacy jika ada
+    try {
+      ["Admin_Identities", "Pengasuh_Identities", "Wali_Identities"].forEach(sheetName => {
+        const idSheet = ss.getSheetByName(sheetName);
+        if (idSheet) {
+          const idData = idSheet.getDataRange().getValues();
+          for (let r = idData.length - 1; r >= 1; r--) {
+            if (String(idData[r][0] || "").trim() === userId || (deletedUserEmail && String(idData[r][1] || "").trim().toLowerCase() === deletedUserEmail.toLowerCase())) {
+              idSheet.deleteRow(r + 1);
+            }
+          }
+        }
+      });
+    } catch (identErr) {
+      console.warn("[DELETE USER IDENTITIES ERROR]", identErr);
+    }
+
+    return {
+      success: true,
+      status: "success",
+      deletedUserId: userId,
+      message: userRowDeleted 
+        ? `Akun pengguna ${deletedUserName ? `"${deletedUserName}"` : userId} berhasil dihapus permanen.`
+        : `Akun ${userId} telah dibersihkan dari sistem.`
+    };
+  } catch (err) {
+    console.error("[DELETE USER ERROR]", err);
+    return {
+      success: false,
+      status: "error",
+      message: "Gagal menghapus pengguna: " + err.message
+    };
+  }
+}
+
 // ============================================================
 // MANAJEMEN PERAN & HAK AKSES SISTEM (RBAC)
 // Terintegrasi dengan Sheet Roles_Permissions & Fast Cache
@@ -5541,6 +5707,11 @@ function handleAuthApiAction(action, payload, e) {
     if (action === "auth.admin.userToggleStatus" || action === "admin.users.toggleStatus" || action === "admin.userToggleStatus") {
       const token = payload.token || (payload.data && payload.data.token) || "";
       return createJsonResponse(toggleUserStatus(payload.data || payload, token));
+    }
+
+    if (action === "auth.admin.userDelete" || action === "admin.users.delete" || action === "admin.userDelete") {
+      const token = payload.token || (payload.data && payload.data.token) || "";
+      return createJsonResponse(deleteAdminUserData(payload.data || payload, token));
     }
 
     // ----------------------------------------------------
@@ -13352,9 +13523,450 @@ function deleteEmployeeData(employeeId, token) {
   }
 }
 
+// ============================================================================
+// MODUL KE-20: IZIN SANTRI & PERPULANGAN (TWO-TIER APPROVAL & GATE CHECK)
+// ============================================================================
 
+const SHEET_IZIN_PERPULANGAN = "Izin_Perpulangan";
 
+const IZIN_PERPULANGAN_HEADERS = [
+  "ID_Izin", "Student_ID", "NIS", "Nama_Santri", 
+  "Wali_ID", "Nama_Wali", "No_WA_Wali", "Kategori", 
+  "Alasan", "Nama_Penjemput", "Hubungan_Penjemput", "Kontak_Penjemput", 
+  "Tgl_Mulai", "Jam_Mulai", "Tgl_Kembali", "Jam_Kembali", 
+  "Status", "Pengurus_Approved_By", "Pengurus_Approved_At", "Pengurus_Catatan", 
+  "Pengasuh_Approved_By", "Pengasuh_Approved_At", "Pengasuh_Catatan", 
+  "Alasan_Penolakan", "Checkout_At", "Checkout_Petugas", 
+  "Checkin_At", "Checkin_Petugas", "Catatan_Keterlambatan", 
+  "Created_At", "Updated_At"
+];
 
+/**
+ * Inisialisasi Tab Izin_Perpulangan di Google Sheets
+ */
+function initIzinPerpulanganSheet() {
+  try {
+    const ss = getDatabaseSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_IZIN_PERPULANGAN);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_IZIN_PERPULANGAN);
+      sheet.getRange(1, 1, 1, IZIN_PERPULANGAN_HEADERS.length).setValues([IZIN_PERPULANGAN_HEADERS]);
+      sheet.getRange(1, 1, 1, IZIN_PERPULANGAN_HEADERS.length).setFontWeight("bold").setBackground("#dcfce7");
+      sheet.setFrozenRows(1);
+      Logger.log(`[SCHEMA AUTO-INIT] Tab '${SHEET_IZIN_PERPULANGAN}' berhasil dibuat otomatis di Google Sheets.`);
+    } else {
+      // Pastikan header lengkap
+      const lastCol = sheet.getLastColumn();
+      if (lastCol === 0) {
+        sheet.getRange(1, 1, 1, IZIN_PERPULANGAN_HEADERS.length).setValues([IZIN_PERPULANGAN_HEADERS]);
+        sheet.getRange(1, 1, 1, IZIN_PERPULANGAN_HEADERS.length).setFontWeight("bold").setBackground("#dcfce7");
+        sheet.setFrozenRows(1);
+      }
+    }
+    return {
+      status: "success",
+      success: true,
+      message: `Tab '${SHEET_IZIN_PERPULANGAN}' berhasil disiapkan di Google Sheets.`,
+      sheetName: SHEET_IZIN_PERPULANGAN
+    };
+  } catch (err) {
+    console.error("[INIT IZIN SHEET ERROR]", err);
+    return { status: "error", success: false, message: "Gagal membuat sheet Izin_Perpulangan: " + err.message };
+  }
+}
+
+/**
+ * Helper mendapatkan sheet Izin_Perpulangan (dengan auto-create resilien)
+ */
+function getIzinSheet() {
+  const ss = getDatabaseSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_IZIN_PERPULANGAN);
+  if (!sheet) {
+    initIzinPerpulanganSheet();
+    sheet = ss.getSheetByName(SHEET_IZIN_PERPULANGAN);
+  }
+  return sheet;
+}
+
+/**
+ * Mengambil daftar data perizinan santri
+ */
+function getIzinPerpulanganData(params = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    if (!sheet) return { status: "success", success: true, data: [] };
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) {
+      return { status: "success", success: true, data: [], summary: { total: 0, menungguPengurus: 0, menungguPengasuh: 0, disetujui: 0, keluar: 0, kembali: 0, terlambat: 0, ditolak: 0 } };
+    }
+
+    const headers = data[0].map(h => String(h || "").trim());
+    const headerMap = {};
+    headers.forEach((h, idx) => { headerMap[h] = idx; });
+
+    let rows = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const idIzin = String(row[headerMap["ID_Izin"]] || "").trim();
+      if (!idIzin) continue;
+
+      const item = {
+        idIzin: idIzin,
+        studentId: String(row[headerMap["Student_ID"]] || "").trim(),
+        studentNis: String(row[headerMap["NIS"]] || "").trim(),
+        studentName: String(row[headerMap["Nama_Santri"]] || "").trim(),
+        waliId: String(row[headerMap["Wali_ID"]] || "").trim(),
+        waliName: String(row[headerMap["Nama_Wali"]] || "").trim(),
+        waliPhone: String(row[headerMap["No_WA_Wali"]] || "").trim(),
+        kategori: String(row[headerMap["Kategori"]] || "").trim(),
+        alasan: String(row[headerMap["Alasan"]] || "").trim(),
+        penjemputNama: String(row[headerMap["Nama_Penjemput"]] || "").trim(),
+        penjemputHubungan: String(row[headerMap["Hubungan_Penjemput"]] || "").trim(),
+        penjemputKontak: String(row[headerMap["Kontak_Penjemput"]] || "").trim(),
+        tglMulai: String(row[headerMap["Tgl_Mulai"]] || "").trim(),
+        jamMulai: String(row[headerMap["Jam_Mulai"]] || "").trim(),
+        tglKembali: String(row[headerMap["Tgl_Kembali"]] || "").trim(),
+        jamKembali: String(row[headerMap["Jam_Kembali"]] || "").trim(),
+        status: String(row[headerMap["Status"]] || "MENUNGGU_PENGURUS").trim(),
+        pengurusApprovedBy: String(row[headerMap["Pengurus_Approved_By"]] || "").trim(),
+        pengurusApprovedAt: String(row[headerMap["Pengurus_Approved_At"]] || "").trim(),
+        pengurusCatatan: String(row[headerMap["Pengurus_Catatan"]] || "").trim(),
+        pengasuhApprovedBy: String(row[headerMap["Pengasuh_Approved_By"]] || "").trim(),
+        pengasuhApprovedAt: String(row[headerMap["Pengasuh_Approved_At"]] || "").trim(),
+        pengasuhCatatan: String(row[headerMap["Pengasuh_Catatan"]] || "").trim(),
+        alasanPenolakan: String(row[headerMap["Alasan_Penolakan"]] || "").trim(),
+        checkoutAt: String(row[headerMap["Checkout_At"]] || "").trim(),
+        checkoutPetugas: String(row[headerMap["Checkout_Petugas"]] || "").trim(),
+        checkinAt: String(row[headerMap["Checkin_At"]] || "").trim(),
+        checkinPetugas: String(row[headerMap["Checkin_Petugas"]] || "").trim(),
+        catatanKeterlambatan: String(row[headerMap["Catatan_Keterlambatan"]] || "").trim(),
+        createdAt: String(row[headerMap["Created_At"]] || "").trim(),
+        updatedAt: String(row[headerMap["Updated_At"]] || "").trim()
+      };
+
+      // Filter parameter jika ada
+      if (params.waliId && item.waliId !== String(params.waliId).trim()) continue;
+      if (params.studentId && item.studentId !== String(params.studentId).trim()) continue;
+      if (params.status && item.status !== String(params.status).trim()) continue;
+      if (params.kategori && item.kategori !== String(params.kategori).trim()) continue;
+
+      rows.push(item);
+    }
+
+    // Urutkan dari yang terbaru
+    rows.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    const summary = {
+      total: rows.length,
+      menungguPengurus: rows.filter(r => r.status === "MENUNGGU_PENGURUS").length,
+      menungguPengasuh: rows.filter(r => r.status === "MENUNGGU_PENGASUH").length,
+      disetujui: rows.filter(r => r.status === "DISETUJUI").length,
+      keluar: rows.filter(r => r.status === "KELUAR").length,
+      kembali: rows.filter(r => r.status === "KEMBALI").length,
+      terlambat: rows.filter(r => r.status === "TERLAMBAT").length,
+      ditolak: rows.filter(r => r.status === "DITOLAK").length
+    };
+
+    return {
+      status: "success",
+      success: true,
+      data: rows,
+      summary: summary
+    };
+  } catch (err) {
+    console.error("[GET IZIN ERROR]", err);
+    return { status: "error", success: false, message: "Gagal mengambil data perizinan: " + err.message };
+  }
+}
+
+/**
+ * Menyimpan pengajuan izin baru (Wali Santri / Admin)
+ */
+function submitIzinPerpulangan(payload = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    if (!sheet) throw new Error("Gagal mengakses database Izin_Perpulangan.");
+
+    const now = new Date();
+    const dateCode = Utilities.formatDate(now, "GMT+7", "yyyyMMdd");
+    const randCode = Math.floor(1000 + Math.random() * 9000);
+    const idIzin = payload.idIzin || payload.id_izin || `IZN-${dateCode}-${randCode}`;
+
+    const studentId = String(payload.studentId || payload.student_id || "").trim();
+    const studentNis = String(payload.studentNis || payload.student_nis || payload.nis || "").trim();
+    const studentName = String(payload.studentName || payload.student_name || payload.nama || "").trim();
+    const waliId = String(payload.waliId || payload.wali_id || "ADMIN_MANUAL").trim();
+    const waliName = String(payload.waliName || payload.wali_name || "Wali Santri").trim();
+    const waliPhone = String(payload.waliPhone || payload.wali_phone || "").trim();
+    const kategori = String(payload.kategori || "Pulang ke Rumah / Libur Terjadwal").trim();
+    const alasan = String(payload.alasan || "").trim();
+    const penjemputNama = String(payload.penjemputNama || payload.penjemput_nama || waliName).trim();
+    const penjemputHubungan = String(payload.penjemputHubungan || payload.penjemput_hubungan || "Orang Tua").trim();
+    const penjemputKontak = String(payload.penjemputKontak || payload.penjemput_kontak || waliPhone).trim();
+    const tglMulai = String(payload.tglMulai || payload.tgl_mulai || "").trim();
+    const jamMulai = String(payload.jamMulai || payload.jam_mulai || "08:00").trim();
+    const tglKembali = String(payload.tglKembali || payload.tgl_kembali || "").trim();
+    const jamKembali = String(payload.jamKembali || payload.jam_kembali || "17:00").trim();
+    const status = "MENUNGGU_PENGURUS";
+    const createdAt = now.toISOString();
+    const updatedAt = createdAt;
+
+    if (!studentName) throw new Error("Nama santri wajib disertakan.");
+    if (!tglMulai || !tglKembali) throw new Error("Tanggal berangkat dan tanggal kembali wajib diisi.");
+    if (!alasan) throw new Error("Alasan perizinan wajib diisi.");
+
+    const newRow = [
+      idIzin, studentId, studentNis, studentName,
+      waliId, waliName, waliPhone, kategori,
+      alasan, penjemputNama, penjemputHubungan, penjemputKontak,
+      tglMulai, jamMulai, tglKembali, jamKembali,
+      status, "", "", "", // Pengurus approval fields
+      "", "", "",         // Pengasuh approval fields
+      "",                 // Alasan penolakan
+      "", "",             // Checkout fields
+      "", "",             // Checkin fields
+      "",                 // Catatan keterlambatan
+      createdAt, updatedAt
+    ];
+
+    sheet.appendRow(newRow);
+
+    return {
+      status: "success",
+      success: true,
+      idIzin: idIzin,
+      message: `Pengajuan izin untuk ${studentName} berhasil dikirim (Menunggu Persetujuan Pengurus Keamanan).`,
+      data: {
+        idIzin, studentId, studentNis, studentName, status, kategori, tglMulai, tglKembali, createdAt
+      }
+    };
+  } catch (err) {
+    console.error("[SUBMIT IZIN ERROR]", err);
+    return { status: "error", success: false, message: "Gagal menyimpan pengajuan izin: " + err.message };
+  }
+}
+
+/**
+ * Persetujuan Tahap 1: Pengurus Keamanan / Asatidz Piket
+ */
+function approveIzinPengurus(payload = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    const idIzin = String(payload.idIzin || payload.id_izin || "").trim();
+    const isApproved = Boolean(payload.approved !== false && payload.status !== "DITOLAK");
+    const actorName = String(payload.actorName || payload.adminName || "Pengurus Keamanan").trim();
+    const catatan = String(payload.catatan || "").trim();
+
+    if (!idIzin) throw new Error("ID Izin wajib disertakan.");
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim());
+    const idIdx = headers.indexOf("ID_Izin");
+    const statusIdx = headers.indexOf("Status");
+    const byIdx = headers.indexOf("Pengurus_Approved_By");
+    const atIdx = headers.indexOf("Pengurus_Approved_At");
+    const noteIdx = headers.indexOf("Pengurus_Catatan");
+    const rejectIdx = headers.indexOf("Alasan_Penolakan");
+    const updatedIdx = headers.indexOf("Updated_At");
+
+    let foundRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === idIzin) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    if (foundRow < 0) throw new Error(`Data izin ${idIzin} tidak ditemukan.`);
+
+    const nowIso = new Date().toISOString();
+    const nextStatus = isApproved ? "MENUNGGU_PENGASUH" : "DITOLAK";
+
+    sheet.getRange(foundRow, statusIdx + 1).setValue(nextStatus);
+    sheet.getRange(foundRow, byIdx + 1).setValue(actorName);
+    sheet.getRange(foundRow, atIdx + 1).setValue(nowIso);
+    sheet.getRange(foundRow, noteIdx + 1).setValue(catatan);
+    if (!isApproved) {
+      sheet.getRange(foundRow, rejectIdx + 1).setValue(catatan || "Ditolak oleh Pengurus Keamanan");
+    }
+    sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+
+    return {
+      status: "success",
+      success: true,
+      idIzin: idIzin,
+      newStatus: nextStatus,
+      message: isApproved 
+        ? `Izin ${idIzin} disetujui Pengurus Keamanan (Diteruskan ke Dewan Pengasuh).`
+        : `Izin ${idIzin} telah ditolak.`
+    };
+  } catch (err) {
+    console.error("[APPROVE PENGURUS ERROR]", err);
+    return { status: "error", success: false, message: "Gagal memproses persetujuan pengurus: " + err.message };
+  }
+}
+
+/**
+ * Persetujuan Tahap 2: Dewan Pengasuh
+ */
+function approveIzinPengasuh(payload = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    const idIzin = String(payload.idIzin || payload.id_izin || "").trim();
+    const isApproved = Boolean(payload.approved !== false && payload.status !== "DITOLAK");
+    const actorName = String(payload.actorName || payload.pengasuhName || "Dewan Pengasuh").trim();
+    const catatan = String(payload.catatan || "").trim();
+
+    if (!idIzin) throw new Error("ID Izin wajib disertakan.");
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim());
+    const idIdx = headers.indexOf("ID_Izin");
+    const statusIdx = headers.indexOf("Status");
+    const byIdx = headers.indexOf("Pengasuh_Approved_By");
+    const atIdx = headers.indexOf("Pengasuh_Approved_At");
+    const noteIdx = headers.indexOf("Pengasuh_Catatan");
+    const rejectIdx = headers.indexOf("Alasan_Penolakan");
+    const updatedIdx = headers.indexOf("Updated_At");
+
+    let foundRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === idIzin) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    if (foundRow < 0) throw new Error(`Data izin ${idIzin} tidak ditemukan.`);
+
+    const nowIso = new Date().toISOString();
+    const nextStatus = isApproved ? "DISETUJUI" : "DITOLAK";
+
+    sheet.getRange(foundRow, statusIdx + 1).setValue(nextStatus);
+    sheet.getRange(foundRow, byIdx + 1).setValue(actorName);
+    sheet.getRange(foundRow, atIdx + 1).setValue(nowIso);
+    sheet.getRange(foundRow, noteIdx + 1).setValue(catatan);
+    if (!isApproved) {
+      sheet.getRange(foundRow, rejectIdx + 1).setValue(catatan || "Ditolak oleh Dewan Pengasuh");
+    }
+    sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+
+    return {
+      status: "success",
+      success: true,
+      idIzin: idIzin,
+      newStatus: nextStatus,
+      message: isApproved 
+        ? `Izin ${idIzin} resmi disetujui Pengasuh. Surat & Kartu Izin Digital siap dicetak.`
+        : `Izin ${idIzin} telah ditolak oleh Pengasuh.`
+    };
+  } catch (err) {
+    console.error("[APPROVE PENGASUH ERROR]", err);
+    return { status: "error", success: false, message: "Gagal memproses persetujuan pengasuh: " + err.message };
+  }
+}
+
+/**
+ * Operasional Pos Gerbang: Check-Out (Keluar) & Check-In (Kembali)
+ */
+function gateCheckIzin(payload = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    const idIzin = String(payload.idIzin || payload.id_izin || "").trim();
+    const tipeAksi = String(payload.tipeAksi || payload.tipe || "checkout").toLowerCase();
+    const petugasName = String(payload.petugasName || payload.petugas || "Petugas Gerbang").trim();
+    const catatan = String(payload.catatan || "").trim();
+
+    if (!idIzin) throw new Error("ID Izin wajib disertakan.");
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h || "").trim());
+    const idIdx = headers.indexOf("ID_Izin");
+    const statusIdx = headers.indexOf("Status");
+    const tglKembaliIdx = headers.indexOf("Tgl_Kembali");
+    const jamKembaliIdx = headers.indexOf("Jam_Kembali");
+    const checkoutAtIdx = headers.indexOf("Checkout_At");
+    const checkoutPetugasIdx = headers.indexOf("Checkout_Petugas");
+    const checkinAtIdx = headers.indexOf("Checkin_At");
+    const checkinPetugasIdx = headers.indexOf("Checkin_Petugas");
+    const catatanLateIdx = headers.indexOf("Catatan_Keterlambatan");
+    const updatedIdx = headers.indexOf("Updated_At");
+
+    let foundRow = -1;
+    let currentRow = null;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === idIzin) {
+        foundRow = i + 1;
+        currentRow = data[i];
+        break;
+      }
+    }
+
+    if (foundRow < 0) throw new Error(`Data izin ${idIzin} tidak ditemukan.`);
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+
+    if (tipeAksi === "checkout" || tipeAksi === "keluar") {
+      sheet.getRange(foundRow, statusIdx + 1).setValue("KELUAR");
+      sheet.getRange(foundRow, checkoutAtIdx + 1).setValue(nowIso);
+      sheet.getRange(foundRow, checkoutPetugasIdx + 1).setValue(petugasName);
+      sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        newStatus: "KELUAR",
+        message: `Check-out berhasil. Santri resmi dicatat meninggalkan pondok pada ${Utilities.formatDate(now, "GMT+7", "dd/MM/yyyy HH:mm")} WIB.`
+      };
+    } else {
+      // Check-in (Kembali ke pondok)
+      // Cek apakah santri kembali terlambat
+      const planDate = String(currentRow[tglKembaliIdx] || "").trim();
+      const planTime = String(currentRow[jamKembaliIdx] || "23:59").trim();
+      let isLate = false;
+      let lateNote = catatan;
+
+      if (planDate) {
+        try {
+          const deadlineStr = `${planDate}T${planTime.length === 5 ? planTime : (planTime + ':00')}+07:00`;
+          const deadlineDate = new Date(deadlineStr);
+          if (now > deadlineDate) {
+            isLate = true;
+            const diffHours = Math.round((now - deadlineDate) / (1000 * 60 * 60));
+            lateNote = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${planDate} ${planTime} WIB). ${catatan}`.trim();
+          }
+        } catch (e) {}
+      }
+
+      const finalStatus = isLate ? "TERLAMBAT" : "KEMBALI";
+
+      sheet.getRange(foundRow, statusIdx + 1).setValue(finalStatus);
+      sheet.getRange(foundRow, checkinAtIdx + 1).setValue(nowIso);
+      sheet.getRange(foundRow, checkinPetugasIdx + 1).setValue(petugasName);
+      if (isLate || lateNote) {
+        sheet.getRange(foundRow, catatanLateIdx + 1).setValue(lateNote);
+      }
+      sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        newStatus: finalStatus,
+        isLate: isLate,
+        message: isLate 
+          ? `Check-in dicatat: Santri kembali TERLAMBAT (${lateNote}).`
+          : `Check-in berhasil: Santri kembali tepat waktu di pondok.`
+      };
+    }
+  } catch (err) {
+    console.error("[GATE CHECK ERROR]", err);
+    return { status: "error", success: false, message: "Gagal memproses check gerbang: " + err.message };
+  }
+}
 
 // >>>>>>>>>>>>>>>>>> END FILE: 06_MasterData.gs <<<<<<<<<<<<<<<<<<
 

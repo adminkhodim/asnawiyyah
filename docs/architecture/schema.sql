@@ -436,6 +436,59 @@ CREATE TABLE IF NOT EXISTS pendaftar_ppdb (
 
 CREATE INDEX IF NOT EXISTS idx_ppdb_nisn ON pendaftar_ppdb(nisn);
 
+-- [TAB 27] Izin_Perpulangan (Modul ke-20: Izin Santri & Perpulangan 2-Tier Approval)
+CREATE TABLE IF NOT EXISTS izin_perpulangan (
+    id_izin VARCHAR(64) PRIMARY KEY, -- Format: IZN-YYYYMMDD-XXXX
+    student_id VARCHAR(64) NOT NULL,
+    student_nis VARCHAR(32) NOT NULL,
+    student_name VARCHAR(255) NOT NULL,
+    wali_id VARCHAR(64) NOT NULL,
+    wali_name VARCHAR(255),
+    wali_phone VARCHAR(32),
+    kategori VARCHAR(64) NOT NULL CHECK (kategori IN (
+        'Pulang ke Rumah / Libur Terjadwal',
+        'Kepentingan Mendesak Keluarga',
+        'Izin Sakit / Berobat Luar',
+        'Tugas / Delegasi Pondok'
+    )),
+    alasan TEXT NOT NULL,
+    penjemput_nama VARCHAR(128),
+    penjemput_hubungan VARCHAR(64) DEFAULT 'Orang Tua',
+    penjemput_kontak VARCHAR(32),
+    tgl_mulai VARCHAR(32) NOT NULL,
+    jam_mulai VARCHAR(16) NOT NULL,
+    tgl_kembali VARCHAR(32) NOT NULL,
+    jam_kembali VARCHAR(16) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'MENUNGGU_PENGURUS' CHECK (status IN (
+        'MENUNGGU_PENGURUS',
+        'MENUNGGU_PENGASUH',
+        'DISETUJUI',
+        'DITOLAK',
+        'KELUAR',
+        'KEMBALI',
+        'TERLAMBAT'
+    )),
+    pengurus_approved_by VARCHAR(128),
+    pengurus_approved_at TIMESTAMPTZ,
+    pengurus_catatan TEXT,
+    pengasuh_approved_by VARCHAR(128),
+    pengasuh_approved_at TIMESTAMPTZ,
+    pengasuh_catatan TEXT,
+    alasan_penolakan TEXT,
+    checkout_at TIMESTAMPTZ,
+    checkout_petugas VARCHAR(128),
+    checkin_at TIMESTAMPTZ,
+    checkin_petugas VARCHAR(128),
+    catatan_keterlambatan TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_izin_student ON izin_perpulangan(student_id);
+CREATE INDEX IF NOT EXISTS idx_izin_nis ON izin_perpulangan(student_nis);
+CREATE INDEX IF NOT EXISTS idx_izin_wali ON izin_perpulangan(wali_id);
+CREATE INDEX IF NOT EXISTS idx_izin_status ON izin_perpulangan(status, created_at DESC);
+
 -- ============================================================================
 -- 5. ALIAS VIEWS UNTUK KOMPATIBILITAS PENAMAAN SPREADSHEET (100% SEAMLESS)
 -- ============================================================================
@@ -445,6 +498,7 @@ CREATE INDEX IF NOT EXISTS idx_ppdb_nisn ON pendaftar_ppdb(nisn);
 CREATE OR REPLACE VIEW wali_santri_maps AS SELECT * FROM wali_santri_map;
 CREATE OR REPLACE VIEW data_alumni AS SELECT * FROM alumni;
 CREATE OR REPLACE VIEW pendaftar AS SELECT * FROM pendaftar_ppdb;
+CREATE OR REPLACE VIEW santri_leaves AS SELECT * FROM izin_perpulangan;
 
 -- ============================================================================
 -- 6. ROW LEVEL SECURITY (RLS) POLICIES
@@ -460,6 +514,7 @@ ALTER TABLE pendaftar_ppdb ENABLE ROW LEVEL SECURITY;
 ALTER TABLE galeri ENABLE ROW LEVEL SECURITY;
 ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jadwal_kegiatan ENABLE ROW LEVEL SECURITY;
+ALTER TABLE izin_perpulangan ENABLE ROW LEVEL SECURITY;
 
 -- Publik read-only untuk portal landing page
 CREATE POLICY "Public Read Active Berita" ON berita FOR SELECT USING (status = 'Publish');
@@ -467,6 +522,25 @@ CREATE POLICY "Public Read Active Banner" ON banner FOR SELECT USING (status = '
 CREATE POLICY "Public Read Active Notifikasi" ON notifikasi FOR SELECT USING (status = 'Aktif');
 CREATE POLICY "Public Read Active Galeri" ON galeri FOR SELECT USING (status = 'Aktif');
 CREATE POLICY "Public Read Published Programs" ON programs FOR SELECT USING (status = 'published');
-CREATE POLICY "Public Read Active Jadwal Kegiatan" ON jadwal_kegiatan FOR SELECT USING (true);
-CREATE POLICY "Full Access Jadwal Kegiatan" ON jadwal_kegiatan FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Read Active Jadwal Kegiatan" ON jadwal_kegiatan FOR SELECT TO anon, authenticated USING (status = 'Aktif');
+
+-- Hak akses mutasi data dibatasi ke pengguna terautentikasi (authenticated)
+CREATE POLICY "Admin Full Access Jadwal Kegiatan" ON jadwal_kegiatan FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin Full Access Berita" ON berita FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin Full Access Banner" ON banner FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin Full Access Notifikasi" ON notifikasi FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin Full Access Galeri" ON galeri FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin Full Access Programs" ON programs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Proteksi ketat tabel data sensitif santri dan pengguna (Tertutup penuh untuk anonim)
+CREATE POLICY "Authenticated Read Students" ON students FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admin Manage Students" ON students FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "User Read Own Profile" ON users FOR SELECT TO authenticated USING (auth.uid()::text = user_id OR auth.jwt() ->> 'email' = email);
+CREATE POLICY "Admin Full Access Users" ON users FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Proteksi perizinan santri & perpulangan
+CREATE POLICY "Authenticated Read Izin Perpulangan" ON izin_perpulangan FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admin Manage Izin Perpulangan" ON izin_perpulangan FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
 

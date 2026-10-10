@@ -6796,9 +6796,21 @@
                     if (tabAdmin) tabAdmin.innerText = adminCount + superAdminCount;
 
                     // Update Tab Online & KPI Super Admin
+                    let activeUserEmail = '';
+                    let activeUserId = '';
+                    try {
+                        const cur = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser) || null;
+                        if (cur) {
+                            activeUserEmail = (cur.email || '').toLowerCase();
+                            activeUserId = cur.userId || cur.user_id || cur.id || '';
+                        }
+                    } catch (e) {}
+
                     const onlineCount = adminUsersList.filter(u => {
                         const st = typeof calculateUserOnlineStatus === 'function' ? calculateUserOnlineStatus(u.last_seen_at) : { isOnline: false };
-                        return st.isOnline;
+                        const isSelf = (activeUserEmail && u.email && u.email.toLowerCase() === activeUserEmail) || 
+                                       (activeUserId && (u.user_id === activeUserId || u.userId === activeUserId));
+                        return st.isOnline || isSelf;
                     }).length;
                     const tabOnline = document.getElementById('user-tab-count-online');
                     if (tabOnline) tabOnline.innerText = onlineCount;
@@ -6836,11 +6848,23 @@
             // Filter Peran & Status Online
             if (adminUsersFilterRole && adminUsersFilterRole !== 'ALL') {
                 if (adminUsersFilterRole === 'ONLINE') {
+                    let activeUserEmail = '';
+                    let activeUserId = '';
+                    try {
+                        const cur = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser) || null;
+                        if (cur) {
+                            activeUserEmail = (cur.email || '').toLowerCase();
+                            activeUserId = cur.userId || cur.user_id || cur.id || '';
+                        }
+                    } catch (e) {}
+
                     filtered = filtered.filter(u => {
                         const presence = typeof calculateUserOnlineStatus === 'function' 
                             ? calculateUserOnlineStatus(u.last_seen_at) 
                             : { isOnline: false };
-                        return presence.isOnline;
+                        const isSelf = (activeUserEmail && u.email && u.email.toLowerCase() === activeUserEmail) || 
+                                       (activeUserId && (u.user_id === activeUserId || u.userId === activeUserId));
+                        return presence.isOnline || isSelf;
                     });
                 } else if (adminUsersFilterRole === 'ASATIDZ' || adminUsersFilterRole === 'PEGAWAI') {
                     filtered = filtered.filter(u => u.role === 'ASATIDZ' || u.role === 'PEGAWAI' || u.role === 'EDITOR');
@@ -6875,7 +6899,9 @@
 
             if (emptyEl) emptyEl.classList.add('hidden');
 
-            const canManageUsers = typeof window.hasPermission === 'function' ? window.hasPermission('users.manage') : true;
+            const currentActorRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                                     sessionStorage.getItem('ASN_ADMIN_ROLE') || 'ADMIN';
+            const isSuperAdminActor = currentActorRole === 'SUPER_ADMIN';
 
             tbody.innerHTML = filtered.map(user => {
                 const safeUserId = String(user.userId || user.identityId || '').replace(/'/g, "\\'");
@@ -6949,9 +6975,26 @@
                 ` : `<span class="text-slate-400 text-[10px]">-</span>`;
 
                 // Status Kehadiran Online
-                const presence = typeof calculateUserOnlineStatus === 'function' 
+                let isRowUserSelf = false;
+                try {
+                    const cur = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser) || null;
+                    if (cur) {
+                        const curEmail = (cur.email || '').toLowerCase();
+                        const curId = cur.userId || cur.user_id || cur.id || '';
+                        if ((curEmail && user.email && user.email.toLowerCase() === curEmail) || 
+                            (curId && (user.user_id === curId || user.userId === curId))) {
+                            isRowUserSelf = true;
+                        }
+                    }
+                } catch (e) {}
+
+                let presence = typeof calculateUserOnlineStatus === 'function' 
                     ? calculateUserOnlineStatus(user.last_seen_at) 
                     : { status: 'offline', label: 'Offline', color: 'slate', text: 'Offline', isOnline: false };
+
+                if (isRowUserSelf && !presence.isOnline) {
+                    presence = { status: 'online', label: 'Online', color: 'emerald', text: 'Online sekarang (Sesi Anda)', isOnline: true };
+                }
 
                 const onlineIndicator = presence.isOnline 
                     ? `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#15202d] animate-pulse shrink-0 inline-block" title="Online Sekarang (${user.device_info || 'Perangkat'})"></span>`
@@ -6996,6 +7039,11 @@
                                 <button type="button" onclick="toggleAdminUserStatus('${safeUserId}', '${status}')" class="px-2 py-1 rounded-lg text-xs font-semibold transition active:scale-95 ${isActive ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'}" title="${isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}">
                                     <i class="fa-solid ${isActive ? 'fa-user-slash' : 'fa-user-check'} text-[11px]"></i>
                                 </button>
+                                ${isSuperAdminActor && !isRowUserSelf ? `
+                                <button type="button" onclick="deleteAdminUser('${safeUserId}', '${safeName}', '${safeEmail}')" class="px-2 py-1 rounded-lg text-xs font-semibold transition active:scale-95 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40" title="Hapus Akun Pengguna Permanen (Khusus Super Admin)">
+                                    <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                </button>
+                                ` : ''}
                             </div>
                             ` : `<span class="text-xs text-slate-400 italic">Lihat Saja</span>`}
                         </td>
@@ -7364,6 +7412,95 @@
             } catch (err) {
                 console.error('[TOGGLE STATUS ERROR]', err);
                 if (typeof showToast === 'function') showToast('❌ ' + err.message);
+            }
+        }
+
+        /**
+         * Hapus akun pengguna secara permanen (Khusus Super Administrator)
+         */
+        async function deleteAdminUser(userId, userName, userEmail) {
+            if (!userId) return;
+
+            const currentActorRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
+                                     sessionStorage.getItem('ASN_ADMIN_ROLE') || 'ADMIN';
+            const isSuperAdminActor = currentActorRole === 'SUPER_ADMIN';
+
+            if (!isSuperAdminActor) {
+                if (typeof showToast === 'function') {
+                    showToast("⛔ Akses Ditolak: Hanya Super Administrator yang berhak menghapus akun pengguna secara permanen.");
+                }
+                return;
+            }
+
+            // Proteksi akun diri sendiri (Self-deletion prevention)
+            let isRowUserSelf = false;
+            try {
+                const cur = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser) || null;
+                if (cur) {
+                    const curEmail = (cur.email || '').toLowerCase();
+                    const curId = cur.userId || cur.user_id || cur.id || '';
+                    if ((curEmail && userEmail && userEmail.toLowerCase() === curEmail) || 
+                        (curId && (userId === curId))) {
+                        isRowUserSelf = true;
+                    }
+                }
+            } catch (e) {}
+
+            if (isRowUserSelf) {
+                if (typeof showToast === 'function') {
+                    showToast("⚠️ Ditolak: Anda tidak dapat menghapus akun Super Admin Anda sendiri yang sedang aktif!");
+                }
+                return;
+            }
+
+            const targetName = userName || userId;
+            const targetEmail = userEmail || '-';
+
+            const confirmMsg = `⚠️ PERINGATAN SUPER ADMINISTRATOR:\n\nApakah Anda yakin ingin MENGHAPUS PERMANEN akun pengguna berikut?\n\n• Nama: ${targetName}\n• Email: ${targetEmail}\n• ID: ${userId}\n\nAkun akan dibersihkan dari Google Sheets dan Cloud Database Supabase. Tindakan ini TIDAK DAPAT DIBATALKAN.\n\nLanjutkan penghapusan?`;
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(`⏳ Sedang menghapus akun "${targetName}"...`);
+            }
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || localStorage.getItem("asnawiyyah_admin_token") || "";
+                let response = null;
+
+                const payload = {
+                    userId: userId,
+                    email: userEmail
+                };
+
+                if (typeof authApiPost === 'function') {
+                    response = await authApiPost('auth.admin.userDelete', { token, ...payload });
+                } else if (typeof apiPost === 'function') {
+                    response = await apiPost('auth.admin.userDelete', { token, ...payload });
+                }
+
+                // Dual-Delete ke Supabase Cloud DB
+                if (typeof window.syncToSupabaseOnWrite === 'function') {
+                    await window.syncToSupabaseOnWrite('auth.admin.userDelete', payload, response).catch(e => console.warn('[SUPABASE DUAL-DELETE WARN]', e));
+                }
+
+                if (response && (response.success || response.status === 'success')) {
+                    if (typeof showToast === 'function') {
+                        showToast(response.message || `✅ Akun "${targetName}" berhasil dihapus permanen!`);
+                    }
+                } else {
+                    const msg = (response && response.message) || `Akun ${targetName} telah dibersihkan.`;
+                    if (typeof showToast === 'function') showToast(`ℹ️ ${msg}`);
+                }
+
+                // Refresh tabel pengguna seketika
+                await loadAdminUsersData();
+            } catch (err) {
+                console.error('[DELETE USER ERROR]', err);
+                if (typeof showToast === 'function') showToast('❌ Gagal menghapus akun: ' + err.message);
+                await loadAdminUsersData();
             }
         }
 

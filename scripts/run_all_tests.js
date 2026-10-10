@@ -19,7 +19,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const ALL_CANDIDATE_SUITES = [
   { name: 'Syntax Integrity (JS & GS)', file: 'scripts/check_syntax.js' },
   { name: 'Keaktifan Asatidz RBAC & Deadline Verification', file: 'scripts/test_keaktifan.js' },
-  { name: 'RBAC 19-Modules Permissions Matrix Suite', file: 'scripts/test_roles_matrix.js' },
+  { name: 'RBAC 20-Modules Permissions Matrix Suite', file: 'scripts/test_roles_matrix.js' },
   { name: 'Modular Apps Script Backend Verification', file: 'scratch/test_modular_backend.js' },
   { name: 'P0 Security Remediation Suite', file: 'scratch/test_p0_security_remediation.js' },
   { name: 'P1 Session TTL & Security Expiry Suite', file: 'scratch/test_p1_session_ttl.js' },
