@@ -543,7 +543,8 @@ function recordNewsView(payload) {
     }
 
     var currentViews = Number(sheet.getRange(targetRow, 10).getValue()) || 0;
-    var newViews = currentViews + 1;
+    var clientViews = Number(payload.views || (payload.data && payload.data.views)) || 0;
+    var newViews = Math.max(currentViews + 1, clientViews);
     sheet.getRange(targetRow, 10).setValue(newViews);
 
     return { success: true, views: newViews };
