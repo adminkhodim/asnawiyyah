@@ -62,4 +62,8 @@ assert(authJs.includes("token.startsWith('WALI_QUICK_')"), 'verifySession harus 
 assert(authJs.includes("PARENT_AUTH_ACTIVE: 'WALI_AUTH_ACTIVE'"), 'ASN_STATES harus memiliki alias PARENT_AUTH_ACTIVE');
 console.log('✅ Verifikasi preservasi sesi cepat (Zero-Logout upon Reload) lolos.');
 
+// 5. Verifikasi Nomor Bantuan WhatsApp Wali Santri
+assert(html.includes('href="https://wa.me/6282293199456?text='), 'index.html harus mengarahkan tombol bantuan WhatsApp ke nomor 6282293199456');
+console.log('✅ Verifikasi nomor bantuan WhatsApp 6282293199456 lolos.');
+
 console.log('🎉 SELURUH PENGUJIAN QUICK LOGIN (NIS & PIN) LULUS!');
