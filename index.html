@@ -10457,8 +10457,68 @@
                     <span id="parent-auth-alert-text">Pesan error autentikasi</span>
                 </div>
 
-                <!-- STEP 1: REQUEST OTP (EMAIL INPUT & GOOGLE SSO) -->
-                <form id="form-parent-request-otp" onsubmit="handleParentRequestOtp(event)" class="space-y-3">
+                <!-- PILIHAN METODE LOGIN (TAB SWITCHER) -->
+                <div class="flex p-1 bg-slate-100 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e]">
+                    <button type="button" id="tab-btn-parent-nis" onclick="switchParentAuthMethod('nis')"
+                        class="flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-[#2b3b4f]">
+                        <i class="fa-solid fa-bolt text-amber-500"></i>
+                        <span>Masuk Cepat NIS & PIN</span>
+                    </button>
+                    <button type="button" id="tab-btn-parent-otp" onclick="switchParentAuthMethod('otp')"
+                        class="flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                        <i class="fa-brands fa-google text-slate-400"></i>
+                        <span>Google / Email OTP</span>
+                    </button>
+                </div>
+
+                <!-- METODE 1: LOGIN CEPAT VIA NIS & TANGGAL LAHIR (ZERO-OTP) -->
+                <form id="form-parent-nis-login" onsubmit="handleParentQuickLoginNis(event)" class="space-y-3.5">
+                    <div class="p-3 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/50 rounded-2xl text-left flex items-start gap-2.5">
+                        <i class="fa-solid fa-circle-check text-amber-600 dark:text-amber-400 mt-0.5 text-xs shrink-0"></i>
+                        <p class="text-[11px] text-amber-900 dark:text-amber-200 leading-snug">
+                            <strong>Akses Langsung Sosialisasi:</strong> Bebas kode OTP email. Cukup gunakan <strong>NIS Santri</strong> dan <strong>Tanggal Lahir</strong> putra/putri Anda sebagai PIN otentikasi.
+                        </p>
+                    </div>
+
+                    <div class="relative text-left">
+                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1">
+                            Nomor Induk Santri (NIS)
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                                <i class="fa-solid fa-id-card"></i>
+                            </span>
+                            <input type="text" id="parent-login-nis" required placeholder="Masukkan NIS santri (cth: 2024001)" 
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="relative text-left">
+                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase mb-1 flex items-center justify-between">
+                            <span>PIN Tanggal Lahir Santri</span>
+                            <span class="text-[9px] font-normal text-slate-400 lowercase">format: hari/bulan/tahun</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                                <i class="fa-solid fa-cake-candles"></i>
+                            </span>
+                            <input type="date" id="parent-login-birthdate" required
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 text-left">
+                            *Digunakan sebagai PIN verifikasi orang tua (hanya diketahui pihak keluarga & pesantren)
+                        </p>
+                    </div>
+
+                    <button type="submit" id="btn-parent-nis-login" 
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2 cursor-pointer">
+                        <span>Masuk ke Dashboard Wali Santri</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+                    </button>
+                </form>
+
+                <!-- METODE 2: GOOGLE 1-KLIK & EMAIL OTP (WRAPPER) -->
+                <div id="parent-otp-methods-wrapper" class="hidden space-y-3">
                     <!-- Google 1-Klik Button (Prominent) -->
                     <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#283a4e] space-y-2">
                         <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wide">Paling Mudah & Instan</span>
@@ -10471,41 +10531,44 @@
                         <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
                     </div>
 
-                    <div class="relative text-left">
-                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Wali Santri Terdaftar</label>
-                        <input type="email" id="parent-auth-email" placeholder="nama@gmail.com" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
-                    </div>
+                    <!-- STEP 1: REQUEST OTP (EMAIL INPUT) -->
+                    <form id="form-parent-request-otp" onsubmit="handleParentRequestOtp(event)" class="space-y-3">
+                        <div class="relative text-left">
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Wali Santri Terdaftar</label>
+                            <input type="email" id="parent-auth-email" placeholder="nama@gmail.com" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2.5 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
 
-                    <button type="submit" id="btn-parent-request-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
-                        <span>Kirim Kode OTP ke Email</span>
-                        <i class="fa-solid fa-paper-plane text-xs"></i>
-                    </button>
-                </form>
-
-                <!-- STEP 2: VERIFY OTP (6 DIGITS) -->
-                <form id="form-parent-verify-otp" onsubmit="handleParentVerifyOtp(event)" class="hidden space-y-3">
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-xl text-[11px] text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-[#253447]">
-                        Kode OTP 6 digit telah dikirimkan ke: <br>
-                        <strong id="parent-auth-target-email" class="text-emerald-600 dark:text-emerald-400 font-bold"></strong>
-                    </div>
-
-                    <div class="relative text-left">
-                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Masukkan 6 Digit OTP</label>
-                        <input type="text" id="parent-otp-code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
-                    </div>
-
-                    <button type="submit" id="btn-parent-verify-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
-                        <span>Verifikasi & Masuk Dashboard Wali</span>
-                        <i class="fa-solid fa-check"></i>
-                    </button>
-
-                    <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
-                        <button type="button" onclick="resetParentAuthStep()" class="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
-                            Ganti Email
+                        <button type="submit" id="btn-parent-request-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                            <span>Kirim Kode OTP ke Email</span>
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
                         </button>
-                        <span id="parent-otp-cooldown" class="text-slate-400">Kirim ulang dalam 60s</span>
-                    </div>
-                </form>
+                    </form>
+
+                    <!-- STEP 2: VERIFY OTP (6 DIGITS) -->
+                    <form id="form-parent-verify-otp" onsubmit="handleParentVerifyOtp(event)" class="hidden space-y-3">
+                        <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-xl text-[11px] text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-[#253447]">
+                            Kode OTP 6 digit telah dikirimkan ke: <br>
+                            <strong id="parent-auth-target-email" class="text-emerald-600 dark:text-emerald-400 font-bold"></strong>
+                        </div>
+
+                        <div class="relative text-left">
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Masukkan 6 Digit OTP</label>
+                            <input type="text" id="parent-otp-code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-emerald-500 outline-none transition">
+                        </div>
+
+                        <button type="submit" id="btn-parent-verify-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                            <span>Verifikasi & Masuk Dashboard Wali</span>
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+
+                        <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
+                            <button type="button" onclick="resetParentAuthStep()" class="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                                Ganti Email
+                            </button>
+                            <span id="parent-otp-cooldown" class="text-slate-400">Kirim ulang dalam 60s</span>
+                        </div>
+                    </form>
+                </div>
 
                 <!-- ACTIVATION CTA FOR NEW WALI SANTRI -->
                 <div class="pt-3 border-t border-slate-100 dark:border-[#253447] text-center space-y-2">

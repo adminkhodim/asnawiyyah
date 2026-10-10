@@ -1949,8 +1949,8 @@ function openParentAuthModal() {
     modal.classList.remove('hidden');
     setTimeout(() => {
         content.classList.remove('scale-95', 'opacity-0');
-        const emailInput = document.getElementById('parent-auth-email') || document.getElementById('parent-auth-phone');
-        if (emailInput) emailInput.focus();
+        const nisInput = document.getElementById('parent-login-nis');
+        if (nisInput) nisInput.focus();
         if (typeof initGoogleAuth === 'function') initGoogleAuth();
     }, 50);
 }
@@ -1967,8 +1967,47 @@ function closeParentAuthModal() {
     }, 250);
 }
 
+function switchParentAuthMethod(method) {
+    const tabNis = document.getElementById('tab-btn-parent-nis');
+    const tabOtp = document.getElementById('tab-btn-parent-otp');
+    const formNis = document.getElementById('form-parent-nis-login');
+    const wrapperOtp = document.getElementById('parent-otp-methods-wrapper');
+    const alertBox = document.getElementById('parent-auth-alert');
+
+    if (alertBox) alertBox.classList.add('hidden');
+
+    if (method === 'nis') {
+        if (tabNis) {
+            tabNis.className = 'flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-[#2b3b4f]';
+        }
+        if (tabOtp) {
+            tabOtp.className = 'flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+        }
+        if (formNis) formNis.classList.remove('hidden');
+        if (wrapperOtp) wrapperOtp.classList.add('hidden');
+        setTimeout(() => {
+            const nisInput = document.getElementById('parent-login-nis');
+            if (nisInput) nisInput.focus();
+        }, 50);
+    } else {
+        if (tabOtp) {
+            tabOtp.className = 'flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-[#2b3b4f]';
+        }
+        if (tabNis) {
+            tabNis.className = 'flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+        }
+        if (formNis) formNis.classList.add('hidden');
+        if (wrapperOtp) wrapperOtp.classList.remove('hidden');
+        setTimeout(() => {
+            const emailInput = document.getElementById('parent-auth-email');
+            if (emailInput) emailInput.focus();
+        }, 50);
+    }
+}
+
 function resetParentAuthStep() {
     stopParentOtpCooldown();
+    switchParentAuthMethod('nis');
     const formReq = document.getElementById('form-parent-request-otp');
     const formVer = document.getElementById('form-parent-verify-otp');
     const alertBox = document.getElementById('parent-auth-alert');
@@ -1979,6 +2018,245 @@ function resetParentAuthStep() {
 
     const otpInput = document.getElementById('parent-otp-code');
     if (otpInput) otpInput.value = '';
+    const nisInput = document.getElementById('parent-login-nis');
+    if (nisInput) nisInput.value = '';
+    const birthInput = document.getElementById('parent-login-birthdate');
+    if (birthInput) birthInput.value = '';
+}
+
+/**
+ * Login Mandiri Cepat via NIS & Tanggal Lahir (Zero-OTP untuk Sosialisasi)
+ */
+async function handleParentQuickLoginNis(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const btn = document.getElementById('btn-parent-nis-login');
+    const alertBox = document.getElementById('parent-auth-alert');
+    const alertText = document.getElementById('parent-auth-alert-text');
+    const nisInput = document.getElementById('parent-login-nis');
+    const birthInput = document.getElementById('parent-login-birthdate');
+
+    const nis = (nisInput?.value || '').trim();
+    const birthDate = (birthInput?.value || '').trim();
+
+    if (!nis || !birthDate) {
+        if (alertBox && alertText) {
+            alertText.innerText = 'Nomor Induk Santri (NIS) dan PIN Tanggal Lahir wajib diisi.';
+            alertBox.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i><span>Memverifikasi Data Santri...</span>`;
+    }
+    if (alertBox) alertBox.classList.add('hidden');
+
+    try {
+        const config = window.ASNAWIYYAH_CONFIG || {};
+        const sbUrl = config.supabaseUrl;
+        const sbKey = config.supabaseKey;
+
+        const headers = (sbKey) ? {
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`,
+            'Content-Type': 'application/json'
+        } : {};
+
+        // 1. Cari data santri dari memori / cache lokal
+        let student = null;
+        let localList = [];
+        if (typeof window.adminStudentsData !== 'undefined' && Array.isArray(window.adminStudentsData)) {
+            localList = window.adminStudentsData;
+        } else {
+            try {
+                const cached = localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE');
+                if (cached) localList = JSON.parse(cached);
+            } catch(e) {}
+        }
+
+        const cleanNis = nis.toLowerCase();
+        student = localList.find(s => {
+            const sNis = String(s.nis || s.nisn || '').toLowerCase().trim();
+            const sId = String(s.studentId || s.student_id || '').toLowerCase().trim();
+            return sNis === cleanNis || sId === cleanNis;
+        });
+
+        // Jika belum ada di memori, query ke Supabase REST API
+        if (!student && sbUrl && sbKey) {
+            const encNis = encodeURIComponent(nis);
+            const queryUrl = `${sbUrl}/rest/v1/students?or=(nis.eq.${encNis},student_id.eq.${encNis},nisn.eq.${encNis})&limit=1`;
+            try {
+                const sRes = await fetch(queryUrl, { headers });
+                if (sRes.ok) {
+                    const resArr = await sRes.json();
+                    if (Array.isArray(resArr) && resArr.length > 0) {
+                        student = resArr[0];
+                    }
+                }
+            } catch (errSup) {
+                console.warn('[QUICK LOGIN] Supabase lookup error:', errSup);
+            }
+        }
+
+        // Fallback jika belum ketemu juga: coba cek via Google Apps Script endpoint jika tersedia
+        if (!student && typeof authApiPost === 'function') {
+            try {
+                const fbRes = await authApiPost('getStudentByNis', { nis: nis });
+                if (fbRes && (fbRes.student || fbRes.data)) {
+                    student = fbRes.student || fbRes.data;
+                }
+            } catch(e) {}
+        }
+
+        if (!student) {
+            throw new Error(`Data santri dengan NIS "${nis}" tidak ditemukan. Mohon periksa kembali NIS santri Anda atau hubungi panitia.`);
+        }
+
+        // 2. Verifikasi PIN Tanggal Lahir Santri
+        const rawStudentBirth = student.birthDate || student.birth_date || student.tanggal_lahir || student.tgl_lahir || '';
+        if (rawStudentBirth) {
+            const normInput = typeof normalizeBirthDate === 'function' ? normalizeBirthDate(birthDate) : birthDate.replace(/[^0-9]/g, '');
+            const normDb = typeof normalizeBirthDate === 'function' ? normalizeBirthDate(rawStudentBirth) : rawStudentBirth.replace(/[^0-9]/g, '');
+            if (normInput && normDb && normInput !== normDb) {
+                throw new Error('PIN Tanggal Lahir tidak cocok dengan data resmi madrasah. Pastikan PIN tanggal lahir tepat.');
+            }
+        }
+
+        const studentId = student.studentId || student.student_id || student.id || student.nis;
+
+        // Normalisasi objek student agar sesuai dengan tampilan dashboard
+        const normalizedStudent = {
+            studentId: studentId,
+            id: studentId,
+            name: student.name || student.nama || ('Santri ' + nis),
+            nis: student.nis || nis,
+            nisn: student.nisn || '',
+            gender: student.gender || student.jenis_kelamin || 'L',
+            kelas: student.kelas || student.grade || 'Aktif',
+            kamar: student.kamar || student.room || '-',
+            status: student.status || 'AKTIF',
+            foto: student.foto || student.photo || student.avatar || '',
+            tanggal_lahir: rawStudentBirth || birthDate,
+            birthDate: rawStudentBirth || birthDate
+        };
+
+        // 3. Resolusi Profil Wali
+        let parentData = {
+            userId: 'USR_WLI_' + (student.nis || studentId),
+            identityId: 'ID_WLI_' + (student.nis || studentId),
+            id: 'WLI_' + (student.nis || studentId),
+            name: student.nama_wali || student.wali || student.nama_ayah || student.nama_ibu || ('Wali Santri (' + normalizedStudent.name + ')'),
+            email: student.email_wali || ('wali.' + (student.nis || studentId) + '@asnawiyyah.wali'),
+            phone: student.no_hp_wali || student.no_wa_wali || student.telepon_wali || '',
+            role: 'WALI_SANTRI'
+        };
+
+        let linkedStudentsList = [normalizedStudent];
+
+        // Cari di Supabase wali_santri_map apakah sudah ada profil & saudara terdaftar
+        if (sbUrl && sbKey) {
+            try {
+                const mapRes = await fetch(`${sbUrl}/rest/v1/wali_santri_map?student_id=eq.${encodeURIComponent(studentId)}&select=*,wali_identities(*)&limit=1`, { headers });
+                if (mapRes.ok) {
+                    const mapArr = await mapRes.json();
+                    if (Array.isArray(mapArr) && mapArr.length > 0) {
+                        const m = mapArr[0];
+                        if (m.wali_identities) {
+                            parentData.name = m.wali_identities.name || parentData.name;
+                            parentData.email = m.wali_identities.email || parentData.email;
+                            parentData.phone = m.wali_identities.phone || parentData.phone;
+                            parentData.userId = m.wali_identities.user_id || m.wali_identities.wali_id || parentData.userId;
+                            parentData.identityId = m.wali_identities.identity_id || m.wali_identities.wali_id || parentData.identityId;
+                        }
+                        if (m.wali_id) {
+                            // Cek saudara kandung yang terdaftar dengan wali_id yang sama
+                            const sibRes = await fetch(`${sbUrl}/rest/v1/wali_santri_map?wali_id=eq.${encodeURIComponent(m.wali_id)}&select=student_id`, { headers });
+                            if (sibRes.ok) {
+                                const sibArr = await sibRes.json();
+                                if (Array.isArray(sibArr) && sibArr.length > 1) {
+                                    const sibIds = sibArr.map(x => x.student_id).filter(id => String(id) !== String(studentId));
+                                    if (sibIds.length > 0) {
+                                        const encIds = sibIds.map(encodeURIComponent).join(',');
+                                        const otherStudsRes = await fetch(`${sbUrl}/rest/v1/students?student_id=in.(${encIds})`, { headers });
+                                        if (otherStudsRes.ok) {
+                                            const otherArr = await otherStudsRes.json();
+                                            if (Array.isArray(otherArr)) {
+                                                otherArr.forEach(os => {
+                                                    linkedStudentsList.push({
+                                                        studentId: os.studentId || os.student_id || os.id || os.nis,
+                                                        id: os.studentId || os.student_id || os.id || os.nis,
+                                                        name: os.name || os.nama || 'Santri',
+                                                        nis: os.nis || '',
+                                                        gender: os.gender || os.jenis_kelamin || 'L',
+                                                        kelas: os.kelas || os.grade || 'Aktif',
+                                                        kamar: os.kamar || os.room || '-',
+                                                        status: os.status || 'AKTIF',
+                                                        foto: os.foto || os.photo || ''
+                                                    });
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Belum ada mapping, otomatis buatkan mapping di Supabase
+                        const nowIso = new Date().toISOString();
+                        const newMapId = `MAP_${parentData.userId.replace(/[^a-zA-Z0-9]/g, '')}_${String(studentId).replace(/[^a-zA-Z0-9]/g, '')}`;
+                        fetch(`${sbUrl}/rest/v1/wali_santri_map`, {
+                            method: 'POST',
+                            headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+                            body: JSON.stringify({
+                                map_id: newMapId,
+                                wali_id: parentData.userId,
+                                student_id: studentId,
+                                relationship: 'GUARDIAN',
+                                status: 'VERIFIED',
+                                created_at: nowIso
+                            })
+                        }).catch(e => console.warn('[AUTO-MAP CATCH]', e));
+                    }
+                }
+            } catch (errRel) {
+                console.warn('[QUICK LOGIN] Map resolution catch:', errRel);
+            }
+        }
+
+        // 4. Generate Session Token & Login
+        const sessionToken = 'WALI_QUICK_TOKEN_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+        ASNIdentity.setParentSession(sessionToken, parentData, linkedStudentsList);
+
+        // 5. Tutup modal & navigasikan ke dashboard wali
+        closeParentAuthModal();
+
+        if (typeof switchTab === 'function') {
+            switchTab('pengaturan');
+        }
+
+        if (typeof showToast === 'function') {
+            showToast(`Ahlan wa Sahlan, ${parentData.name}! Berhasil masuk ke Dashboard Wali Santri.`);
+        }
+
+        const waliDashboard = document.getElementById('account-state-wali');
+        if (waliDashboard) {
+            setTimeout(() => {
+                waliDashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 150);
+        }
+
+    } catch (err) {
+        if (alertBox && alertText) {
+            alertText.innerText = err.message || 'Gagal memverifikasi identitas santri.';
+            alertBox.classList.remove('hidden');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<span>Masuk ke Dashboard Wali Santri</span><i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>`;
+        }
+    }
 }
 
 async function handleParentRequestOtp(e) {
@@ -3095,3 +3373,5 @@ window.openSelfServiceConnectStudentModal = openSelfServiceConnectStudentModal;
 window.closeSelfServiceConnectStudentModal = closeSelfServiceConnectStudentModal;
 window.normalizeBirthDate = normalizeBirthDate;
 window.handleSelfServiceConnectStudent = handleSelfServiceConnectStudent;
+window.switchParentAuthMethod = switchParentAuthMethod;
+window.handleParentQuickLoginNis = handleParentQuickLoginNis;
