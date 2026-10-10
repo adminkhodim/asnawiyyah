@@ -580,99 +580,289 @@
             renderAdminNewsList();
         }
 
+              // ---------- FUNGSI HELPER EDITORIAL BERITA ----------
+        function getNewsThumbnail(news) {
+            const defaultNewsImage = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop";
+            let imgSource = (news && news.gambar && String(news.gambar).trim()) ? news.gambar : '';
+
+            // Jika gambar kosong atau URL kopi lama, cari gambar pertama dari isi berita
+            if ((!imgSource || imgSource.includes('photo-1584286595398-a59f21d313f5')) && news && news.isi) {
+                const match = String(news.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
+                    imgSource = match[1];
+                }
+            }
+            if (!imgSource || imgSource.includes('photo-1584286595398-a59f21d313f5')) {
+                imgSource = defaultNewsImage;
+            }
+            return imgSource;
+        }
+
+        let activeNewsCategory = 'Semua';
+        let activeNewsSearchKeyword = '';
+        let newsSearchDebounceTimer = null;
+
+        function applyNewsFilterAndSearch() {
+            if (!mockNewsData || !Array.isArray(mockNewsData)) return;
+
+            let result = [...mockNewsData];
+
+            // Filter Kategori
+            if (activeNewsCategory && activeNewsCategory !== 'Semua') {
+                const catLower = activeNewsCategory.toLowerCase().trim();
+                result = result.filter(n => {
+                    const k = (n.kategori || '').toLowerCase();
+                    const j = (n.judul || '').toLowerCase();
+                    return k.includes(catLower) || j.includes(catLower);
+                });
+            }
+
+            // Search Keyword
+            if (activeNewsSearchKeyword && activeNewsSearchKeyword.trim() !== '') {
+                const kw = activeNewsSearchKeyword.toLowerCase().trim();
+                result = result.filter(n => {
+                    const jud = (n.judul || '').toLowerCase();
+                    const kat = (n.kategori || '').toLowerCase();
+                    const ring = (n.ringkasan || '').toLowerCase();
+                    const isi = (n.isi || '').toLowerCase();
+                    const pen = (n.penulis || '').toLowerCase();
+                    return jud.includes(kw) || kat.includes(kw) || ring.includes(kw) || isi.includes(kw) || pen.includes(kw);
+                });
+            }
+
+            renderNews(result);
+        }
+
+        function handleNewsSearch(val) {
+            activeNewsSearchKeyword = val || '';
+            const clearBtn = document.getElementById('news-search-clear-btn');
+            if (clearBtn) {
+                if (activeNewsSearchKeyword.trim().length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+            if (newsSearchDebounceTimer) clearTimeout(newsSearchDebounceTimer);
+            newsSearchDebounceTimer = setTimeout(() => {
+                applyNewsFilterAndSearch();
+            }, 180);
+        }
+        window.handleNewsSearch = handleNewsSearch;
+
+        function clearNewsSearch() {
+            const input = document.getElementById('news-search-input');
+            const clearBtn = document.getElementById('news-search-clear-btn');
+            if (input) input.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+            activeNewsSearchKeyword = '';
+            applyNewsFilterAndSearch();
+        }
+        window.clearNewsSearch = clearNewsSearch;
+
+        function filterNewsByCategory(category, btnElement) {
+            activeNewsCategory = category || 'Semua';
+
+            document.querySelectorAll('.filter-news-btn').forEach(btn => {
+                btn.className = "filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition";
+            });
+            if (btnElement) {
+                btnElement.className = "filter-news-btn active-news-filter px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-emerald-900 shadow-xs shrink-0 transition";
+            }
+
+            applyNewsFilterAndSearch();
+        }
+        window.filterNewsByCategory = filterNewsByCategory;
+
+        // ---------- RENDER PORTAL BERITA GAYA NU ONLINE (TRI-COLUMN HERO) ----------
         function renderNews(newsArray) {
+            const heroContainer = document.getElementById('nu-hero-container');
+            const heroLeft = document.getElementById('nu-hero-left');
+            const heroCenter = document.getElementById('nu-hero-center');
+            const heroRight = document.getElementById('nu-hero-right');
+            const emptyState = document.getElementById('nu-news-empty');
+            const archiveSection = document.getElementById('nu-archive-section');
+            const archiveCount = document.getElementById('nu-archive-count');
             const gridContainer = document.getElementById('news-grid-container');
+
             if (!gridContainer) return;
+
+            // Bersihkan semua kontainer
+            if (heroLeft) heroLeft.innerHTML = "";
+            if (heroCenter) heroCenter.innerHTML = "";
+            if (heroRight) heroRight.innerHTML = "";
             gridContainer.innerHTML = "";
 
             if (!newsArray || newsArray.length === 0) {
-                gridContainer.innerHTML = `
-                    <div class="col-span-full py-12 text-center text-slate-400 dark:text-slate-500 text-xs space-y-2">
-                        <i class="fa-solid fa-newspaper text-3xl text-slate-300 dark:text-slate-600 block mb-2"></i>
-                        <p class="font-semibold">Belum ada berita pada kategori ini.</p>
-                    </div>
-                `;
+                if (heroContainer) heroContainer.classList.add('hidden');
+                if (archiveSection) archiveSection.classList.add('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
                 return;
             }
 
-            newsArray.forEach((news, idx) => {
-                const card = document.createElement('article');
-                card.className = "bg-slate-50 dark:bg-[#15202d] hover:bg-emerald-50/50 dark:hover:bg-[#1c2836] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] hover:border-brand-100 dark:hover:border-emerald-500/40 flex flex-col gap-3 cursor-pointer group transition duration-200";
-                card.onclick = () => bacaBerita(news.news_id || news.slug);
+            if (emptyState) emptyState.classList.add('hidden');
+            if (heroContainer) heroContainer.classList.remove('hidden');
 
-                const defaultNewsImage = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop";
-                let imgSource = (news.gambar && String(news.gambar).trim()) ? news.gambar : '';
+            const defaultNewsImage = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=600&auto=format&fit=crop";
 
-                // Jika gambar kosong atau URL kopi lama, cari gambar pertama dari isi berita
-                if ((!imgSource || imgSource.includes('photo-1584286595398-a59f21d313f5')) && news.isi) {
-                    const match = String(news.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
-                    if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
-                        imgSource = match[1];
-                    }
-                }
-                if (!imgSource || imgSource.includes('photo-1584286595398-a59f21d313f5')) {
-                    imgSource = defaultNewsImage;
-                }
-
-                const imgHtml = `<img src="${imgSource}" alt="${escapeHtml(news.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null;this.src='${defaultNewsImage}';">`;
-
+            // Helper kartu berita sub-headline untuk kolom kiri dan kanan
+            function createSubHeroCard(news, isLast = false) {
+                const thumb = getNewsThumbnail(news);
                 const viewsFormatted = Number(news.views || 0).toLocaleString('id-ID');
-                card.innerHTML = `
-                    <div class="w-full h-40 bg-brand-800 rounded-xl relative flex items-center justify-center overflow-hidden">
-                        ${imgHtml}
-                        <span class="absolute top-2.5 left-2.5 bg-brand-600 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">${news.kategori}</span>
+                const plainExcerpt = (news.ringkasan || news.isi || '').replace(/<[^>]*>?/gm, '').trim();
+
+                const el = document.createElement('article');
+                el.className = `group cursor-pointer flex flex-col gap-2.5 ${!isLast ? 'border-b border-dashed border-slate-200 dark:border-[#253447] pb-5' : ''}`;
+                el.onclick = () => bacaBerita(news.news_id || news.slug);
+
+                el.innerHTML = `
+                    <div class="w-full aspect-[16/10] rounded-xl overflow-hidden relative bg-slate-100 dark:bg-[#1c2836]">
+                        <img src="${thumb}" alt="${escapeHtml(news.judul)}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                            onerror="this.onerror=null;this.src='${defaultNewsImage}';">
+                        <span class="absolute top-2 left-2 bg-emerald-800/90 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider backdrop-blur-xs">
+                            ${escapeHtml(news.kategori)}
+                        </span>
                     </div>
-                    <div class="space-y-1.5">
-                        <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-400 dark:text-slate-400">
-                            <span><i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal}</span>
-                            <span>•</span>
-                            <span class="text-brand-700 dark:text-emerald-400 font-semibold">${news.penulis || 'Admin'}</span>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-400 font-medium">
+                            <span><i class="fa-regular fa-clock mr-1"></i>${news.tanggal}</span>
                             <span>•</span>
                             <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
                                 <i class="fa-regular fa-eye mr-1"></i>
                                 <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
                             </span>
                         </div>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
+                        <h4 class="text-xs md:text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                             ${news.judul}
-                        </h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                            ${news.ringkasan}
+                        </h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            ${plainExcerpt}
                         </p>
                     </div>
                 `;
-                gridContainer.appendChild(card);
-            });
-        }
-
-        function filterNewsByCategory(category, btnElement) {
-            document.querySelectorAll('.filter-news-btn').forEach(btn => {
-                btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn";
-            });
-            if (btnElement) {
-                btnElement.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm shrink-0 transition filter-news-btn active-news-filter";
+                return el;
             }
 
-            if (!mockNewsData || mockNewsData.length === 0) return;
+            // 1. Kolom Tengah: Berita Utama Besar (Headline Index 0)
+            if (newsArray.length > 0 && heroCenter) {
+                const mainNews = newsArray[0];
+                const mainThumb = getNewsThumbnail(mainNews);
+                const mainViews = Number(mainNews.views || 0).toLocaleString('id-ID');
+                const mainPlain = (mainNews.ringkasan || mainNews.isi || '').replace(/<[^>]*>?/gm, '').trim();
 
-            if (category === 'Semua') {
-                renderNews(mockNewsData);
-            } else {
-                const searchCat = category.toLowerCase().trim();
-                const filtered = mockNewsData.filter(n => {
-                    const kat = (n.kategori || '').toLowerCase();
-                    const jud = (n.judul || '').toLowerCase();
-                    return kat.includes(searchCat) || jud.includes(searchCat);
+                const centerEl = document.createElement('article');
+                centerEl.className = "group cursor-pointer flex flex-col gap-3.5";
+                centerEl.onclick = () => bacaBerita(mainNews.news_id || mainNews.slug);
+
+                centerEl.innerHTML = `
+                    <div class="w-full aspect-[16/9] max-h-80 rounded-2xl overflow-hidden relative bg-slate-900 shadow-md">
+                        <img src="${mainThumb}" alt="${escapeHtml(mainNews.judul)}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                            onerror="this.onerror=null;this.src='${defaultNewsImage}';">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+                        <span class="absolute top-3 left-3 bg-emerald-700 text-white text-[10px] md:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm">
+                            ${escapeHtml(mainNews.kategori)}
+                        </span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center flex-wrap gap-2 text-xs text-slate-400 dark:text-slate-400">
+                            <span class="text-emerald-700 dark:text-emerald-400 font-bold"><i class="fa-solid fa-pen-nib mr-1"></i>${escapeHtml(mainNews.penulis || 'Redaksi Asnawiyyah')}</span>
+                            <span>•</span>
+                            <span><i class="fa-regular fa-calendar mr-1"></i>${mainNews.tanggal}</span>
+                            <span>•</span>
+                            <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${mainViews} kali dibaca">
+                                <i class="fa-regular fa-eye mr-1"></i>
+                                <span data-news-views-id="${mainNews.news_id || mainNews.slug}">${mainViews}</span>
+                            </span>
+                        </div>
+                        <h2 class="text-lg md:text-2xl font-serif font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition leading-snug line-clamp-3">
+                            ${mainNews.judul}
+                        </h2>
+                        <p class="text-xs md:text-sm text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                            ${mainPlain}
+                        </p>
+                        <div class="pt-1">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 group-hover:gap-2 transition-all">
+                                Baca Selengkapnya <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                heroCenter.appendChild(centerEl);
+            }
+
+            // 2. Kolom Kiri: 2 Berita Sub-Headline (Index 1 & 2)
+            if (heroLeft) {
+                const leftItems = newsArray.slice(1, 3);
+                leftItems.forEach((n, i) => {
+                    heroLeft.appendChild(createSubHeroCard(n, i === leftItems.length - 1));
                 });
-                renderNews(filtered);
+            }
+
+            // 3. Kolom Kanan: 2 Berita Sub-Headline (Index 3 & 4)
+            if (heroRight) {
+                const rightItems = newsArray.slice(3, 5);
+                rightItems.forEach((n, i) => {
+                    heroRight.appendChild(createSubHeroCard(n, i === rightItems.length - 1));
+                });
+            }
+
+            // 4. Arsip Berita (Index >= 5)
+            const remainingNews = newsArray.slice(5);
+            if (remainingNews.length > 0) {
+                if (archiveSection) archiveSection.classList.remove('hidden');
+                if (archiveCount) archiveCount.textContent = `${remainingNews.length} Berita Lainnya`;
+
+                remainingNews.forEach(news => {
+                    const card = document.createElement('article');
+                    card.className = "bg-slate-50 dark:bg-[#1c2836] hover:bg-emerald-50/50 dark:hover:bg-[#253447] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] hover:border-emerald-200 dark:hover:border-emerald-500/40 flex flex-col gap-3 cursor-pointer group transition duration-200";
+                    card.onclick = () => bacaBerita(news.news_id || news.slug);
+
+                    const imgSource = getNewsThumbnail(news);
+                    const viewsFormatted = Number(news.views || 0).toLocaleString('id-ID');
+                    const excerpt = (news.ringkasan || news.isi || '').replace(/<[^>]*>?/gm, '').trim();
+
+                    card.innerHTML = `
+                        <div class="w-full h-40 rounded-xl relative flex items-center justify-center overflow-hidden bg-slate-200 dark:bg-slate-800">
+                            <img src="${imgSource}" alt="${escapeHtml(news.judul)}"
+                                class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                onerror="this.onerror=null;this.src='${defaultNewsImage}';">
+                            <span class="absolute top-2.5 left-2.5 bg-emerald-800 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">
+                                ${escapeHtml(news.kategori)}
+                            </span>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-400 dark:text-slate-400">
+                                <span><i class="fa-solid fa-calendar mr-1"></i> ${news.tanggal}</span>
+                                <span>•</span>
+                                <span class="text-emerald-700 dark:text-emerald-400 font-semibold">${escapeHtml(news.penulis || 'Admin')}</span>
+                                <span>•</span>
+                                <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
+                                    <i class="fa-regular fa-eye mr-1"></i>
+                                    <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
+                                </span>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
+                                ${news.judul}
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                                ${excerpt}
+                            </p>
+                        </div>
+                    `;
+                    gridContainer.appendChild(card);
+                });
+            } else {
+                if (archiveSection) archiveSection.classList.add('hidden');
             }
         }
-        window.filterNewsByCategory = filterNewsByCategory;
 
+        // ---------- RENDER HEADLINE BERITA DI BERANDA (LANDING PAGE) ----------
         function renderHeadlineNews(newsArray) {
             const containerMobile = document.getElementById('headline-news-container');
             const containerDesktop = document.getElementById('headline-news-container-desktop');
-            const topHeadline = newsArray.slice(0, 3);
+            const topHeadline = (newsArray || []).slice(0, 3);
             const defaultThumb = "https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=400&auto=format&fit=crop";
 
             // Mobile Render
@@ -682,21 +872,12 @@
                     const item = document.createElement('article');
                     item.className = `flex items-center justify-between gap-3 ${idx < topHeadline.length - 1 ? 'border-b border-slate-100 dark:border-[#253447] pb-4' : ''} cursor-pointer group`;
                     item.onclick = () => bacaBerita(news.news_id || news.slug);
-                    let thumbSrc = news.gambar || '';
-                    if ((!thumbSrc || thumbSrc.includes('photo-1584286595398-a59f21d313f5')) && news.isi) {
-                        const match = String(news.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
-                        if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
-                            thumbSrc = match[1];
-                        }
-                    }
-                    if (!thumbSrc || thumbSrc.includes('photo-1584286595398-a59f21d313f5')) {
-                        thumbSrc = defaultThumb;
-                    }
+                    const thumbSrc = getNewsThumbnail(news);
                     const viewsFormatted = Number(news.views || 0).toLocaleString('id-ID');
                     item.innerHTML = `
                         <div class="space-y-1.5 flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="inline-block px-2.5 py-0.5 bg-emerald-700 text-white text-[9px] font-extrabold rounded-md uppercase tracking-wider">${news.kategori}</span>
+                                <span class="inline-block px-2.5 py-0.5 bg-emerald-700 text-white text-[9px] font-extrabold rounded-md uppercase tracking-wider">${escapeHtml(news.kategori)}</span>
                                 <span class="inline-flex items-center text-[10px] text-emerald-600 dark:text-emerald-400 font-bold" title="${viewsFormatted} kali dibaca">
                                     <i class="fa-regular fa-eye mr-1"></i>
                                     <span data-news-views-id="${news.news_id || news.slug}">${viewsFormatted}</span>
@@ -707,70 +888,87 @@
                             </h4>
                         </div>
                         <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 dark:border-[#253447] bg-slate-100 dark:bg-[#1c2836]">
-                            <img src="${thumbSrc}" alt="${news.judul}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <img src="${thumbSrc}" alt="${escapeHtml(news.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null;this.src='${defaultThumb}';">
                         </div>
                     `;
                     containerMobile.appendChild(item);
                 });
             }
 
-            // Desktop Render
+            // Desktop Render (Editorial Nuansa NU Online)
             if (containerDesktop) {
                 containerDesktop.innerHTML = "";
                 if (topHeadline.length > 0) {
                     const bigNews = topHeadline[0];
-                    const bigThumb = bigNews.gambar || defaultThumb;
-                    const plainContent = (bigNews.ringkasan || bigNews.isi || "").replace(/<[^>]*>?/gm, '');
+                    const bigThumb = getNewsThumbnail(bigNews);
+                    const plainContent = (bigNews.ringkasan || bigNews.isi || "").replace(/<[^>]*>?/gm, '').trim();
+                    const viewsFormatted = Number(bigNews.views || 0).toLocaleString('id-ID');
 
                     let html = `
-                        <!-- Featured Big News -->
-                        <div class="grid grid-cols-12 gap-6 bg-white dark:bg-[#15202d] p-5 rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm">
-                            <div class="col-span-6 rounded-xl overflow-hidden cursor-pointer" onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')">
-                                <img src="${bigThumb}" alt="${bigNews.judul}" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                        <!-- Featured Big Headline -->
+                        <div class="grid grid-cols-12 gap-5 bg-white dark:bg-[#15202d] p-5 rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:border-emerald-300 dark:hover:border-emerald-500/40 transition">
+                            <div class="col-span-6 rounded-xl overflow-hidden cursor-pointer aspect-[16/10] bg-slate-900" onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')">
+                                <img src="${bigThumb}" alt="${escapeHtml(bigNews.judul)}" class="w-full h-full object-cover hover:scale-105 transition duration-500" onerror="this.onerror=null;this.src='${defaultThumb}';">
                             </div>
                             <div class="col-span-6 flex flex-col justify-between py-1">
                                 <div class="space-y-2">
-                                    <div class="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                                        <span>${bigNews.kategori} • ${bigNews.tanggal}</span>
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex-wrap">
+                                        <span class="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md font-bold uppercase text-[10px]">${escapeHtml(bigNews.kategori)}</span>
                                         <span>•</span>
-                                        <span class="inline-flex items-center font-bold" title="${Number(bigNews.views || 0).toLocaleString('id-ID')} kali dibaca">
+                                        <span>${bigNews.tanggal}</span>
+                                        <span>•</span>
+                                        <span class="inline-flex items-center font-bold" title="${viewsFormatted} kali dibaca">
                                             <i class="fa-regular fa-eye mr-1"></i>
-                                            <span data-news-views-id="${bigNews.news_id || bigNews.slug}">${Number(bigNews.views || 0).toLocaleString('id-ID')}</span>
+                                            <span data-news-views-id="${bigNews.news_id || bigNews.slug}">${viewsFormatted}</span>
                                         </span>
                                     </div>
                                     <h4 onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
-                                        class="font-bold text-base text-slate-900 dark:text-slate-100 leading-snug hover:text-emerald-700 dark:hover:text-emerald-400 transition cursor-pointer line-clamp-2">
+                                        class="font-black font-serif text-lg text-slate-900 dark:text-slate-100 leading-snug hover:text-emerald-700 dark:hover:text-emerald-400 transition cursor-pointer line-clamp-2">
                                         ${bigNews.judul}
                                     </h4>
-                                    <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-3">
+                                    <p class="text-xs text-slate-500 dark:text-slate-300 line-clamp-3 leading-relaxed">
                                         ${plainContent}
                                     </p>
                                 </div>
                                 <button onclick="bacaBerita('${bigNews.news_id || bigNews.slug}')"
-                                    class="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 inline-flex items-center gap-1 pt-3">
-                                    Baca Selengkapnya <span>→</span>
+                                    class="text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:text-emerald-600 dark:hover:text-emerald-200 inline-flex items-center gap-1.5 pt-3 group">
+                                    Baca Selengkapnya <span class="group-hover:translate-x-1 transition-transform">→</span>
                                 </button>
                             </div>
                         </div>
                     `;
 
+                    // Sub-Headlines di bawah Headline Utama
                     if (topHeadline.length > 1) {
-                        html += `<div class="grid grid-cols-2 gap-4 mt-6">`;
+                        html += `<div class="grid grid-cols-2 gap-4 mt-5">`;
                         for (let i = 1; i < topHeadline.length; i++) {
                             const smallNews = topHeadline[i];
+                            const smThumb = getNewsThumbnail(smallNews);
+                            const smViews = Number(smallNews.views || 0).toLocaleString('id-ID');
                             html += `
                                 <div onclick="bacaBerita('${smallNews.news_id || smallNews.slug}')"
-                                    class="bg-white dark:bg-[#15202d] p-4 rounded-xl border border-slate-200/70 dark:border-[#253447] hover:border-slate-300 dark:hover:border-slate-600 transition cursor-pointer">
-                                    <div class="flex items-center justify-between text-[11px] font-medium text-slate-400 dark:text-slate-400">
-                                        <span>${smallNews.kategori} • ${smallNews.tanggal}</span>
-                                        <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${Number(smallNews.views || 0).toLocaleString('id-ID')} kali dibaca">
-                                            <i class="fa-regular fa-eye mr-1"></i>
-                                            <span data-news-views-id="${smallNews.news_id || smallNews.slug}">${Number(smallNews.views || 0).toLocaleString('id-ID')}</span>
-                                        </span>
+                                    class="bg-white dark:bg-[#15202d] p-3.5 rounded-xl border border-slate-200/70 dark:border-[#253447] hover:border-emerald-300 dark:hover:border-emerald-500/40 hover:shadow-xs transition cursor-pointer flex gap-3 group">
+                                    <div class="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100 dark:bg-[#1c2836]">
+                                        <img src="${smThumb}" alt="${escapeHtml(smallNews.judul)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null;this.src='${defaultThumb}';">
                                     </div>
-                                    <h5 class="font-bold text-xs text-slate-800 dark:text-slate-100 mt-1 line-clamp-2 hover:text-emerald-700 dark:hover:text-emerald-400">
-                                        ${smallNews.judul}
-                                    </h5>
+                                    <div class="min-w-0 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                                <span class="uppercase tracking-wider font-bold">${escapeHtml(smallNews.kategori)}</span>
+                                                <span>•</span>
+                                                <span>${smallNews.tanggal}</span>
+                                            </div>
+                                            <h5 class="font-bold text-xs text-slate-800 dark:text-slate-100 mt-1 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 leading-snug transition">
+                                                ${smallNews.judul}
+                                            </h5>
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 pt-1">
+                                            <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold" title="${smViews} kali dibaca">
+                                                <i class="fa-regular fa-eye mr-1"></i>
+                                                <span data-news-views-id="${smallNews.news_id || smallNews.slug}">${smViews}</span>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             `;
                         }
@@ -779,7 +977,6 @@
                     containerDesktop.innerHTML = html;
                 }
             }
-
         }
 
         let currentActiveNews = null;

@@ -978,54 +978,108 @@
 
         </div>
 
-        <!-- ==================== TABS 2: BERITA PESANTREN ==================== -->
-        <div id="page-kabar" class="tab-content hidden space-y-6">
+        <!-- ==================== TABS 2: BERITA PESANTREN (NU ONLINE STYLE) ==================== -->
+        <div id="page-kabar" class="tab-content hidden space-y-5 max-w-7xl mx-auto">
 
-            <!-- BARIS KEMBALI & HEADER UTAMA -->
-            <div
-                class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] flex items-center justify-between">
-                <div class="flex items-center space-x-2.5">
+            <!-- HEADER UTAMA EDITORIAL & PENCARIAN -->
+            <div class="bg-white dark:bg-[#15202d] p-4 md:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
                     <button onclick="switchTab('beranda')"
-                        class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                        class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
                         title="Kembali ke Beranda">
                         <i class="fa-solid fa-arrow-left text-xs"></i>
                     </button>
-                    <div>
-                        <span class="text-[10px] font-bold text-brand-700 dark:text-emerald-400 uppercase tracking-widest block">Informasi
-                            Terkini</span>
-                        <h2 class="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100">Berita Pesantren</h2>
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <span class="text-2xl font-black text-emerald-800 dark:text-emerald-400 tracking-tight font-serif">Asnawiyyah<span class="text-emerald-600 dark:text-emerald-300 font-sans font-bold">News</span></span>
+                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
+                            <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400"></i> Terverifikasi
+                        </span>
                     </div>
+                </div>
+
+                <!-- KOLOM PENCARIAN CEPAT INSTAN -->
+                <div class="relative w-full md:w-80 shrink-0">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                    <input type="text" id="news-search-input" oninput="handleNewsSearch(this.value)"
+                        placeholder="Cari Berita Pesantren..."
+                        class="w-full pl-9 pr-8 py-2 text-xs md:text-sm rounded-full border border-slate-200 dark:border-[#253447] bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white dark:focus:bg-[#15202d] transition shadow-2xs">
+                    <button id="news-search-clear-btn" type="button" onclick="clearNewsSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- LIST ARTIKEL & BERITA -->
-            <div class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+            <!-- PITA NAVIGASI KATEGORI HIJAU KHAS NU ONLINE -->
+            <div class="bg-emerald-800 dark:bg-[#0a482d] text-white rounded-2xl shadow-sm px-2.5 py-1.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none border border-emerald-900/40">
+                <button type="button" onclick="filterNewsByCategory('Semua', this)"
+                    class="filter-news-btn active-news-filter px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-emerald-900 shadow-xs shrink-0 transition">
+                    Semua
+                </button>
+                <button type="button" onclick="filterNewsByCategory('Dawuh Pengasuh', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    Dawuh Pengasuh
+                </button>
+                <button type="button" onclick="filterNewsByCategory('Kabar Alumni', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    Kabar Alumni
+                </button>
+                <button type="button" onclick="filterNewsByCategory('Kegiatan', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    Warta Pondok
+                </button>
+                <button type="button" onclick="filterNewsByCategory('Prestasi', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    Prestasi Santri
+                </button>
+                <button type="button" onclick="filterNewsByCategory('Artikel', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    Artikel & Opini
+                </button>
+                <button type="button" onclick="filterNewsByCategory('Kajian', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    Kajian Keilmuan
+                </button>
+                <button type="button" onclick="filterNewsByCategory('PPDB', this)"
+                    class="filter-news-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:bg-emerald-700/80 hover:text-white shrink-0 transition">
+                    PPDB
+                </button>
+            </div>
 
-                <!-- Filter Kategori Berita -->
-                <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-100 dark:border-[#253447]">
-                    <button type="button" onclick="filterNewsByCategory('Semua', this)"
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm shrink-0 transition filter-news-btn active-news-filter">
-                        Semua Berita
-                    </button>
-                    <button type="button" onclick="filterNewsByCategory('Prestasi', this)"
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn">
-                        Prestasi Santri
-                    </button>
-                    <button type="button" onclick="filterNewsByCategory('Kegiatan', this)"
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn">
-                        Kegiatan Pesantren
-                    </button>
-                    <button type="button" onclick="filterNewsByCategory('PPDB', this)"
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253447] dark:hover:text-white shrink-0 transition filter-news-btn">
-                        Pengumuman PPDB
-                    </button>
+            <!-- CONTAINER EDITORIAL TRI-COLUMN ALA NU ONLINE -->
+            <div id="nu-hero-wrapper" class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <div id="nu-hero-container" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Kolom Kiri: 2 Berita Sub-Headline (3 Kolom Grid Desktop) -->
+                    <div id="nu-hero-left" class="lg:col-span-3 space-y-6 order-2 lg:order-1"></div>
+
+                    <!-- Kolom Tengah: Berita Utama Besar (6 Kolom Grid Desktop) -->
+                    <div id="nu-hero-center" class="lg:col-span-6 order-1 lg:order-2"></div>
+
+                    <!-- Kolom Kanan: 2 Berita Sub-Headline (3 Kolom Grid Desktop) -->
+                    <div id="nu-hero-right" class="lg:col-span-3 space-y-6 order-3"></div>
                 </div>
 
-                <!-- Grid Cards Berita Dinamis -->
-                <div id="news-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Diisi otomatis oleh JavaScript -->
+                <!-- EMPTY STATE JIKA PENCARIAN / FILTER KOSONG -->
+                <div id="nu-news-empty" class="hidden py-16 text-center space-y-3">
+                    <i class="fa-solid fa-newspaper text-4xl text-slate-300 dark:text-slate-600 block mx-auto"></i>
+                    <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">Tidak ada berita ditemukan</h4>
+                    <p class="text-xs text-slate-400">Coba ubah kata kunci pencarian atau pilih kategori lain.</p>
                 </div>
 
+                <!-- ARSIP & WARTA LAINNYA -->
+                <div id="nu-archive-section" class="mt-8 pt-6 border-t border-slate-100 dark:border-[#253447] space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span>
+                            Warta & Artikel Lainnya
+                        </h3>
+                        <span id="nu-archive-count" class="text-xs text-slate-400"></span>
+                    </div>
+
+                    <!-- Grid Cards Berita Dinamis -->
+                    <div id="news-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <!-- Diisi otomatis oleh JavaScript -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -5645,14 +5699,16 @@
                                 <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Kategori / Rubrik <span class="text-rose-500">*</span></label>
                                 <select id="admin-news-kategori" required
                                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs md:text-sm text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#1c2836] focus:bg-white dark:focus:bg-[#15202d] focus:ring-2 focus:ring-emerald-600 focus:outline-none transition shadow-2xs">
-                                    <option value="Prestasi">Prestasi Santri</option>
+                                    <option value="Dawuh Pengasuh">Dawuh Pengasuh</option>
+                                    <option value="Kabar Alumni">Kabar Alumni</option>
                                     <option value="Kegiatan">Kegiatan Pesantren</option>
+                                    <option value="Prestasi">Prestasi Santri</option>
                                     <option value="Artikel">Artikel & Wawasan</option>
                                     <option value="Opini">Opini & Catatan</option>
-                                    <option value="Politik">Kabar Kebangsaan</option>
-                                    <option value="Sosial">Bakti Sosial & Kemasyarakatan</option>
-                                    <option value="PPDB">Informasi PPDB</option>
                                     <option value="Kajian">Kajian & Keilmuan Islam</option>
+                                    <option value="Sosial">Bakti Sosial & Kemasyarakatan</option>
+                                    <option value="Politik">Kabar Kebangsaan</option>
+                                    <option value="PPDB">Informasi PPDB</option>
                                 </select>
                             </div>
 
