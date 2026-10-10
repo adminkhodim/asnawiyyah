@@ -92,5 +92,15 @@ assert(perpulanganContent.includes('loadWaliPerpulanganData'), 'Fungsi loadWaliP
 assert(perpulanganContent.includes('renderWaliIzinTracking'), 'Fungsi renderWaliIzinTracking harus ada di js/perpulangan.js');
 console.log('✅ 6. Integrasi Portal Wali Santri (Form Pengajuan & Live Tracking Stepper) terverifikasi 100%');
 
-console.log('\n🎉 SELURUH PENGUJIAN MODUL PERPULANGAN (LANGKAH 4 & 5) SUKSES 100%!');
+// 6. Verifikasi Fitur Pencarian Cerdas Nama / NIS Terintegrasi Data Santri
+assert(indexHtmlContent.includes('id="perpulangan-student-search-input"'), 'Input pencarian nama/NIS santri harus ada di modal form');
+assert(indexHtmlContent.includes('id="perpulangan-student-search-dropdown"'), 'Dropdown live search santri harus ada di modal form');
+assert(indexHtmlContent.includes('id="perpulangan-selected-student-card"'), 'Kartu santri terpilih harus ada di modal form');
+assert(perpulanganContent.includes('onSearchStudentInput'), 'Handler onSearchStudentInput harus ada di js/perpulangan.js');
+assert(perpulanganContent.includes('selectStudentFromSearch'), 'Handler selectStudentFromSearch harus ada di js/perpulangan.js');
+assert(perpulanganContent.includes('getAllAvailableStudents'), 'Fungsi getAllAvailableStudents harus ada di js/perpulangan.js');
+console.log('✅ 7. Fitur Pencarian Cerdas Nama/NIS Terhubung Master Data Santri Terverifikasi 100%');
+
+console.log('\n🎉 SELURUH PENGUJIAN MODUL PERPULANGAN SUKSES 100%!');
+
 

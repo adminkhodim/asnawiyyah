@@ -503,6 +503,305 @@
     }
 
     /**
+     * Dapatkan Seluruh Master Santri dari Memori / Cache / Backend
+     */
+    function getAllAvailableStudents() {
+        const isWali = (window.ASNIdentity && window.ASNIdentity.currentRole === 'WALI_SANTRI') || (typeof getCurrentUserRole === 'function' && getCurrentUserRole() === 'WALI_SANTRI');
+
+        // Jika Wali Santri, ambil linkedStudents
+        if (isWali && window.ASNIdentity && Array.isArray(window.ASNIdentity.linkedStudents) && window.ASNIdentity.linkedStudents.length > 0) {
+            return window.ASNIdentity.linkedStudents;
+        }
+
+        // Ambil dari window.adminStudentsData
+        if (Array.isArray(window.adminStudentsData) && window.adminStudentsData.length > 0) {
+            return window.adminStudentsData;
+        }
+        if (Array.isArray(window.adminStudentsList) && window.adminStudentsList.length > 0) {
+            return window.adminStudentsList;
+        }
+
+        // Ambil dari localStorage cache jika ada
+        try {
+            const cached = localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    window.adminStudentsData = parsed;
+                    return parsed;
+                }
+            }
+        } catch (e) {}
+
+        // Fallback global santriData
+        if (Array.isArray(window.santriData) && window.santriData.length > 0) {
+            return window.santriData;
+        }
+        if (window.ASNStudents && Array.isArray(window.ASNStudents.list) && window.ASNStudents.list.length > 0) {
+            return window.ASNStudents.list;
+        }
+
+        return [];
+    }
+
+    /**
+     * Pastikan Master Santri Ter-load di background jika memori kosong
+     */
+    async function ensureStudentsLoaded() {
+        const current = getAllAvailableStudents();
+        if (current.length > 0) {
+            updateStudentIndicator(current.length);
+            return current;
+        }
+
+        try {
+            const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+            let res = null;
+            if (typeof apiGet === 'function') {
+                res = await apiGet('getStudents', token ? { token } : {});
+            } else if (typeof apiPost === 'function') {
+                res = await apiPost('getStudents', { token });
+            }
+
+            if (res && (res.status === 'success' || res.success) && Array.isArray(res.data)) {
+                window.adminStudentsData = res.data;
+                try {
+                    localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify(res.data));
+                } catch(e) {}
+                updateStudentIndicator(res.data.length);
+                return res.data;
+            }
+        } catch (err) {
+            console.warn('[ASNPerpulangan] Gagal preload master santri:', err);
+        }
+        return [];
+    }
+
+    function updateStudentIndicator(count) {
+        const ind = document.getElementById('perpulangan-student-data-indicator');
+        if (ind) {
+            ind.innerHTML = `<i class="fa-solid fa-circle-check text-[9px] text-emerald-500"></i> ${count} Santri Terhubung`;
+        }
+    }
+
+    /**
+     * Live Search Input Handler untuk Santri
+     */
+    function onSearchStudentInput(query) {
+        const clearBtn = document.getElementById('perpulangan-student-search-clear-btn');
+        if (clearBtn) {
+            if (query && query.trim()) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+        }
+
+        renderStudentSearchDropdown(query);
+    }
+
+    function onSearchStudentFocus() {
+        const input = document.getElementById('perpulangan-student-search-input');
+        renderStudentSearchDropdown(input ? input.value : '');
+    }
+
+    function clearStudentSearch() {
+        const input = document.getElementById('perpulangan-student-search-input');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        const clearBtn = document.getElementById('perpulangan-student-search-clear-btn');
+        if (clearBtn) clearBtn.classList.add('hidden');
+        renderStudentSearchDropdown('');
+    }
+
+    function renderStudentSearchDropdown(query) {
+        const dropdown = document.getElementById('perpulangan-student-search-dropdown');
+        if (!dropdown) return;
+
+        const all = getAllAvailableStudents();
+        const q = (query || '').toLowerCase().trim();
+
+        let matched = [];
+        if (!q) {
+            matched = all.slice(0, 10);
+        } else {
+            matched = all.filter(s => {
+                const name = String(s.name || s.nama || s.nama_santri || '').toLowerCase();
+                const nis = String(s.nis || s.nisn || '').toLowerCase();
+                return name.includes(q) || nis.includes(q);
+            }).slice(0, 20);
+        }
+
+        if (matched.length === 0) {
+            dropdown.innerHTML = `
+                <div class="p-4 text-center text-slate-400 space-y-1">
+                    <i class="fa-solid fa-user-xmark text-lg text-slate-300 dark:text-slate-600 mb-1"></i>
+                    <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">Santri tidak ditemukan</p>
+                    <p class="text-[10px] text-slate-400">Tidak ada santri dengan nama atau NIS "${escapeHtml(query)}" di Data Santri.</p>
+                </div>
+            `;
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        dropdown.innerHTML = matched.map(s => {
+            const id = s.studentId || s.student_id || s.id || s.nis;
+            const name = s.name || s.nama || s.nama_santri || 'Santri';
+            const nis = s.nis || s.nisn || '-';
+            const gender = (s.gender || 'L').toUpperCase() === 'P' ? 'Putri' : 'Putra';
+            const prog = s.program || s.kelas || 'Santri';
+            const photoUrl = s.photoUrl || s.photo_url || '';
+
+            const avatarHtml = photoUrl
+                ? `<img src="${escapeHtml(photoUrl)}" class="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-200 dark:border-[#253447]" onerror="this.onerror=null;this.src='';this.className='hidden';">`
+                : `<div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0"><i class="fa-solid fa-user-graduate"></i></div>`;
+
+            const studentDataStr = escapeHtml(JSON.stringify({
+                id: id,
+                studentId: id,
+                name: name,
+                nis: nis,
+                program: prog,
+                gender: gender,
+                photoUrl: photoUrl
+            }));
+
+            return `
+                <div class="p-2.5 hover:bg-emerald-50 dark:hover:bg-[#1f2d3d] cursor-pointer flex items-center justify-between transition group"
+                    onclick='window.ASNPerpulangan.selectStudentFromSearch(${JSON.stringify(studentDataStr)})'>
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        ${avatarHtml}
+                        <div class="min-w-0">
+                            <div class="font-bold text-slate-800 dark:text-slate-100 text-xs truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                                ${escapeHtml(name)}
+                            </div>
+                            <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400">NIS: ${escapeHtml(nis)}</span>
+                                <span>•</span>
+                                <span>${escapeHtml(prog)} (${gender})</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold opacity-0 group-hover:opacity-100 transition flex items-center gap-1 shrink-0">
+                        Pilih <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                    </span>
+                </div>
+            `;
+        }).join('');
+
+        dropdown.classList.remove('hidden');
+    }
+
+    function selectStudentFromSearch(student) {
+        if (typeof student === 'string') {
+            try { student = JSON.parse(student); } catch(e) {}
+        }
+        if (!student) return;
+
+        const id = student.studentId || student.id || student.nis || '';
+        const name = student.name || student.nama || student.nama_santri || '';
+        const nis = student.nis || student.nisn || '';
+        const extra = `${student.program || 'Santri'} • ${student.gender || 'Aktif'}`;
+        const photoUrl = student.photoUrl || student.photo_url || '';
+
+        // Isi hidden fields
+        const idInput = document.getElementById('perpulangan-form-student-id');
+        const nameInput = document.getElementById('perpulangan-form-student-name');
+        const nisInput = document.getElementById('perpulangan-form-student-nis');
+        if (idInput) idInput.value = id;
+        if (nameInput) nameInput.value = name;
+        if (nisInput) nisInput.value = nis;
+
+        // Update Kartu Santri Terpilih
+        const card = document.getElementById('perpulangan-selected-student-card');
+        const searchBox = document.getElementById('perpulangan-search-box-wrapper');
+        const quickWali = document.getElementById('perpulangan-wali-quick-students');
+        const nameEl = document.getElementById('perpulangan-selected-student-name');
+        const nisEl = document.getElementById('perpulangan-selected-student-nis');
+        const extraEl = document.getElementById('perpulangan-selected-student-extra');
+        const avatarEl = document.getElementById('perpulangan-selected-student-avatar');
+
+        if (nameEl) nameEl.innerText = name;
+        if (nisEl) nisEl.innerText = `NIS: ${nis || '-'}`;
+        if (extraEl) extraEl.innerText = extra;
+
+        if (avatarEl) {
+            if (photoUrl) {
+                avatarEl.innerHTML = `<img src="${escapeHtml(photoUrl)}" class="w-full h-full object-cover">`;
+            } else {
+                avatarEl.innerHTML = `<i class="fa-solid fa-user-graduate"></i>`;
+            }
+        }
+
+        // Switch View ke Card
+        if (searchBox) searchBox.classList.add('hidden');
+        if (quickWali) quickWali.classList.add('hidden');
+        if (card) card.classList.remove('hidden');
+
+        // Sembunyikan dropdown
+        const dropdown = document.getElementById('perpulangan-student-search-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    function resetSelectedStudent() {
+        const idInput = document.getElementById('perpulangan-form-student-id');
+        const nameInput = document.getElementById('perpulangan-form-student-name');
+        const nisInput = document.getElementById('perpulangan-form-student-nis');
+        if (idInput) idInput.value = '';
+        if (nameInput) nameInput.value = '';
+        if (nisInput) nisInput.value = '';
+
+        const card = document.getElementById('perpulangan-selected-student-card');
+        const searchBox = document.getElementById('perpulangan-search-box-wrapper');
+        const input = document.getElementById('perpulangan-student-search-input');
+        const dropdown = document.getElementById('perpulangan-student-search-dropdown');
+
+        if (card) card.classList.add('hidden');
+        if (searchBox) searchBox.classList.remove('hidden');
+        if (dropdown) dropdown.classList.add('hidden');
+
+        renderWaliQuickChips();
+
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function renderWaliQuickChips() {
+        const isWali = (window.ASNIdentity && window.ASNIdentity.currentRole === 'WALI_SANTRI') || (typeof getCurrentUserRole === 'function' && getCurrentUserRole() === 'WALI_SANTRI');
+        const container = document.getElementById('perpulangan-wali-quick-students');
+        const chipsContainer = document.getElementById('perpulangan-wali-quick-chips');
+
+        if (!container || !chipsContainer) return;
+
+        if (!isWali) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        const linked = (window.ASNIdentity && Array.isArray(window.ASNIdentity.linkedStudents)) ? window.ASNIdentity.linkedStudents : [];
+        if (linked.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.classList.remove('hidden');
+        chipsContainer.innerHTML = linked.map(s => {
+            const sName = s.nama || s.name || 'Santri';
+            const sNis = s.nis || s.nisn || '';
+            const sId = s.id || s.studentId || sNis;
+            const dataObj = escapeHtml(JSON.stringify({ id: sId, studentId: sId, name: sName, nis: sNis }));
+            return `
+                <button type="button" onclick='window.ASNPerpulangan.selectStudentFromSearch(${JSON.stringify(dataObj)})'
+                    class="px-2.5 py-1 rounded-xl bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold border border-emerald-300/60 dark:border-emerald-800 transition active:scale-95 inline-flex items-center gap-1 cursor-pointer">
+                    <i class="fa-solid fa-user-check text-[9px]"></i>
+                    <span>${escapeHtml(sName)}</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    /**
      * Modal Form Pengajuan / Input Izin Santri Baru
      */
     function openModalFormIzin(prefill = {}) {
@@ -511,9 +810,7 @@
         if (!modal || !form) return;
 
         form.reset();
-
-        // Mengisi pilihan santri dari cache master jika ada
-        populateStudentSelect();
+        resetSelectedStudent();
 
         // Default tanggal hari ini dan besok
         const now = new Date();
@@ -531,9 +828,16 @@
         if (timeStartInput) timeStartInput.value = '08:00';
         if (timeEndInput) timeEndInput.value = '17:00';
 
-        if (prefill.student_id) {
-            const selectEl = document.getElementById('perpulangan-form-student-select');
-            if (selectEl) selectEl.value = prefill.student_id;
+        // Preload master santri agar pencarian instan
+        ensureStudentsLoaded();
+
+        if (prefill.student_id || prefill.student_name || prefill.name) {
+            selectStudentFromSearch({
+                studentId: prefill.student_id || '',
+                id: prefill.student_id || '',
+                name: prefill.student_name || prefill.name || '',
+                nis: prefill.student_nis || prefill.nis || ''
+            });
         }
 
         modal.classList.remove('hidden');
@@ -545,48 +849,16 @@
     }
 
     /**
-     * Isi Opsi Dropdown Santri dari Master Data / Santri Terhubung Wali
-     */
-    function populateStudentSelect() {
-        const select = document.getElementById('perpulangan-form-student-select');
-        if (!select) return;
-
-        select.innerHTML = '<option value="">-- Pilih Santri --</option>';
-
-        let students = [];
-        const isWali = (window.ASNIdentity && window.ASNIdentity.currentRole === 'WALI_SANTRI') || (typeof getCurrentUserRole === 'function' && getCurrentUserRole() === 'WALI_SANTRI');
-
-        // Jika user adalah Wali Santri, utamakan santri binaan yang terhubung ke akunnya
-        if (isWali && window.ASNIdentity && Array.isArray(window.ASNIdentity.linkedStudents) && window.ASNIdentity.linkedStudents.length > 0) {
-            students = window.ASNIdentity.linkedStudents;
-        } else if (window.ASNStudents && Array.isArray(window.ASNStudents.list)) {
-            students = window.ASNStudents.list;
-        } else if (window.santriData && Array.isArray(window.santriData)) {
-            students = window.santriData;
-        }
-
-        students.forEach(s => {
-            const nis = s.nis || s.NIS || s.nisn || '';
-            const name = s.nama || s.Nama || s.name || s.nama_santri || 'Santri';
-            const id = s.id || s.ID || s.studentId || s.student_id || nis;
-            const opt = document.createElement('option');
-            opt.value = id;
-            opt.dataset.nis = nis;
-            opt.dataset.name = name;
-            opt.innerText = `${name} (${nis || 'Tanpa NIS'})`;
-            select.appendChild(opt);
-        });
-    }
-
-    /**
      * Submit Form Pengajuan Izin
      */
     async function submitFormIzin(event) {
         if (event) event.preventDefault();
 
-        const selectStudent = document.getElementById('perpulangan-form-student-select');
-        const manualName = document.getElementById('perpulangan-form-student-name');
-        const manualNis = document.getElementById('perpulangan-form-student-nis');
+        const hiddenId = document.getElementById('perpulangan-form-student-id')?.value;
+        const hiddenName = document.getElementById('perpulangan-form-student-name')?.value;
+        const hiddenNis = document.getElementById('perpulangan-form-student-nis')?.value;
+        const searchInput = document.getElementById('perpulangan-student-search-input')?.value;
+
         const kategori = document.getElementById('perpulangan-form-kategori')?.value;
         const alasan = document.getElementById('perpulangan-form-alasan')?.value;
         const penjemputNama = document.getElementById('perpulangan-form-penjemput-nama')?.value;
@@ -597,23 +869,21 @@
         const tglKembali = document.getElementById('perpulangan-form-tgl-kembali')?.value;
         const jamKembali = document.getElementById('perpulangan-form-jam-kembali')?.value;
 
-        let studentId = '';
-        let studentName = '';
-        let studentNis = '';
+        let studentId = hiddenId || '';
+        let studentName = hiddenName || (searchInput ? searchInput.trim() : '');
+        let studentNis = hiddenNis || '';
 
-        if (selectStudent && selectStudent.value) {
-            studentId = selectStudent.value;
-            const selectedOpt = selectStudent.selectedOptions[0];
-            studentName = selectedOpt.dataset.name || selectedOpt.innerText;
-            studentNis = selectedOpt.dataset.nis || '';
-        } else if (manualName && manualName.value) {
-            studentName = manualName.value.trim();
-            studentNis = manualNis ? manualNis.value.trim() : '';
-            studentId = 'STU_' + Date.now();
+        // Jika user mengetikkan nama di search input tanpa klik list dropdown
+        if (!studentName && searchInput && searchInput.trim()) {
+            studentName = searchInput.trim();
         }
 
         if (!studentName) {
-            if (typeof showToast === 'function') showToast('Nama Santri wajib dipilih atau diisi.', 'warning');
+            if (typeof showToast === 'function') {
+                showToast('Harap cari dan pilih Santri terlebih dahulu.', 'warning');
+            }
+            const sInput = document.getElementById('perpulangan-student-search-input');
+            if (sInput) sInput.focus();
             return;
         }
 
@@ -1235,13 +1505,11 @@
      * Buka Modal Form Izin dari Sudut Pandang Orang Tua / Wali Santri
      */
     function openWaliIzinModal(studentId = '', studentName = '', studentNis = '') {
-        openModalFormIzin({ student_id: studentId });
-
-        // Auto-fill nama santri jika dropdown belum terisi
-        const select = document.getElementById('perpulangan-form-student-select');
-        if (select && studentId) {
-            select.value = studentId;
-        }
+        openModalFormIzin({
+            student_id: studentId,
+            student_name: studentName,
+            student_nis: studentNis
+        });
 
         // Auto-fill nama & kontak wali santri dari sesi login
         const actor = (window.ASNIdentity && window.ASNIdentity.currentUser) || {};
@@ -1472,6 +1740,15 @@
         }).join('');
     }
 
+    // Click outside listener untuk menutup dropdown pencarian santri
+    document.addEventListener('click', (e) => {
+        const searchBox = document.getElementById('perpulangan-search-box-wrapper');
+        const dropdown = document.getElementById('perpulangan-student-search-dropdown');
+        if (searchBox && dropdown && !searchBox.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
     // Export API ke Objek Global
     ASNPerpulangan.loadData = loadPerpulanganData;
     ASNPerpulangan.setFilter = setPerpulanganFilter;
@@ -1479,6 +1756,11 @@
     ASNPerpulangan.openModalFormIzin = openModalFormIzin;
     ASNPerpulangan.closeModalFormIzin = closeModalFormIzin;
     ASNPerpulangan.submitFormIzin = submitFormIzin;
+    ASNPerpulangan.onSearchStudentInput = onSearchStudentInput;
+    ASNPerpulangan.onSearchStudentFocus = onSearchStudentFocus;
+    ASNPerpulangan.clearStudentSearch = clearStudentSearch;
+    ASNPerpulangan.selectStudentFromSearch = selectStudentFromSearch;
+    ASNPerpulangan.resetSelectedStudent = resetSelectedStudent;
     ASNPerpulangan.openModalApproval = openModalApproval;
     ASNPerpulangan.closeModalApproval = closeModalApproval;
     ASNPerpulangan.openModalReject = openModalReject;

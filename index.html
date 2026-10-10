@@ -10459,23 +10459,80 @@
 
             <!-- Body Form Modal -->
             <form id="form-perpulangan-input" onsubmit="window.ASNPerpulangan.submitFormIzin(event)" class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
-                <!-- Pilihan Santri -->
-                <div class="space-y-1.5">
-                    <label class="font-bold text-slate-700 dark:text-slate-200">Pilih Santri Terdaftar</label>
-                    <select id="perpulangan-form-student-select" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="">-- Pilih dari Master Santri --</option>
-                    </select>
-                </div>
-
-                <!-- Input Santri Manual (Alternatif) -->
-                <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-[#1a2634] rounded-2xl border border-slate-200/80 dark:border-[#25374a]">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">Atau Ketik Nama Santri</label>
-                        <input type="text" id="perpulangan-form-student-name" placeholder="Nama lengkap santri" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <!-- Kolom Pencarian Santri Terdaftar (Nama / NIS) -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-graduate text-emerald-600 dark:text-emerald-400"></i>
+                            <span>Santri Yang Mengajukan Izin</span>
+                            <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <span id="perpulangan-student-data-indicator" class="text-[10px] text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-database text-[9px] text-emerald-500"></i> Data Santri Terkoneksi
+                        </span>
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-semibold text-slate-500 dark:text-slate-300">Nomor Induk (NIS)</label>
-                        <input type="text" id="perpulangan-form-student-nis" placeholder="NIS (jika ada)" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+
+                    <!-- Hidden Form Fields untuk ID, Nama, NIS santri -->
+                    <input type="hidden" id="perpulangan-form-student-id" value="">
+                    <input type="hidden" id="perpulangan-form-student-name" value="">
+                    <input type="hidden" id="perpulangan-form-student-nis" value="">
+
+                    <!-- State 1: Kolom Input Pencarian Aktif -->
+                    <div id="perpulangan-search-box-wrapper" class="relative">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-3 text-slate-400 pointer-events-none text-xs">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="perpulangan-student-search-input"
+                                autocomplete="off"
+                                placeholder="Ketik nama atau NIS santri (contoh: Ahmad / 202401)..."
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl pl-8.5 pr-8 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-[#15202d] transition"
+                                oninput="window.ASNPerpulangan.onSearchStudentInput(this.value)"
+                                onfocus="window.ASNPerpulangan.onSearchStudentFocus()"
+                            >
+                            <button type="button" id="perpulangan-student-search-clear-btn" 
+                                onclick="window.ASNPerpulangan.clearStudentSearch()" 
+                                class="hidden absolute right-2 w-6 h-6 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] flex items-center justify-center text-xs transition">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dropdown Hasil Pencarian Live -->
+                        <div id="perpulangan-student-search-dropdown" 
+                            class="hidden absolute z-30 left-0 right-0 top-full mt-1 bg-white dark:bg-[#1c2836] rounded-2xl shadow-xl border border-slate-200 dark:border-[#253447] max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-[#253447]">
+                            <!-- Hasil diisi secara dinamis oleh JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Rekomendasi Cepat Santri Binaan (Khusus Wali Santri) -->
+                    <div id="perpulangan-wali-quick-students" class="hidden space-y-1 pt-0.5">
+                        <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-people-roof text-emerald-500 text-[10px]"></i> Santri binaan Anda (klik untuk memilih):
+                        </span>
+                        <div id="perpulangan-wali-quick-chips" class="flex flex-wrap gap-1.5">
+                            <!-- Chips diisi otomatis -->
+                        </div>
+                    </div>
+
+                    <!-- State 2: Kartu Santri Terpilih (Selected Card) -->
+                    <div id="perpulangan-selected-student-card" class="hidden p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between transition-all">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden shadow-sm" id="perpulangan-selected-student-avatar">
+                                <i class="fa-solid fa-user-graduate"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 id="perpulangan-selected-student-name" class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">Nama Santri</h4>
+                                <div class="flex items-center space-x-1.5 mt-0.5 text-[10px]">
+                                    <span id="perpulangan-selected-student-nis" class="text-emerald-700 dark:text-emerald-300 font-semibold font-mono">NIS: -</span>
+                                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                                    <span id="perpulangan-selected-student-extra" class="text-slate-500 dark:text-slate-400 truncate">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="window.ASNPerpulangan.resetSelectedStudent()" class="px-2.5 py-1 rounded-xl bg-white dark:bg-[#15202d] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-[10px] font-bold border border-rose-200 dark:border-rose-900/40 shadow-xs transition shrink-0 flex items-center space-x-1">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Ganti Santri</span>
+                        </button>
                     </div>
                 </div>
 
