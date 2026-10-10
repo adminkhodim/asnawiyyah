@@ -77,6 +77,20 @@ assert(apiJsContent.includes('approveIzinPengurus'), 'approveIzinPengurus harus 
 assert(apiJsContent.includes('approveIzinPengasuh'), 'approveIzinPengasuh harus terdaftar di api.js');
 assert(apiJsContent.includes('rejectPermohonanIzin'), 'rejectPermohonanIzin harus terdaftar di api.js');
 assert(apiJsContent.includes('gateCheckIzin'), 'gateCheckIzin harus terdaftar di api.js');
-console.log('✅ 5. API client adapter di js/api.js siap melayani mutasi & query modul perpulangan');
+// 5. Verifikasi Integrasi Langkah 5: Portal Wali Santri
+assert(indexHtmlContent.includes('id="parent-perpulangan-tracking-list"'), 'Kontainer tracking pelacakan izin santri harus ada di portal wali santri index.html');
+assert(indexHtmlContent.includes('id="parent-perpulangan-count-badge"'), 'Badge count izin harus ada di portal wali santri index.html');
 
-console.log('\n🎉 SELURUH PENGUJIAN MODUL PERPULANGAN (LANGKAH 4) SUKSES 100%!');
+const authJsPath = path.join(ROOT_DIR, 'js', 'auth.js');
+const authJsContent = fs.readFileSync(authJsPath, 'utf8');
+
+assert(authJsContent.includes('loadWaliPerpulanganData'), 'js/auth.js harus memanggil loadWaliPerpulanganData saat akun wali santri aktif');
+assert(authJsContent.includes('openWaliIzinModal'), 'js/auth.js harus menyediakan tombol openWaliIzinModal pada kartu santri digital');
+
+assert(perpulanganContent.includes('openWaliIzinModal'), 'Fungsi openWaliIzinModal harus ada di js/perpulangan.js');
+assert(perpulanganContent.includes('loadWaliPerpulanganData'), 'Fungsi loadWaliPerpulanganData harus ada di js/perpulangan.js');
+assert(perpulanganContent.includes('renderWaliIzinTracking'), 'Fungsi renderWaliIzinTracking harus ada di js/perpulangan.js');
+console.log('✅ 6. Integrasi Portal Wali Santri (Form Pengajuan & Live Tracking Stepper) terverifikasi 100%');
+
+console.log('\n🎉 SELURUH PENGUJIAN MODUL PERPULANGAN (LANGKAH 4 & 5) SUKSES 100%!');
+

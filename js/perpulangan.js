@@ -545,7 +545,7 @@
     }
 
     /**
-     * Isi Opsi Dropdown Santri dari Master Data
+     * Isi Opsi Dropdown Santri dari Master Data / Santri Terhubung Wali
      */
     function populateStudentSelect() {
         const select = document.getElementById('perpulangan-form-student-select');
@@ -554,16 +554,21 @@
         select.innerHTML = '<option value="">-- Pilih Santri --</option>';
 
         let students = [];
-        if (window.ASNStudents && Array.isArray(window.ASNStudents.list)) {
+        const isWali = (window.ASNIdentity && window.ASNIdentity.currentRole === 'WALI_SANTRI') || (typeof getCurrentUserRole === 'function' && getCurrentUserRole() === 'WALI_SANTRI');
+
+        // Jika user adalah Wali Santri, utamakan santri binaan yang terhubung ke akunnya
+        if (isWali && window.ASNIdentity && Array.isArray(window.ASNIdentity.linkedStudents) && window.ASNIdentity.linkedStudents.length > 0) {
+            students = window.ASNIdentity.linkedStudents;
+        } else if (window.ASNStudents && Array.isArray(window.ASNStudents.list)) {
             students = window.ASNStudents.list;
         } else if (window.santriData && Array.isArray(window.santriData)) {
             students = window.santriData;
         }
 
         students.forEach(s => {
-            const nis = s.nis || s.NIS || '';
-            const name = s.nama || s.Nama || s.nama_santri || 'Santri';
-            const id = s.id || s.ID || nis;
+            const nis = s.nis || s.NIS || s.nisn || '';
+            const name = s.nama || s.Nama || s.name || s.nama_santri || 'Santri';
+            const id = s.id || s.ID || s.studentId || s.student_id || nis;
             const opt = document.createElement('option');
             opt.value = id;
             opt.dataset.nis = nis;
@@ -617,10 +622,16 @@
             return;
         }
 
+        const currentActor = (window.ASNIdentity && window.ASNIdentity.currentUser) || {};
+        const isWali = (window.ASNIdentity && window.ASNIdentity.currentRole === 'WALI_SANTRI') || (typeof getCurrentUserRole === 'function' && getCurrentUserRole() === 'WALI_SANTRI');
+
         const payload = {
             student_id: studentId,
             student_nis: studentNis,
             student_name: studentName,
+            wali_id: isWali ? (currentActor.id || currentActor.userId || '') : '',
+            wali_name: isWali ? (currentActor.name || penjemputNama) : '',
+            wali_phone: isWali ? (currentActor.phone || currentActor.email || penjemputKontak) : '',
             kategori: kategori || 'Izin Biasa',
             alasan: alasan,
             penjemput_nama: penjemputNama,
@@ -650,6 +661,9 @@
                 }
                 closeModalFormIzin();
                 await loadPerpulanganData(true);
+                if (typeof loadWaliPerpulanganData === 'function') {
+                    await loadWaliPerpulanganData();
+                }
             } else {
                 throw new Error(res?.message || 'Gagal menyimpan permohonan izin.');
             }
@@ -1211,6 +1225,253 @@
         if (modal) modal.classList.add('hidden');
     }
 
+    /**
+     * =========================================================================
+     * INTEGRASI PORTAL WALI SANTRI (LANGKAH 5)
+     * =========================================================================
+     */
+
+    /**
+     * Buka Modal Form Izin dari Sudut Pandang Orang Tua / Wali Santri
+     */
+    function openWaliIzinModal(studentId = '', studentName = '', studentNis = '') {
+        openModalFormIzin({ student_id: studentId });
+
+        // Auto-fill nama santri jika dropdown belum terisi
+        const select = document.getElementById('perpulangan-form-student-select');
+        if (select && studentId) {
+            select.value = studentId;
+        }
+
+        // Auto-fill nama & kontak wali santri dari sesi login
+        const actor = (window.ASNIdentity && window.ASNIdentity.currentUser) || {};
+        const penjemputInput = document.getElementById('perpulangan-form-penjemput-nama');
+        const kontakInput = document.getElementById('perpulangan-form-penjemput-kontak');
+        const hubunganSelect = document.getElementById('perpulangan-form-penjemput-hubungan');
+
+        if (penjemputInput && !penjemputInput.value) {
+            penjemputInput.value = actor.name || 'Wali Santri';
+        }
+        if (kontakInput && !kontakInput.value) {
+            kontakInput.value = actor.phone || '';
+        }
+        if (hubunganSelect) {
+            hubunganSelect.value = 'Wali Santri';
+        }
+    }
+
+    /**
+     * Memuat dan Menyaring Data Perizinan Khusus Anak-Anak Wali Santri
+     */
+    async function loadWaliPerpulanganData() {
+        const container = document.getElementById('parent-perpulangan-tracking-list');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-1 animate-pulse">
+                <i class="fa-solid fa-spinner fa-spin text-emerald-600 text-lg mb-1"></i>
+                <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Memuat status izin santri...</p>
+            </div>
+        `;
+
+        try {
+            if (typeof window.getIzinPerpulanganList !== 'function') {
+                throw new Error('Fungsi getIzinPerpulanganList belum tersedia.');
+            }
+
+            const response = await window.getIzinPerpulanganList();
+            let rawList = [];
+            if (response && response.status === 'success' && Array.isArray(response.data)) {
+                rawList = response.data;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                rawList = response.data;
+            } else if (Array.isArray(response)) {
+                rawList = response;
+            }
+
+            // Dapatkan daftar santri yang terhubung ke wali ini
+            let linked = (window.ASNIdentity && Array.isArray(window.ASNIdentity.linkedStudents)) ? window.ASNIdentity.linkedStudents : [];
+            if (linked.length === 0) {
+                try {
+                    const raw = sessionStorage.getItem('asnawiyyah_parent_students');
+                    if (raw) linked = JSON.parse(raw);
+                } catch (e) {}
+            }
+
+            const myNisList = linked.map(s => String(s.nis || s.nisn || s.NIS || '').toLowerCase().trim()).filter(Boolean);
+            const myStudentIds = linked.map(s => String(s.studentId || s.student_id || s.id || '').toLowerCase().trim()).filter(Boolean);
+            const myWaliId = String((window.ASNIdentity && window.ASNIdentity.currentUser && (window.ASNIdentity.currentUser.id || window.ASNIdentity.currentUser.userId)) || '').toLowerCase().trim();
+
+            const myIzinList = rawList.filter(item => {
+                const sNis = String(item.student_nis || item.nis || '').toLowerCase().trim();
+                const sId = String(item.student_id || '').toLowerCase().trim();
+                const wId = String(item.wali_id || '').toLowerCase().trim();
+                return (myNisList.length > 0 && myNisList.includes(sNis)) ||
+                       (myStudentIds.length > 0 && myStudentIds.includes(sId)) ||
+                       (myWaliId && wId === myWaliId);
+            });
+
+            renderWaliIzinTracking(myIzinList);
+        } catch (error) {
+            console.error('[ASNPerpulangan] Gagal memuat data izin wali:', error);
+            container.innerHTML = `
+                <div class="p-4 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-100 dark:border-rose-900/40 text-center space-y-1">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                    <p class="text-xs font-bold text-rose-800 dark:text-rose-200">Gagal memuat status izin santri.</p>
+                    <button type="button" onclick="window.ASNPerpulangan.loadWaliPerpulanganData()" class="mt-1 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold">
+                        Coba Lagi
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Render Kartu Status & Pelacakan Izin Santri Realtime di Portal Wali
+     */
+    function renderWaliIzinTracking(list) {
+        const container = document.getElementById('parent-perpulangan-tracking-list');
+        const badgeCount = document.getElementById('parent-perpulangan-count-badge');
+        if (!container) return;
+
+        if (badgeCount) {
+            badgeCount.innerText = `${list.length} Izin`;
+        }
+
+        if (!list || list.length === 0) {
+            container.innerHTML = `
+                <div class="p-5 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center space-y-2">
+                    <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-base">
+                        <i class="fa-solid fa-person-walking-luggage"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200">Belum Ada Pengajuan Izin</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                        Putra/putri Anda saat ini tercatat berada di lingkungan pondok dan mengikuti kegiatan rutin.
+                    </p>
+                    <div class="pt-1">
+                        <button type="button" onclick="window.ASNPerpulangan.openWaliIzinModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-95 inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Ajukan Izin Santri</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+        container.innerHTML = list.map((item, idx) => {
+            const idIzin = item.id_izin || item.id || `IZN-${idx + 1}`;
+            const studentName = item.student_name || item.nama_santri || 'Santri';
+            const studentNis = item.student_nis || item.nis || '-';
+            const kategori = item.kategori || 'Izin';
+            const alasan = item.alasan || '-';
+            const status = String(item.status || 'MENUNGGU_PENGURUS').toUpperCase();
+            const badgeCfg = getStatusBadgeConfig(status);
+
+            const tglMulai = formatDateIndo(item.tgl_mulai);
+            const jamMulai = formatTimeIndo(item.jam_mulai);
+            const tglKembali = formatDateIndo(item.tgl_kembali);
+            const jamKembali = formatTimeIndo(item.jam_kembali);
+
+            const stepPengurusActive = ['MENUNGGU_PENGASUH', 'DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status);
+            const stepPengasuhActive = ['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status);
+            const stepGerbangActive = ['KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status);
+            const isDitolak = status === 'DITOLAK';
+
+            let printBtn = '';
+            if (['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status)) {
+                printBtn = `
+                    <button type="button" onclick="window.ASNPerpulangan.openModalPrintSuratIzin('${idIzin}')" 
+                        class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                        <i class="fa-solid fa-qrcode text-xs"></i>
+                        <span>Buka Surat Jalan & QR</span>
+                    </button>
+                `;
+            }
+
+            return `
+            <div class="p-4 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs space-y-3 transition-all hover:border-emerald-300 dark:hover:border-emerald-800">
+                <!-- Bar Atas: Nama Santri & Status Badge -->
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100">${escapeHtml(studentName)}</h4>
+                            <span class="text-[10px] font-mono text-slate-400">NIS: ${escapeHtml(studentNis)}</span>
+                        </div>
+                        <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300">
+                            ${escapeHtml(kategori)}
+                        </span>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border shrink-0 ${badgeCfg.bg}">
+                        <span class="w-1.5 h-1.5 rounded-full ${badgeCfg.dot}"></span>
+                        <span>${badgeCfg.label}</span>
+                    </span>
+                </div>
+
+                <!-- Alasan & Jadwal Kepulangan -->
+                <div class="p-2.5 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-100 dark:border-[#25374a] space-y-1.5 text-[11px]">
+                    <div class="text-slate-600 dark:text-slate-300">
+                        <span class="text-slate-400">Keperluan:</span> <strong>${escapeHtml(alasan)}</strong>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:justify-between text-slate-500 dark:text-slate-300 gap-1 pt-0.5 border-t border-slate-200/60 dark:border-[#25374a]">
+                        <div><i class="fa-solid fa-clock text-emerald-500 mr-1"></i> Berangkat: <strong>${tglMulai} ${jamMulai}</strong></div>
+                        <div class="text-amber-700 dark:text-amber-400"><i class="fa-solid fa-circle-exclamation mr-1"></i> Batas Kembali: <strong>${tglKembali} ${jamKembali}</strong></div>
+                    </div>
+                </div>
+
+                <!-- LIVE TRACKER STEPPER -->
+                ${!isDitolak ? `
+                <div class="pt-1">
+                    <div class="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Pelacakan Persetujuan:</div>
+                    <div class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+                        <!-- Step 1: Diajukan -->
+                        <div class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 font-bold">
+                            <i class="fa-solid fa-file-signature block text-xs mb-0.5"></i>
+                            <span>Diajukan</span>
+                        </div>
+                        <!-- Step 2: Pengurus -->
+                        <div class="p-1.5 rounded-lg ${stepPengurusActive ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 font-bold' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-400 border border-transparent'}">
+                            <i class="fa-solid fa-user-check block text-xs mb-0.5"></i>
+                            <span>Tier 1 Pengurus</span>
+                        </div>
+                        <!-- Step 3: Pengasuh -->
+                        <div class="p-1.5 rounded-lg ${stepPengasuhActive ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/60 font-bold' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-400 border border-transparent'}">
+                            <i class="fa-solid fa-hands-praying block text-xs mb-0.5"></i>
+                            <span>Tier 2 Pengasuh</span>
+                        </div>
+                        <!-- Step 4: Pos Gerbang -->
+                        <div class="p-1.5 rounded-lg ${stepGerbangActive ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200/60 font-bold' : 'bg-slate-100 dark:bg-[#1c2836] text-slate-400 border border-transparent'}">
+                            <i class="fa-solid fa-door-open block text-xs mb-0.5"></i>
+                            <span>Pos Gerbang</span>
+                        </div>
+                    </div>
+                </div>
+                ` : `
+                <!-- Box Penolakan -->
+                <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 text-[11px] text-rose-800 dark:text-rose-300">
+                    <span class="font-bold block mb-0.5"><i class="fa-solid fa-circle-xmark mr-1"></i> Alasan Penolakan dari Pesantren:</span>
+                    <span>${escapeHtml(item.alasan_penolakan || 'Tidak memperoleh rekomendasi dari dewan pengurus/pengasuh.')}</span>
+                </div>
+                `}
+
+                <!-- Bar Bawah Aksi -->
+                <div class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#253447]">
+                    <span class="font-mono text-[9px] text-slate-400">ID: ${idIzin}</span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="window.ASNPerpulangan.openModalDetail('${idIzin}')" 
+                            class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 text-xs font-semibold transition active:scale-95">
+                            Detail Timeline
+                        </button>
+                        ${printBtn}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
     // Export API ke Objek Global
     ASNPerpulangan.loadData = loadPerpulanganData;
     ASNPerpulangan.setFilter = setPerpulanganFilter;
@@ -1230,10 +1491,15 @@
     ASNPerpulangan.printSuratIzinDocument = printSuratIzinDocument;
     ASNPerpulangan.openModalDetail = openModalDetail;
     ASNPerpulangan.closeModalDetail = closeModalDetail;
+    ASNPerpulangan.openWaliIzinModal = openWaliIzinModal;
+    ASNPerpulangan.loadWaliPerpulanganData = loadWaliPerpulanganData;
+    ASNPerpulangan.renderWaliIzinTracking = renderWaliIzinTracking;
 
     // Export window level alias untuk kemudahan integrasi event handler onclick
     window.loadPerpulanganData = loadPerpulanganData;
     window.openModalFormIzin = openModalFormIzin;
     window.closeModalFormIzin = closeModalFormIzin;
+    window.openWaliIzinModal = openWaliIzinModal;
+    window.loadWaliPerpulanganData = loadWaliPerpulanganData;
 
 })(window, document);

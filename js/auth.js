@@ -870,6 +870,17 @@ const ASNIdentity = {
             
             // Render linked students
             this.renderLinkedStudents();
+
+            // Load & track perizinan/perpulangan santri wali (Langkah 5)
+            try {
+                if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadWaliPerpulanganData === 'function') {
+                    window.ASNPerpulangan.loadWaliPerpulanganData();
+                } else if (typeof window.loadWaliPerpulanganData === 'function') {
+                    window.loadWaliPerpulanganData();
+                }
+            } catch (errPerp) {
+                console.warn('[ASNAuth] Gagal memuat pelacakan perpulangan wali:', errPerp);
+            }
         } else {
             // PUBLIC
             publicStateEl.classList.remove('hidden');
@@ -1133,11 +1144,15 @@ const ASNIdentity = {
                         </div>
                     </div>
 
-                    <!-- Tombol Aksi Mutaba'ah Lengkap -->
-                    <div class="pt-1">
-                        <button type="button" data-student-id="${escapeHtml(studentId)}" onclick="openTahfidzStudentDetail(this.getAttribute('data-student-id'), 'parent')" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-amber-900/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2" title="Buka Buku Mutaba'ah & Capaian Santri">
-                            <i class="fa-solid fa-book-quran text-sm text-slate-950"></i>
-                            <span>Buka Buku Mutaba'ah Lengkap</span>
+                    <!-- Tombol Aksi Mutaba'ah & Izin Santri -->
+                    <div class="pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button type="button" data-student-id="${escapeHtml(studentId)}" onclick="openTahfidzStudentDetail(this.getAttribute('data-student-id'), 'parent')" class="w-full py-2.5 px-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl font-extrabold text-xs tracking-wide shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-1.5" title="Buka Buku Mutaba'ah & Capaian Santri">
+                            <i class="fa-solid fa-book-quran text-xs text-slate-950"></i>
+                            <span>Buku Mutaba'ah</span>
+                        </button>
+                        <button type="button" onclick="if(window.ASNPerpulangan && typeof window.ASNPerpulangan.openWaliIzinModal === 'function') { window.ASNPerpulangan.openWaliIzinModal('${escapeHtml(studentId)}', '${escapeHtml(studentName)}', '${escapeHtml(studentNis)}'); } else if(typeof window.openWaliIzinModal === 'function') { window.openWaliIzinModal('${escapeHtml(studentId)}', '${escapeHtml(studentName)}', '${escapeHtml(studentNis)}'); }" class="w-full py-2.5 px-3 bg-emerald-600/90 hover:bg-emerald-600 text-white rounded-2xl font-bold text-xs tracking-wide shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 border border-emerald-500/40" title="Ajukan Izin / Perpulangan untuk Santri ini">
+                            <i class="fa-solid fa-person-walking-luggage text-xs"></i>
+                            <span>Ajukan Izin</span>
                         </button>
                     </div>
                 </div>
