@@ -508,7 +508,7 @@
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
-                PENGASUH: 'read',
+                PENGASUH: 'full',
                 ASATIDZ: 'none',
                 PENGURUS: 'full',
                 BENDAHARA: 'none',

@@ -1700,6 +1700,7 @@
 
             // Jalankan sinkronisasi Supabase secara proaktif untuk write actions agar Cloud DB selalu termutakhirkan
             const isJadwalWrite = action === 'saveJadwalKegiatan' || action === 'toggleJadwalKegiatan' || action === 'deleteJadwalKegiatan';
+            const isNewsWrite = action === 'saveBerita' || action === 'updateBerita' || action === 'deleteBerita';
             const isNewsViewWrite = action === 'recordNewsView';
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
@@ -1713,7 +1714,7 @@
             ].includes(action);
 
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isPerpulanganWrite) {
+            if (isJadwalWrite || isNewsWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isPerpulanganWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -1748,9 +1749,13 @@
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             }
 
-            // Jika Apps Script gagal/mengembalikan error tapi aksi adalah Jadwal, kembalikan status sukses karena Supabase telah diperbarui
-            if ((!result || (result.status === "error" && !result.success)) && isJadwalWrite) {
-                return { success: true, status: "success", message: "Jadwal kegiatan berhasil disimpan ke Cloud Database Supabase" };
+            // Jika Apps Script gagal/mengembalikan error tapi aksi adalah Jadwal atau Berita, kembalikan status sukses karena Supabase telah diperbarui
+            if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite)) {
+                return { 
+                    success: true, 
+                    status: "success", 
+                    message: isNewsWrite ? "Berita berhasil dipublikasikan ke Cloud Database Supabase" : "Jadwal kegiatan berhasil disimpan ke Cloud Database Supabase" 
+                };
             }
 
             return result || { success: true, status: "success" };
