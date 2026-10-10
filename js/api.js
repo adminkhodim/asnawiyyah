@@ -1500,6 +1500,129 @@
                         }
                     };
                 }
+
+                // 15. Izin Santri & Perpulangan (Modul 20 Fast-Read Supabase <50ms)
+                if (action === "getIzinPerpulanganList" || action === "perpulangan.list" || action === "auth.perpulangan.list") {
+                    let query = `${sbUrl}/rest/v1/izin_perpulangan?select=*&order=created_at.desc`;
+                    if (params.studentId || params.student_id) {
+                        query += `&student_id=eq.${encodeURIComponent(params.studentId || params.student_id)}`;
+                    } else if (params.studentNis || params.student_nis || params.nis) {
+                        query += `&student_nis=eq.${encodeURIComponent(params.studentNis || params.student_nis || params.nis)}`;
+                    }
+                    if (params.waliId || params.wali_id) {
+                        query += `&wali_id=eq.${encodeURIComponent(params.waliId || params.wali_id)}`;
+                    }
+                    if (params.status && params.status !== 'ALL') {
+                        query += `&status=eq.${encodeURIComponent(params.status)}`;
+                    }
+                    if (params.kategori && params.kategori !== 'ALL') {
+                        query += `&kategori=eq.${encodeURIComponent(params.kategori)}`;
+                    }
+
+                    const res = await fetch(query, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    if (!Array.isArray(rows)) return null;
+
+                    const list = rows.map(r => ({
+                        idIzin: r.id_izin,
+                        id: r.id_izin,
+                        studentId: r.student_id,
+                        studentNis: r.student_nis,
+                        studentName: r.student_name,
+                        waliId: r.wali_id,
+                        waliName: r.wali_name || '',
+                        waliPhone: r.wali_phone || '',
+                        kategori: r.kategori,
+                        alasan: r.alasan || '',
+                        penjemputNama: r.penjemput_nama || '',
+                        penjemputHubungan: r.penjemput_hubungan || 'Orang Tua',
+                        penjemputKontak: r.penjemput_kontak || '',
+                        tglMulai: r.tgl_mulai,
+                        jamMulai: r.jam_mulai,
+                        tglKembali: r.tgl_kembali,
+                        jamKembali: r.jam_kembali,
+                        status: r.status,
+                        pengurusApprovedBy: r.pengurus_approved_by || '',
+                        pengurusApprovedAt: r.pengurus_approved_at || null,
+                        pengurusCatatan: r.pengurus_catatan || '',
+                        pengasuhApprovedBy: r.pengasuh_approved_by || '',
+                        pengasuhApprovedAt: r.pengasuh_approved_at || null,
+                        pengasuhCatatan: r.pengasuh_catatan || '',
+                        alasanPenolakan: r.alasan_penolakan || '',
+                        checkoutAt: r.checkout_at || null,
+                        checkoutPetugas: r.checkout_petugas || '',
+                        checkinAt: r.checkin_at || null,
+                        checkinPetugas: r.checkin_petugas || '',
+                        catatanKeterlambatan: r.catatan_keterlambatan || '',
+                        createdAt: r.created_at,
+                        updatedAt: r.updated_at
+                    }));
+
+                    return {
+                        success: true,
+                        status: "success",
+                        data: list,
+                        summary: {
+                            total: list.length,
+                            menungguPengurus: list.filter(r => r.status === 'MENUNGGU_PENGURUS').length,
+                            menungguPengasuh: list.filter(r => r.status === 'MENUNGGU_PENGASUH').length,
+                            disetujui: list.filter(r => r.status === 'DISETUJUI').length,
+                            keluar: list.filter(r => r.status === 'KELUAR').length,
+                            kembali: list.filter(r => r.status === 'KEMBALI').length,
+                            terlambat: list.filter(r => r.status === 'TERLAMBAT').length,
+                            ditolak: list.filter(r => r.status === 'DITOLAK').length
+                        }
+                    };
+                }
+
+                if (action === "getIzinPerpulanganById" || action === "perpulangan.getById") {
+                    const id = String(params.idIzin || params.id || params.id_izin || "").trim();
+                    if (!id) return null;
+                    const res = await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    if (!rows || rows.length === 0) return null;
+                    const r = rows[0];
+                    return {
+                        success: true,
+                        status: "success",
+                        data: {
+                            idIzin: r.id_izin,
+                            id: r.id_izin,
+                            studentId: r.student_id,
+                            studentNis: r.student_nis,
+                            studentName: r.student_name,
+                            waliId: r.wali_id,
+                            waliName: r.wali_name || '',
+                            waliPhone: r.wali_phone || '',
+                            kategori: r.kategori,
+                            alasan: r.alasan || '',
+                            penjemputNama: r.penjemput_nama || '',
+                            penjemputHubungan: r.penjemput_hubungan || 'Orang Tua',
+                            penjemputKontak: r.penjemput_kontak || '',
+                            tglMulai: r.tgl_mulai,
+                            jamMulai: r.jam_mulai,
+                            tglKembali: r.tgl_kembali,
+                            jamKembali: r.jam_kembali,
+                            status: r.status,
+                            pengurusApprovedBy: r.pengurus_approved_by || '',
+                            pengurusApprovedAt: r.pengurus_approved_at || null,
+                            pengurusCatatan: r.pengurus_catatan || '',
+                            pengasuhApprovedBy: r.pengasuh_approved_by || '',
+                            pengasuhApprovedAt: r.pengasuh_approved_at || null,
+                            pengasuhCatatan: r.pengasuh_catatan || '',
+                            alasanPenolakan: r.alasan_penolakan || '',
+                            checkoutAt: r.checkout_at || null,
+                            checkoutPetugas: r.checkout_petugas || '',
+                            checkinAt: r.checkin_at || null,
+                            checkinPetugas: r.checkin_petugas || '',
+                            catatanKeterlambatan: r.catatan_keterlambatan || '',
+                            createdAt: r.created_at,
+                            updatedAt: r.updated_at
+                        }
+                    };
+                }
             } catch (err) {
                 console.warn("[SUPABASE FETCH ERROR]", action, err);
                 return null;
@@ -1549,7 +1672,9 @@
                 'getTahfidzSesiList', 'getTahfidzSesi', 'tahfidz.sesiList',
                 'getKeaktifanAsatidz', 'keaktifan.getAsatidz', 'auth.keaktifan.asatidz',
                 'program.list',
-                'getPPDB', 'checkStatus'
+                'getPPDB', 'checkStatus',
+                'getIzinPerpulanganList', 'perpulangan.list', 'auth.perpulangan.list',
+                'getIzinPerpulanganById', 'perpulangan.getById'
             ];
             if (fastReadActions.includes(action)) {
                 try {
@@ -1579,8 +1704,16 @@
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
             const isSesiWrite = action === 'saveTahfidzSesi' || action === 'deleteTahfidzSesi';
+            const isPerpulanganWrite = [
+                'perpulangan.submit', 'submitPermohonanIzin', 'submitIzinPerpulangan',
+                'perpulangan.approvePengurus', 'approveIzinPengurus',
+                'perpulangan.approvePengasuh', 'approveIzinPengasuh',
+                'perpulangan.reject', 'rejectIzin', 'rejectIzinPerpulangan',
+                'perpulangan.gateCheck', 'gateCheckIzin'
+            ].includes(action);
+
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite) {
+            if (isJadwalWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isPerpulanganWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -2514,6 +2647,119 @@
                         });
                     }
                 }
+
+                // ==================== 15. IZIN PERPULANGAN SANTRI (MODUL 20) ====================
+                else if (action === 'perpulangan.submit' || action === 'submitPermohonanIzin' || action === 'submitIzinPerpulangan') {
+                    const d = payload.payload || payload.data || payload;
+                    const idIzin = (response && (response.idIzin || response.id_izin || (response.data && response.data.idIzin))) || d.idIzin || d.id_izin || ('IZN-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000));
+                    const nowIso = new Date().toISOString();
+                    const row = {
+                        id_izin: idIzin,
+                        student_id: String(d.studentId || d.student_id || '').trim(),
+                        student_nis: String(d.studentNis || d.student_nis || d.nis || '').trim(),
+                        student_name: String(d.studentName || d.student_name || d.nama || '').trim(),
+                        wali_id: String(d.waliId || d.wali_id || (window.ASNIdentity && window.ASNIdentity.currentUser && (window.ASNIdentity.currentUser.userId || window.ASNIdentity.currentUser.id)) || 'WALI_USER').trim(),
+                        wali_name: String(d.waliName || d.wali_name || '').trim(),
+                        wali_phone: String(d.waliPhone || d.wali_phone || '').trim(),
+                        kategori: String(d.kategori || 'Pulang ke Rumah / Libur Terjadwal').trim(),
+                        alasan: String(d.alasan || '').trim(),
+                        penjemput_nama: String(d.penjemputNama || d.penjemput_nama || d.waliName || '').trim(),
+                        penjemput_hubungan: String(d.penjemputHubungan || d.penjemput_hubungan || 'Orang Tua').trim(),
+                        penjemput_kontak: String(d.penjemputKontak || d.penjemput_kontak || d.waliPhone || '').trim(),
+                        tgl_mulai: String(d.tglMulai || d.tgl_mulai || '').trim(),
+                        jam_mulai: String(d.jamMulai || d.jam_mulai || '08:00').trim(),
+                        tgl_kembali: String(d.tglKembali || d.tgl_kembali || '').trim(),
+                        jam_kembali: String(d.jamKembali || d.jam_kembali || '17:00').trim(),
+                        status: 'MENUNGGU_PENGURUS',
+                        created_at: nowIso,
+                        updated_at: nowIso
+                    };
+                    await fetch(`${sbUrl}/rest/v1/izin_perpulangan`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(row)
+                    });
+                }
+                else if (action === 'perpulangan.approvePengurus' || action === 'approveIzinPengurus') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    if (id) {
+                        const nowIso = new Date().toISOString();
+                        const actor = payload.approvedBy || payload.actorName || (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Pengurus Keamanan';
+                        await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                status: 'MENUNGGU_PENGASUH',
+                                pengurus_approved_by: actor,
+                                pengurus_approved_at: nowIso,
+                                pengurus_catatan: payload.catatan || payload.pengurusCatatan || '',
+                                updated_at: nowIso
+                            })
+                        });
+                    }
+                }
+                else if (action === 'perpulangan.approvePengasuh' || action === 'approveIzinPengasuh') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    if (id) {
+                        const nowIso = new Date().toISOString();
+                        const actor = payload.approvedBy || payload.actorName || (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Dewan Pengasuh';
+                        await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                status: 'DISETUJUI',
+                                pengasuh_approved_by: actor,
+                                pengasuh_approved_at: nowIso,
+                                pengasuh_catatan: payload.catatan || payload.pengasuhCatatan || '',
+                                updated_at: nowIso
+                            })
+                        });
+                    }
+                }
+                else if (action === 'perpulangan.reject' || action === 'rejectIzin' || action === 'rejectIzinPerpulangan') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    if (id) {
+                        const nowIso = new Date().toISOString();
+                        await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                status: 'DITOLAK',
+                                alasan_penolakan: payload.alasan || payload.alasanPenolakan || 'Tidak memenuhi kriteria perizinan',
+                                updated_at: nowIso
+                            })
+                        });
+                    }
+                }
+                else if (action === 'perpulangan.gateCheck' || action === 'gateCheckIzin') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    const checkType = String(payload.type || payload.checkType || payload.tipeAksi || 'OUT').toUpperCase();
+                    if (id) {
+                        const nowIso = new Date().toISOString();
+                        const petugas = payload.petugas || payload.petugasName || (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Petugas Gerbang';
+                        let patchBody = { updated_at: nowIso };
+
+                        if (checkType === 'OUT' || checkType === 'CHECKOUT' || checkType === 'KELUAR') {
+                            patchBody.status = 'KELUAR';
+                            patchBody.checkout_at = nowIso;
+                            patchBody.checkout_petugas = petugas;
+                        } else {
+                            const isLate = Boolean(payload.isLate);
+                            patchBody.status = isLate ? 'TERLAMBAT' : 'KEMBALI';
+                            patchBody.checkin_at = nowIso;
+                            patchBody.checkin_petugas = petugas;
+                            if (payload.catatanKeterlambatan || payload.catatan) {
+                                patchBody.catatan_keterlambatan = payload.catatanKeterlambatan || payload.catatan;
+                            }
+                        }
+
+                        await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify(patchBody)
+                        });
+                    }
+                }
             } catch (syncErr) {
                 console.warn('[SUPABASE DUAL-WRITE SYNC ERROR]', action, syncErr);
             }
@@ -3061,3 +3307,61 @@
         window.selectCalDate = selectCalDate;
         window.getHijriDate = getHijriDate;
         window.getPasaranJawa = getPasaranJawa;
+
+        // =====================================================================
+        // MODUL 20: IZIN & PERPULANGAN SANTRI (API CLIENT ADAPTER)
+        // Two-Tier Approval, Gate QR Check, & Fast-Read Dual-Sync
+        // =====================================================================
+
+        async function getIzinPerpulanganList(filters = {}) {
+            try {
+                let res = await fetchFromSupabase('getIzinPerpulanganList', filters);
+                if (res && (res.success || res.status === 'success')) return res;
+            } catch (err) {
+                console.warn('[PERPULANGAN FAST-READ FAILOVER]', err);
+            }
+            return await apiPost('perpulangan.list', filters);
+        }
+
+        async function getIzinPerpulanganById(idIzin) {
+            if (!idIzin) return { success: false, message: 'ID Izin wajib disertakan' };
+            try {
+                let res = await fetchFromSupabase('getIzinPerpulanganById', { idIzin });
+                if (res && (res.success || res.status === 'success')) return res;
+            } catch (err) {
+                console.warn('[PERPULANGAN GET BY ID FAILOVER]', err);
+            }
+            return await apiPost('perpulangan.getById', { idIzin });
+        }
+
+        async function submitPermohonanIzin(data) {
+            return await apiPost('perpulangan.submit', data);
+        }
+
+        async function approveIzinPengurus(idIzin, catatan = '') {
+            const actor = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Pengurus Keamanan';
+            return await apiPost('perpulangan.approvePengurus', { idIzin, catatan, approvedBy: actor });
+        }
+
+        async function approveIzinPengasuh(idIzin, catatan = '') {
+            const actor = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Dewan Pengasuh';
+            return await apiPost('perpulangan.approvePengasuh', { idIzin, catatan, approvedBy: actor });
+        }
+
+        async function rejectPermohonanIzin(idIzin, alasan = '') {
+            return await apiPost('perpulangan.reject', { idIzin, alasan });
+        }
+
+        async function gateCheckIzin(idIzin, checkType = 'OUT', catatan = '') {
+            const petugas = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Petugas Gerbang';
+            return await apiPost('perpulangan.gateCheck', { idIzin, checkType, catatan, petugas });
+        }
+
+        window.getIzinPerpulanganList = getIzinPerpulanganList;
+        window.getIzinPerpulanganById = getIzinPerpulanganById;
+        window.submitPermohonanIzin = submitPermohonanIzin;
+        window.approveIzinPengurus = approveIzinPengurus;
+        window.approveIzinPengasuh = approveIzinPengasuh;
+        window.rejectPermohonanIzin = rejectPermohonanIzin;
+        window.gateCheckIzin = gateCheckIzin;
+
