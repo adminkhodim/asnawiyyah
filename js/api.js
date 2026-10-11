@@ -1713,8 +1713,10 @@
                 'perpulangan.gateCheck', 'gateCheckIzin'
             ].includes(action);
 
+            const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
+
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isPerpulanganWrite) {
+            if (isJadwalWrite || isNewsWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isPerpulanganWrite || isNotifikasiWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -2303,36 +2305,78 @@
                 }
 
                 // ==================== 7. WARTA & NOTIFIKASI ====================
-                else if (action === 'saveNotifikasi') {
+                else if (action === 'saveNotifikasi' || action === 'admin.saveNotifikasi') {
                     const d = payload.data || payload;
                     const notifId = (response && (response.id || response.notifId)) || d.id || ('NOTIF_' + Date.now());
                     const imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || d.gambar || d.gambar_url || d.gambarLama || null;
+                    const statusVal = d.status || 'Aktif';
+                    const isPopupVal = Boolean(d.is_popup === true || d.is_popup === 1 || String(d.is_popup) === "1" || String(d.is_popup).toLowerCase() === "true" || d.isPopup === true || d.isPopup === 1 || String(d.isPopup) === "1" || String(d.isPopup).toLowerCase() === "true");
+
                     const notifRow = {
                         id: notifId,
                         judul: d.judul || 'Warta Pengumuman',
-                        kategori: d.kategori || 'Akademik',
+                        kategori: d.kategori || 'Pengumuman',
                         tanggal: d.tanggal || new Date().toISOString().split('T')[0],
                         ringkasan: d.ringkasan || null,
                         isi: d.isi || '',
                         gambar_url: imgUrl,
-                        is_popup: !!(d.is_popup || d.isPopup),
-                        status: d.status || 'Aktif',
-                        created_at: new Date().toISOString()
+                        is_popup: isPopupVal,
+                        status: statusVal
                     };
-                    await fetch(`${sbUrl}/rest/v1/notifikasi`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(notifRow)
-                    });
+
+                    // Utamakan PATCH jika record sudah ada untuk update instan
+                    let patched = false;
+                    if (d.id) {
+                        try {
+                            const pRes = await fetch(`${sbUrl}/rest/v1/notifikasi?id=eq.${encodeURIComponent(notifId)}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'apikey': sbKey,
+                                    'Authorization': `Bearer ${sbKey}`,
+                                    'Content-Type': 'application/json',
+                                    'Prefer': 'return=representation'
+                                },
+                                body: JSON.stringify(notifRow)
+                            });
+                            if (pRes.ok) {
+                                const pJson = await pRes.json().catch(() => []);
+                                if (Array.isArray(pJson) && pJson.length > 0) {
+                                    patched = true;
+                                }
+                            }
+                        } catch (pErr) {
+                            console.warn('[SB NOTIF PATCH WARN]', pErr);
+                        }
+                    }
+
+                    if (!patched) {
+                        notifRow.created_at = new Date().toISOString();
+                        await fetch(`${sbUrl}/rest/v1/notifikasi`, {
+                            method: 'POST',
+                            headers: {
+                                ...headers,
+                                'Prefer': 'resolution=merge-duplicates,return=representation'
+                            },
+                            body: JSON.stringify(notifRow)
+                        }).catch(e => console.warn('[SB NOTIF POST WARN]', e));
+                    }
+
+                    // Bersihkan cache notifikasi di browser agar data terbaru selalu termuat
+                    try {
+                        if (typeof localStorage !== 'undefined') localStorage.removeItem('asn_cached_notifikasi');
+                    } catch (e) {}
                 }
-                else if (action === 'deleteNotifikasi') {
-                    const notifId = payload.id || (payload.data && payload.data.id);
+                else if (action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi') {
+                    const notifId = payload.id || (payload.data && payload.data.id) || payload.notifId || (payload.data && payload.data.notifId);
                     if (notifId) {
                         await fetch(`${sbUrl}/rest/v1/notifikasi?id=eq.${encodeURIComponent(notifId)}`, {
                             method: 'DELETE',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-                        });
+                        }).catch(e => console.warn('[SB NOTIF DELETE WARN]', e));
                     }
+                    try {
+                        if (typeof localStorage !== 'undefined') localStorage.removeItem('asn_cached_notifikasi');
+                    } catch (e) {}
                 }
 
                 // ==================== 8. GALERI FOTO ====================

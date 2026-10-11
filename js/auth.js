@@ -382,8 +382,111 @@ const ASNAuthAPI = {
         }
     },
 
-    async getParentStudents(token) {
+    async getParentStudents(token, parentHint = null) {
         if (!token) return { success: false, students: [] };
+
+        // 1. Prioritas Fast-Read langsung dari Supabase Cloud Database (Realtime Source of Truth)
+        try {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+
+            if (sbUrl && sbKey) {
+                // Tentukan identitas wali santri
+                let parentUser = parentHint || (typeof ASNIdentity !== 'undefined' ? ASNIdentity.currentUser : null);
+                if (!parentUser) {
+                    try {
+                        const raw = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_DATA);
+                        if (raw) parentUser = JSON.parse(raw);
+                    } catch(e) {}
+                }
+
+                // Jika token JWT, ekstrak payload jika parentUser belum tersedia
+                if (!parentUser && typeof token === 'string' && token.includes('.')) {
+                    try {
+                        const parts = token.split('.');
+                        if (parts.length === 3) {
+                            const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                            const payload = JSON.parse(decodeURIComponent(escape(atob(b64))));
+                            if (payload) {
+                                parentUser = {
+                                    email: payload.sub || payload.email,
+                                    userId: payload.identityId || payload.userId || payload.sub
+                                };
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                let targetUserId = parentUser ? (parentUser.userId || parentUser.identityId || parentUser.user_id || parentUser.id) : null;
+                const parentEmail = parentUser ? String(parentUser.email || '').trim().toLowerCase() : '';
+                const parentPhone = parentUser ? String(parentUser.phone || '').trim() : '';
+
+                const headers = { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` };
+
+                // Jika belum tahu targetUserId atau targetUserId bukan format USR_, cari berdasarkan email atau phone di tabel users
+                if ((!targetUserId || !String(targetUserId).startsWith('USR_')) && (parentEmail || parentPhone)) {
+                    let filterQuery = parentEmail ? `email=eq.${encodeURIComponent(parentEmail)}` : `phone=eq.${encodeURIComponent(parentPhone)}`;
+                    const uRes = await fetch(`${sbUrl}/rest/v1/users?${filterQuery}&select=user_id,email,phone,name`, { headers });
+                    if (uRes.ok) {
+                        const uData = await uRes.json();
+                        if (Array.isArray(uData) && uData.length > 0) {
+                            targetUserId = uData[0].user_id;
+                        }
+                    }
+                }
+
+                if (targetUserId) {
+                    // Query relasi anak dari tabel wali_santri_map
+                    const mapRes = await fetch(`${sbUrl}/rest/v1/wali_santri_map?wali_id=eq.${encodeURIComponent(targetUserId)}&select=*`, { headers });
+                    if (mapRes.ok) {
+                        const maps = await mapRes.json();
+                        if (Array.isArray(maps) && maps.length > 0) {
+                            const validMaps = maps.filter(m => !m.status || String(m.status).toUpperCase() === 'VERIFIED' || String(m.status).toUpperCase() === 'ACTIVE');
+                            const studentIds = validMaps.map(m => m.student_id).filter(Boolean);
+
+                            if (studentIds.length > 0) {
+                                // Query data santri dari tabel students di Supabase
+                                const orFilter = studentIds.map(id => `student_id.eq.${encodeURIComponent(id)},nis.eq.${encodeURIComponent(id)}`).join(',');
+                                const stRes = await fetch(`${sbUrl}/rest/v1/students?or=(${orFilter})&select=*`, { headers });
+                                let dbStudents = [];
+                                if (stRes.ok) {
+                                    dbStudents = await stRes.json();
+                                }
+
+                                const enriched = validMaps.map(m => {
+                                    const st = dbStudents.find(s => s.student_id === m.student_id || s.nis === m.student_id) || {};
+                                    return {
+                                        studentId: m.student_id,
+                                        student_id: m.student_id,
+                                        nis: st.nis || '-',
+                                        nisn: st.nis || '-',
+                                        nik: st.nik || '',
+                                        name: st.name || 'Santri',
+                                        gender: (st.gender || 'L').toUpperCase(),
+                                        birthDate: st.birth_date || '',
+                                        photoUrl: st.photo_url || '',
+                                        photo_url: st.photo_url || '',
+                                        qrCode: st.qr_code || ('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(st.nis || m.student_id)),
+                                        program: st.program || 'Reguler',
+                                        status: st.status || 'ACTIVE',
+                                        relationship: m.relationship || 'GUARDIAN'
+                                    };
+                                });
+
+                                if (enriched.length > 0) {
+                                    return { success: true, students: enriched, source: 'supabase' };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (sbErr) {
+            console.warn('[ASNAuthAPI] Supabase fast-read getParentStudents warning:', sbErr);
+        }
+
+        // 2. Fallback jika Quick Token
         if (typeof token === 'string' && (token.startsWith('WALI_QUICK_') || token.startsWith('WALI_NIS_'))) {
             let students = [];
             try {
@@ -391,10 +494,12 @@ const ASNAuthAPI = {
             } catch(e) {}
             if (Array.isArray(students) && students.length > 0) return { success: true, students: students };
         }
+
+        // 3. Fallback ke Google Apps Script backend
         try {
             const response = await authApiPost(ASN_AUTH_ACTIONS.PARENT_STUDENTS, { token: token });
             if (response && response.success && Array.isArray(response.students)) {
-                return { success: true, students: response.students };
+                return { success: true, students: response.students, source: 'gas' };
             }
             return { success: false, students: [], message: (response && response.message) || 'Gagal memuat daftar santri.' };
         } catch (err) {
@@ -521,6 +626,21 @@ const ASNIdentity = {
                 const savedStuds = sessionStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS) || localStorage.getItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
                 if (savedStuds) this.linkedStudents = JSON.parse(savedStuds);
             } catch (e) {}
+
+            // Proaktif sinkronisasi santri dari Supabase seketika jika ada penambahan anak baru
+            setTimeout(() => {
+                ASNAuthAPI.getParentStudents(parentToken, this.currentUser).then(fresh => {
+                    if (fresh && fresh.success && Array.isArray(fresh.students) && fresh.students.length > 0) {
+                        const curLen = Array.isArray(this.linkedStudents) ? this.linkedStudents.length : 0;
+                        if (fresh.students.length !== curLen) {
+                            this.linkedStudents = fresh.students;
+                            sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(fresh.students));
+                            localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(fresh.students));
+                            this.renderLinkedStudents();
+                        }
+                    }
+                }).catch(() => {});
+            }, 30);
         } else {
             this.currentRole = ASN_ROLES.PUBLIC;
             this.currentState = ASN_STATES.PUBLIC;
@@ -632,18 +752,19 @@ const ASNIdentity = {
                 }
 
                 // Hydrate parent profile & student relationships from server
-                const [profRes, studRes] = await Promise.all([
-                    ASNAuthAPI.getParentProfile(token),
-                    ASNAuthAPI.getParentStudents(token)
-                ]);
-
+                let parentUser = null;
+                const profRes = await ASNAuthAPI.getParentProfile(token);
                 if (profRes.success && profRes.parent) {
                     this.currentUser = profRes.parent;
+                    parentUser = profRes.parent;
                     sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(profRes.parent));
                     localStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(profRes.parent));
                 } else if (verifyRes.identity) {
                     this.currentUser = verifyRes.identity;
+                    parentUser = verifyRes.identity;
                 }
+
+                const studRes = await ASNAuthAPI.getParentStudents(token, parentUser || this.currentUser);
 
                 if (studRes.success && Array.isArray(studRes.students) && studRes.students.length > 0) {
                     this.linkedStudents = studRes.students;
@@ -750,7 +871,7 @@ const ASNIdentity = {
             `;
         }
 
-        const studRes = await ASNAuthAPI.getParentStudents(token);
+        const studRes = await ASNAuthAPI.getParentStudents(token, this.currentUser);
         if (studRes.success && Array.isArray(studRes.students)) {
             this.linkedStudents = studRes.students;
             sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(studRes.students));
@@ -2365,7 +2486,14 @@ async function handleParentVerifyOtp(e) {
         const result = await ASNAuthAPI.verifyParentOtp(email, otp);
         if (result.success && result.token) {
             stopParentOtpCooldown();
-            ASNIdentity.setParentSession(result.token, result.parent, result.students);
+            let finalStudents = result.students || [];
+            try {
+                const fresh = await ASNAuthAPI.getParentStudents(result.token, result.parent);
+                if (fresh.success && Array.isArray(fresh.students) && fresh.students.length >= finalStudents.length) {
+                    finalStudents = fresh.students;
+                }
+            } catch (e) {}
+            ASNIdentity.setParentSession(result.token, result.parent, finalStudents);
             closeParentAuthModal();
             if (typeof showToast === 'function') {
                 showToast('Login Wali Santri Berhasil!');
@@ -3013,7 +3141,14 @@ async function handleCredentialResponse(response) {
                     if (typeof showAdminView === 'function') showAdminView('hub');
                 }
             } else if (role === 'WALI_SANTRI') {
-                ASNIdentity.setParentSession(ssoResult.token, ssoResult.parent || ssoResult.identity, ssoResult.students);
+                let finalStudents = ssoResult.students || [];
+                try {
+                    const fresh = await ASNAuthAPI.getParentStudents(ssoResult.token, ssoResult.parent || ssoResult.identity);
+                    if (fresh.success && Array.isArray(fresh.students) && fresh.students.length >= finalStudents.length) {
+                        finalStudents = fresh.students;
+                    }
+                } catch (e) {}
+                ASNIdentity.setParentSession(ssoResult.token, ssoResult.parent || ssoResult.identity, finalStudents);
                 if (typeof closeParentAuthModal === 'function') closeParentAuthModal();
                 if (typeof showToast === 'function') showToast('Login Wali Santri Berhasil!');
             }
@@ -3412,3 +3547,5 @@ window.normalizeBirthDate = normalizeBirthDate;
 window.handleSelfServiceConnectStudent = handleSelfServiceConnectStudent;
 window.switchParentAuthMethod = switchParentAuthMethod;
 window.handleParentQuickLoginNis = handleParentQuickLoginNis;
+window.ASNIdentity = ASNIdentity;
+window.ASNAuthAPI = ASNAuthAPI;

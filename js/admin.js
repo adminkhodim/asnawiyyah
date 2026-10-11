@@ -5761,6 +5761,7 @@
                     if (typeof showToast === 'function') showToast(`Status warta berhasil diubah ke ${newStatus}!`);
                     try {
                         sessionStorage.removeItem('asn_dismissed_popup_' + item.id);
+                        localStorage.removeItem('asn_cached_notifikasi');
                     } catch (e) {}
                     await loadAdminNotifikasi();
                     if (typeof loadNotifikasi === 'function') await loadNotifikasi();
@@ -6018,6 +6019,9 @@
                 if (response && (response.status === "success" || response.success)) {
                     if (typeof showToast === 'function') showToast(response.message || "Warta notifikasi berhasil disimpan!");
                     resetAdminNotifikasiForm();
+                    try {
+                        localStorage.removeItem('asn_cached_notifikasi');
+                    } catch (e) {}
                     await loadAdminNotifikasi();
                     if (isPopup) {
                         try {
@@ -6051,18 +6055,22 @@
             const token = getAdminSessionToken();
             try {
                 let response = null;
+                const deletePayload = { token, id, notifId: id, data: { id, notifId: id } };
                 if (typeof apiPost === 'function') {
-                    response = await apiPost("deleteNotifikasi", { token, id });
+                    response = await apiPost("deleteNotifikasi", deletePayload);
                 } else {
                     const res = await fetch(API_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ action: "deleteNotifikasi", token, id })
+                        body: JSON.stringify({ action: "deleteNotifikasi", ...deletePayload })
                     });
                     response = await res.json();
                 }
 
                 if (response && (response.status === "success" || response.success)) {
                     if (typeof showToast === 'function') showToast("Warta notifikasi berhasil dihapus!");
+                    try {
+                        localStorage.removeItem('asn_cached_notifikasi');
+                    } catch (e) {}
                     await loadAdminNotifikasi();
                     if (typeof loadNotifikasi === 'function') loadNotifikasi();
                 } else {
