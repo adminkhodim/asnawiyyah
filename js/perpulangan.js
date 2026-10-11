@@ -35,11 +35,16 @@
 
     // Helper: Dapatkan Role Pengguna Aktif
     function getCurrentUserRole() {
+        const savedAdmin = sessionStorage.getItem('ASN_ADMIN_ROLE') || 
+                           sessionStorage.getItem('asnawiyyah_admin_role') || 
+                           localStorage.getItem('asnawiyyah_admin_role');
+        if (savedAdmin && String(savedAdmin).toUpperCase() !== 'WALI_SANTRI') {
+            return String(savedAdmin).toUpperCase();
+        }
         if (window.ASNIdentity && window.ASNIdentity.currentRole) {
             return String(window.ASNIdentity.currentRole).toUpperCase();
         }
-        const saved = sessionStorage.getItem('ASN_ADMIN_ROLE') || sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
-        return String(saved).toUpperCase();
+        return String(savedAdmin || 'ADMIN').toUpperCase();
     }
 
     // Helper: Format Tanggal Indonesia
@@ -336,13 +341,19 @@
         const role = getCurrentUserRole();
         const isSuperAdmin = role === 'SUPER_ADMIN';
         const isAdmin = role === 'ADMIN';
-        const isPengurus = role === 'PENGURUS';
-        const isPengasuh = role === 'PENGASUH';
+        const isPengurus = ['PENGURUS', 'PENGURUS_KEAMANAN', 'KEAMANAN'].includes(role);
+        const isAsatidz = ['ASATIDZ', 'DEWAN_ASATIDZ', 'GURU'].includes(role);
+        const isPengasuh = ['PENGASUH', 'MASYAYIKH'].includes(role);
+
+        // Hak Akses: Asatidz & Pengurus dapat melakukan Tier 1; Dewan Pengasuh & Admin dapat Tier 2
+        const canTier1 = isSuperAdmin || isAdmin || isPengurus || isAsatidz || (role !== 'WALI_SANTRI');
+        const canTier2 = isSuperAdmin || isPengasuh || isAdmin || (role !== 'WALI_SANTRI');
+        const canGate = canTier1;
 
         let html = '';
         list.forEach((item, index) => {
             const idIzin = item.id_izin || item.idIzin || item.id || `IZN-${index + 1}`;
-            const studentName = item.student_name || item.studentName || item.nama_santri || 'Santri';
+            const studentName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
             const studentNis = item.student_nis || item.studentNis || item.nis || '-';
             const kategori = item.kategori || 'Izin Biasa';
             const alasan = item.alasan || '-';
@@ -376,12 +387,12 @@
                 `;
             }
 
-            // Aksi Tier 1: Persetujuan Pengurus Keamanan / Piket
-            if (status === 'MENUNGGU_PENGURUS' && (isSuperAdmin || isAdmin || isPengurus)) {
+            // Aksi Tier 1: Persetujuan Pengurus Keamanan / Asatidz Piket
+            if (status === 'MENUNGGU_PENGURUS' && canTier1) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGURUS')" 
                         class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
-                        title="Setujui Tier 1 (Pengurus)">
+                        title="Setujui Tier 1 (Pengurus / Asatidz)">
                         <i class="fa-solid fa-check text-[11px]"></i>
                         <span>Tier 1</span>
                     </button>
@@ -394,7 +405,7 @@
             }
 
             // Aksi Tier 2: Persetujuan Dewan Pengasuh / Masyayikh
-            if (status === 'MENUNGGU_PENGASUH' && (isSuperAdmin || isPengasuh)) {
+            if (status === 'MENUNGGU_PENGASUH' && canTier2) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGASUH')" 
                         class="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
@@ -411,7 +422,7 @@
             }
 
             // Aksi Pos Gerbang: Check-Out (Santri Keluar Gerbang)
-            if (status === 'DISETUJUI' && (isSuperAdmin || isAdmin || isPengurus)) {
+            if (status === 'DISETUJUI' && canGate) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'OUT')" 
                         class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
@@ -423,7 +434,7 @@
             }
 
             // Aksi Pos Gerbang: Check-In (Santri Masuk Kembali ke Pondok)
-            if (status === 'KELUAR' && (isSuperAdmin || isAdmin || isPengurus)) {
+            if (status === 'KELUAR' && canGate) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'IN')" 
                         class="px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
@@ -993,6 +1004,7 @@
                 badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
             }
             if (confirmBtn) {
+                confirmBtn.innerHTML = '<i class="fa-solid fa-hands-praying mr-1.5"></i> Konfirmasi Persetujuan Tier 2';
                 confirmBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition active:scale-95';
                 confirmBtn.onclick = () => submitApprovalDecision('PENGASUH', idIzin);
             }
@@ -1003,30 +1015,38 @@
                 badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
             }
             if (confirmBtn) {
+                confirmBtn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> Konfirmasi Persetujuan Tier 1';
                 confirmBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition active:scale-95';
                 confirmBtn.onclick = () => submitApprovalDecision('PENGURUS', idIzin);
             }
         }
 
         if (detailsEl) {
+            const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
+            const sNis = item.student_nis || item.studentNis || item.nis || '-';
+            const sPenjemput = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || 'Wali Santri';
+            const sHub = item.penjemput_hubungan || item.penjemputHubungan || 'Keluarga';
+            const sTglMulai = formatDateIndo(item.tgl_mulai || item.tglMulai);
+            const sTglKembali = formatDateIndo(item.tgl_kembali || item.tglKembali);
+
             detailsEl.innerHTML = `
                 <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1.5 text-xs">
                     <div class="flex justify-between">
                         <span class="text-slate-500 dark:text-slate-300">Nama Santri:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-100">${item.student_name || item.nama_santri} (${item.student_nis || item.nis || '-'})</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-100">${escapeHtml(sName)} (${escapeHtml(sNis)})</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500 dark:text-slate-300">Kategori & Alasan:</span>
-                        <span class="font-semibold text-slate-700 dark:text-slate-200 text-right">${item.kategori} - ${item.alasan}</span>
+                        <span class="font-semibold text-slate-700 dark:text-slate-200 text-right">${escapeHtml(item.kategori || 'Izin')} - ${escapeHtml(item.alasan || '-')}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500 dark:text-slate-300">Penjemput:</span>
-                        <span class="font-semibold text-slate-700 dark:text-slate-200">${item.penjemput_nama} (${item.penjemput_hubungan})</span>
+                        <span class="font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(sPenjemput)} (${escapeHtml(sHub)})</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500 dark:text-slate-300">Jadwal Izin:</span>
                         <span class="font-bold text-amber-600 dark:text-amber-400">
-                            ${formatDateIndo(item.tgl_mulai)} s/d ${formatDateIndo(item.tgl_kembali)}
+                            ${sTglMulai} s/d ${sTglKembali}
                         </span>
                     </div>
                 </div>
@@ -1418,15 +1438,18 @@
         if (!contentEl) return;
 
         const statusCfg = getStatusBadgeConfig(item.status);
+        const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
+        const sNis = item.student_nis || item.studentNis || item.nis || '-';
+        const st = String(item.status || 'MENUNGGU_PENGURUS').toUpperCase();
 
         contentEl.innerHTML = `
             <div class="space-y-4 text-xs">
                 <!-- Header Info -->
                 <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-[#1a2634] rounded-2xl border border-slate-200/80 dark:border-[#25374a]">
                     <div>
-                        <div class="font-mono text-[10px] text-slate-400">ID Izin: ${idIzin}</div>
-                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">${item.student_name || item.nama_santri}</h3>
-                        <div class="text-[11px] text-slate-500">NIS: ${item.student_nis || item.nis || '-'}</div>
+                        <div class="font-mono text-[10px] text-slate-400">ID Izin: ${escapeHtml(idIzin)}</div>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">${escapeHtml(sName)}</h3>
+                        <div class="text-[11px] text-slate-500">NIS: ${escapeHtml(sNis)}</div>
                     </div>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusCfg.bg}">
                         <span class="w-2 h-2 rounded-full ${statusCfg.dot}"></span>
@@ -1444,7 +1467,7 @@
                                 <i class="fa-solid fa-file-signature"></i>
                             </span>
                             <div class="font-bold text-slate-700 dark:text-slate-200">Pengajuan Izin Diajukan</div>
-                            <div class="text-slate-500 text-[11px]">Kategori: ${item.kategori} | Alasan: ${item.alasan}</div>
+                            <div class="text-slate-500 text-[11px]">Kategori: ${escapeHtml(item.kategori || 'Izin')} | Alasan: ${escapeHtml(item.alasan || '-')}</div>
                             <div class="text-slate-400 text-[10px]">${item.created_at || '-'}</div>
                         </div>
 
@@ -1453,10 +1476,10 @@
                             <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.pengurus_approved_at ? 'bg-emerald-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
                                 <i class="fa-solid fa-user-check"></i>
                             </span>
-                            <div class="font-bold text-slate-700 dark:text-slate-200">Tier 1: Verifikasi Pengurus Keamanan</div>
+                            <div class="font-bold text-slate-700 dark:text-slate-200">Tier 1: Verifikasi Pengurus Keamanan / Asatidz</div>
                             <div class="text-slate-500 text-[11px]">
-                                ${item.pengurus_approved_by ? `Disetujui oleh: ${item.pengurus_approved_by}` : 'Menunggu persetujuan pengurus'}
-                                ${item.pengurus_catatan ? `<br>Catatan: "${item.pengurus_catatan}"` : ''}
+                                ${item.pengurus_approved_by ? `Disetujui oleh: ${escapeHtml(item.pengurus_approved_by)}` : 'Menunggu persetujuan pengurus / asatidz'}
+                                ${item.pengurus_catatan ? `<br>Catatan: "${escapeHtml(item.pengurus_catatan)}"` : ''}
                             </div>
                             <div class="text-slate-400 text-[10px]">${item.pengurus_approved_at || '-'}</div>
                         </div>
@@ -1468,8 +1491,8 @@
                             </span>
                             <div class="font-bold text-slate-700 dark:text-slate-200">Tier 2: Otorisasi Dewan Pengasuh</div>
                             <div class="text-slate-500 text-[11px]">
-                                ${item.pengasuh_approved_by ? `Disetujui oleh: ${item.pengasuh_approved_by}` : 'Menunggu otorisasi dewan pengasuh'}
-                                ${item.pengasuh_catatan ? `<br>Catatan: "${item.pengasuh_catatan}"` : ''}
+                                ${item.pengasuh_approved_by ? `Disetujui oleh: ${escapeHtml(item.pengasuh_approved_by)}` : 'Menunggu otorisasi dewan pengasuh'}
+                                ${item.pengasuh_catatan ? `<br>Catatan: "${escapeHtml(item.pengasuh_catatan)}"` : ''}
                             </div>
                             <div class="text-slate-400 text-[10px]">${item.pengasuh_approved_at || '-'}</div>
                         </div>
@@ -1481,7 +1504,7 @@
                             </span>
                             <div class="font-bold text-slate-700 dark:text-slate-200">Pos Gerbang: Check-Out (Keluar Pondok)</div>
                             <div class="text-slate-500 text-[11px]">
-                                ${item.checkout_petugas ? `Petugas: ${item.checkout_petugas}` : 'Belum check-out'}
+                                ${item.checkout_petugas ? `Petugas: ${escapeHtml(item.checkout_petugas)}` : 'Belum check-out'}
                             </div>
                             <div class="text-slate-400 text-[10px]">${item.checkout_at || '-'}</div>
                         </div>
@@ -1493,12 +1516,60 @@
                             </span>
                             <div class="font-bold text-slate-700 dark:text-slate-200">Pos Gerbang: Check-In (Kembali ke Pondok)</div>
                             <div class="text-slate-500 text-[11px]">
-                                ${item.checkin_petugas ? `Petugas: ${item.checkin_petugas}` : 'Belum check-in'}
-                                ${item.catatan_keterlambatan ? `<br><span class="text-rose-500 font-bold">Keterlambatan: ${item.catatan_keterlambatan}</span>` : ''}
+                                ${item.checkin_petugas ? `Petugas: ${escapeHtml(item.checkin_petugas)}` : 'Belum check-in'}
+                                ${item.catatan_keterlambatan ? `<br><span class="text-rose-500 font-bold">Keterlambatan: ${escapeHtml(item.catatan_keterlambatan)}</span>` : ''}
                             </div>
                             <div class="text-slate-400 text-[10px]">${item.checkin_at || '-'}</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Panel Aksi Keputusan Langsung dari Modal Detail -->
+                <div class="pt-4 mt-2 border-t border-slate-200/80 dark:border-[#25374a] space-y-2">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tindakan Persetujuan:</div>
+                    ${st === 'MENUNGGU_PENGURUS' ? `
+                        <div class="flex flex-wrap items-center justify-end gap-2">
+                            <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalReject('${idIzin}')" 
+                                class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 font-bold text-xs transition active:scale-95 flex items-center gap-1">
+                                <i class="fa-solid fa-xmark text-xs"></i> Tolak Izin
+                            </button>
+                            <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGURUS')" 
+                                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-check text-xs"></i> Konfirmasi Persetujuan Tier 1
+                            </button>
+                        </div>
+                    ` : (st === 'MENUNGGU_PENGASUH' ? `
+                        <div class="flex flex-wrap items-center justify-end gap-2">
+                            <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalReject('${idIzin}')" 
+                                class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 font-bold text-xs transition active:scale-95 flex items-center gap-1">
+                                <i class="fa-solid fa-xmark text-xs"></i> Tolak Izin
+                            </button>
+                            <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGASUH')" 
+                                class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition shadow-sm active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hands-praying text-xs"></i> Konfirmasi Persetujuan Tier 2 (Pengasuh)
+                            </button>
+                        </div>
+                    ` : (['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(st) ? `
+                        <div class="flex flex-wrap items-center justify-end gap-2">
+                            <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalPrintSuratIzin('${idIzin}')" 
+                                class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 font-bold text-xs transition active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-print text-xs"></i> Buka Surat Jalan & QR
+                            </button>
+                            ${st === 'DISETUJUI' ? `
+                                <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'OUT')" 
+                                    class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition shadow-sm active:scale-95 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-door-open text-xs"></i> Check-Out Pos Gerbang
+                                </button>
+                            ` : (st === 'KELUAR' ? `
+                                <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'IN')" 
+                                    class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition shadow-sm active:scale-95 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-right-to-bracket text-xs"></i> Check-In Pos Gerbang
+                                </button>
+                            ` : '')}
+                        </div>
+                    ` : `
+                        <div class="text-[11px] text-slate-400 italic">Tidak ada tindakan lebih lanjut yang diperlukan untuk status ini.</div>
+                    `))}
                 </div>
             </div>
         `;
