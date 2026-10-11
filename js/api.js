@@ -3365,7 +3365,9 @@
         async function getIzinPerpulanganList(filters = {}) {
             try {
                 let res = await fetchFromSupabase('getIzinPerpulanganList', filters);
-                if (res && (res.success || res.status === 'success')) return res;
+                if (res && (res.success || res.status === 'success') && Array.isArray(res.data) && res.data.length > 0) {
+                    return res;
+                }
             } catch (err) {
                 console.warn('[PERPULANGAN FAST-READ FAILOVER]', err);
             }

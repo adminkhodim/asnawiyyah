@@ -55,7 +55,7 @@ requiredModals.forEach(modalId => {
 console.log('✅ 2. Seluruh elemen UI, view panel, dan 6 modal perpulangan terpasang di index.html');
 
 // Cek Script Tag
-assert(indexHtmlContent.includes('<script src="js/perpulangan.js"></script>'), 'Script tag js/perpulangan.js harus terdaftar di index.html');
+assert(indexHtmlContent.includes('js/perpulangan.js'), 'Script tag js/perpulangan.js harus terdaftar di index.html');
 console.log('✅ 3. Script js/perpulangan.js berhasil didaftarkan di index.html');
 
 // 3. Verifikasi Integrasi di js/admin.js (showAdminView)

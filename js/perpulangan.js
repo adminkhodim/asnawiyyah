@@ -46,15 +46,25 @@
     function formatDateIndo(dateStr) {
         if (!dateStr) return '-';
         try {
-            const parts = String(dateStr).split('T')[0].split('-');
-            if (parts.length === 3) {
+            if (dateStr instanceof Date) {
+                return dateStr.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            }
+            const s = String(dateStr).trim();
+            // Cek format YYYY-MM-DD
+            const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (isoMatch) {
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                const day = parseInt(parts[2], 10);
-                const month = months[parseInt(parts[1], 10) - 1] || parts[1];
-                const year = parts[0];
+                const day = parseInt(isoMatch[3], 10);
+                const month = months[parseInt(isoMatch[2], 10) - 1] || isoMatch[2];
+                const year = isoMatch[1];
                 return `${day} ${month} ${year}`;
             }
-            return dateStr;
+            // Cek parsing Date standar JS / GAS
+            const parsed = new Date(s);
+            if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 1970) {
+                return parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            }
+            return s;
         } catch (e) {
             return dateStr;
         }
@@ -63,11 +73,17 @@
     // Helper: Format Jam
     function formatTimeIndo(timeStr) {
         if (!timeStr) return '';
-        const parts = String(timeStr).split(':');
-        if (parts.length >= 2) {
-            return `${parts[0]}:${parts[1]} WIB`;
+        try {
+            const s = String(timeStr).trim();
+            // Cocokkan jam:menit
+            const m = s.match(/(\d{1,2}):(\d{2})/);
+            if (m) {
+                return `${m[1].padStart(2, '0')}:${m[2]} WIB`;
+            }
+            return `${s} WIB`;
+        } catch (e) {
+            return `${timeStr} WIB`;
         }
-        return `${timeStr} WIB`;
     }
 
     // Helper: Dapatkan Badge Status dengan Warna Harmonis
@@ -325,18 +341,18 @@
 
         let html = '';
         list.forEach((item, index) => {
-            const idIzin = item.id_izin || item.id || `IZN-${index + 1}`;
-            const studentName = item.student_name || item.nama_santri || 'Santri';
-            const studentNis = item.student_nis || item.nis || '-';
+            const idIzin = item.id_izin || item.idIzin || item.id || `IZN-${index + 1}`;
+            const studentName = item.student_name || item.studentName || item.nama_santri || 'Santri';
+            const studentNis = item.student_nis || item.studentNis || item.nis || '-';
             const kategori = item.kategori || 'Izin Biasa';
             const alasan = item.alasan || '-';
-            const penjemput = item.penjemput_nama || item.wali_name || '-';
-            const hubungan = item.penjemput_hubungan || 'Keluarga';
-            const noHp = item.penjemput_kontak || item.wali_phone || '';
-            const tglMulai = formatDateIndo(item.tgl_mulai);
-            const jamMulai = formatTimeIndo(item.jam_mulai);
-            const tglKembali = formatDateIndo(item.tgl_kembali);
-            const jamKembali = formatTimeIndo(item.jam_kembali);
+            const penjemput = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || '-';
+            const hubungan = item.penjemput_hubungan || item.penjemputHubungan || 'Keluarga';
+            const noHp = item.penjemput_kontak || item.penjemputKontak || item.wali_phone || item.waliPhone || '';
+            const tglMulai = formatDateIndo(item.tgl_mulai || item.tglMulai);
+            const jamMulai = formatTimeIndo(item.jam_mulai || item.jamMulai);
+            const tglKembali = formatDateIndo(item.tgl_kembali || item.tglKembali);
+            const jamKembali = formatTimeIndo(item.jam_kembali || item.jamKembali);
             const status = String(item.status || 'MENUNGGU_PENGURUS').toUpperCase();
             const badgeCfg = getStatusBadgeConfig(status);
 
@@ -1571,9 +1587,9 @@
             const myWaliId = String((window.ASNIdentity && window.ASNIdentity.currentUser && (window.ASNIdentity.currentUser.id || window.ASNIdentity.currentUser.userId)) || '').toLowerCase().trim();
 
             const myIzinList = rawList.filter(item => {
-                const sNis = String(item.student_nis || item.nis || '').toLowerCase().trim();
-                const sId = String(item.student_id || '').toLowerCase().trim();
-                const wId = String(item.wali_id || '').toLowerCase().trim();
+                const sNis = String(item.student_nis || item.studentNis || item.nis || '').toLowerCase().trim();
+                const sId = String(item.student_id || item.studentId || '').toLowerCase().trim();
+                const wId = String(item.wali_id || item.waliId || '').toLowerCase().trim();
                 return (myNisList.length > 0 && myNisList.includes(sNis)) ||
                        (myStudentIds.length > 0 && myStudentIds.includes(sId)) ||
                        (myWaliId && wId === myWaliId);
@@ -1630,18 +1646,18 @@
         const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
         container.innerHTML = list.map((item, idx) => {
-            const idIzin = item.id_izin || item.id || `IZN-${idx + 1}`;
-            const studentName = item.student_name || item.nama_santri || 'Santri';
-            const studentNis = item.student_nis || item.nis || '-';
+            const idIzin = item.id_izin || item.idIzin || item.id || `IZN-${idx + 1}`;
+            const studentName = item.student_name || item.studentName || item.nama_santri || 'Santri';
+            const studentNis = item.student_nis || item.studentNis || item.nis || '-';
             const kategori = item.kategori || 'Izin';
             const alasan = item.alasan || '-';
             const status = String(item.status || 'MENUNGGU_PENGURUS').toUpperCase();
             const badgeCfg = getStatusBadgeConfig(status);
 
-            const tglMulai = formatDateIndo(item.tgl_mulai);
-            const jamMulai = formatTimeIndo(item.jam_mulai);
-            const tglKembali = formatDateIndo(item.tgl_kembali);
-            const jamKembali = formatTimeIndo(item.jam_kembali);
+            const tglMulai = formatDateIndo(item.tgl_mulai || item.tglMulai);
+            const jamMulai = formatTimeIndo(item.jam_mulai || item.jamMulai);
+            const tglKembali = formatDateIndo(item.tgl_kembali || item.tglKembali);
+            const jamKembali = formatTimeIndo(item.jam_kembali || item.jamKembali);
 
             const stepPengurusActive = ['MENUNGGU_PENGASUH', 'DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status);
             const stepPengasuhActive = ['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status);
