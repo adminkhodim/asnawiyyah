@@ -4927,11 +4927,47 @@
                         <i class="fa-solid fa-circle-half-stroke text-amber-500 dark:text-indigo-400"></i>
                     </button>
 
-                    <!-- Quick Button: Notification Shortcut -->
-                    <button type="button" onclick="showAdminView('notifikasi')" class="relative w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs transition active:scale-95" title="Broadcast & Notifikasi">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#15202d]"></span>
-                    </button>
+                    <!-- Notification Bell with Live Approval Alert Dropdown -->
+                    <div class="relative" id="admin-notif-menu-wrapper">
+                        <button type="button" id="admin-notif-btn" onclick="toggleAdminNotifDropdown(event)"
+                            class="relative w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs transition active:scale-95" title="Pemberitahuan & Approval Izin">
+                            <i class="fa-solid fa-bell"></i>
+                            <span id="admin-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
+                        </button>
+
+                        <!-- Notification Popover Card -->
+                        <div id="admin-notif-dropdown" class="hidden absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-[#15202d] rounded-2xl shadow-xl shadow-slate-300/40 dark:shadow-black/60 border border-slate-100 dark:border-slate-700/80 p-3 z-50 animate-fade-in-up">
+                            <!-- Header Notifikasi -->
+                            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bell text-emerald-600 dark:text-emerald-400 text-xs"></i>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Pemberitahuan Izin Santri</span>
+                                </div>
+                                <span id="admin-notif-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                    0 Butuh Tindakan
+                                </span>
+                            </div>
+
+                            <!-- List Notifikasi Izin / Approval -->
+                            <div id="admin-notif-list-container" class="max-h-72 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
+                                <div class="py-6 text-center text-slate-400 text-xs">
+                                    <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
+                                    <span>Tidak ada izin santri yang butuh persetujuan saat ini.</span>
+                                </div>
+                            </div>
+
+                            <!-- Footer Shortcut -->
+                            <div class="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                                <button type="button" onclick="showAdminView('perpulangan'); closeAdminNotifDropdown();" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1">
+                                    <span>Buka Modul Izin & Perpulangan</span>
+                                    <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </button>
+                                <button type="button" onclick="showAdminView('notifikasi'); closeAdminNotifDropdown();" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                    Broadcast
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- User Account Dropdown Trigger & Popover (Logo Pengguna & Pengaturan Akun) -->
                     <div class="relative pl-1 border-l border-slate-200 dark:border-slate-700" id="admin-user-menu-wrapper">
@@ -7143,8 +7179,8 @@
                     </div>
                 </div>
 
-                <!-- SUMMARY METRIC CARDS (2 BARIS x 4 KARTU) -->
-                <div class="grid grid-cols-4 gap-1.5 sm:gap-2 md:gap-2.5">
+                <!-- SUMMARY METRIC CARDS (1 BARIS x 8 KARTU DI DESKTOP) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 sm:gap-2">
                     <!-- Total -->
                     <div class="bg-white dark:bg-[#15202d] p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs text-center cursor-pointer hover:border-emerald-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('ALL')">
                         <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tight sm:tracking-wider truncate">Total Izin</div>
@@ -15479,8 +15515,8 @@
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js"></script>
     <script src="js/jadwal-sholat.js"></script>
-    <script src="js/roles.js?v=53"></script>
-    <script src="js/admin.js?v=53"></script>
+    <script src="js/roles.js?v=54"></script>
+    <script src="js/admin.js?v=54"></script>
     <script src="js/alumni.js"></script>
     <script src="js/auth.js?v=51"></script>
     <script src="js/pegawai.js"></script>
@@ -15488,7 +15524,7 @@
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=55"></script>
+    <script src="js/perpulangan.js?v=56"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>

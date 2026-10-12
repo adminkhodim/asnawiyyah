@@ -76,10 +76,140 @@
         }
         window.openAdminProfileSettings = openAdminProfileSettings;
 
+        function toggleAdminNotifDropdown(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('admin-notif-dropdown');
+            if (!dropdown) return;
+            const isHidden = dropdown.classList.contains('hidden');
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                updateHeaderApprovalNotifications();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+        window.toggleAdminNotifDropdown = toggleAdminNotifDropdown;
+
+        function closeAdminNotifDropdown() {
+            const dropdown = document.getElementById('admin-notif-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+        window.closeAdminNotifDropdown = closeAdminNotifDropdown;
+
+        function updateHeaderApprovalNotifications() {
+            const badgeEl = document.getElementById('admin-notif-badge');
+            const statusBadgeEl = document.getElementById('admin-notif-status-badge');
+            const container = document.getElementById('admin-notif-list-container');
+            if (!container) return;
+
+            const list = (window.ASNPerpulangan && Array.isArray(window.ASNPerpulangan.list)) ? window.ASNPerpulangan.list : [];
+            const role = (window.ASNIdentity && window.ASNIdentity.currentRole) || 
+                         sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+            const roleUpper = String(role).toUpperCase();
+
+            // Filter pending approval berdasarkan peran
+            let pendingItems = [];
+            if (roleUpper === 'PENGASUH') {
+                pendingItems = list.filter(item => String(item.status || '').toUpperCase() === 'MENUNGGU_PENGASUH');
+            } else if (roleUpper === 'SUPER_ADMIN' || roleUpper === 'ADMIN') {
+                pendingItems = list.filter(item => {
+                    const st = String(item.status || '').toUpperCase();
+                    return st === 'MENUNGGU_PENGURUS' || st === 'MENUNGGU_PENGASUH';
+                });
+            } else {
+                pendingItems = list.filter(item => String(item.status || '').toUpperCase() === 'MENUNGGU_PENGURUS');
+            }
+
+            const count = pendingItems.length;
+
+            // Update Badge Count pada Icon Lonceng
+            if (badgeEl) {
+                if (count > 0) {
+                    badgeEl.innerText = count > 99 ? '99+' : count;
+                    badgeEl.classList.remove('hidden');
+                } else {
+                    badgeEl.classList.add('hidden');
+                }
+            }
+
+            // Update Label Status di Header Popover
+            if (statusBadgeEl) {
+                statusBadgeEl.innerText = `${count} Butuh Tindakan`;
+                if (count > 0) {
+                    statusBadgeEl.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60';
+                } else {
+                    statusBadgeEl.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700';
+                }
+            }
+
+            // Render Daftar Kartu Notifikasi
+            if (count === 0) {
+                container.innerHTML = `
+                    <div class="py-6 text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
+                        <span>Semua pengajuan izin santri telah ditinjau.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingItems.slice(0, 8).map(item => {
+                const isPengasuhTier = String(item.status || '').toUpperCase() === 'MENUNGGU_PENGASUH';
+                const tierBadge = isPengasuhTier ? 
+                    `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200">Tier 2 (Pengasuh)</span>` :
+                    `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200">Tier 1 (Pengurus)</span>`;
+
+                const santriName = item.nama_santri || item.namaSantri || 'Santri';
+                const keperluan = item.keperluan || item.kategori || 'Izin';
+                const waktu = item.tanggal_mulai ? `${item.tanggal_mulai}` : '';
+
+                return `
+                    <div onclick="openNotificationIzinDetail('${item.id}')" 
+                        class="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 hover:bg-emerald-50/60 dark:bg-[#1c2836]/60 dark:hover:bg-emerald-950/30 transition cursor-pointer group">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                    ${santriName}
+                                </h4>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${keperluan}</p>
+                            </div>
+                            <div class="shrink-0 text-right">
+                                ${tierBadge}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10px] text-slate-400">
+                            <span><i class="fa-regular fa-clock mr-1"></i>${waktu || 'Hari ini'}</span>
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5">
+                                Tinjau <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        window.updateHeaderApprovalNotifications = updateHeaderApprovalNotifications;
+
+        function openNotificationIzinDetail(izinId) {
+            closeAdminNotifDropdown();
+            if (typeof showAdminView === 'function') {
+                showAdminView('perpulangan');
+            }
+            if (window.ASNPerpulangan && typeof window.ASNPerpulangan.openModalApproval === 'function') {
+                setTimeout(() => {
+                    window.ASNPerpulangan.openModalApproval(izinId);
+                }, 200);
+            }
+        }
+        window.openNotificationIzinDetail = openNotificationIzinDetail;
+
         document.addEventListener('click', function(e) {
             const wrapper = document.getElementById('admin-user-menu-wrapper');
             if (wrapper && !wrapper.contains(e.target)) {
                 closeAdminUserDropdown();
+            }
+            const notifWrapper = document.getElementById('admin-notif-menu-wrapper');
+            if (notifWrapper && !notifWrapper.contains(e.target)) {
+                closeAdminNotifDropdown();
             }
         });
 

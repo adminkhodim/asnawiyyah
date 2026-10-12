@@ -2559,6 +2559,11 @@
             dropdownEmail.innerText = ASNIdentity.currentUser.email;
         }
 
+        // Sinkronisasi badge notifikasi lonceng approval
+        if (typeof updateHeaderApprovalNotifications === 'function') {
+            updateHeaderApprovalNotifications();
+        }
+
         // 10. Terapkan konfigurasi izin secara menyeluruh ke seluruh UI
         applyAllRolePermissionsUI(roleKey);
         if (roleKey === 'ASATIDZ') {

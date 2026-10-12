@@ -292,6 +292,11 @@
         setVal('perpulangan-metric-kembali', s.kembali);
         setVal('perpulangan-metric-terlambat', s.terlambat);
         setVal('perpulangan-metric-ditolak', s.ditolak);
+
+        // Sinkronisasi badge notifikasi lonceng di header
+        if (typeof updateHeaderApprovalNotifications === 'function') {
+            updateHeaderApprovalNotifications();
+        }
     }
 
     /**
