@@ -255,6 +255,10 @@ function doPost(e) {
       return createJsonResponse(initIzinPerpulanganSheet());
     }
 
+    if (action === "syncIzinPerpulanganFromSupabase" || action === "perpulangan.syncFromSupabase") {
+      return createJsonResponse(syncIzinPerpulanganFromSupabase());
+    }
+
     if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getIzinPerpulanganData(payload.data || payload, token));

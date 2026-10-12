@@ -1032,6 +1032,10 @@ function doPost(e) {
       return createJsonResponse(initIzinPerpulanganSheet());
     }
 
+    if (action === "syncIzinPerpulanganFromSupabase" || action === "perpulangan.syncFromSupabase") {
+      return createJsonResponse(syncIzinPerpulanganFromSupabase());
+    }
+
     if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getIzinPerpulanganData(payload.data || payload, token));
@@ -13621,6 +13625,114 @@ function initIzinPerpulanganSheet() {
   } catch (err) {
     console.error("[INIT IZIN SHEET ERROR]", err);
     return { status: "error", success: false, message: "Gagal membuat sheet Izin_Perpulangan: " + err.message };
+  }
+}
+
+/**
+ * Sinkronisasi Penuh Tab Izin_Perpulangan dari Cloud PostgreSQL Supabase ke Google Spreadsheet
+ * Memperbaiki seluruh selisih data, duplikasi ID lama, dan error formula nomor telepon (#ERROR!).
+ */
+function syncIzinPerpulanganFromSupabase() {
+  try {
+    const ss = getDatabaseSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_IZIN_PERPULANGAN);
+    if (!sheet) {
+      initIzinPerpulanganSheet();
+      sheet = ss.getSheetByName(SHEET_IZIN_PERPULANGAN);
+    }
+
+    const sbUrl = "https://tkjhfhyabacbyknwrysh.supabase.co";
+    const sbKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRramhmaHlhYmFjYnlrbndyeXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDk1MDMsImV4cCI6MjEwNjM4NTUwM30.uIeUO_v29ztXFUyDAxb_50ybP62BO0ta_QEzgwWFdlo";
+
+    const fetchUrl = sbUrl + "/rest/v1/izin_perpulangan?select=*&order=created_at.asc";
+    const resp = UrlFetchApp.fetch(fetchUrl, {
+      method: "GET",
+      headers: {
+        "apikey": sbKey,
+        "Authorization": "Bearer " + sbKey
+      },
+      muteHttpExceptions: true
+    });
+
+    if (resp.getResponseCode() !== 200) {
+      throw new Error("Gagal mengambil data dari Supabase: " + resp.getContentText());
+    }
+
+    const list = JSON.parse(resp.getContentText());
+    if (!Array.isArray(list) || list.length === 0) {
+      return { status: "warning", success: false, message: "Tidak ada data izin di Supabase." };
+    }
+
+    // 1. Bersihkan seluruh baris lama di tab Izin_Perpulangan (kecuali Header di baris 1)
+    const lastRow = sheet.getLastRow();
+    const lastCol = Math.max(sheet.getLastColumn(), IZIN_PERPULANGAN_HEADERS.length);
+    if (lastRow > 1) {
+      sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
+    }
+
+    // 2. Pastikan Header baris 1 utuh dan rapi
+    sheet.getRange(1, 1, 1, IZIN_PERPULANGAN_HEADERS.length).setValues([IZIN_PERPULANGAN_HEADERS]);
+    sheet.getRange(1, 1, 1, IZIN_PERPULANGAN_HEADERS.length).setFontWeight("bold").setBackground("#dcfce7");
+    sheet.setFrozenRows(1);
+
+    // 3. Susun data bersih
+    const rows = list.map(d => {
+      let safeWaliPhone = String(d.wali_phone || "").trim();
+      if (safeWaliPhone && (safeWaliPhone.startsWith("+") || safeWaliPhone.startsWith("="))) {
+        safeWaliPhone = "'" + safeWaliPhone;
+      }
+      let safePenjemputKontak = String(d.penjemput_kontak || "").trim();
+      if (safePenjemputKontak && (safePenjemputKontak.startsWith("+") || safePenjemputKontak.startsWith("="))) {
+        safePenjemputKontak = "'" + safePenjemputKontak;
+      }
+
+      return [
+        d.id_izin || "",
+        d.student_id || "",
+        d.student_nis || "",
+        d.student_name || "",
+        d.wali_id || "",
+        d.wali_name || "",
+        safeWaliPhone,
+        d.kategori || "",
+        d.alasan || "",
+        d.penjemput_nama || "",
+        d.penjemput_hubungan || "",
+        safePenjemputKontak,
+        d.tgl_mulai || "",
+        d.jam_mulai || "",
+        d.tgl_kembali || "",
+        d.jam_kembali || "",
+        d.status || "",
+        d.pengurus_approved_by || "",
+        d.pengurus_approved_at || "",
+        d.pengurus_catatan || "",
+        d.pengasuh_approved_by || "",
+        d.pengasuh_approved_at || "",
+        d.pengasuh_catatan || "",
+        d.alasan_penolakan || "",
+        d.checkout_at || "",
+        d.checkout_petugas || "",
+        d.checkin_at || "",
+        d.checkin_petugas || "",
+        d.catatan_keterlambatan || "",
+        d.created_at || "",
+        d.updated_at || ""
+      ];
+    });
+
+    // 4. Tulis data ke Sheet sekaligus (Batch Insert)
+    sheet.getRange(2, 1, rows.length, IZIN_PERPULANGAN_HEADERS.length).setValues(rows);
+
+    return {
+      status: "success",
+      success: true,
+      message: `Berhasil menyinkronkan ${rows.length} data izin dari Supabase ke Spreadsheet Izin_Perpulangan.`,
+      totalSynced: rows.length
+    };
+  } catch (err) {
+    console.error("[SYNC SUPABASE TO SPREADSHEET ERROR]", err);
+    return { status: "error", success: false, message: "Gagal menyinkronkan data: " + err.message };
   }
 }
 
