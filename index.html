@@ -15526,6 +15526,21 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').then(registration => {
                     console.log('ServiceWorker PWA berhasil didaftarkan dengan scope:', registration.scope);
+                    // Cek pembaruan segera
+                    registration.update();
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Versi baru aplikasi terdeteksi, membersihkan cache...');
+                                    if ('caches' in window) {
+                                        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+                                    }
+                                }
+                            });
+                        }
+                    });
                 }).catch(err => {
                     console.log('ServiceWorker pendaftaran gagal:', err);
                 });
@@ -15543,8 +15558,8 @@
     <script src="data-maulid-dibai.js"></script>
     <script src="data-qasidah-burdah.js"></script>
     <script src="data-tahlil-yasin.js"></script>
-    <script src="js/api.js?v=52"></script>
-    <script src="js/db-adapter.js"></script>
+    <script src="js/api.js?v=60"></script>
+    <script src="js/db-adapter.js?v=60"></script>
     <script src="js/data-programs.js"></script>
 
     <!-- Logic Modules -->
@@ -15552,16 +15567,16 @@
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js"></script>
     <script src="js/jadwal-sholat.js"></script>
-    <script src="js/roles.js?v=54"></script>
-    <script src="js/admin.js?v=54"></script>
+    <script src="js/roles.js?v=60"></script>
+    <script src="js/admin.js?v=60"></script>
     <script src="js/alumni.js"></script>
-    <script src="js/auth.js?v=51"></script>
+    <script src="js/auth.js?v=60"></script>
     <script src="js/pegawai.js"></script>
     <script src="js/tahfidz.js"></script>
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=56"></script>
+    <script src="js/perpulangan.js?v=60"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>

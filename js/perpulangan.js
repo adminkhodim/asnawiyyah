@@ -1741,7 +1741,7 @@
      * Modal Pratinjau Surat Jalan & Kartu Izin Digital Resmi
      */
     function openModalPrintSuratIzin(idIzin) {
-        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id || x.idIzin) === idIzin);
+        const item = ASNPerpulangan.list.find(x => String(x.id_izin || x.id || x.idIzin || '').trim() === String(idIzin || '').trim());
         if (!item) return;
 
         ASNPerpulangan.selectedIzin = item;
@@ -1878,7 +1878,7 @@
      * Modal Detail & Riwayat Audit Izin
      */
     function openModalDetail(idIzin) {
-        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id || x.idIzin) === idIzin);
+        const item = ASNPerpulangan.list.find(x => String(x.id_izin || x.id || x.idIzin || '').trim() === String(idIzin || '').trim());
         if (!item) return;
 
         ASNPerpulangan.selectedIzin = item;
