@@ -47,6 +47,12 @@
         return String(savedAdmin || 'ADMIN').toUpperCase();
     }
 
+    // Helper: Escape HTML
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
     // Helper: Format Tanggal Indonesia
     function formatDateIndo(dateStr) {
         if (!dateStr) return '-';
@@ -342,11 +348,11 @@
         const q = ASNPerpulangan.searchQuery;
         if (q) {
             result = result.filter(item => {
-                const sName = String(item.student_name || item.nama_santri || '').toLowerCase();
-                const sNis = String(item.student_nis || item.nis || '').toLowerCase();
-                const idIzin = String(item.id_izin || item.id || '').toLowerCase();
+                const sName = String(item.student_name || item.studentName || item.nama_santri || item.nama || '').toLowerCase();
+                const sNis = String(item.student_nis || item.studentNis || item.nis || '').toLowerCase();
+                const idIzin = String(item.id_izin || item.id || item.idIzin || '').toLowerCase();
                 const alasan = String(item.alasan || '').toLowerCase();
-                const wali = String(item.wali_name || item.penjemput_nama || '').toLowerCase();
+                const wali = String(item.wali_name || item.waliName || item.penjemput_nama || item.penjemputNama || '').toLowerCase();
                 return sName.includes(q) || sNis.includes(q) || idIzin.includes(q) || alasan.includes(q) || wali.includes(q);
             });
         }
@@ -1542,7 +1548,8 @@
 
         if (alasanInput) alasanInput.value = '';
         if (infoEl) {
-            infoEl.innerText = `Menolak permohonan izin atas nama: ${item.student_name || item.nama_santri} (${item.kategori})`;
+            const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
+            infoEl.innerText = `Menolak permohonan izin atas nama: ${sName} (${item.kategori || 'Izin'})`;
         }
         if (confirmBtn) {
             confirmBtn.onclick = () => submitRejectDecision(idIzin);
@@ -1595,7 +1602,7 @@
      * Modal Pos Gerbang Keamanan (Check-Out / Check-In)
      */
     function openModalGateCheck(idIzin, mode = 'OUT') {
-        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id || x.idIzin) === idIzin);
         if (!item) return;
 
         ASNPerpulangan.selectedIzin = item;
@@ -1623,10 +1630,13 @@
             confirmBtn.onclick = () => submitGateCheckDecision(idIzin, mode);
         }
 
+        const tglKmb = item.tgl_kembali || item.tglKembali;
+        const jamKmb = item.jam_kembali || item.jamKembali || '17:00';
+
         // Cek keterlambatan potensial jika check-in
         let lateNotice = '';
-        if (!isOut && item.tgl_kembali) {
-            const returnTarget = new Date(`${item.tgl_kembali}T${item.jam_kembali || '17:00'}:00`);
+        if (!isOut && tglKmb) {
+            const returnTarget = new Date(`${tglKmb}T${jamKmb}:00`);
             const now = new Date();
             if (now > returnTarget) {
                 const diffHours = Math.round((now - returnTarget) / (1000 * 60 * 60));
@@ -1640,13 +1650,18 @@
         }
 
         if (detailsEl) {
+            const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
+            const sNis = item.student_nis || item.studentNis || item.nis || '-';
+            const sPenjemput = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || 'Wali Santri';
+            const sHub = item.penjemput_hubungan || item.penjemputHubungan || 'Wali';
+
             detailsEl.innerHTML = `
                 <div class="space-y-2 text-xs">
                     <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1">
-                        <div class="font-bold text-sm text-slate-800 dark:text-slate-100">${item.student_name || item.nama_santri}</div>
-                        <div class="text-slate-500 dark:text-slate-300">NIS: ${item.student_nis || item.nis || '-'} | ID Izin: ${idIzin}</div>
-                        <div class="text-slate-600 dark:text-slate-300 pt-1">Penjemput: <strong>${item.penjemput_nama}</strong> (${item.penjemput_hubungan})</div>
-                        <div class="text-amber-700 dark:text-amber-400 font-semibold">Batas Kembali: ${formatDateIndo(item.tgl_kembali)} pukul ${formatTimeIndo(item.jam_kembali)}</div>
+                        <div class="font-bold text-sm text-slate-800 dark:text-slate-100">${escapeHtml(sName)}</div>
+                        <div class="text-slate-500 dark:text-slate-300">NIS: ${escapeHtml(sNis)} | ID Izin: ${escapeHtml(idIzin)}</div>
+                        <div class="text-slate-600 dark:text-slate-300 pt-1">Penjemput: <strong>${escapeHtml(sPenjemput)}</strong> (${escapeHtml(sHub)})</div>
+                        <div class="text-amber-700 dark:text-amber-400 font-semibold">Batas Kembali: ${formatDateIndo(tglKmb)} pukul ${formatTimeIndo(jamKmb)}</div>
                     </div>
                     ${lateNotice}
                 </div>
@@ -1726,7 +1741,7 @@
      * Modal Pratinjau Surat Jalan & Kartu Izin Digital Resmi
      */
     function openModalPrintSuratIzin(idIzin) {
-        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id || x.idIzin) === idIzin);
         if (!item) return;
 
         ASNPerpulangan.selectedIzin = item;
@@ -1737,7 +1752,20 @@
         const container = document.getElementById('perpulangan-print-document');
         if (!container) return;
 
-        const qrData = `ASNAWIYYAH-IZIN|${idIzin}|${item.student_nis || '-'}|${item.student_name || '-'}|${item.status || 'DISETUJUI'}|VERIFIED`;
+        const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
+        const sNis = item.student_nis || item.studentNis || item.nis || '-';
+        const sKategori = item.kategori || 'Izin Santri';
+        const sAlasan = item.alasan || '-';
+        const sPenjemputNama = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || 'Wali Santri';
+        const sPenjemputHub = item.penjemput_hubungan || item.penjemputHubungan || 'Wali';
+        const sPenjemputKontak = String(item.penjemput_kontak || item.penjemputKontak || item.wali_phone || item.waliPhone || '').replace(/^'/, '').trim() || '-';
+        const sTglMulai = formatDateIndo(item.tgl_mulai || item.tglMulai);
+        const sJamMulai = formatTimeIndo(item.jam_mulai || item.jamMulai);
+        const sTglKembali = formatDateIndo(item.tgl_kembali || item.tglKembali);
+        const sJamKembali = formatTimeIndo(item.jam_kembali || item.jamKembali);
+        const sApprover = item.pengasuh_approved_by || item.pengasuhApprovedBy || item.pengurus_approved_by || item.pengurusApprovedBy || 'Dewan Pengasuh / Khodim Pesantren';
+
+        const qrData = `ASNAWIYYAH-IZIN|${idIzin}|${sNis}|${sName}|${item.status || 'DISETUJUI'}|VERIFIED`;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}`;
 
         container.innerHTML = `
@@ -1761,7 +1789,7 @@
                 <!-- JUDUL SURAT -->
                 <div class="text-center my-4">
                     <h2 class="font-bold text-sm sm:text-base text-slate-900 underline uppercase tracking-wider">SURAT JALAN & IZIN PERPULANGAN SANTRI</h2>
-                    <p class="text-xs text-slate-500 font-mono mt-0.5">Nomor: ${idIzin}/PPTQ-ASN/IZN/${new Date().getFullYear()}</p>
+                    <p class="text-xs text-slate-500 font-mono mt-0.5">Nomor: ${escapeHtml(idIzin)}/PPTQ-ASN/IZN/${new Date().getFullYear()}</p>
                 </div>
 
                 <!-- ISI SURAT -->
@@ -1773,31 +1801,31 @@
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs mb-4">
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Nama Santri</span>
-                        <span class="col-span-2 font-bold text-slate-800">: ${item.student_name || item.nama_santri}</span>
+                        <span class="col-span-2 font-bold text-slate-800">: ${escapeHtml(sName)}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Nomor Induk (NIS)</span>
-                        <span class="col-span-2 font-medium text-slate-800">: ${item.student_nis || item.nis || '-'}</span>
+                        <span class="col-span-2 font-medium text-slate-800">: ${escapeHtml(sNis)}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Kategori Izin</span>
-                        <span class="col-span-2 font-bold text-emerald-800">: ${item.kategori}</span>
+                        <span class="col-span-2 font-bold text-emerald-800">: ${escapeHtml(sKategori)}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Keperluan / Alasan</span>
-                        <span class="col-span-2 text-slate-800">: ${item.alasan}</span>
+                        <span class="col-span-2 text-slate-800">: ${escapeHtml(sAlasan)}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Penjemput Resmi</span>
-                        <span class="col-span-2 text-slate-800">: ${item.penjemput_nama} (${item.penjemput_hubungan}) - HP: ${item.penjemput_kontak || '-'}</span>
+                        <span class="col-span-2 text-slate-800">: ${escapeHtml(sPenjemputNama)} (${escapeHtml(sPenjemputHub)}) - HP: ${escapeHtml(sPenjemputKontak)}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Waktu Keluar</span>
-                        <span class="col-span-2 text-slate-800">: ${formatDateIndo(item.tgl_mulai)} pukul ${formatTimeIndo(item.jam_mulai)}</span>
+                        <span class="col-span-2 text-slate-800">: ${escapeHtml(sTglMulai)}${sJamMulai ? ' pukul ' + escapeHtml(sJamMulai) : ''}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Wajib Kembali</span>
-                        <span class="col-span-2 font-bold text-rose-700">: ${formatDateIndo(item.tgl_kembali)} pukul ${formatTimeIndo(item.jam_kembali)}</span>
+                        <span class="col-span-2 font-bold text-rose-700">: ${escapeHtml(sTglKembali)}${sJamKembali ? ' pukul ' + escapeHtml(sJamKembali) : ''}</span>
                     </div>
                 </div>
 
@@ -1816,7 +1844,7 @@
                     <!-- Tanda Tangan Penjemput -->
                     <div class="space-y-12">
                         <div>Penjemput / Wali Santri,</div>
-                        <div class="font-bold underline text-slate-800 pt-4">${item.penjemput_nama || 'Wali Santri'}</div>
+                        <div class="font-bold underline text-slate-800 pt-4">${escapeHtml(sPenjemputNama)}</div>
                     </div>
 
                     <!-- QR Code Validasi Pos Gerbang -->
@@ -1828,7 +1856,7 @@
                     <!-- Tanda Tangan Masyayikh / Pengurus -->
                     <div class="space-y-12">
                         <div>Pilangwetan, ${formatDateIndo(new Date().toISOString().split('T')[0])}<br>Dewan Pengasuh / Pengurus,</div>
-                        <div class="font-bold underline text-slate-800 pt-4">${item.pengasuh_approved_by || item.pengurus_approved_by || 'Khodim Pesantren'}</div>
+                        <div class="font-bold underline text-slate-800 pt-4">${escapeHtml(sApprover)}</div>
                     </div>
                 </div>
             </div>
@@ -1850,7 +1878,7 @@
      * Modal Detail & Riwayat Audit Izin
      */
     function openModalDetail(idIzin) {
-        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id || x.idIzin) === idIzin);
         if (!item) return;
 
         ASNPerpulangan.selectedIzin = item;
@@ -1877,6 +1905,107 @@
         const sNis = item.student_nis || item.studentNis || item.nis || '-';
         const st = String(item.status || 'MENUNGGU_PENGURUS').toUpperCase();
 
+        // Audit fields normalisasi
+        const pengurusAppAt = item.pengurus_approved_at || item.pengurusApprovedAt;
+        const pengurusAppBy = item.pengurus_approved_by || item.pengurusApprovedBy;
+        const pengurusNote = item.pengurus_catatan || item.pengurusCatatan;
+
+        const pengasuhAppAt = item.pengasuh_approved_at || item.pengasuhApprovedAt;
+        const pengasuhAppBy = item.pengasuh_approved_by || item.pengasuhApprovedBy;
+        const pengasuhNote = item.pengasuh_catatan || item.pengasuhCatatan;
+
+        const outAt = item.checkout_at || item.checkoutAt;
+        const outBy = item.checkout_petugas || item.checkoutPetugas;
+
+        const inAt = item.checkin_at || item.checkinAt;
+        const inBy = item.checkin_petugas || item.checkinPetugas;
+        const lateNote = item.catatan_keterlambatan || item.catatanKeterlambatan;
+
+        const isDitolak = st === 'DITOLAK';
+
+        // Penentuan Status Alur Timeline Proses Perizinan (5 Steps)
+        // Step 1: Pengajuan (Selalu Selesai jika izin terdaftar)
+        const step1Status = 'COMPLETED';
+
+        // Step 2: Tier 1 Verifikasi Pengurus Keamanan / Asatidz
+        let step2Status = 'PENDING';
+        if (isDitolak && !pengurusAppAt && !pengasuhAppAt) {
+            step2Status = 'REJECTED';
+        } else if (pengurusAppAt || ['MENUNGGU_PENGASUH', 'DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(st)) {
+            step2Status = 'COMPLETED';
+        } else if (st === 'MENUNGGU_PENGURUS') {
+            step2Status = 'CURRENT';
+        }
+
+        // Step 3: Tier 2 Otorisasi Dewan Pengasuh
+        let step3Status = 'PENDING';
+        if (isDitolak && step2Status === 'COMPLETED') {
+            step3Status = 'REJECTED';
+        } else if (pengasuhAppAt || ['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(st)) {
+            step3Status = 'COMPLETED';
+        } else if (st === 'MENUNGGU_PENGASUH') {
+            step3Status = 'CURRENT';
+        }
+
+        // Step 4: Pos Gerbang Check-Out (Keluar Pondok)
+        let step4Status = 'PENDING';
+        if (outAt || ['KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(st)) {
+            step4Status = 'COMPLETED';
+        } else if (st === 'DISETUJUI') {
+            step4Status = 'CURRENT';
+        }
+
+        // Step 5: Pos Gerbang Check-In (Kembali ke Pondok)
+        let step5Status = 'PENDING';
+        if (inAt || st === 'KEMBALI') {
+            step5Status = 'COMPLETED';
+        } else if (st === 'TERLAMBAT') {
+            step5Status = 'LATE';
+        } else if (st === 'KELUAR') {
+            step5Status = 'CURRENT';
+        }
+
+        function getStepVisual(status, defaultIcon) {
+            switch (status) {
+                case 'COMPLETED':
+                    return {
+                        circleClass: 'bg-emerald-500 text-white shadow-xs ring-2 ring-emerald-200 dark:ring-emerald-900',
+                        icon: 'fa-check',
+                        badge: '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 ml-1.5"><i class="fa-solid fa-check text-[8px] mr-1"></i>Selesai</span>'
+                    };
+                case 'CURRENT':
+                    return {
+                        circleClass: 'bg-emerald-600 text-white shadow-sm ring-4 ring-emerald-200 dark:ring-emerald-900 animate-pulse',
+                        icon: defaultIcon,
+                        badge: '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 ml-1.5 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-ping"></span>Status Terkini</span>'
+                    };
+                case 'REJECTED':
+                    return {
+                        circleClass: 'bg-rose-500 text-white shadow-xs ring-2 ring-rose-200 dark:ring-rose-900',
+                        icon: 'fa-xmark',
+                        badge: '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 ml-1.5">Ditolak</span>'
+                    };
+                case 'LATE':
+                    return {
+                        circleClass: 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-200 dark:ring-amber-900',
+                        icon: 'fa-triangle-exclamation',
+                        badge: '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 ml-1.5">Terlambat</span>'
+                    };
+                default: // PENDING
+                    return {
+                        circleClass: 'bg-slate-200 dark:bg-slate-700 text-slate-400',
+                        icon: defaultIcon,
+                        badge: ''
+                    };
+            }
+        }
+
+        const v1 = getStepVisual(step1Status, 'fa-file-signature');
+        const v2 = getStepVisual(step2Status, 'fa-user-check');
+        const v3 = getStepVisual(step3Status, 'fa-hands-praying');
+        const v4 = getStepVisual(step4Status, 'fa-door-open');
+        const v5 = getStepVisual(step5Status, 'fa-right-to-bracket');
+
         contentEl.innerHTML = `
             <div class="space-y-4 text-xs">
                 <!-- Header Info -->
@@ -1898,63 +2027,78 @@
                     <div class="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-[#25374a]">
                         <!-- 1. Pengajuan -->
                         <div class="relative">
-                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
-                                <i class="fa-solid fa-file-signature"></i>
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${v1.circleClass} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid ${v1.icon}"></i>
                             </span>
-                            <div class="font-bold text-slate-700 dark:text-slate-200">Pengajuan Izin Diajukan</div>
+                            <div class="flex items-center font-bold text-slate-700 dark:text-slate-200">
+                                <span>Pengajuan Izin Diajukan</span>
+                                ${v1.badge}
+                            </div>
                             <div class="text-slate-500 text-[11px]">Kategori: ${escapeHtml(item.kategori || 'Izin')} | Alasan: ${escapeHtml(item.alasan || '-')}</div>
-                            <div class="text-slate-400 text-[10px]">${item.created_at || '-'}</div>
+                            <div class="text-slate-400 text-[10px]">${item.created_at || item.createdAt || '-'}</div>
                         </div>
 
                         <!-- 2. Tier 1 Pengurus -->
                         <div class="relative">
-                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.pengurus_approved_at ? 'bg-emerald-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
-                                <i class="fa-solid fa-user-check"></i>
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${v2.circleClass} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid ${v2.icon}"></i>
                             </span>
-                            <div class="font-bold text-slate-700 dark:text-slate-200">Tier 1: Verifikasi Pengurus Keamanan / Asatidz</div>
-                            <div class="text-slate-500 text-[11px]">
-                                ${item.pengurus_approved_by ? `Disetujui oleh: ${escapeHtml(item.pengurus_approved_by)}` : 'Menunggu persetujuan pengurus / asatidz'}
-                                ${item.pengurus_catatan ? `<br>Catatan: "${escapeHtml(item.pengurus_catatan)}"` : ''}
+                            <div class="flex items-center font-bold text-slate-700 dark:text-slate-200">
+                                <span>Tier 1: Verifikasi Pengurus Keamanan / Asatidz</span>
+                                ${v2.badge}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${item.pengurus_approved_at || '-'}</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${pengurusAppBy ? `Disetujui oleh: ${escapeHtml(pengurusAppBy)}` : (step2Status === 'COMPLETED' ? 'Telah diverifikasi oleh Pengurus Keamanan' : (step2Status === 'CURRENT' ? 'Menunggu verifikasi pengurus / asatidz piket' : (step2Status === 'REJECTED' ? 'Permohonan ditolak pada Tier 1' : 'Menunggu verifikasi pengurus / asatidz')))}
+                                ${pengurusNote ? `<br>Catatan: "${escapeHtml(pengurusNote)}"` : ''}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${pengurusAppAt || (step2Status === 'COMPLETED' ? 'Terverifikasi' : '-')}</div>
                         </div>
 
                         <!-- 3. Tier 2 Dewan Pengasuh -->
                         <div class="relative">
-                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.pengasuh_approved_at ? 'bg-purple-600 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
-                                <i class="fa-solid fa-hands-praying"></i>
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${v3.circleClass} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid ${v3.icon}"></i>
                             </span>
-                            <div class="font-bold text-slate-700 dark:text-slate-200">Tier 2: Otorisasi Dewan Pengasuh</div>
-                            <div class="text-slate-500 text-[11px]">
-                                ${item.pengasuh_approved_by ? `Disetujui oleh: ${escapeHtml(item.pengasuh_approved_by)}` : 'Menunggu otorisasi dewan pengasuh'}
-                                ${item.pengasuh_catatan ? `<br>Catatan: "${escapeHtml(item.pengasuh_catatan)}"` : ''}
+                            <div class="flex items-center font-bold text-slate-700 dark:text-slate-200">
+                                <span>Tier 2: Otorisasi Dewan Pengasuh</span>
+                                ${v3.badge}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${item.pengasuh_approved_at || '-'}</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${pengasuhAppBy ? `Disetujui oleh: ${escapeHtml(pengasuhAppBy)}` : (step3Status === 'COMPLETED' ? 'Telah diotorisasi oleh Dewan Pengasuh' : (step3Status === 'CURRENT' ? 'Menunggu otorisasi khusus dewan pengasuh' : (step3Status === 'REJECTED' ? 'Permohonan ditolak oleh Dewan Pengasuh' : 'Menunggu otorisasi dewan pengasuh')))}
+                                ${pengasuhNote ? `<br>Catatan: "${escapeHtml(pengasuhNote)}"` : ''}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${pengasuhAppAt || (step3Status === 'COMPLETED' ? 'Diotorisasi' : '-')}</div>
                         </div>
 
                         <!-- 4. Pos Gerbang Check-Out -->
                         <div class="relative">
-                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.checkout_at ? 'bg-sky-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
-                                <i class="fa-solid fa-door-open"></i>
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${v4.circleClass} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid ${v4.icon}"></i>
                             </span>
-                            <div class="font-bold text-slate-700 dark:text-slate-200">Pos Gerbang: Check-Out (Keluar Pondok)</div>
-                            <div class="text-slate-500 text-[11px]">
-                                ${item.checkout_petugas ? `Petugas: ${escapeHtml(item.checkout_petugas)}` : 'Belum check-out'}
+                            <div class="flex items-center font-bold text-slate-700 dark:text-slate-200">
+                                <span>Pos Gerbang: Check-Out (Keluar Pondok)</span>
+                                ${v4.badge}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${item.checkout_at || '-'}</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${outBy ? `Petugas: ${escapeHtml(outBy)}` : (step4Status === 'COMPLETED' ? 'Check-out terkonfirmasi di pos gerbang' : (step4Status === 'CURRENT' ? 'Izin resmi aktif, siap check-out di pos gerbang' : 'Belum check-out'))}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${outAt || '-'}</div>
                         </div>
 
                         <!-- 5. Pos Gerbang Check-In -->
                         <div class="relative">
-                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${item.checkin_at ? 'bg-teal-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-[10px]">
-                                <i class="fa-solid fa-right-to-bracket"></i>
+                            <span class="absolute -left-6 top-0 w-5 h-5 rounded-full ${v5.circleClass} flex items-center justify-center text-[10px]">
+                                <i class="fa-solid ${v5.icon}"></i>
                             </span>
-                            <div class="font-bold text-slate-700 dark:text-slate-200">Pos Gerbang: Check-In (Kembali ke Pondok)</div>
-                            <div class="text-slate-500 text-[11px]">
-                                ${item.checkin_petugas ? `Petugas: ${escapeHtml(item.checkin_petugas)}` : 'Belum check-in'}
-                                ${item.catatan_keterlambatan ? `<br><span class="text-rose-500 font-bold">Keterlambatan: ${escapeHtml(item.catatan_keterlambatan)}</span>` : ''}
+                            <div class="flex items-center font-bold text-slate-700 dark:text-slate-200">
+                                <span>Pos Gerbang: Check-In (Kembali ke Pondok)</span>
+                                ${v5.badge}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${item.checkin_at || '-'}</div>
+                            <div class="text-slate-500 text-[11px]">
+                                ${inBy ? `Petugas: ${escapeHtml(inBy)}` : (step5Status === 'COMPLETED' ? 'Check-in terkonfirmasi, santri telah kembali di pondok' : (step5Status === 'CURRENT' ? 'Santri sedang di luar pondok, menunggu waktu kembali' : 'Belum check-in'))}
+                                ${lateNote ? `<br><span class="text-rose-500 font-bold">Keterlambatan: ${escapeHtml(lateNote)}</span>` : ''}
+                            </div>
+                            <div class="text-slate-400 text-[10px]">${inAt || '-'}</div>
                         </div>
                     </div>
                 </div>
