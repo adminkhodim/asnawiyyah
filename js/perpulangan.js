@@ -97,49 +97,49 @@
         switch (s) {
             case 'MENUNGGU_PENGURUS':
                 return {
-                    label: 'Menunggu Pengurus (Tier 1)',
+                    label: 'Tier 1 (Pengurus)',
                     bg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60',
                     dot: 'bg-amber-500',
                     icon: 'fa-user-clock'
                 };
             case 'MENUNGGU_PENGASUH':
                 return {
-                    label: 'Menunggu Pengasuh (Tier 2)',
+                    label: 'Tier 2 (Pengasuh)',
                     bg: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60',
                     dot: 'bg-indigo-500',
                     icon: 'fa-hands-praying'
                 };
             case 'DISETUJUI':
                 return {
-                    label: 'Disetujui (Siap Berangkat)',
+                    label: 'Disetujui',
                     bg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60',
                     dot: 'bg-emerald-500',
                     icon: 'fa-circle-check'
                 };
             case 'KELUAR':
                 return {
-                    label: 'Santri di Luar Pondok',
+                    label: 'Di Luar',
                     bg: 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60',
                     dot: 'bg-sky-500 animate-pulse',
                     icon: 'fa-person-walking-luggage'
                 };
             case 'KEMBALI':
                 return {
-                    label: 'Kembali (Selesai Tepat Waktu)',
+                    label: 'Kembali',
                     bg: 'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border-teal-200/80 dark:border-teal-800/60',
                     dot: 'bg-teal-500',
                     icon: 'fa-circle-check'
                 };
             case 'TERLAMBAT':
                 return {
-                    label: 'Terlambat Masuk',
+                    label: 'Terlambat',
                     bg: 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60',
                     dot: 'bg-rose-500 animate-ping',
                     icon: 'fa-triangle-exclamation'
                 };
             case 'DITOLAK':
                 return {
-                    label: 'Permohonan Ditolak',
+                    label: 'Ditolak',
                     bg: 'bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300 border-red-200/80 dark:border-red-800/60',
                     dot: 'bg-red-500',
                     icon: 'fa-circle-xmark'
@@ -433,13 +433,13 @@
             if (status === 'MENUNGGU_PENGURUS' && canTier1) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGURUS')" 
-                        class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
                         title="Setujui Tier 1 (Pengurus / Asatidz)">
-                        <i class="fa-solid fa-check text-[11px]"></i>
+                        <i class="fa-solid fa-check text-[10px]"></i>
                         <span>Tier 1</span>
                     </button>
                     <button type="button" onclick="window.ASNPerpulangan.openModalReject('${idIzin}')" 
-                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
+                        class="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
                         title="Tolak Permohonan Izin">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
@@ -450,13 +450,13 @@
             if (status === 'MENUNGGU_PENGASUH' && canTier2) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGASUH')" 
-                        class="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
-                        title="Persetujuan Akhir Dewan Pengasuh">
-                        <i class="fa-solid fa-hands-praying text-[11px]"></i>
-                        <span>Tier 2 (Pengasuh)</span>
+                        class="px-2 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
+                        title="Persetujuan Akhir Dewan Pengasuh (Tier 2)">
+                        <i class="fa-solid fa-hands-praying text-[10px]"></i>
+                        <span>Tier 2</span>
                     </button>
                     <button type="button" onclick="window.ASNPerpulangan.openModalReject('${idIzin}')" 
-                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
+                        class="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
                         title="Tolak Permohonan Izin">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
@@ -467,10 +467,10 @@
             if (status === 'DISETUJUI' && canGate) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'OUT')" 
-                        class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        class="px-2 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
                         title="Check-Out Pos Gerbang (Santri Keluar)">
-                        <i class="fa-solid fa-door-open text-[11px]"></i>
-                        <span>Check-Out</span>
+                        <i class="fa-solid fa-door-open text-[10px]"></i>
+                        <span>Keluar</span>
                     </button>
                 `;
             }
@@ -479,10 +479,10 @@
             if (status === 'KELUAR' && canGate) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'IN')" 
-                        class="px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-sm" 
+                        class="px-2 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
                         title="Check-In Pos Gerbang (Santri Tiba di Pondok)">
-                        <i class="fa-solid fa-right-to-bracket text-[11px]"></i>
-                        <span>Check-In</span>
+                        <i class="fa-solid fa-right-to-bracket text-[10px]"></i>
+                        <span>Kembali</span>
                     </button>
                 `;
             }
@@ -492,12 +492,13 @@
             let waButtonMobile = '';
             if (noHp) {
                 const cleanPhone = noHp.replace(/\D/g, '').replace(/^0/, '62');
+                const displayPhone = noHp.replace(/^\+62\s?/, '0');
                 waButton = `
                     <a href="https://wa.me/${cleanPhone}?text=Assalamu%27alaikum%20Warahmatullah%2C%20terkait%20izin%20santri%20${encodeURIComponent(studentName)}" 
                         target="_blank" rel="noopener noreferrer" 
-                        class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 text-[11px] ml-1" 
-                        title="Hubungi via WhatsApp">
-                        <i class="fa-brands fa-whatsapp text-xs text-emerald-500"></i> ${noHp}
+                        class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-0.5 text-[10px]" 
+                        title="Hubungi via WhatsApp (${displayPhone})">
+                        <i class="fa-brands fa-whatsapp text-emerald-500"></i> ${displayPhone}
                     </a>
                 `;
                 waButtonMobile = `
@@ -505,72 +506,71 @@
                         target="_blank" rel="noopener noreferrer" 
                         class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 text-[11px]" 
                         title="Hubungi Penjemput via WhatsApp">
-                        <i class="fa-brands fa-whatsapp text-xs text-emerald-500"></i> ${noHp}
+                        <i class="fa-brands fa-whatsapp text-xs text-emerald-500"></i> ${displayPhone}
                     </a>
                 `;
             }
 
-            // 1. Render Baris Tabel Desktop (md: ke atas)
+            // 1. Render Baris Tabel Desktop (Tampil Utuh dalam 1 Layar Tanpa Scroll Horizontal)
             tableHtml += `
                 <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1a2634] transition-colors border-b border-slate-100 dark:border-[#223142]">
-                    <!-- No & ID Izin -->
-                    <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
-                        <span class="font-bold text-slate-700 dark:text-slate-200">#${index + 1}</span>
-                        <div class="font-mono text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">${idIzin}</div>
-                    </td>
-
-                    <!-- Data Santri -->
-                    <td class="px-4 py-3">
-                        <div class="flex items-center space-x-2.5">
+                    <!-- 1. Data Santri & ID (Terpadu) -->
+                    <td class="px-3 py-2.5 align-middle">
+                        <div class="flex items-center space-x-2.5 min-w-0">
                             <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0 border border-emerald-200 dark:border-emerald-800">
                                 ${studentName.charAt(0).toUpperCase()}
                             </div>
-                            <div class="min-w-0">
-                                <span class="font-bold text-xs text-slate-800 dark:text-slate-100 block truncate">${studentName}</span>
-                                <span class="text-[11px] text-slate-400 dark:text-slate-300">NIS: ${studentNis}</span>
+                            <div class="min-w-0 flex-1">
+                                <span class="font-bold text-xs text-slate-800 dark:text-slate-100 block truncate" title="${studentName}">${studentName}</span>
+                                <div class="text-[10px] text-slate-400 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
+                                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">NIS: ${studentNis}</span>
+                                    <span>•</span>
+                                    <span class="font-mono text-slate-400">#${index + 1} ${idIzin}</span>
+                                </div>
                             </div>
                         </div>
                     </td>
 
-                    <!-- Kategori & Alasan -->
-                    <td class="px-4 py-3 text-xs max-w-xs">
-                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-700 dark:bg-[#1c2836] dark:text-slate-300 mb-1 border border-slate-200/60 dark:border-slate-700/60">
+                    <!-- 2. Keperluan & Alasan -->
+                    <td class="px-3 py-2.5 align-middle">
+                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-full">
                             ${kategori}
                         </span>
-                        <p class="text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed" title="${alasan}">
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5" title="${alasan}">
                             ${alasan}
                         </p>
                     </td>
 
-                    <!-- Penjemput & Kontak -->
-                    <td class="px-4 py-3 text-xs whitespace-nowrap">
-                        <div class="font-semibold text-slate-700 dark:text-slate-200">${penjemput}</div>
-                        <div class="text-[11px] text-slate-400 dark:text-slate-300">Hubungan: ${hubungan}</div>
-                        ${waButton}
+                    <!-- 3. Penjemput & Kontak -->
+                    <td class="px-3 py-2.5 align-middle">
+                        <div class="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate" title="${penjemput}">${penjemput}</div>
+                        <div class="text-[10px] text-slate-400 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                            <span>${hubungan}</span>
+                            ${waButton ? `<span>•</span> ${waButton}` : ''}
+                        </div>
                     </td>
 
-                    <!-- Waktu Izin & Batas Kembali -->
-                    <td class="px-4 py-3 text-xs whitespace-nowrap">
-                        <div class="text-slate-700 dark:text-slate-200">
-                            <span class="text-slate-400 dark:text-slate-300">Keluar:</span> ${tglMulai} ${jamMulai}
+                    <!-- 4. Waktu Izin & Batas Kembali -->
+                    <td class="px-3 py-2.5 align-middle whitespace-nowrap text-[11px]">
+                        <div class="text-slate-600 dark:text-slate-300">
+                            <span class="text-slate-400 text-[10px]">Keluar:</span> ${tglMulai} ${jamMulai}
                         </div>
                         <div class="font-semibold text-amber-700 dark:text-amber-400 mt-0.5">
-                            <span class="text-slate-400 dark:text-slate-300">Kembali:</span> ${tglKembali} ${jamKembali}
+                            <span class="text-slate-400 text-[10px] font-normal">Kembali:</span> ${tglKembali} ${jamKembali}
                         </div>
                     </td>
 
-                    <!-- Status Badge -->
-                    <td class="px-4 py-3 whitespace-nowrap text-xs">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeCfg.bg}">
+                    <!-- 5. Status Badge -->
+                    <td class="px-3 py-2.5 align-middle text-center whitespace-nowrap">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeCfg.bg}">
                             <span class="w-1.5 h-1.5 rounded-full ${badgeCfg.dot}"></span>
-                            <i class="fa-solid ${badgeCfg.icon} text-[10px]"></i>
                             <span>${badgeCfg.label}</span>
                         </span>
                     </td>
 
-                    <!-- Aksi -->
-                    <td class="px-4 py-3 whitespace-nowrap text-xs text-right">
-                        <div class="flex items-center justify-end gap-1.5">
+                    <!-- 6. Aksi -->
+                    <td class="px-3 py-2.5 align-middle text-right whitespace-nowrap">
+                        <div class="inline-flex items-center justify-end gap-1">
                             ${actionButtons}
                         </div>
                     </td>

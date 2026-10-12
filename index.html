@@ -7202,18 +7202,17 @@
                         <span class="text-[11px] text-slate-400">Two-Tier Dual-Sync: Supabase & Google Sheets</span>
                     </div>
 
-                    <!-- Tampilan Desktop & Tablet: Tabel Tabular -->
+                    <!-- Tampilan Desktop & Tablet: Tabel Tabular (Fit 1 Layar Tanpa Scroll Horizontal) -->
                     <div class="hidden md:block overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left border-collapse text-xs">
+                        <table class="w-full text-left border-collapse text-xs table-auto xl:table-fixed">
                             <thead class="bg-slate-50/80 dark:bg-[#1a2634] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#223142]">
                                 <tr>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">No & ID Izin</th>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Data Santri</th>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Kategori & Alasan</th>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Penjemput</th>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Jadwal Izin</th>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px]">Status Izin</th>
-                                    <th class="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-right">Aksi</th>
+                                    <th class="px-3 py-2.5 font-bold uppercase tracking-wider text-[10px] xl:w-[25%]">Data Santri & ID</th>
+                                    <th class="px-3 py-2.5 font-bold uppercase tracking-wider text-[10px] xl:w-[17%]">Keperluan</th>
+                                    <th class="px-3 py-2.5 font-bold uppercase tracking-wider text-[10px] xl:w-[17%]">Penjemput</th>
+                                    <th class="px-3 py-2.5 font-bold uppercase tracking-wider text-[10px] xl:w-[16%]">Jadwal Izin</th>
+                                    <th class="px-3 py-2.5 font-bold uppercase tracking-wider text-[10px] text-center xl:w-[12%]">Status</th>
+                                    <th class="px-3 py-2.5 font-bold uppercase tracking-wider text-[10px] text-right xl:w-[13%]">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="perpulangan-table-body" class="divide-y divide-slate-100 dark:divide-[#223142]">
@@ -15447,7 +15446,7 @@
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=53"></script>
+    <script src="js/perpulangan.js?v=54"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>
