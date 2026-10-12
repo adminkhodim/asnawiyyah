@@ -2586,7 +2586,12 @@ async function submitTahfidzCatat(e) {
     setTahfidzButtonLoading(btn, true, "Menyimpan Setoran...");
 
     try {
-        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
+        const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : null) ||
+            sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS?.adminToken || "asnawiyyah_tahfidz_admin_token") ||
+            localStorage.getItem(TAHFIDZ_STORAGE_KEYS?.adminToken || "asnawiyyah_tahfidz_admin_token") ||
+            sessionStorage.getItem("asnawiyyah_admin_token") ||
+            localStorage.getItem("asnawiyyah_admin_token") ||
+            "";
         const finalJuzStart = (ASNTahfidz.catatState.inputMode === 'JUZ') ? (ASNTahfidz.catatState.juzStart || juz) : juz;
         const finalJuzEnd = (ASNTahfidz.catatState.inputMode === 'JUZ') ? (ASNTahfidz.catatState.juzEnd || juz) : juz;
         const finalCatatan = (ASNTahfidz.catatState.tipe === 'TASMI' && ASNTahfidz.catatState.inputMode === 'JUZ')

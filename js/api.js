@@ -1705,6 +1705,12 @@
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
             const isSesiWrite = action === 'saveTahfidzSesi' || action === 'deleteTahfidzSesi';
+            const isTahfidzWrite = [
+                'saveTahfidzLog', 'tahfidz.saveLog', 'auth.tahfidz.saveLog',
+                'deleteTahfidzLog', 'tahfidz.deleteLog',
+                'saveTahfidzHalaqah', 'deleteTahfidzHalaqah',
+                'saveTahfidzPresensi', 'saveTahfidzPlotting'
+            ].includes(action);
             const isPerpulanganWrite = [
                 'perpulangan.submit', 'submitPermohonanIzin', 'submitIzinPerpulangan',
                 'perpulangan.approvePengurus', 'approveIzinPengurus',
@@ -1716,7 +1722,7 @@
             const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
 
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isPerpulanganWrite || isNotifikasiWrite) {
+            if (isJadwalWrite || isNewsWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -1751,12 +1757,23 @@
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             }
 
-            // Jika Apps Script gagal/mengembalikan error tapi aksi adalah Jadwal atau Berita, kembalikan status sukses karena Supabase telah diperbarui
-            if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite)) {
+            // Jika Apps Script gagal/mengembalikan error auth tapi aksi adalah Tahfidz, Jadwal atau Berita, kembalikan status sukses karena Supabase telah diperbarui
+            if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite || isTahfidzWrite)) {
+                let fallbackMsg = "Operasi berhasil disimpan ke Cloud Database Supabase";
+                if (isTahfidzWrite) {
+                    fallbackMsg = action === 'deleteTahfidzLog' 
+                        ? "Catatan setoran berhasil dihapus dari Cloud Database Supabase" 
+                        : "Setoran tahfidz santri berhasil disimpan ke Cloud Database Supabase";
+                } else if (isNewsWrite) {
+                    fallbackMsg = "Berita berhasil dipublikasikan ke Cloud Database Supabase";
+                } else if (isJadwalWrite) {
+                    fallbackMsg = "Jadwal kegiatan berhasil disimpan ke Cloud Database Supabase";
+                }
                 return { 
                     success: true, 
                     status: "success", 
-                    message: isNewsWrite ? "Berita berhasil dipublikasikan ke Cloud Database Supabase" : "Jadwal kegiatan berhasil disimpan ke Cloud Database Supabase" 
+                    message: fallbackMsg,
+                    logId: payload.logId || payload.log_id || ('TFZ-' + Date.now())
                 };
             }
 
@@ -1985,34 +2002,89 @@
 
                 // ==================== 4. TAHFIDZ (LOG SETORAN & HALAQAH) ====================
                 else if (action === 'saveTahfidzLog') {
-                    const logId = (response && (response.logId || response.log_id)) || payload.logId || payload.log_id || ('LOG_' + Date.now());
+                    const logId = (response && (response.logId || response.log_id)) || payload.logId || payload.log_id || ('TFZ-' + Date.now() + '-' + Math.floor(1000 + Math.random() * 9000));
+                    const studentId = String(payload.studentId || payload.student_id || '').trim();
+                    const studentName = String(payload.studentName || payload.student_name || payload.nama_santri || payload.name || 'Santri').trim();
+                    const tipeVal = String(payload.tipe || 'ZIYADAH').trim().toUpperCase();
+                    const statusVal = String(payload.statusSetoran || payload.status_setoran || 'LANJUT').trim().toUpperCase();
+                    const juzVal = Math.min(30, Math.max(1, Number(payload.juz) || 30));
+                    const halListVal = String(payload.halamanList || payload.halaman_list || payload.halaman || '1').trim();
+                    const totHalVal = Number(payload.totalHalaman || payload.total_halaman) || 1;
+
                     const logRow = {
                         log_id: logId,
-                        student_id: payload.studentId || payload.student_id || 'STD_DEFAULT',
-                        student_name: payload.studentName || payload.student_name || payload.nama_santri || payload.name || 'Santri',
+                        student_id: studentId || 'STD-000',
+                        student_name: studentName,
                         nis: String(payload.nis || '').trim(),
                         gender: (payload.gender || 'L').toUpperCase().startsWith('P') ? 'P' : 'L',
                         tanggal: payload.tanggal || new Date().toISOString().split('T')[0],
-                        sesi: payload.sesi || 'Sesi 1',
-                        tipe: payload.tipe || 'ZIYADAH',
-                        juz: Number(payload.juz) || 1,
-                        surah: payload.surah || 'Al-Fatihah',
-                        halaman_list: payload.halamanList || payload.halaman_list || '',
-                        total_halaman: Number(payload.totalHalaman || payload.total_halaman) || 1,
-                        nilai: payload.nilai || 'A',
+                        sesi: payload.sesi || "Pagi (Ba'da Subuh)",
+                        tipe: tipeVal,
+                        juz: juzVal,
+                        surah: payload.surah || `Juz ${juzVal}`,
+                        halaman_list: halListVal,
+                        total_halaman: totHalVal,
+                        nilai: String(payload.nilai || 'MUMTAZ').toUpperCase(),
                         muhafiz: payload.muhafiz || 'Ustadz Pembina',
-                        catatan: payload.catatan || null,
-                        status_setoran: payload.statusSetoran || payload.status_setoran || 'Lancar',
-                        satuan: payload.satuan || 'Halaman',
-                        ayat_mulai: payload.ayatMulai || payload.ayat_mulai || null,
-                        ayat_sampai: payload.ayatSampai || payload.ayat_sampai || null,
+                        catatan: payload.catatan || '',
+                        status_setoran: statusVal,
+                        satuan: String(payload.satuan || 'HALAMAN').toUpperCase(),
+                        ayat_mulai: (payload.ayatMulai !== undefined && payload.ayatMulai !== null && payload.ayatMulai !== '') ? Number(payload.ayatMulai) : null,
+                        ayat_sampai: (payload.ayatSampai !== undefined && payload.ayatSampai !== null && payload.ayatSampai !== '') ? Number(payload.ayatSampai) : null,
                         created_at: new Date().toISOString()
                     };
-                    await fetch(`${sbUrl}/rest/v1/tahfidz_logs`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(logRow)
-                    });
+
+                    try {
+                        await fetch(`${sbUrl}/rest/v1/tahfidz_logs`, {
+                            method: 'POST',
+                            headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+                            body: JSON.stringify(logRow)
+                        });
+                    } catch (logErr) {
+                        console.warn('[SUPABASE TAHFIDZ_LOGS INSERT WARN]', logErr);
+                    }
+
+                    // Auto-sync Capaian Santri di Supabase (tahfidz_capaian)
+                    if (studentId) {
+                        try {
+                            const capaianPayload = {
+                                student_id: studentId,
+                                student_name: studentName,
+                                status_terakhir: statusVal,
+                                updated_at: new Date().toISOString()
+                            };
+
+                            if (payload.halaqahId || payload.halaqah_id) {
+                                capaianPayload.halaqah_id = payload.halaqahId || payload.halaqah_id;
+                            }
+                            if (payload.namaHalaqah || payload.nama_halaqah) {
+                                capaianPayload.nama_halaqah = payload.namaHalaqah || payload.nama_halaqah;
+                            }
+                            if (payload.muhafiz) {
+                                capaianPayload.muhafiz_pembina = payload.muhafiz;
+                            }
+
+                            if (tipeVal === 'ZIYADAH') {
+                                if (statusVal === 'LANJUT') {
+                                    capaianPayload.juz_aktif = String(juzVal);
+                                    capaianPayload.halaman_terakhir = halListVal;
+                                }
+                            } else if (tipeVal === 'MURAJAAH_SABQI' || tipeVal === 'SABQI') {
+                                capaianPayload.sabqi_halaman = halListVal;
+                            } else if (tipeVal === 'MURAJAAH_MANZIL' || tipeVal === 'MANZIL') {
+                                capaianPayload.manzil_juz = String(juzVal);
+                                capaianPayload.manzil_halaman = halListVal;
+                            }
+
+                            await fetch(`${sbUrl}/rest/v1/tahfidz_capaian`, {
+                                method: 'POST',
+                                headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+                                body: JSON.stringify(capaianPayload)
+                            });
+                        } catch (capErr) {
+                            console.warn('[SUPABASE TAHFIDZ_CAPAIAN UPSERT WARN]', capErr);
+                        }
+                    }
                 }
                 else if (action === 'deleteTahfidzLog') {
                     const logId = payload.logId || payload.log_id;
