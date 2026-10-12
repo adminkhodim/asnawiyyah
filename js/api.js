@@ -2723,6 +2723,30 @@
                         created_at: nowIso,
                         updated_at: nowIso
                     };
+                    // Resolusi Otomatis Nama Santri & NIS jika diajukan manual tanpa memilih dari list
+                    if ((!row.student_nis || !row.student_id) && row.student_name) {
+                        try {
+                            const cachedStudents = window.adminStudentsData || 
+                                (localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE') ? JSON.parse(localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE')) : null);
+                            let matchedStudent = null;
+                            const normKey = row.student_name.toLowerCase().replace(/['’`"]/g, '').replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+                            const compactKey = normKey.replace(/\s+/g, '');
+
+                            if (Array.isArray(cachedStudents) && cachedStudents.length > 0) {
+                                matchedStudent = cachedStudents.find(s => {
+                                    const sNorm = String(s.name || s.nama || '').toLowerCase().replace(/['’`"]/g, '').replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+                                    return sNorm === normKey || sNorm.replace(/\s+/g, '') === compactKey || sNorm.replace(/\s+/g, '').includes(compactKey) || compactKey.includes(sNorm.replace(/\s+/g, ''));
+                                });
+                            }
+
+                            if (matchedStudent) {
+                                row.student_id = matchedStudent.student_id || matchedStudent.id || row.student_id;
+                                row.student_nis = matchedStudent.nis || row.student_nis;
+                                row.student_name = matchedStudent.name || matchedStudent.nama || row.student_name;
+                            }
+                        } catch (e) {}
+                    }
+
                     await fetch(`${sbUrl}/rest/v1/izin_perpulangan`, {
                         method: 'POST',
                         headers,

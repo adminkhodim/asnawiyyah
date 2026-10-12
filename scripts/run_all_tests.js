@@ -21,6 +21,7 @@ const ALL_CANDIDATE_SUITES = [
   { name: 'Keaktifan Asatidz RBAC & Deadline Verification', file: 'scripts/test_keaktifan.js' },
   { name: 'RBAC 21-Modules Permissions Matrix Suite', file: 'scripts/test_roles_matrix.js' },
   { name: 'Modul 20: Izin Santri & Perpulangan Suite', file: 'scripts/test_perpulangan.js' },
+  { name: 'Modul 20: Auto-Resolving Santri & NIS Suite', file: 'scripts/test_perpulangan_auto_resolve.js' },
   { name: 'Redesain Portal Berita NU Online Suite', file: 'scripts/test_nu_news_portal.js' },
   { name: 'Wali Santri Quick Login (NIS & PIN) Suite', file: 'scripts/test_parent_quick_login.js' },
   { name: 'Wali Santri Belum Terhubung & Follow-Up WA Suite', file: 'scripts/test_wali_unlinked.js' },

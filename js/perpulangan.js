@@ -183,6 +183,39 @@
                 rawList = response;
             }
 
+            // Pastikan master data santri termuat untuk auto-resolving & normalisasi
+            await ensureStudentsLoaded();
+
+            // Auto-enrichment: Lengkapi NIS & Nama Resmi jika santri diajukan manual sebelumnya
+            rawList = (rawList || []).map(item => {
+                const currNis = item.student_nis || item.studentNis || item.nis || '';
+                const currName = item.student_name || item.studentName || item.nama_santri || item.nama || '';
+                const currId = item.student_id || item.studentId || '';
+
+                if ((!currNis || currNis === '-' || !currId) && currName) {
+                    const resolved = resolveStudentByNameOrNis(currName);
+                    if (resolved) {
+                        const fixedName = resolved.name || resolved.nama || currName;
+                        const fixedNis = resolved.nis || resolved.studentNis || currNis;
+                        const fixedId = resolved.student_id || resolved.studentId || resolved.id || currId;
+
+                        item.student_name = fixedName;
+                        item.studentName = fixedName;
+                        item.student_nis = fixedNis;
+                        item.studentNis = fixedNis;
+                        item.student_id = fixedId;
+                        item.studentId = fixedId;
+
+                        // Sinkronkan ke Supabase jika ada ID Izin
+                        const idIzin = item.id_izin || item.idIzin || item.id;
+                        if (idIzin) {
+                            syncResolvedStudentToSupabase(idIzin, fixedId, fixedNis, fixedName);
+                        }
+                    }
+                }
+                return item;
+            });
+
             ASNPerpulangan.list = rawList;
             calculatePerpulanganMetrics(rawList);
             renderPerpulanganMetrics();
@@ -654,6 +687,98 @@
     }
 
     /**
+     * Helper Normalisasi Teks untuk Matching Nama Santri
+     */
+    function normalizeStudentSearchKey(str) {
+        return String(str || '')
+            .toLowerCase()
+            .replace(/['’`"]/g, '') // buang tanda kutip
+            .replace(/[^a-z0-9]/g, ' ') // ganti karakter non-alfanumerik dengan spasi
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    /**
+     * Resolusi Cerdas Santri berdasarkan Nama, NIS, atau Kata Kunci Manual
+     */
+    function resolveStudentByNameOrNis(identifier) {
+        if (!identifier) return null;
+        const all = getAllAvailableStudents();
+        if (!all || all.length === 0) return null;
+
+        const raw = String(identifier).trim();
+        const normKey = normalizeStudentSearchKey(raw);
+        const compactKey = normKey.replace(/\s+/g, '');
+        if (!normKey && !compactKey) return null;
+
+        // 1. Cek Exact NIS atau ID match
+        let found = all.find(s => {
+            const sNis = String(s.nis || s.studentNis || s.nisn || '').trim();
+            const sId = String(s.studentId || s.student_id || s.id || '').trim();
+            return (sNis && sNis.toLowerCase() === raw.toLowerCase()) || 
+                   (sId && sId.toLowerCase() === raw.toLowerCase());
+        });
+        if (found) return found;
+
+        // 2. Cek Exact Name match (setelah normalisasi spasi & tanda kutip)
+        found = all.find(s => {
+            const sNameNorm = normalizeStudentSearchKey(s.name || s.nama || s.nama_santri);
+            return sNameNorm === normKey || sNameNorm.replace(/\s+/g, '') === compactKey;
+        });
+        if (found) return found;
+
+        // 3. Cek Substring Name match (saling mencakup)
+        found = all.find(s => {
+            const sNameCompact = normalizeStudentSearchKey(s.name || s.nama || s.nama_santri).replace(/\s+/g, '');
+            return (sNameCompact && compactKey && (sNameCompact.includes(compactKey) || compactKey.includes(sNameCompact)));
+        });
+        if (found) return found;
+
+        // 4. Cek Multi-word matching (semua kata kunci pencarian ada di nama santri)
+        const words = normKey.split(' ').filter(w => w.length >= 2);
+        if (words.length > 0) {
+            found = all.find(s => {
+                const sNameNorm = normalizeStudentSearchKey(s.name || s.nama || s.nama_santri);
+                return words.every(w => sNameNorm.includes(w));
+            });
+            if (found) return found;
+        }
+
+        return null;
+    }
+
+    /**
+     * Sinkronisasi data santri yang ter-resolve ke Supabase di background
+     */
+    async function syncResolvedStudentToSupabase(idIzin, studentId, studentNis, studentName) {
+        if (!idIzin || !studentNis) return;
+        try {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (!sbUrl || !sbKey) return;
+
+            await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': sbKey,
+                    'Authorization': `Bearer ${sbKey}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    student_id: studentId,
+                    student_nis: studentNis,
+                    student_name: studentName,
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } catch (e) {
+            // background sync silently ignores error
+        }
+    }
+
+    /**
      * Pastikan Master Santri Ter-load di background jika memori kosong
      */
     async function ensureStudentsLoaded() {
@@ -664,6 +789,29 @@
         }
 
         try {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+
+            // Prioritas 1: Ambil langsung dari Supabase REST API (<50ms)
+            if (sbUrl && sbKey) {
+                const sRes = await fetch(`${sbUrl}/rest/v1/students?select=*&order=name.asc`, {
+                    headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                });
+                if (sRes.ok) {
+                    const data = await sRes.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        window.adminStudentsData = data;
+                        try {
+                            localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify(data));
+                        } catch(e) {}
+                        updateStudentIndicator(data.length);
+                        return data;
+                    }
+                }
+            }
+
+            // Prioritas 2: Fallback ke GAS API
             const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
             let res = null;
             if (typeof apiGet === 'function') {
@@ -1055,9 +1203,14 @@
         let studentName = hiddenName || (searchInput ? searchInput.trim() : '');
         let studentNis = hiddenNis || '';
 
-        // Jika user mengetikkan nama di search input tanpa klik list dropdown
-        if (!studentName && searchInput && searchInput.trim()) {
-            studentName = searchInput.trim();
+        // Jika user mengetikkan nama di search input tanpa klik list dropdown atau NIS belum ada
+        if ((!studentId || !studentNis) && studentName) {
+            const resolved = resolveStudentByNameOrNis(studentName);
+            if (resolved) {
+                studentId = resolved.student_id || resolved.studentId || resolved.id || studentId;
+                studentNis = resolved.nis || resolved.studentNis || studentNis;
+                studentName = resolved.name || resolved.nama || studentName;
+            }
         }
 
         if (!studentName) {
