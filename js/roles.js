@@ -2538,6 +2538,14 @@
         if (sidebarInitial) {
             sidebarInitial.innerText = (profile.shortName || 'AD').substring(0, 2).toUpperCase();
         }
+        const topbarUsername = document.getElementById('admin-topbar-username');
+        if (topbarUsername) {
+            topbarUsername.innerText = profile.shortName || 'Admin Utama';
+        }
+        const topbarRoleBadgePill = document.getElementById('admin-topbar-role-badge');
+        if (topbarRoleBadgePill) {
+            topbarRoleBadgePill.innerText = `(${profile.shortName || 'Super Admin'})`;
+        }
         const topbarRoleBadge = document.getElementById('admin-topbar-role');
         if (topbarRoleBadge) {
             topbarRoleBadge.innerText = profile.name || profile.shortName;
@@ -2545,6 +2553,10 @@
         const topbarInitial = document.getElementById('admin-topbar-avatar-initial');
         if (topbarInitial) {
             topbarInitial.innerText = (profile.shortName || 'AD').substring(0, 2).toUpperCase();
+        }
+        const dropdownEmail = document.getElementById('admin-dropdown-email');
+        if (dropdownEmail && typeof ASNIdentity !== 'undefined' && ASNIdentity.currentUser && ASNIdentity.currentUser.email) {
+            dropdownEmail.innerText = ASNIdentity.currentUser.email;
         }
 
         // 10. Terapkan konfigurasi izin secara menyeluruh ke seluruh UI

@@ -39,6 +39,70 @@
             switchTab('beranda');
         }
 
+        function toggleAdminUserDropdown(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const dropdown = document.getElementById('admin-user-dropdown');
+            const chevron = document.getElementById('admin-topbar-chevron');
+            if (!dropdown) return;
+            const isHidden = dropdown.classList.contains('hidden');
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                if (chevron) chevron.classList.add('rotate-180');
+            } else {
+                dropdown.classList.add('hidden');
+                if (chevron) chevron.classList.remove('rotate-180');
+            }
+        }
+        window.toggleAdminUserDropdown = toggleAdminUserDropdown;
+
+        function closeAdminUserDropdown() {
+            const dropdown = document.getElementById('admin-user-dropdown');
+            const chevron = document.getElementById('admin-topbar-chevron');
+            if (dropdown) dropdown.classList.add('hidden');
+            if (chevron) chevron.classList.remove('rotate-180');
+        }
+        window.closeAdminUserDropdown = closeAdminUserDropdown;
+
+        function openAdminProfileSettings() {
+            if (typeof showAdminView === 'function') {
+                showAdminView('users');
+            }
+            if (typeof showToast === 'function') {
+                const username = document.getElementById('admin-topbar-username')?.innerText || 'Admin Utama';
+                showToast(`Profil Pengguna: ${username}`);
+            }
+        }
+        window.openAdminProfileSettings = openAdminProfileSettings;
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('admin-user-menu-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeAdminUserDropdown();
+            }
+        });
+
+        // Toggle Expand / Collapse per kelompok menu sidebar
+        function toggleAdminMenuGroup(headerBtn) {
+            if (!headerBtn) return;
+            const group = headerBtn.closest('.admin-menu-group');
+            if (!group) return;
+            const list = group.querySelector('ul');
+            const arrow = headerBtn.querySelector('.menu-group-arrow');
+            if (!list) return;
+
+            const isHidden = list.classList.contains('hidden');
+            if (isHidden) {
+                list.classList.remove('hidden');
+                if (arrow) arrow.classList.remove('-rotate-90');
+            } else {
+                list.classList.add('hidden');
+                if (arrow) arrow.classList.add('-rotate-90');
+            }
+        }
+        window.toggleAdminMenuGroup = toggleAdminMenuGroup;
+
         
         let adminSidebarCollapsed = false;
         function toggleAdminSidebar() {
@@ -622,6 +686,15 @@
             document.querySelectorAll('.admin-nav-item').forEach(btn => {
                 if (btn.dataset.view === viewName) {
                     btn.classList.add('active');
+                    const group = btn.closest('.admin-menu-group');
+                    if (group) {
+                        const list = group.querySelector('ul');
+                        const arrow = group.querySelector('.menu-group-arrow');
+                        if (list && list.classList.contains('hidden')) {
+                            list.classList.remove('hidden');
+                            if (arrow) arrow.classList.remove('-rotate-90');
+                        }
+                    }
                 } else {
                     btn.classList.remove('active');
                 }
