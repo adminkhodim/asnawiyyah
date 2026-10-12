@@ -1764,41 +1764,47 @@
         const sTglKembali = formatDateIndo(item.tgl_kembali || item.tglKembali);
         const sJamKembali = formatTimeIndo(item.jam_kembali || item.jamKembali);
         const sApprover = item.pengasuh_approved_by || item.pengasuhApprovedBy || item.pengurus_approved_by || item.pengurusApprovedBy || 'Dewan Pengasuh / Khodim Pesantren';
+        const sTglApproval = item.pengasuh_approved_at || item.pengasuhApprovedAt || item.approved_at || item.created_at || new Date().toISOString();
 
-        const qrData = `ASNAWIYYAH-IZIN|${idIzin}|${sNis}|${sName}|${item.status || 'DISETUJUI'}|VERIFIED`;
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}`;
+        // 1. QR Code Pos Gerbang Keamanan (Validasi Check-out & Check-in)
+        const qrGerbangData = `ASNAWIYYAH-IZIN|${idIzin}|${sNis}|${sName}|${item.status || 'DISETUJUI'}|VERIFIED`;
+        const qrGerbangUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrGerbangData)}`;
+
+        // 2. QR Code Tanda Tangan Elektronik (TTE) Dewan Pengasuh (Opsi 1)
+        const qrPengasuhData = `ASNAWIYYAH-TTE|${idIzin}|${sApprover}|${sTglApproval}|SAH`;
+        const qrPengasuhUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrPengasuhData)}`;
 
         container.innerHTML = `
-            <div class="bg-white text-slate-900 p-6 sm:p-8 rounded-2xl max-w-2xl mx-auto border border-slate-200 shadow-sm print:shadow-none print:border-none print:p-0 font-sans">
+            <div class="perpulangan-surat-sheet bg-white text-slate-900 p-5 sm:p-6 rounded-2xl max-w-2xl mx-auto border border-slate-200 shadow-sm print:shadow-none print:border-none print:p-0 font-sans text-xs">
                 <!-- KOP SURAT RESMI PESANTREN -->
-                <div class="border-b-2 border-emerald-800 pb-4 mb-5 flex items-center justify-between gap-4">
-                    <img src="/assets/img/logo-asnawiyyah.jpg" alt="Logo PPTQ Asnawiyyah" class="w-16 h-16 object-contain rounded-full shadow-xs shrink-0" onerror="this.style.display='none'">
+                <div class="border-b-2 border-emerald-800 pb-2.5 mb-2.5 flex items-center justify-between gap-3">
+                    <img src="/assets/img/logo-asnawiyyah.jpg" alt="Logo PPTQ Asnawiyyah" class="w-14 h-14 object-contain rounded-full shadow-xs shrink-0" onerror="this.style.display='none'">
                     <div class="text-center flex-1">
-                        <div class="font-serif font-bold text-xs tracking-widest text-emerald-900 uppercase">Pondok Pesantren Tahfidzul Qur'an</div>
-                        <h1 class="font-serif font-black text-lg sm:text-xl text-emerald-950 tracking-wide uppercase">ASNAWIYYAH</h1>
-                        <p class="text-[11px] text-slate-600 leading-tight">
+                        <div class="font-serif font-bold text-[10px] sm:text-xs tracking-widest text-emerald-900 uppercase">Pondok Pesantren Tahfidzul Qur'an</div>
+                        <h1 class="font-serif font-black text-base sm:text-lg text-emerald-950 tracking-wide uppercase">ASNAWIYYAH</h1>
+                        <p class="text-[10px] text-slate-600 leading-tight mt-0.5">
                             Pilangwetan RT 03 RW 02, Kebonagung, Demak, Jawa Tengah 59582<br>
                             Website: asnawiyyah.or.id | WhatsApp Khodim: 0812-3456-7890
                         </p>
                     </div>
-                    <div class="w-16 hidden sm:block shrink-0 text-right">
-                        <span class="inline-block px-2 py-1 text-[9px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded">RESMI</span>
+                    <div class="w-14 hidden sm:block shrink-0 text-right">
+                        <span class="inline-block px-2 py-0.5 text-[8px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded">RESMI</span>
                     </div>
                 </div>
 
                 <!-- JUDUL SURAT -->
-                <div class="text-center my-4">
-                    <h2 class="font-bold text-sm sm:text-base text-slate-900 underline uppercase tracking-wider">SURAT JALAN & IZIN PERPULANGAN SANTRI</h2>
-                    <p class="text-xs text-slate-500 font-mono mt-0.5">Nomor: ${escapeHtml(idIzin)}/PPTQ-ASN/IZN/${new Date().getFullYear()}</p>
+                <div class="text-center my-2">
+                    <h2 class="font-bold text-xs sm:text-sm text-slate-900 underline uppercase tracking-wider">SURAT JALAN & IZIN PERPULANGAN SANTRI</h2>
+                    <p class="text-[10px] text-slate-500 font-mono mt-0.5">Nomor: ${escapeHtml(idIzin)}/PPTQ-ASN/IZN/${new Date().getFullYear()}</p>
                 </div>
 
                 <!-- ISI SURAT -->
-                <p class="text-xs text-slate-700 leading-relaxed mb-3">
+                <p class="text-[11px] text-slate-700 leading-normal mb-2">
                     Pengurus Pondok Pesantren Tahfidzul Qur'an (PPTQ) Asnawiyyah menerangkan bahwa santri berikut telah memperoleh izin resmi untuk meninggalkan lingkungan pesantren:
                 </p>
 
                 <!-- TABEL DATA SANTRI -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs mb-4">
+                <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-1.5 text-[11px] mb-2.5">
                     <div class="grid grid-cols-3 gap-2">
                         <span class="text-slate-500">Nama Santri</span>
                         <span class="col-span-2 font-bold text-slate-800">: ${escapeHtml(sName)}</span>
@@ -1830,7 +1836,7 @@
                 </div>
 
                 <!-- TATA TERTIB SINGKAT -->
-                <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200/60 text-[11px] text-amber-900 space-y-1 mb-6">
+                <div class="p-2 bg-amber-50/70 rounded-lg border border-amber-200/60 text-[10px] text-amber-900 space-y-0.5 mb-2.5">
                     <span class="font-bold block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Ketentuan Selama Izin:</span>
                     <ol class="list-decimal pl-4 space-y-0.5 text-slate-700">
                         <li>Santri wajib menjaga nama baik almamater, akhlakul karimah, dan shalat berjamaah.</li>
@@ -1839,25 +1845,51 @@
                     </ol>
                 </div>
 
-                <!-- TANDA TANGAN & QR CODE VERIFIKASI -->
-                <div class="grid grid-cols-3 gap-4 text-center items-end text-xs pt-2">
-                    <!-- Tanda Tangan Penjemput -->
-                    <div class="space-y-12">
-                        <div>Penjemput / Wali Santri,</div>
-                        <div class="font-bold underline text-slate-800 pt-4">${escapeHtml(sPenjemputNama)}</div>
+                <!-- TANDA TANGAN & BARCODE VERIFIKASI RESMI (OPSI 1) -->
+                <div class="grid grid-cols-3 gap-3 text-center items-end text-xs pt-1 border-t border-slate-200/80 mt-1">
+                    <!-- Kolom 1: Tanda Tangan Penjemput -->
+                    <div class="flex flex-col items-center justify-between min-h-[115px]">
+                        <div class="text-[11px] font-medium text-slate-700">Penjemput / Wali Santri,</div>
+                        <div class="my-auto py-2 text-[10px] text-slate-400 italic">(Tanda Tangan)</div>
+                        <div>
+                            <div class="font-bold underline text-slate-800 text-[11px]">${escapeHtml(sPenjemputNama)}</div>
+                            <span class="text-[9px] text-slate-500 block font-mono">Hubungan: ${escapeHtml(sPenjemputHub)}</span>
+                        </div>
                     </div>
 
-                    <!-- QR Code Validasi Pos Gerbang -->
-                    <div class="flex flex-col items-center justify-center space-y-1">
-                        <img src="${qrUrl}" alt="QR Validasi" class="w-24 h-24 border border-slate-300 p-1 rounded-lg bg-white shadow-xs">
-                        <span class="text-[9px] font-mono text-slate-500">Scan Validasi Gerbang</span>
+                    <!-- Kolom 2: QR Code Validasi Pos Gerbang -->
+                    <div class="flex flex-col items-center justify-between min-h-[115px]">
+                        <div class="text-[11px] font-medium text-slate-700">Validasi Pos Gerbang,</div>
+                        <div class="my-auto py-1">
+                            <img src="${qrGerbangUrl}" alt="QR Validasi Gerbang" class="w-16 h-16 border border-slate-300 p-0.5 rounded-lg bg-white shadow-xs mx-auto">
+                            <span class="text-[8px] font-mono text-slate-500 font-semibold block mt-0.5">Scan Check-Out / In</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-slate-700 text-[10px]">Pos Keamanan PPTQ</div>
+                            <span class="text-[9px] text-emerald-700 font-semibold block">Validasi Digital</span>
+                        </div>
                     </div>
 
-                    <!-- Tanda Tangan Masyayikh / Pengurus -->
-                    <div class="space-y-12">
-                        <div>Pilangwetan, ${formatDateIndo(new Date().toISOString().split('T')[0])}<br>Dewan Pengasuh / Pengurus,</div>
-                        <div class="font-bold underline text-slate-800 pt-4">${escapeHtml(sApprover)}</div>
+                    <!-- Kolom 3: Barcode TTE Dewan Pengasuh (Opsi 1) -->
+                    <div class="flex flex-col items-center justify-between min-h-[115px]">
+                        <div class="text-[11px] font-medium text-slate-700">
+                            Pilangwetan, ${formatDateIndo(new Date().toISOString().split('T')[0])}<br>
+                            <span class="font-semibold text-emerald-950">Dewan Pengasuh PPTQ,</span>
+                        </div>
+                        <div class="my-auto py-1">
+                            <img src="${qrPengasuhUrl}" alt="TTE Dewan Pengasuh" class="w-16 h-16 border border-emerald-500/80 p-0.5 rounded-lg bg-white shadow-xs mx-auto">
+                            <span class="text-[8px] font-mono text-emerald-800 font-bold block mt-0.5">TTE Resmi Terverifikasi</span>
+                        </div>
+                        <div>
+                            <div class="font-bold underline text-slate-900 text-[11px]">${escapeHtml(sApprover)}</div>
+                            <span class="text-[9px] text-emerald-700 font-semibold block">Khodimul Ma'had</span>
+                        </div>
                     </div>
+                </div>
+
+                <!-- CATATAN VALIDITAS RESMI SISTEM -->
+                <div class="text-center text-[9px] text-slate-400 mt-2 print:mt-1 font-mono">
+                    Dokumen resmi dicetak secara otomatis melalui Sistem Digital PPTQ Asnawiyyah (asnawiyyah.or.id)
                 </div>
             </div>
         `;

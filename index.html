@@ -181,6 +181,68 @@
         .stagger-6 { animation-delay: 0.42s; }
         .stagger-7 { animation-delay: 0.50s; }
         .stagger-8 { animation-delay: 0.58s; }
+
+        /* 5. TATA LETAK CETAK SURAT JALAN PERPULANGAN PAS 1 HALAMAN A4 */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 5mm 8mm;
+            }
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body > *:not(#modal-perpulangan-print) {
+                display: none !important;
+            }
+            #modal-perpulangan-print {
+                position: static !important;
+                display: block !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                backdrop-filter: none !important;
+            }
+            #modal-perpulangan-print > div {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                border-radius: 0 !important;
+            }
+            #perpulangan-print-document {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                overflow: visible !important;
+            }
+            .perpulangan-surat-sheet {
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+        }
     </style>
 </head>
 
@@ -15576,7 +15638,7 @@
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=60"></script>
+    <script src="js/perpulangan.js?v=61"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>
