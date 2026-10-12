@@ -318,20 +318,22 @@
     }
 
     /**
-     * Render Baris Tabel Perizinan Santri
+     * Render Baris Tabel Perizinan Santri (Desktop Tabular & Mobile Card List)
      */
     function renderPerpulanganTable() {
         const tableBody = document.getElementById('perpulangan-table-body');
+        const cardsContainer = document.getElementById('perpulangan-mobile-cards');
         const emptyState = document.getElementById('perpulangan-empty-state');
         const counterEl = document.getElementById('perpulangan-table-count');
 
-        if (!tableBody) return;
+        if (!tableBody && !cardsContainer) return;
 
         const list = ASNPerpulangan.filteredList;
         if (counterEl) counterEl.innerText = `${list.length} Data Ditampilkan`;
 
         if (list.length === 0) {
-            tableBody.innerHTML = '';
+            if (tableBody) tableBody.innerHTML = '';
+            if (cardsContainer) cardsContainer.innerHTML = '';
             if (emptyState) emptyState.classList.remove('hidden');
             return;
         }
@@ -350,7 +352,9 @@
         const canTier2 = isSuperAdmin || isPengasuh || isAdmin || (role !== 'WALI_SANTRI');
         const canGate = canTier1;
 
-        let html = '';
+        let tableHtml = '';
+        let cardsHtml = '';
+
         list.forEach((item, index) => {
             const idIzin = item.id_izin || item.idIzin || item.id || `IZN-${index + 1}`;
             const studentName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
@@ -447,6 +451,7 @@
 
             // WhatsApp Penjemput Action
             let waButton = '';
+            let waButtonMobile = '';
             if (noHp) {
                 const cleanPhone = noHp.replace(/\D/g, '').replace(/^0/, '62');
                 waButton = `
@@ -457,9 +462,18 @@
                         <i class="fa-brands fa-whatsapp text-xs text-emerald-500"></i> ${noHp}
                     </a>
                 `;
+                waButtonMobile = `
+                    <a href="https://wa.me/${cleanPhone}?text=Assalamu%27alaikum%20Warahmatullah%2C%20terkait%20izin%20santri%20${encodeURIComponent(studentName)}" 
+                        target="_blank" rel="noopener noreferrer" 
+                        class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 text-[11px]" 
+                        title="Hubungi Penjemput via WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-xs text-emerald-500"></i> ${noHp}
+                    </a>
+                `;
             }
 
-            html += `
+            // 1. Render Baris Tabel Desktop (md: ke atas)
+            tableHtml += `
                 <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1a2634] transition-colors border-b border-slate-100 dark:border-[#223142]">
                     <!-- No & ID Izin -->
                     <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
@@ -524,9 +538,72 @@
                     </td>
                 </tr>
             `;
+
+            // 2. Render Kartu Mobile (Layar Smartphone: 100% Fit, Responsif & Tanpa Scroll Horizontal)
+            cardsHtml += `
+                <div class="p-3.5 hover:bg-slate-50/60 dark:hover:bg-[#1a2634]/60 transition-colors space-y-2.5">
+                    <!-- Header Kartu: No, ID Izin, dan Status Badge -->
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="font-bold text-xs text-slate-700 dark:text-slate-200">#${index + 1}</span>
+                            <span class="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#1e2a38] px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-[#2b3a4d]">${idIzin}</span>
+                        </div>
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeCfg.bg}">
+                                <span class="w-1.5 h-1.5 rounded-full ${badgeCfg.dot}"></span>
+                                <i class="fa-solid ${badgeCfg.icon} text-[9px]"></i>
+                                <span>${badgeCfg.label}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Profil Santri & Kategori -->
+                    <div class="flex items-start gap-2.5">
+                        <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0 border border-emerald-200 dark:border-emerald-800 mt-0.5">
+                            ${studentName.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-1">
+                                <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${studentName}</h4>
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 shrink-0 border border-slate-200/60 dark:border-slate-700/60">${kategori}</span>
+                            </div>
+                            <div class="text-[11px] text-slate-400 dark:text-slate-300">NIS: ${studentNis}</div>
+                        </div>
+                    </div>
+
+                    <!-- Kotak Rincian Keperluan, Penjemput, & Jadwal -->
+                    <div class="bg-slate-50 dark:bg-[#182330] rounded-xl p-2.5 text-[11px] space-y-1.5 border border-slate-100 dark:border-[#223142]">
+                        <div class="text-slate-600 dark:text-slate-300 leading-snug">
+                            <span class="font-semibold text-slate-500 dark:text-slate-400">Keperluan:</span> ${alasan}
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-y-1 text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/60 dark:border-[#223142]">
+                            <div>
+                                <span class="font-semibold text-slate-600 dark:text-slate-300">Penjemput:</span> ${penjemput} <span class="text-slate-400 text-[10px]">(${hubungan})</span>
+                            </div>
+                            ${waButtonMobile}
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60 dark:border-[#223142] text-[10.5px]">
+                            <div>
+                                <span class="text-slate-400 dark:text-slate-400 block text-[9.5px]">Keluar:</span>
+                                <span class="font-medium text-slate-700 dark:text-slate-200">${tglMulai} ${jamMulai}</span>
+                            </div>
+                            <div>
+                                <span class="text-amber-600 dark:text-amber-400 block text-[9.5px]">Batas Kembali:</span>
+                                <span class="font-semibold text-amber-700 dark:text-amber-400">${tglKembali} ${jamKembali}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Tombol Aksi (Tampil Utuh & Nyaman di-tap di HP) -->
+                    <div class="flex items-center justify-end gap-1.5 pt-1">
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
         });
 
-        tableBody.innerHTML = html;
+        if (tableBody) tableBody.innerHTML = tableHtml;
+        if (cardsContainer) cardsContainer.innerHTML = cardsHtml;
     }
 
     /**
