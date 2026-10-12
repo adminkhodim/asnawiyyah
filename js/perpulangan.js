@@ -722,6 +722,9 @@
         renderStudentSearchDropdown('');
     }
 
+    let _searchMatchedStudents = [];
+    let _waliLinkedStudents = [];
+
     function renderStudentSearchDropdown(query) {
         const dropdown = document.getElementById('perpulangan-student-search-dropdown');
         if (!dropdown) return;
@@ -740,6 +743,8 @@
             }).slice(0, 20);
         }
 
+        _searchMatchedStudents = matched;
+
         if (matched.length === 0) {
             dropdown.innerHTML = `
                 <div class="p-4 text-center text-slate-400 space-y-1">
@@ -752,7 +757,7 @@
             return;
         }
 
-        dropdown.innerHTML = matched.map(s => {
+        dropdown.innerHTML = matched.map((s, index) => {
             const id = s.studentId || s.student_id || s.id || s.nis;
             const name = s.name || s.nama || s.nama_santri || 'Santri';
             const nis = s.nis || s.nisn || '-';
@@ -764,20 +769,13 @@
                 ? `<img src="${escapeHtml(photoUrl)}" class="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-200 dark:border-[#253447]" onerror="this.onerror=null;this.src='';this.className='hidden';">`
                 : `<div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0"><i class="fa-solid fa-user-graduate"></i></div>`;
 
-            const studentDataStr = escapeHtml(JSON.stringify({
-                id: id,
-                studentId: id,
-                name: name,
-                nis: nis,
-                program: prog,
-                gender: gender,
-                photoUrl: photoUrl
-            }));
-
             return `
-                <div class="p-2.5 hover:bg-emerald-50 dark:hover:bg-[#1f2d3d] cursor-pointer flex items-center justify-between transition group"
-                    onclick='window.ASNPerpulangan.selectStudentFromSearch(${JSON.stringify(studentDataStr)})'>
-                    <div class="flex items-center space-x-2.5 min-w-0">
+                <div class="p-2.5 hover:bg-emerald-50 dark:hover:bg-[#1f2d3d] active:bg-emerald-100 dark:active:bg-[#253447] cursor-pointer flex items-center justify-between transition group select-none"
+                    role="button"
+                    tabindex="0"
+                    onmousedown="event.preventDefault()"
+                    onclick="window.ASNPerpulangan.selectStudentByIndex(${index})">
+                    <div class="flex items-center space-x-2.5 min-w-0 pr-2">
                         ${avatarHtml}
                         <div class="min-w-0">
                             <div class="font-bold text-slate-800 dark:text-slate-100 text-xs truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
@@ -790,7 +788,7 @@
                             </div>
                         </div>
                     </div>
-                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold opacity-0 group-hover:opacity-100 transition flex items-center gap-1 shrink-0">
+                    <span class="text-[10px] bg-emerald-50 group-hover:bg-emerald-600 text-emerald-700 group-hover:text-white dark:bg-emerald-950/80 dark:group-hover:bg-emerald-600 dark:text-emerald-300 dark:group-hover:text-white border border-emerald-200 dark:border-emerald-800 px-2 py-1 rounded-lg font-bold flex items-center gap-1 shrink-0 transition">
                         Pilih <i class="fa-solid fa-arrow-right text-[9px]"></i>
                     </span>
                 </div>
@@ -800,11 +798,86 @@
         dropdown.classList.remove('hidden');
     }
 
+    function selectStudentByIndex(index) {
+        if (!Array.isArray(_searchMatchedStudents) || !_searchMatchedStudents[index]) {
+            console.warn('[ASNPerpulangan] Santri tidak ditemukan di index:', index);
+            return;
+        }
+        const s = _searchMatchedStudents[index];
+        const id = s.studentId || s.student_id || s.id || s.nis;
+        const name = s.name || s.nama || s.nama_santri || 'Santri';
+        const nis = s.nis || s.nisn || '-';
+        const prog = s.program || s.kelas || 'Santri';
+        const gender = (s.gender || 'L').toUpperCase() === 'P' ? 'Putri' : 'Putra';
+        const photoUrl = s.photoUrl || s.photo_url || '';
+
+        selectStudentFromSearch({
+            id: id,
+            studentId: id,
+            name: name,
+            nis: nis,
+            program: prog,
+            gender: gender,
+            photoUrl: photoUrl
+        });
+    }
+
+    function selectStudentById(id) {
+        if (!id) return;
+        const all = getAllAvailableStudents();
+        const found = all.find(s => String(s.studentId || s.student_id || s.id || s.nis) === String(id) || String(s.nis) === String(id));
+        if (found) {
+            const sId = found.studentId || found.student_id || found.id || found.nis;
+            const name = found.name || found.nama || found.nama_santri || 'Santri';
+            const nis = found.nis || found.nisn || '-';
+            const prog = found.program || found.kelas || 'Santri';
+            const gender = (found.gender || 'L').toUpperCase() === 'P' ? 'Putri' : 'Putra';
+            const photoUrl = found.photoUrl || found.photo_url || '';
+
+            selectStudentFromSearch({
+                id: sId,
+                studentId: sId,
+                name: name,
+                nis: nis,
+                program: prog,
+                gender: gender,
+                photoUrl: photoUrl
+            });
+        }
+    }
+
+    function selectStudentFromLinked(idx) {
+        if (Array.isArray(_waliLinkedStudents) && _waliLinkedStudents[idx]) {
+            const s = _waliLinkedStudents[idx];
+            const sName = s.nama || s.name || 'Santri';
+            const sNis = s.nis || s.nisn || '';
+            const sId = s.id || s.studentId || sNis;
+            const prog = s.program || s.kelas || 'Santri';
+            const gender = (s.gender || 'L').toUpperCase() === 'P' ? 'Putri' : 'Putra';
+            const photoUrl = s.photoUrl || s.photo_url || '';
+            selectStudentFromSearch({ 
+                id: sId, 
+                studentId: sId, 
+                name: sName, 
+                nis: sNis, 
+                program: prog, 
+                gender: gender, 
+                photoUrl: photoUrl 
+            });
+        }
+    }
+
     function selectStudentFromSearch(student) {
         if (typeof student === 'string') {
-            try { student = JSON.parse(student); } catch(e) {}
+            try { 
+                student = JSON.parse(student); 
+            } catch(e) {
+                try {
+                    student = JSON.parse(student.replace(/&quot;/g, '"'));
+                } catch(e2) {}
+            }
         }
-        if (!student) return;
+        if (!student || typeof student !== 'object') return;
 
         const id = student.studentId || student.id || student.nis || '';
         const name = student.name || student.nama || student.nama_santri || '';
@@ -894,14 +967,14 @@
             return;
         }
 
+        _waliLinkedStudents = linked;
         container.classList.remove('hidden');
-        chipsContainer.innerHTML = linked.map(s => {
+        chipsContainer.innerHTML = linked.map((s, idx) => {
             const sName = s.nama || s.name || 'Santri';
-            const sNis = s.nis || s.nisn || '';
-            const sId = s.id || s.studentId || sNis;
-            const dataObj = escapeHtml(JSON.stringify({ id: sId, studentId: sId, name: sName, nis: sNis }));
             return `
-                <button type="button" onclick='window.ASNPerpulangan.selectStudentFromSearch(${JSON.stringify(dataObj)})'
+                <button type="button" 
+                    onmousedown="event.preventDefault()"
+                    onclick="window.ASNPerpulangan.selectStudentFromLinked(${idx})"
                     class="px-2.5 py-1 rounded-xl bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold border border-emerald-300/60 dark:border-emerald-800 transition active:scale-95 inline-flex items-center gap-1 cursor-pointer">
                     <i class="fa-solid fa-user-check text-[9px]"></i>
                     <span>${escapeHtml(sName)}</span>
@@ -2050,6 +2123,9 @@
     ASNPerpulangan.onSearchStudentFocus = onSearchStudentFocus;
     ASNPerpulangan.clearStudentSearch = clearStudentSearch;
     ASNPerpulangan.selectStudentFromSearch = selectStudentFromSearch;
+    ASNPerpulangan.selectStudentByIndex = selectStudentByIndex;
+    ASNPerpulangan.selectStudentById = selectStudentById;
+    ASNPerpulangan.selectStudentFromLinked = selectStudentFromLinked;
     ASNPerpulangan.resetSelectedStudent = resetSelectedStudent;
     ASNPerpulangan.openModalApproval = openModalApproval;
     ASNPerpulangan.closeModalApproval = closeModalApproval;

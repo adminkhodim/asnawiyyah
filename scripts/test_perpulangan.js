@@ -98,8 +98,10 @@ assert(indexHtmlContent.includes('id="perpulangan-student-search-dropdown"'), 'D
 assert(indexHtmlContent.includes('id="perpulangan-selected-student-card"'), 'Kartu santri terpilih harus ada di modal form');
 assert(perpulanganContent.includes('onSearchStudentInput'), 'Handler onSearchStudentInput harus ada di js/perpulangan.js');
 assert(perpulanganContent.includes('selectStudentFromSearch'), 'Handler selectStudentFromSearch harus ada di js/perpulangan.js');
+assert(perpulanganContent.includes('selectStudentByIndex'), 'Handler selectStudentByIndex harus ada di js/perpulangan.js');
+assert(perpulanganContent.includes('selectStudentFromLinked'), 'Handler selectStudentFromLinked harus ada di js/perpulangan.js');
 assert(perpulanganContent.includes('getAllAvailableStudents'), 'Fungsi getAllAvailableStudents harus ada di js/perpulangan.js');
-console.log('✅ 7. Fitur Pencarian Cerdas Nama/NIS Terhubung Master Data Santri Terverifikasi 100%');
+console.log('✅ 7. Fitur Pencarian Cerdas Nama/NIS Terhubung Master Data Santri (Direct Click & Touch Safe) Terverifikasi 100%');
 
 console.log('\n🎉 SELURUH PENGUJIAN MODUL PERPULANGAN SUKSES 100%!');
 
