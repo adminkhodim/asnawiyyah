@@ -10462,16 +10462,30 @@
                 <i class="fa-solid fa-xmark text-sm"></i>
             </button>
 
-            <div class="p-6 md:p-8 text-center space-y-5">
-                <div class="w-14 h-14 bg-brand-50 dark:bg-emerald-950/60 text-brand-700 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-brand-100 dark:border-emerald-800/40">
+            <div class="p-6 md:p-8 text-center space-y-4">
+                <div class="w-14 h-14 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-blue-100 dark:border-blue-900/40">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
 
                 <div>
                     <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Masuk Pengelola / Admin</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-300 mt-1 leading-relaxed">
-                        Akses khusus operasional dan tata kelola portal pesantren via Email OTP.
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                        Akses khusus operasional dan CMS pesantren
                     </p>
+                </div>
+
+                <!-- Segmented Control Tab Pilihan (1-Klik vs OTP) -->
+                <div class="flex p-1 bg-slate-100 dark:bg-[#1c2836] rounded-2xl border border-slate-200/80 dark:border-[#283a4e]">
+                    <button type="button" id="tab-admin-one-click" onclick="switchAdminAuthTab('one-click')" 
+                        class="flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-blue-700 dark:text-blue-400 shadow-sm">
+                        <i class="fa-solid fa-bolt text-amber-500"></i>
+                        <span>1-Klik Google</span>
+                    </button>
+                    <button type="button" id="tab-admin-otp" onclick="switchAdminAuthTab('otp')" 
+                        class="flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>Email OTP</span>
+                    </button>
                 </div>
 
                 <!-- Alert Message -->
@@ -10480,54 +10494,77 @@
                     <span id="admin-auth-alert-text">Pesan error autentikasi</span>
                 </div>
 
-                <!-- STEP 1: REQUEST OTP (EMAIL INPUT) -->
-                <form id="form-admin-request-otp" onsubmit="handleAdminRequestOtp(event)" class="space-y-3">
-                    <div class="relative text-left">
-                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Resmi Pengelola</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                            <input type="email" id="admin-auth-email" required placeholder="admin@asnawiyyah.sch.id" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 pl-9 pr-3 py-3 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition">
+                <!-- PANEL 1: METODE 1-KLIK GOOGLE -->
+                <div id="panel-admin-one-click" class="space-y-3.5">
+                    <div class="p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/40 space-y-3 text-left">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-check text-xs"></i> SSO Resmi Google
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-600 text-white">INSTAN</span>
                         </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Masuk instan tanpa kata sandi menggunakan Akun Google resmi yang terdaftar sebagai <strong>Administrator, Asatidz, atau Pengurus</strong>.
+                        </p>
+                        <div id="google-signin-admin" class="flex justify-center w-full min-h-[44px]"></div>
                     </div>
 
-                    <button type="submit" id="btn-admin-request-otp" class="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
-                        <span>Kirim Kode OTP</span>
-                        <i class="fa-solid fa-arrow-right"></i>
+                    <!-- Tombol Trigger Cepat jika SDK lambat atau perlu prompt manual -->
+                    <button type="button" onclick="triggerAdminGooglePrompt()" 
+                        class="w-full py-2.5 px-3 bg-white dark:bg-[#1c2836] hover:bg-slate-50 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition border border-slate-200 dark:border-[#283a4e] flex items-center justify-center space-x-2 shadow-sm">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Buka Pilihan Akun Google</span>
                     </button>
+                </div>
 
-                    <div class="relative flex py-1 items-center">
-                        <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
-                        <span class="flex-shrink mx-3 text-[10px] text-slate-400 uppercase font-semibold">atau</span>
-                        <div class="flex-grow border-t border-slate-200 dark:border-[#253447]"></div>
-                    </div>
+                <!-- PANEL 2: METODE EMAIL OTP -->
+                <div id="panel-admin-otp" class="hidden space-y-3">
+                    <!-- STEP 1: REQUEST OTP (EMAIL INPUT) -->
+                    <form id="form-admin-request-otp" onsubmit="handleAdminRequestOtp(event)" class="space-y-3">
+                        <div class="relative text-left">
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Email Resmi Pengelola</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                                <input type="email" id="admin-auth-email" required placeholder="admin@asnawiyyah.sch.id" class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 pl-9 pr-3 py-3 rounded-xl text-xs border border-slate-200 dark:border-[#283a4e] focus:bg-white dark:focus:bg-[#15202d] focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition">
+                            </div>
+                        </div>
 
-                    <div id="google-signin-admin" class="flex justify-center w-full min-h-[40px]"></div>
-                </form>
-
-                <!-- STEP 2: VERIFY OTP (6 DIGITS) -->
-                <form id="form-admin-verify-otp" onsubmit="handleAdminVerifyOtp(event)" class="hidden space-y-3">
-                    <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-xl text-[11px] text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-[#253447]">
-                        Kode verifikasi telah dikirim ke: <br>
-                        <strong id="admin-auth-target-email" class="text-brand-700 dark:text-emerald-400 font-bold"></strong>
-                    </div>
-
-                    <div class="relative text-left">
-                        <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Masukkan 6 Digit OTP</label>
-                        <input type="text" id="admin-auth-otp" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition">
-                    </div>
-
-                    <button type="submit" id="btn-admin-verify-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
-                        <span>Verifikasi & Masuk</span>
-                        <i class="fa-solid fa-check"></i>
-                    </button>
-
-                    <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
-                        <button type="button" onclick="resetAdminAuthStep()" class="text-brand-700 dark:text-emerald-400 font-semibold hover:underline">
-                            Ganti Email
+                        <button type="submit" id="btn-admin-request-otp" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                            <span>Kirim Kode OTP</span>
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
-                        <span id="admin-otp-cooldown" class="text-slate-400">Kirim ulang dalam 60s</span>
-                    </div>
-                </form>
+                    </form>
+
+                    <!-- STEP 2: VERIFY OTP (6 DIGITS) -->
+                    <form id="form-admin-verify-otp" onsubmit="handleAdminVerifyOtp(event)" class="hidden space-y-3">
+                        <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-xl text-[11px] text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-[#253447]">
+                            Kode verifikasi telah dikirim ke: <br>
+                            <strong id="admin-auth-target-email" class="text-blue-700 dark:text-blue-400 font-bold"></strong>
+                        </div>
+
+                        <div class="relative text-left">
+                            <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase mb-1">Masukkan 6 Digit OTP</label>
+                            <input type="text" id="admin-auth-otp" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full text-center tracking-[0.5em] font-extrabold text-lg bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] text-slate-800 dark:text-slate-100 px-4 py-2.5 rounded-xl focus:bg-white dark:focus:bg-[#15202d] focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        </div>
+
+                        <button type="submit" id="btn-admin-verify-otp" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center space-x-2">
+                            <span>Verifikasi & Masuk</span>
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+
+                        <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
+                            <button type="button" onclick="resetAdminAuthStep()" class="text-blue-700 dark:text-blue-400 font-semibold hover:underline">
+                                Ganti Email
+                            </button>
+                            <span id="admin-otp-cooldown" class="text-slate-400">Kirim ulang dalam 60s</span>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

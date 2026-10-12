@@ -840,6 +840,9 @@ const ASNIdentity = {
         if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
         this.currentState = ASN_STATES.ADMIN_AUTH_ACTIVE;
         this.renderAccountCenterUI();
+        if (typeof applyAdminRoleVisibility === 'function') {
+            applyAdminRoleVisibility(role);
+        }
     },
 
     setParentSession(token, parentData, students) {
@@ -1727,17 +1730,70 @@ function closeStudentQrModal() {
 // =====================================================================
 
 // ----- Admin Modal Controllers -----
-function openAdminAuthModal() {
+function switchAdminAuthTab(mode) {
+    const tabOneClick = document.getElementById('tab-admin-one-click');
+    const tabOtp = document.getElementById('tab-admin-otp');
+    const panelOneClick = document.getElementById('panel-admin-one-click');
+    const panelOtp = document.getElementById('panel-admin-otp');
+    const alertBox = document.getElementById('admin-auth-alert');
+    if (alertBox) alertBox.classList.add('hidden');
+
+    if (mode === 'one-click') {
+        if (tabOneClick) {
+            tabOneClick.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-blue-700 dark:text-blue-400 shadow-sm';
+        }
+        if (tabOtp) {
+            tabOtp.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+        }
+        if (panelOneClick) panelOneClick.classList.remove('hidden');
+        if (panelOtp) panelOtp.classList.add('hidden');
+        if (typeof initGoogleAuth === 'function') initGoogleAuth();
+    } else {
+        if (tabOtp) {
+            tabOtp.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 bg-white dark:bg-[#15202d] text-blue-700 dark:text-blue-400 shadow-sm';
+        }
+        if (tabOneClick) {
+            tabOneClick.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+        }
+        if (panelOtp) panelOtp.classList.remove('hidden');
+        if (panelOneClick) panelOneClick.classList.add('hidden');
+        const emailInput = document.getElementById('admin-auth-email');
+        if (emailInput) setTimeout(() => emailInput.focus(), 100);
+    }
+}
+window.switchAdminAuthTab = switchAdminAuthTab;
+
+function triggerAdminGooglePrompt() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        try {
+            google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    console.log('[Google One-Tap] Not displayed, refreshing button render');
+                    initGoogleAuth();
+                }
+            });
+        } catch (e) {
+            initGoogleAuth();
+        }
+    } else {
+        if (typeof showToast === 'function') {
+            showToast('Sedang memuat layanan Google Sign-In, silakan tunggu...');
+        }
+        if (typeof initGoogleAuth === 'function') initGoogleAuth();
+    }
+}
+window.triggerAdminGooglePrompt = triggerAdminGooglePrompt;
+
+function openAdminAuthModal(initialTab = 'one-click') {
     const modal = document.getElementById('modal-auth-admin');
     const content = document.getElementById('modal-auth-admin-content');
     if (!modal || !content) return;
 
     resetAdminAuthStep();
+    switchAdminAuthTab(initialTab);
     modal.classList.remove('hidden');
     setTimeout(() => {
         content.classList.remove('scale-95', 'opacity-0');
-        const emailInput = document.getElementById('admin-auth-email');
-        if (emailInput) emailInput.focus();
         if (typeof initGoogleAuth === 'function') initGoogleAuth();
     }, 50);
 }
@@ -2059,12 +2115,14 @@ async function handleAdminVerifyOtp(e) {
                 ASNIdentity.setAdminSession(result.token, result.admin);
                 closeAdminAuthModal();
                 if (typeof showToast === 'function') {
-                    showToast('Login Admin Berhasil!');
+                    showToast('Login Pengelola Berhasil!');
                 }
-                if (window.innerWidth >= 768) {
-                    if (typeof switchTab === 'function') switchTab('admin');
+                setTimeout(() => {
+                    if (typeof switchTab === 'function') switchTab('admin', true);
                     if (typeof showAdminView === 'function') showAdminView('hub');
-                }
+                    if (typeof applyAdminRoleVisibility === 'function') applyAdminRoleVisibility(role);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
             }
         } else {
             // Fail safely: tampilkan error, jangan login, jangan bypass!
@@ -3132,14 +3190,18 @@ async function handleCredentialResponse(response) {
                     if (typeof applyAdminRoleVisibility === 'function') applyAdminRoleVisibility('PENGASUH');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }, 100);
-            } else if (role === 'ADMIN' || role === 'EDITOR') {
+            } else if (isAsnAdminRole(role)) {
                 ASNIdentity.setAdminSession(ssoResult.token, ssoResult.admin || ssoResult.identity);
                 if (typeof closeAdminAuthModal === 'function') closeAdminAuthModal();
-                if (typeof showToast === 'function') showToast('Login Pengelola Berhasil!');
-                if (window.innerWidth >= 1024 && (window.location.pathname.replace(/\/+$/, '') === '/administrator' || document.getElementById('page-admin')?.classList.contains('block'))) {
-                    if (typeof switchTab === 'function') switchTab('admin');
+                if (typeof showToast === 'function') showToast(`Ahlan wa Sahlan, ${ssoResult.identity?.name || ssoResult.admin?.name || 'Pengelola'}`);
+                
+                // Langsung arahkan masuk ke Dashboard Admin (baik mobile maupun desktop)
+                setTimeout(() => {
+                    if (typeof switchTab === 'function') switchTab('admin', true);
                     if (typeof showAdminView === 'function') showAdminView('hub');
-                }
+                    if (typeof applyAdminRoleVisibility === 'function') applyAdminRoleVisibility(role);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
             } else if (role === 'WALI_SANTRI') {
                 let finalStudents = ssoResult.students || [];
                 try {
