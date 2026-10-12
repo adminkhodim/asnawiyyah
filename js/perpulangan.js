@@ -347,10 +347,15 @@
         const isAsatidz = ['ASATIDZ', 'DEWAN_ASATIDZ', 'GURU'].includes(role);
         const isPengasuh = ['PENGASUH', 'MASYAYIKH'].includes(role);
 
-        // Hak Akses: Asatidz & Pengurus dapat melakukan Tier 1; Dewan Pengasuh & Admin dapat Tier 2
-        const canTier1 = isSuperAdmin || isAdmin || isPengurus || isAsatidz || (role !== 'WALI_SANTRI');
-        const canTier2 = isSuperAdmin || isPengasuh || isAdmin || (role !== 'WALI_SANTRI');
-        const canGate = canTier1;
+        // Hak Akses Ketat Two-Tier Approval:
+        // Tier 1: Pengurus Keamanan, Asatidz Piket, Admin, Super Admin
+        const canTier1 = isSuperAdmin || isAdmin || isPengurus || isAsatidz;
+
+        // Tier 2: EKSKLUSIF Dewan Pengasuh / Masyayikh & Super Admin (Akun lain hanya melihat saja)
+        const canTier2 = isSuperAdmin || isPengasuh;
+
+        // Pos Gerbang: Petugas Keamanan, Pengurus, Asatidz, Admin, Super Admin
+        const canGate = isSuperAdmin || isAdmin || isPengurus || isAsatidz;
 
         let tableHtml = '';
         let cardsHtml = '';
@@ -1092,6 +1097,19 @@
         const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
         if (!item) return;
 
+        const role = getCurrentUserRole();
+        const isSuperAdmin = role === 'SUPER_ADMIN';
+        const isPengasuh = ['PENGASUH', 'MASYAYIKH'].includes(role);
+        const canTier2 = isSuperAdmin || isPengasuh;
+
+        // Validasi: Hak akses Tier 2 hanya eksklusif untuk Dewan Pengasuh / Super Admin
+        if (tier === 'PENGASUH' && !canTier2) {
+            if (typeof showToast === 'function') {
+                showToast('Akses Terbatas: Persetujuan Tier 2 hanya dapat diproses oleh akun Dewan Pengasuh / Masyayikh.', 'warning');
+            }
+            return;
+        }
+
         ASNPerpulangan.selectedIzin = item;
 
         const modal = document.getElementById('modal-perpulangan-approval');
@@ -1210,6 +1228,19 @@
         if (confirmBtn) {
             confirmBtn.disabled = true;
             confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Memproses...';
+        }
+
+        const role = getCurrentUserRole();
+        const isSuperAdmin = role === 'SUPER_ADMIN';
+        const isPengasuh = ['PENGASUH', 'MASYAYIKH'].includes(role);
+        const canTier2 = isSuperAdmin || isPengasuh;
+
+        if (tier === 'PENGASUH' && !canTier2) {
+            if (typeof showToast === 'function') {
+                showToast('Akses Ditolak: Hanya akun Dewan Pengasuh yang memiliki wewenang untuk menyetujui Tier 2.', 'error');
+            }
+            if (confirmBtn) confirmBtn.disabled = false;
+            return;
         }
 
         try {
@@ -1584,6 +1615,17 @@
         const contentEl = document.getElementById('perpulangan-detail-content');
         if (!contentEl) return;
 
+        const role = getCurrentUserRole();
+        const isSuperAdmin = role === 'SUPER_ADMIN';
+        const isAdmin = role === 'ADMIN';
+        const isPengurus = ['PENGURUS', 'PENGURUS_KEAMANAN', 'KEAMANAN'].includes(role);
+        const isAsatidz = ['ASATIDZ', 'DEWAN_ASATIDZ', 'GURU'].includes(role);
+        const isPengasuh = ['PENGASUH', 'MASYAYIKH'].includes(role);
+
+        const canTier1 = isSuperAdmin || isAdmin || isPengurus || isAsatidz;
+        const canTier2 = isSuperAdmin || isPengasuh;
+        const canGate = isSuperAdmin || isAdmin || isPengurus || isAsatidz;
+
         const statusCfg = getStatusBadgeConfig(item.status);
         const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
         const sNis = item.student_nis || item.studentNis || item.nis || '-';
@@ -1674,7 +1716,7 @@
                 <!-- Panel Aksi Keputusan Langsung dari Modal Detail -->
                 <div class="pt-4 mt-2 border-t border-slate-200/80 dark:border-[#25374a] space-y-2">
                     <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tindakan Persetujuan:</div>
-                    ${st === 'MENUNGGU_PENGURUS' ? `
+                    ${st === 'MENUNGGU_PENGURUS' ? (canTier1 ? `
                         <div class="flex flex-wrap items-center justify-end gap-2">
                             <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalReject('${idIzin}')" 
                                 class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 font-bold text-xs transition active:scale-95 flex items-center gap-1">
@@ -1685,7 +1727,12 @@
                                 <i class="fa-solid fa-check text-xs"></i> Konfirmasi Persetujuan Tier 1
                             </button>
                         </div>
-                    ` : (st === 'MENUNGGU_PENGASUH' ? `
+                    ` : `
+                        <div class="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/40 text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-hourglass-half text-xs text-amber-600"></i>
+                            <span>Izin saat ini sedang menunggu verifikasi oleh <strong>Pengurus Keamanan / Asatidz Piket (Tier 1)</strong>.</span>
+                        </div>
+                    `) : (st === 'MENUNGGU_PENGASUH' ? (canTier2 ? `
                         <div class="flex flex-wrap items-center justify-end gap-2">
                             <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalReject('${idIzin}')" 
                                 class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 font-bold text-xs transition active:scale-95 flex items-center gap-1">
@@ -1696,7 +1743,16 @@
                                 <i class="fa-solid fa-hands-praying text-xs"></i> Konfirmasi Persetujuan Tier 2 (Pengasuh)
                             </button>
                         </div>
-                    ` : (['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(st) ? `
+                    ` : `
+                        <div class="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/40 text-xs flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-full bg-purple-200/70 dark:bg-purple-900/60 flex items-center justify-center shrink-0 text-purple-700 dark:text-purple-300">
+                                <i class="fa-solid fa-lock text-[10px]"></i>
+                            </div>
+                            <div class="leading-relaxed">
+                                Izin telah diverifikasi Tier 1 dan saat ini <strong>menunggu persetujuan khusus Dewan Pengasuh / Masyayikh (Tier 2)</strong>. Akun selain Pengasuh hanya dapat memantau status.
+                            </div>
+                        </div>
+                    `) : (['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(st) ? `
                         <div class="flex flex-wrap items-center justify-end gap-2">
                             <button type="button" onclick="window.ASNPerpulangan.closeModalDetail(); window.ASNPerpulangan.openModalPrintSuratIzin('${idIzin}')" 
                                 class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 font-bold text-xs transition active:scale-95 flex items-center gap-1.5">
