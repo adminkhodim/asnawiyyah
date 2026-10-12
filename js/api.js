@@ -2734,16 +2734,22 @@
                     if (id) {
                         const nowIso = new Date().toISOString();
                         const actor = payload.approvedBy || payload.actorName || (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Pengurus Keamanan';
+                        const patchBody = {
+                            status: 'MENUNGGU_PENGASUH',
+                            pengurus_approved_by: actor,
+                            pengurus_approved_at: nowIso,
+                            pengurus_catatan: payload.catatan || payload.pengurusCatatan || '',
+                            updated_at: nowIso
+                        };
+                        if (payload.tgl_mulai || payload.tglMulai) patchBody.tgl_mulai = payload.tgl_mulai || payload.tglMulai;
+                        if (payload.jam_mulai || payload.jamMulai) patchBody.jam_mulai = payload.jam_mulai || payload.jamMulai;
+                        if (payload.tgl_kembali || payload.tglKembali) patchBody.tgl_kembali = payload.tgl_kembali || payload.tglKembali;
+                        if (payload.jam_kembali || payload.jamKembali) patchBody.jam_kembali = payload.jam_kembali || payload.jamKembali;
+
                         await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
                             method: 'PATCH',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                status: 'MENUNGGU_PENGASUH',
-                                pengurus_approved_by: actor,
-                                pengurus_approved_at: nowIso,
-                                pengurus_catatan: payload.catatan || payload.pengurusCatatan || '',
-                                updated_at: nowIso
-                            })
+                            body: JSON.stringify(patchBody)
                         });
                     }
                 }
@@ -2752,16 +2758,22 @@
                     if (id) {
                         const nowIso = new Date().toISOString();
                         const actor = payload.approvedBy || payload.actorName || (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Dewan Pengasuh';
+                        const patchBody = {
+                            status: 'DISETUJUI',
+                            pengasuh_approved_by: actor,
+                            pengasuh_approved_at: nowIso,
+                            pengasuh_catatan: payload.catatan || payload.pengasuhCatatan || '',
+                            updated_at: nowIso
+                        };
+                        if (payload.tgl_mulai || payload.tglMulai) patchBody.tgl_mulai = payload.tgl_mulai || payload.tglMulai;
+                        if (payload.jam_mulai || payload.jamMulai) patchBody.jam_mulai = payload.jam_mulai || payload.jamMulai;
+                        if (payload.tgl_kembali || payload.tglKembali) patchBody.tgl_kembali = payload.tgl_kembali || payload.tglKembali;
+                        if (payload.jam_kembali || payload.jamKembali) patchBody.jam_kembali = payload.jam_kembali || payload.jamKembali;
+
                         await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
                             method: 'PATCH',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                status: 'DISETUJUI',
-                                pengasuh_approved_by: actor,
-                                pengasuh_approved_at: nowIso,
-                                pengasuh_catatan: payload.catatan || payload.pengasuhCatatan || '',
-                                updated_at: nowIso
-                            })
+                            body: JSON.stringify(patchBody)
                         });
                     }
                 }
@@ -3389,14 +3401,14 @@
             return await apiPost('perpulangan.submit', data);
         }
 
-        async function approveIzinPengurus(idIzin, catatan = '') {
+        async function approveIzinPengurus(idIzin, catatan = '', scheduleUpdates = {}) {
             const actor = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Pengurus Keamanan';
-            return await apiPost('perpulangan.approvePengurus', { idIzin, catatan, approvedBy: actor });
+            return await apiPost('perpulangan.approvePengurus', { idIzin, catatan, approvedBy: actor, ...scheduleUpdates });
         }
 
-        async function approveIzinPengasuh(idIzin, catatan = '') {
+        async function approveIzinPengasuh(idIzin, catatan = '', scheduleUpdates = {}) {
             const actor = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Dewan Pengasuh';
-            return await apiPost('perpulangan.approvePengasuh', { idIzin, catatan, approvedBy: actor });
+            return await apiPost('perpulangan.approvePengasuh', { idIzin, catatan, approvedBy: actor, ...scheduleUpdates });
         }
 
         async function rejectPermohonanIzin(idIzin, alasan = '') {

@@ -1057,6 +1057,37 @@
     /**
      * Modal Approval Two-Tier (Tier 1 Pengurus -> Tier 2 Pengasuh)
      */
+    /**
+     * Helper Parser Tanggal & Jam ke Format Input HTML (YYYY-MM-DD & HH:mm)
+     */
+    function parseDateToIsoInput(val) {
+        if (!val) return '';
+        const s = String(val).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (m) {
+            return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        }
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        return '';
+    }
+
+    function parseTimeToIsoInput(val) {
+        if (!val) return '08:00';
+        const s = String(val).trim();
+        const m = s.match(/(\d{1,2}):(\d{2})/);
+        if (m) {
+            return `${m[1].padStart(2, '0')}:${m[2]}`;
+        }
+        return '08:00';
+    }
+
     function openModalApproval(idIzin, tier) {
         const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
         if (!item) return;
@@ -1071,6 +1102,17 @@
         const detailsEl = document.getElementById('perpulangan-approval-details');
         const catatanInput = document.getElementById('perpulangan-approval-catatan');
         const confirmBtn = document.getElementById('perpulangan-approval-btn-confirm');
+
+        // Pre-fill input jadwal izin yang editable untuk konfirmasi durasi
+        const tglMulaiInput = document.getElementById('perpulangan-approval-tgl-mulai');
+        const jamMulaiInput = document.getElementById('perpulangan-approval-jam-mulai');
+        const tglKembaliInput = document.getElementById('perpulangan-approval-tgl-kembali');
+        const jamKembaliInput = document.getElementById('perpulangan-approval-jam-kembali');
+
+        if (tglMulaiInput) tglMulaiInput.value = parseDateToIsoInput(item.tgl_mulai || item.tglMulai);
+        if (jamMulaiInput) jamMulaiInput.value = parseTimeToIsoInput(item.jam_mulai || item.jamMulai || '08:00');
+        if (tglKembaliInput) tglKembaliInput.value = parseDateToIsoInput(item.tgl_kembali || item.tglKembali);
+        if (jamKembaliInput) jamKembaliInput.value = parseTimeToIsoInput(item.jam_kembali || item.jamKembali || '17:00');
 
         if (catatanInput) catatanInput.value = '';
 
@@ -1104,7 +1146,9 @@
             const sPenjemput = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || 'Wali Santri';
             const sHub = item.penjemput_hubungan || item.penjemputHubungan || 'Keluarga';
             const sTglMulai = formatDateIndo(item.tgl_mulai || item.tglMulai);
+            const sJamMulai = formatTimeIndo(item.jam_mulai || item.jamMulai);
             const sTglKembali = formatDateIndo(item.tgl_kembali || item.tglKembali);
+            const sJamKembali = formatTimeIndo(item.jam_kembali || item.jamKembali);
 
             detailsEl.innerHTML = `
                 <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1.5 text-xs">
@@ -1121,9 +1165,9 @@
                         <span class="font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(sPenjemput)} (${escapeHtml(sHub)})</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-300">Jadwal Izin:</span>
-                        <span class="font-bold text-amber-600 dark:text-amber-400">
-                            ${sTglMulai} s/d ${sTglKembali}
+                        <span class="text-slate-500 dark:text-slate-300">Pengajuan Wali:</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200 text-right">
+                            ${sTglMulai} ${sJamMulai} s/d ${sTglKembali} ${sJamKembali}
                         </span>
                     </div>
                 </div>
@@ -1145,6 +1189,23 @@
         const catatanInput = document.getElementById('perpulangan-approval-catatan');
         const catatan = catatanInput ? catatanInput.value.trim() : '';
 
+        // Ambil nilai jadwal izin yang telah dikonfirmasi / diedit oleh Tier 1 / Tier 2
+        const tglMulaiVal = document.getElementById('perpulangan-approval-tgl-mulai')?.value || '';
+        const jamMulaiVal = document.getElementById('perpulangan-approval-jam-mulai')?.value || '08:00';
+        const tglKembaliVal = document.getElementById('perpulangan-approval-tgl-kembali')?.value || '';
+        const jamKembaliVal = document.getElementById('perpulangan-approval-jam-kembali')?.value || '17:00';
+
+        const scheduleUpdates = {
+            tgl_mulai: tglMulaiVal,
+            jam_mulai: jamMulaiVal,
+            tgl_kembali: tglKembaliVal,
+            jam_kembali: jamKembaliVal,
+            tglMulai: tglMulaiVal,
+            jamMulai: jamMulaiVal,
+            tglKembali: tglKembaliVal,
+            jamKembali: jamKembaliVal
+        };
+
         const confirmBtn = document.getElementById('perpulangan-approval-btn-confirm');
         if (confirmBtn) {
             confirmBtn.disabled = true;
@@ -1154,12 +1215,21 @@
         try {
             let res;
             if (tier === 'PENGASUH') {
-                res = await window.approveIzinPengasuh(idIzin, catatan);
+                res = await window.approveIzinPengasuh(idIzin, catatan, scheduleUpdates);
             } else {
-                res = await window.approveIzinPengurus(idIzin, catatan);
+                res = await window.approveIzinPengurus(idIzin, catatan, scheduleUpdates);
             }
 
             if (res && (res.success || res.status === 'success')) {
+                // Perbarui memori lokal agar tabel dan kartu langsung mencerminkan jadwal baru
+                const currentItem = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin);
+                if (currentItem) {
+                    if (tglMulaiVal) { currentItem.tgl_mulai = tglMulaiVal; currentItem.tglMulai = tglMulaiVal; }
+                    if (jamMulaiVal) { currentItem.jam_mulai = jamMulaiVal; currentItem.jamMulai = jamMulaiVal; }
+                    if (tglKembaliVal) { currentItem.tgl_kembali = tglKembaliVal; currentItem.tglKembali = tglKembaliVal; }
+                    if (jamKembaliVal) { currentItem.jam_kembali = jamKembaliVal; currentItem.jamKembali = jamKembaliVal; }
+                }
+
                 const msg = tier === 'PENGASUH'
                     ? 'Izin disetujui penuh oleh Dewan Pengasuh! Santri siap cetak surat jalan.'
                     : 'Persetujuan Tier 1 tersimpan. Izin diteruskan ke antrean Dewan Pengasuh.';

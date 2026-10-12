@@ -11096,8 +11096,45 @@
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
-            <div class="p-5 space-y-4 text-xs">
+            <div class="p-5 space-y-4 text-xs overflow-y-auto max-h-[calc(92vh-130px)]">
                 <div id="perpulangan-approval-details"></div>
+
+                <!-- Konfirmasi & Penyesuaian Durasi Jadwal Izin (Editable oleh Pengurus / Pengasuh) -->
+                <div class="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-amber-900 dark:text-amber-300 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-600 dark:text-amber-400"></i>
+                            <span>Konfirmasi / Sesuaikan Durasi Jadwal</span>
+                        </label>
+                        <span class="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-200/70 dark:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-300/60 dark:border-amber-700/60 flex items-center gap-1">
+                            <i class="fa-solid fa-pen-to-square text-[9px]"></i>
+                            <span>Bisa Diedit</span>
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Tgl Berangkat:</label>
+                            <input type="date" id="perpulangan-approval-tgl-mulai" class="w-full bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Jam Berangkat:</label>
+                            <input type="time" id="perpulangan-approval-jam-mulai" class="w-full bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-amber-800 dark:text-amber-400">Batas Tgl Kembali:</label>
+                            <input type="date" id="perpulangan-approval-tgl-kembali" class="w-full bg-white dark:bg-[#1c2836] border border-amber-300 dark:border-amber-800/80 rounded-xl px-2.5 py-1.5 text-xs text-amber-800 dark:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-amber-800 dark:text-amber-400">Batas Jam Kembali:</label>
+                            <input type="time" id="perpulangan-approval-jam-kembali" class="w-full bg-white dark:bg-[#1c2836] border border-amber-300 dark:border-amber-800/80 rounded-xl px-2.5 py-1.5 text-xs text-amber-800 dark:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="space-y-1.5">
                     <label class="font-bold text-slate-700 dark:text-slate-200">Catatan / Arahan Khusus (Opsional):</label>
                     <textarea id="perpulangan-approval-catatan" rows="2" placeholder="Tuliskan catatan kepulangan atau pesan khusus..." class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
@@ -15368,7 +15405,7 @@
     <script src="data-maulid-dibai.js"></script>
     <script src="data-qasidah-burdah.js"></script>
     <script src="data-tahlil-yasin.js"></script>
-    <script src="js/api.js?v=49"></script>
+    <script src="js/api.js?v=50"></script>
     <script src="js/db-adapter.js"></script>
     <script src="js/data-programs.js"></script>
 
@@ -15378,15 +15415,15 @@
     <script src="js/ibadah.js"></script>
     <script src="js/jadwal-sholat.js"></script>
     <script src="js/roles.js"></script>
-    <script src="js/admin.js?v=49"></script>
+    <script src="js/admin.js?v=50"></script>
     <script src="js/alumni.js"></script>
-    <script src="js/auth.js?v=49"></script>
+    <script src="js/auth.js?v=50"></script>
     <script src="js/pegawai.js"></script>
     <script src="js/tahfidz.js"></script>
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=49"></script>
+    <script src="js/perpulangan.js?v=50"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>
