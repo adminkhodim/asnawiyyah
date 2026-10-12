@@ -412,7 +412,7 @@
             // Logika Akses Aksi Berdasarkan Peran & Status Izin
             let actionButtons = `
                 <button type="button" onclick="window.ASNPerpulangan.openModalDetail('${idIzin}')" 
-                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition active:scale-95" 
+                    class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 transition flex items-center justify-center shrink-0 active:scale-95" 
                     title="Lihat Detail & Timeline Izin">
                     <i class="fa-solid fa-eye text-xs"></i>
                 </button>
@@ -422,7 +422,7 @@
             if (['DISETUJUI', 'KELUAR', 'KEMBALI', 'TERLAMBAT'].includes(status)) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalPrintSuratIzin('${idIzin}')" 
-                        class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 dark:text-indigo-300 transition active:scale-95" 
+                        class="w-7 h-7 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 dark:text-indigo-300 transition flex items-center justify-center shrink-0 active:scale-95" 
                         title="Cetak Surat Jalan & QR Code">
                         <i class="fa-solid fa-print text-xs"></i>
                     </button>
@@ -433,13 +433,13 @@
             if (status === 'MENUNGGU_PENGURUS' && canTier1) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGURUS')" 
-                        class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
+                        class="h-7 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10.5px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 whitespace-nowrap" 
                         title="Setujui Tier 1 (Pengurus / Asatidz)">
                         <i class="fa-solid fa-check text-[10px]"></i>
                         <span>Tier 1</span>
                     </button>
                     <button type="button" onclick="window.ASNPerpulangan.openModalReject('${idIzin}')" 
-                        class="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
+                        class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition flex items-center justify-center shrink-0 active:scale-95" 
                         title="Tolak Permohonan Izin">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
@@ -450,13 +450,13 @@
             if (status === 'MENUNGGU_PENGASUH' && canTier2) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalApproval('${idIzin}', 'PENGASUH')" 
-                        class="px-2 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
+                        class="h-7 px-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[10.5px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 whitespace-nowrap" 
                         title="Persetujuan Akhir Dewan Pengasuh (Tier 2)">
                         <i class="fa-solid fa-hands-praying text-[10px]"></i>
                         <span>Tier 2</span>
                     </button>
                     <button type="button" onclick="window.ASNPerpulangan.openModalReject('${idIzin}')" 
-                        class="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition active:scale-95" 
+                        class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 transition flex items-center justify-center shrink-0 active:scale-95" 
                         title="Tolak Permohonan Izin">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
@@ -467,7 +467,7 @@
             if (status === 'DISETUJUI' && canGate) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'OUT')" 
-                        class="px-2 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
+                        class="h-7 px-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[10.5px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 whitespace-nowrap" 
                         title="Check-Out Pos Gerbang (Santri Keluar)">
                         <i class="fa-solid fa-door-open text-[10px]"></i>
                         <span>Keluar</span>
@@ -479,7 +479,7 @@
             if (status === 'KELUAR' && canGate) {
                 actionButtons += `
                     <button type="button" onclick="window.ASNPerpulangan.openModalGateCheck('${idIzin}', 'IN')" 
-                        class="px-2 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs whitespace-nowrap" 
+                        class="h-7 px-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[10.5px] font-bold transition inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 whitespace-nowrap" 
                         title="Check-In Pos Gerbang (Santri Tiba di Pondok)">
                         <i class="fa-solid fa-right-to-bracket text-[10px]"></i>
                         <span>Kembali</span>
@@ -496,9 +496,9 @@
                 waButton = `
                     <a href="https://wa.me/${cleanPhone}?text=Assalamu%27alaikum%20Warahmatullah%2C%20terkait%20izin%20santri%20${encodeURIComponent(studentName)}" 
                         target="_blank" rel="noopener noreferrer" 
-                        class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-0.5 text-[10px]" 
+                        class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold inline-flex items-center gap-0.5 text-[10px] shrink-0" 
                         title="Hubungi via WhatsApp (${displayPhone})">
-                        <i class="fa-brands fa-whatsapp text-emerald-500"></i> ${displayPhone}
+                        <i class="fa-brands fa-whatsapp text-emerald-500"></i> <span class="hidden 2xl:inline">${displayPhone}</span><span class="2xl:hidden">WA</span>
                     </a>
                 `;
                 waButtonMobile = `
@@ -515,25 +515,25 @@
             tableHtml += `
                 <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1a2634] transition-colors border-b border-slate-100 dark:border-[#223142]">
                     <!-- 1. Data Santri & ID (Terpadu) -->
-                    <td class="px-3 py-2.5 align-middle">
+                    <td class="px-3 py-2.5 align-middle min-w-0">
                         <div class="flex items-center space-x-2.5 min-w-0">
                             <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold flex items-center justify-center text-xs shrink-0 border border-emerald-200 dark:border-emerald-800">
                                 ${studentName.charAt(0).toUpperCase()}
                             </div>
                             <div class="min-w-0 flex-1">
                                 <span class="font-bold text-xs text-slate-800 dark:text-slate-100 block truncate" title="${studentName}">${studentName}</span>
-                                <div class="text-[10px] text-slate-400 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
-                                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">NIS: ${studentNis}</span>
-                                    <span>•</span>
-                                    <span class="font-mono text-slate-400">#${index + 1} ${idIzin}</span>
+                                <div class="text-[10px] text-slate-400 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">NIS: ${studentNis}</span>
+                                    <span class="text-slate-300 dark:text-slate-600 shrink-0">•</span>
+                                    <span class="font-mono text-slate-400 truncate" title="${idIzin}">#${index + 1} ${idIzin}</span>
                                 </div>
                             </div>
                         </div>
                     </td>
 
                     <!-- 2. Keperluan & Alasan -->
-                    <td class="px-3 py-2.5 align-middle">
-                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-full">
+                    <td class="px-3 py-2.5 align-middle min-w-0">
+                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-full" title="${kategori}">
                             ${kategori}
                         </span>
                         <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5" title="${alasan}">
@@ -542,34 +542,36 @@
                     </td>
 
                     <!-- 3. Penjemput & Kontak -->
-                    <td class="px-3 py-2.5 align-middle">
+                    <td class="px-3 py-2.5 align-middle min-w-0">
                         <div class="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate" title="${penjemput}">${penjemput}</div>
                         <div class="text-[10px] text-slate-400 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                            <span>${hubungan}</span>
+                            <span class="truncate">${hubungan}</span>
                             ${waButton ? `<span>•</span> ${waButton}` : ''}
                         </div>
                     </td>
 
                     <!-- 4. Waktu Izin & Batas Kembali -->
-                    <td class="px-3 py-2.5 align-middle whitespace-nowrap text-[11px]">
-                        <div class="text-slate-600 dark:text-slate-300">
-                            <span class="text-slate-400 text-[10px]">Keluar:</span> ${tglMulai} ${jamMulai}
+                    <td class="px-3 py-2.5 align-middle min-w-0 text-[10.5px]">
+                        <div class="text-slate-600 dark:text-slate-300 truncate" title="Keluar: ${tglMulai} ${jamMulai}">
+                            <span class="text-slate-400 text-[10px]">Keluar:</span> <span class="font-medium">${tglMulai} ${jamMulai}</span>
                         </div>
-                        <div class="font-semibold text-amber-700 dark:text-amber-400 mt-0.5">
-                            <span class="text-slate-400 text-[10px] font-normal">Kembali:</span> ${tglKembali} ${jamKembali}
+                        <div class="font-semibold text-amber-700 dark:text-amber-400 mt-0.5 truncate" title="Kembali: ${tglKembali} ${jamKembali}">
+                            <span class="text-slate-400 text-[10px] font-normal">Kembali:</span> <span>${tglKembali} ${jamKembali}</span>
                         </div>
                     </td>
 
                     <!-- 5. Status Badge -->
-                    <td class="px-3 py-2.5 align-middle text-center whitespace-nowrap">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeCfg.bg}">
-                            <span class="w-1.5 h-1.5 rounded-full ${badgeCfg.dot}"></span>
-                            <span>${badgeCfg.label}</span>
-                        </span>
+                    <td class="px-2 py-2.5 align-middle text-center min-w-0">
+                        <div class="flex justify-center">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeCfg.bg} max-w-full truncate" title="${badgeCfg.label}">
+                                <span class="w-1.5 h-1.5 rounded-full ${badgeCfg.dot} shrink-0"></span>
+                                <span class="truncate">${badgeCfg.label}</span>
+                            </span>
+                        </div>
                     </td>
 
                     <!-- 6. Aksi -->
-                    <td class="px-3 py-2.5 align-middle text-right whitespace-nowrap">
+                    <td class="px-3 py-2.5 align-middle text-right">
                         <div class="inline-flex items-center justify-end gap-1">
                             ${actionButtons}
                         </div>
