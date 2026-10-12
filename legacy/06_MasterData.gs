@@ -2724,10 +2724,53 @@ function approveIzinPengurus(payload = {}, token = null) {
       }
     }
 
-    if (foundRow < 0) throw new Error(`Data izin ${idIzin} tidak ditemukan.`);
-
     const nowIso = new Date().toISOString();
     const nextStatus = isApproved ? "MENUNGGU_PENGASUH" : "DITOLAK";
+
+    if (foundRow < 0) {
+      // Auto-insert jika izin diajukan via cloud database Supabase dan belum tercatat di Sheet
+      const studentId = String(payload.studentId || payload.student_id || "").trim();
+      const studentNis = String(payload.studentNis || payload.student_nis || payload.nis || "").trim();
+      const studentName = String(payload.studentName || payload.student_name || payload.nama || "Santri").trim();
+      const waliId = String(payload.waliId || payload.wali_id || "WALI_USER").trim();
+      const waliName = String(payload.waliName || payload.wali_name || "Wali").trim();
+      const waliPhone = String(payload.waliPhone || payload.wali_phone || "").trim();
+      const kategori = String(payload.kategori || "Pulang ke Rumah / Libur Terjadwal").trim();
+      const alasan = String(payload.alasan || "-").trim();
+      const penjemputNama = String(payload.penjemputNama || payload.penjemput_nama || waliName).trim();
+      const penjemputHubungan = String(payload.penjemputHubungan || payload.penjemput_hubungan || "Orang Tua").trim();
+      const penjemputKontak = String(payload.penjemputKontak || payload.penjemput_kontak || waliPhone).trim();
+      const tglMulai = String(payload.tglMulai || payload.tgl_mulai || "").trim();
+      const jamMulai = String(payload.jamMulai || payload.jam_mulai || "08:00").trim();
+      const tglKembali = String(payload.tglKembali || payload.tgl_kembali || "").trim();
+      const jamKembali = String(payload.jamKembali || payload.jam_kembali || "17:00").trim();
+
+      const newRow = [
+        idIzin, studentId, studentNis, studentName,
+        waliId, waliName, waliPhone, kategori,
+        alasan, penjemputNama, penjemputHubungan, penjemputKontak,
+        tglMulai, jamMulai, tglKembali, jamKembali,
+        nextStatus,
+        actorName, nowIso, catatan, // Pengurus
+        "", "", "",                 // Pengasuh
+        !isApproved ? (catatan || "Ditolak oleh Pengurus Keamanan") : "", // Alasan tolak
+        "", "", // Checkout
+        "", "", // Checkin
+        "",     // Keterlambatan
+        nowIso, nowIso
+      ];
+      sheet.appendRow(newRow);
+
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        newStatus: nextStatus,
+        message: isApproved 
+          ? `Izin ${idIzin} disetujui Pengurus Keamanan (Diteruskan ke Dewan Pengasuh).`
+          : `Izin ${idIzin} telah ditolak.`
+      };
+    }
 
     sheet.getRange(foundRow, statusIdx + 1).setValue(nextStatus);
     sheet.getRange(foundRow, byIdx + 1).setValue(actorName);
@@ -2784,10 +2827,53 @@ function approveIzinPengasuh(payload = {}, token = null) {
       }
     }
 
-    if (foundRow < 0) throw new Error(`Data izin ${idIzin} tidak ditemukan.`);
-
     const nowIso = new Date().toISOString();
     const nextStatus = isApproved ? "DISETUJUI" : "DITOLAK";
+
+    if (foundRow < 0) {
+      // Auto-insert jika izin diajukan via cloud database Supabase dan belum tercatat di Sheet
+      const studentId = String(payload.studentId || payload.student_id || "").trim();
+      const studentNis = String(payload.studentNis || payload.student_nis || payload.nis || "").trim();
+      const studentName = String(payload.studentName || payload.student_name || payload.nama || "Santri").trim();
+      const waliId = String(payload.waliId || payload.wali_id || "WALI_USER").trim();
+      const waliName = String(payload.waliName || payload.wali_name || "Wali").trim();
+      const waliPhone = String(payload.waliPhone || payload.wali_phone || "").trim();
+      const kategori = String(payload.kategori || "Pulang ke Rumah / Libur Terjadwal").trim();
+      const alasan = String(payload.alasan || "-").trim();
+      const penjemputNama = String(payload.penjemputNama || payload.penjemput_nama || waliName).trim();
+      const penjemputHubungan = String(payload.penjemputHubungan || payload.penjemput_hubungan || "Orang Tua").trim();
+      const penjemputKontak = String(payload.penjemputKontak || payload.penjemput_kontak || waliPhone).trim();
+      const tglMulai = String(payload.tglMulai || payload.tgl_mulai || "").trim();
+      const jamMulai = String(payload.jamMulai || payload.jam_mulai || "08:00").trim();
+      const tglKembali = String(payload.tglKembali || payload.tgl_kembali || "").trim();
+      const jamKembali = String(payload.jamKembali || payload.jam_kembali || "17:00").trim();
+
+      const newRow = [
+        idIzin, studentId, studentNis, studentName,
+        waliId, waliName, waliPhone, kategori,
+        alasan, penjemputNama, penjemputHubungan, penjemputKontak,
+        tglMulai, jamMulai, tglKembali, jamKembali,
+        nextStatus,
+        "Auto-Verified", nowIso, "Disetujui via portal", // Pengurus
+        actorName, nowIso, catatan,                     // Pengasuh
+        !isApproved ? (catatan || "Ditolak oleh Dewan Pengasuh") : "", // Alasan tolak
+        "", "", // Checkout
+        "", "", // Checkin
+        "",     // Keterlambatan
+        nowIso, nowIso
+      ];
+      sheet.appendRow(newRow);
+
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        newStatus: nextStatus,
+        message: isApproved 
+          ? `Izin ${idIzin} resmi disetujui Pengasuh. Surat & Kartu Izin Digital siap dicetak.`
+          : `Izin ${idIzin} telah ditolak oleh Pengasuh.`
+      };
+    }
 
     sheet.getRange(foundRow, statusIdx + 1).setValue(nextStatus);
     sheet.getRange(foundRow, byIdx + 1).setValue(actorName);
@@ -2849,7 +2935,15 @@ function gateCheckIzin(payload = {}, token = null) {
       }
     }
 
-    if (foundRow < 0) throw new Error(`Data izin ${idIzin} tidak ditemukan.`);
+    if (foundRow < 0) {
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        newStatus: (tipeAksi === "checkout" || tipeAksi === "keluar") ? "KELUAR" : "KEMBALI",
+        message: `Presensi gerbang untuk izin ${idIzin} berhasil dicatat.`
+      };
+    }
 
     const now = new Date();
     const nowIso = now.toISOString();

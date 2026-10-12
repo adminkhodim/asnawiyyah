@@ -1757,8 +1757,8 @@
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             }
 
-            // Jika Apps Script gagal/mengembalikan error auth tapi aksi adalah Tahfidz, Jadwal atau Berita, kembalikan status sukses karena Supabase telah diperbarui
-            if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite || isTahfidzWrite)) {
+            // Jika Apps Script gagal/mengembalikan error tapi aksi adalah Tahfidz, Jadwal, Berita, Perpulangan, atau Notifikasi, kembalikan status sukses karena Supabase telah diperbarui
+            if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite)) {
                 let fallbackMsg = "Operasi berhasil disimpan ke Cloud Database Supabase";
                 if (isTahfidzWrite) {
                     fallbackMsg = action === 'deleteTahfidzLog' 
@@ -1768,11 +1768,35 @@
                     fallbackMsg = "Berita berhasil dipublikasikan ke Cloud Database Supabase";
                 } else if (isJadwalWrite) {
                     fallbackMsg = "Jadwal kegiatan berhasil disimpan ke Cloud Database Supabase";
+                } else if (isPerpulanganWrite) {
+                    if (action === 'perpulangan.approvePengasuh' || action === 'approveIzinPengasuh') {
+                        fallbackMsg = "Izin resmi disetujui Pengasuh (Cloud Database).";
+                    } else if (action === 'perpulangan.approvePengurus' || action === 'approveIzinPengurus') {
+                        fallbackMsg = "Izin disetujui Pengurus Keamanan (Cloud Database).";
+                    } else if (action === 'perpulangan.reject' || action === 'rejectIzin' || action === 'rejectIzinPerpulangan') {
+                        fallbackMsg = "Izin telah ditolak (Cloud Database).";
+                    } else if (action === 'perpulangan.gateCheck' || action === 'gateCheckIzin') {
+                        fallbackMsg = "Presensi gerbang santri berhasil dicatat (Cloud Database).";
+                    } else {
+                        fallbackMsg = "Permohonan izin berhasil diajukan ke Cloud Database.";
+                    }
+                } else if (isNotifikasiWrite) {
+                    fallbackMsg = "Notifikasi berhasil diperbarui di Cloud Database Supabase";
                 }
+
+                const idIzinVal = payload.idIzin || payload.id_izin || (payload.data && (payload.data.idIzin || payload.data.id_izin));
+                const nextStatusVal = (action === 'perpulangan.approvePengasuh' || action === 'approveIzinPengasuh') 
+                    ? 'DISETUJUI' 
+                    : ((action === 'perpulangan.approvePengurus' || action === 'approveIzinPengurus') 
+                        ? 'MENUNGGU_PENGASUH' 
+                        : ((action === 'perpulangan.reject' || action === 'rejectIzin' || action === 'rejectIzinPerpulangan') ? 'DITOLAK' : undefined));
+
                 return { 
                     success: true, 
                     status: "success", 
                     message: fallbackMsg,
+                    idIzin: idIzinVal,
+                    newStatus: nextStatusVal,
                     logId: payload.logId || payload.log_id || ('TFZ-' + Date.now())
                 };
             }

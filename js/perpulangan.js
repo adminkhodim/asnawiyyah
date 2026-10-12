@@ -1446,7 +1446,20 @@
         const tglKembaliVal = document.getElementById('perpulangan-approval-tgl-kembali')?.value || '';
         const jamKembaliVal = document.getElementById('perpulangan-approval-jam-kembali')?.value || '17:00';
 
+        const currentItem = ASNPerpulangan.list.find(x => (x.id_izin || x.id) === idIzin) || {};
+
         const scheduleUpdates = {
+            studentId: currentItem.student_id || currentItem.studentId || '',
+            studentNis: currentItem.student_nis || currentItem.studentNis || currentItem.nis || '',
+            studentName: currentItem.student_name || currentItem.studentName || currentItem.nama || '',
+            waliId: currentItem.wali_id || currentItem.waliId || '',
+            waliName: currentItem.wali_name || currentItem.waliName || '',
+            waliPhone: currentItem.wali_phone || currentItem.waliPhone || '',
+            kategori: currentItem.kategori || '',
+            alasan: currentItem.alasan || '',
+            penjemputNama: currentItem.penjemput_nama || currentItem.penjemputNama || '',
+            penjemputHubungan: currentItem.penjemput_hubungan || currentItem.penjemputHubungan || '',
+            penjemputKontak: currentItem.penjemput_kontak || currentItem.penjemputKontak || '',
             tgl_mulai: tglMulaiVal,
             jam_mulai: jamMulaiVal,
             tgl_kembali: tglKembaliVal,
