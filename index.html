@@ -7270,7 +7270,7 @@
                 </div>
 
                 <!-- CARDS RINGKASAN METRIK WALI SANTRI -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 md:gap-3">
                     <!-- 1. Total Wali Terdaftar -->
                     <div class="bg-gradient-to-br from-[#10b981] to-[#059669] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
                         <div class="flex items-start justify-between">
@@ -7350,6 +7350,26 @@
                             <span class="px-2 py-0.5 rounded-full bg-white text-indigo-800 font-black shadow-xs shrink-0 text-[9px]">100% Siap</span>
                         </div>
                     </div>
+
+                    <!-- 5. Santri Belum Terhubung (Tindak Lanjut) -->
+                    <div onclick="setAdminWaliFilter('UNLINKED')" class="cursor-pointer bg-gradient-to-br from-[#f43f5e] to-[#e11d48] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-rose-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-6 hover:-translate-y-0.5" title="Klik untuk memantau santri yang belum aktivasi">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">BELUM TERHUBUNG</span>
+                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                <i class="fa-solid fa-user-clock"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                <span id="wali-metric-unlinked">0</span>
+                                <span class="text-xs font-bold text-white/80">Santri</span>
+                            </h4>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                            <span class="truncate font-normal text-[10px] opacity-90">Perlu aktivasi wali</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white text-rose-800 font-black shadow-xs shrink-0 text-[9px]">Follow-Up</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- PENCARIAN & FILTER TABEL -->
@@ -7366,13 +7386,17 @@
                             <button type="button" onclick="setAdminWaliFilter('ALL')" id="filter-wali-all" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow-xs transition">Semua (<span id="count-pill-wali-all">0</span>)</button>
                             <button type="button" onclick="setAdminWaliFilter('MULTI')" id="filter-wali-multi" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 transition">Multi-Santri (≥2 Anak) (<span id="count-pill-wali-multi">0</span>)</button>
                             <button type="button" onclick="setAdminWaliFilter('SINGLE')" id="filter-wali-single" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-600 dark:text-slate-300 transition">1 Santri (<span id="count-pill-wali-single">0</span>)</button>
+                            <button type="button" onclick="setAdminWaliFilter('UNLINKED')" id="filter-wali-unlinked" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40 transition inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-clock text-[10px]"></i>
+                                <span>Belum Terhubung (<span id="count-pill-wali-unlinked">0</span>)</span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- TABEL DATA WALI SANTRI -->
                     <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-[#253447]">
                         <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                            <thead class="bg-slate-50/80 dark:bg-[#1a2533] text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#253447]">
+                            <thead id="admin-wali-table-head" class="bg-slate-50/80 dark:bg-[#1a2533] text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#253447]">
                                 <tr>
                                     <th class="py-3 px-3.5">Wali Santri</th>
                                     <th class="py-3 px-3.5">WhatsApp / HP</th>
@@ -15415,7 +15439,7 @@
     <script src="js/ibadah.js"></script>
     <script src="js/jadwal-sholat.js"></script>
     <script src="js/roles.js"></script>
-    <script src="js/admin.js?v=51"></script>
+    <script src="js/admin.js?v=52"></script>
     <script src="js/alumni.js"></script>
     <script src="js/auth.js?v=51"></script>
     <script src="js/pegawai.js"></script>
