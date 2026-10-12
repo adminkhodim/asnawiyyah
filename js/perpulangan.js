@@ -97,6 +97,23 @@
         }
     }
 
+    // Helper: Format Tanggal & Jam Lengkap Indonesia (WIB UTC+7)
+    function formatDateTimeIndo(isoStr) {
+        if (!isoStr) return '-';
+        try {
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const day = d.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric' });
+            const monthIdx = parseInt(d.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', month: 'numeric' }), 10) - 1;
+            const year = d.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', year: 'numeric' });
+            const time = d.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+            return `${day} ${months[monthIdx] || ''} ${year}, ${time} WIB`;
+        } catch (e) {
+            return isoStr;
+        }
+    }
+
     // Helper: Dapatkan Badge Status dengan Warna Harmonis
     function getStatusBadgeConfig(status) {
         const s = String(status || '').toUpperCase();
@@ -219,6 +236,34 @@
                         }
                     }
                 }
+
+                // Auto-healing & Normalisasi KETERLAMBATAN jika checkin_at melewati batas waktu rencana kembali
+                const tglKmb = item.tgl_kembali || item.tglKembali;
+                const jamKmb = item.jam_kembali || item.jamKembali || '17:00';
+                const inAt = item.checkin_at || item.checkinAt;
+                const currStatus = String(item.status || '').toUpperCase();
+
+                if (tglKmb && inAt) {
+                    const deadlineStr = `${tglKmb}T${jamKmb.length === 5 ? (jamKmb + ':00') : jamKmb}+07:00`;
+                    const deadlineDate = new Date(deadlineStr);
+                    const inDate = new Date(inAt);
+
+                    if (!isNaN(deadlineDate.getTime()) && !isNaN(inDate.getTime()) && inDate > deadlineDate) {
+                        if (currStatus !== 'TERLAMBAT') {
+                            item.status = 'TERLAMBAT';
+                            const diffHours = Math.max(1, Math.round((inDate - deadlineDate) / (1000 * 60 * 60)));
+                            if (!item.catatan_keterlambatan && !item.catatanKeterlambatan) {
+                                item.catatan_keterlambatan = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}).`;
+                                item.catatanKeterlambatan = item.catatan_keterlambatan;
+                            }
+                            const idIzin = item.id_izin || item.idIzin || item.id;
+                            if (idIzin) {
+                                syncResolvedStatusToSupabase(idIzin, 'TERLAMBAT', item.catatan_keterlambatan);
+                            }
+                        }
+                    }
+                }
+
                 return item;
             });
 
@@ -783,6 +828,36 @@
                     student_id: studentId,
                     student_nis: studentNis,
                     student_name: studentName,
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } catch (e) {
+            // background sync silently ignores error
+        }
+    }
+
+    /**
+     * Sinkronisasi auto-heal status keterlambatan ke Supabase di background
+     */
+    async function syncResolvedStatusToSupabase(idIzin, newStatus, lateNote) {
+        if (!idIzin || !newStatus) return;
+        try {
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (!sbUrl || !sbKey) return;
+
+            await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': sbKey,
+                    'Authorization': `Bearer ${sbKey}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    status: newStatus,
+                    catatan_keterlambatan: lateNote || null,
                     updated_at: new Date().toISOString()
                 })
             });
@@ -1636,14 +1711,15 @@
         // Cek keterlambatan potensial jika check-in
         let lateNotice = '';
         if (!isOut && tglKmb) {
-            const returnTarget = new Date(`${tglKmb}T${jamKmb}:00`);
+            const deadlineStr = `${tglKmb}T${jamKmb.length === 5 ? (jamKmb + ':00') : jamKmb}+07:00`;
+            const returnTarget = new Date(deadlineStr);
             const now = new Date();
-            if (now > returnTarget) {
-                const diffHours = Math.round((now - returnTarget) / (1000 * 60 * 60));
+            if (!isNaN(returnTarget.getTime()) && now > returnTarget) {
+                const diffHours = Math.max(1, Math.round((now - returnTarget) / (1000 * 60 * 60)));
                 lateNotice = `
                     <div class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation text-sm"></i>
-                        <span><strong>Peringatan:</strong> Santri melewati batas waktu kembali (+/- ${diffHours} jam). Sistem akan menandai sebagai status TERLAMBAT.</span>
+                        <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i>
+                        <span><strong>Peringatan Terlambat:</strong> Santri melewati batas waktu kembali (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}) selisih +/- ${diffHours} jam. Sistem otomatis menandai sebagai status TERLAMBAT.</span>
                     </div>
                 `;
             }
@@ -1689,13 +1765,32 @@
             confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyimpan Log...';
         }
 
+        const item = ASNPerpulangan.list.find(x => String(x.id_izin || x.id || x.idIzin || '').trim() === String(idIzin || '').trim());
+        let isLate = false;
+        let calculatedLateNote = '';
+
+        if (mode === 'IN' && item) {
+            const tglKmb = item.tgl_kembali || item.tglKembali;
+            const jamKmb = item.jam_kembali || item.jamKembali || '17:00';
+            if (tglKmb) {
+                const deadlineStr = `${tglKmb}T${jamKmb.length === 5 ? (jamKmb + ':00') : jamKmb}+07:00`;
+                const returnTarget = new Date(deadlineStr);
+                const now = new Date();
+                if (!isNaN(returnTarget.getTime()) && now > returnTarget) {
+                    isLate = true;
+                    const diffHours = Math.max(1, Math.round((now - returnTarget) / (1000 * 60 * 60)));
+                    calculatedLateNote = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}). ${catatan}`.trim();
+                }
+            }
+        }
+
         try {
-            const res = await window.gateCheckIzin(idIzin, mode, catatan);
+            const res = await window.gateCheckIzin(idIzin, mode, catatan, isLate, calculatedLateNote);
             if (res && (res.success || res.status === 'success')) {
                 const msg = mode === 'OUT'
                     ? 'Check-Out berhasil dicatat. Status santri kini: KELUAR PONDOK.'
-                    : 'Check-In berhasil dicatat. Santri telah kembali ke pondok.';
-                if (typeof showToast === 'function') showToast(msg, 'success');
+                    : (isLate ? `Check-In dicatat: Santri KEMBALI TERLAMBAT (${calculatedLateNote}).` : 'Check-In berhasil dicatat. Santri telah kembali tepat waktu ke pondok.');
+                if (typeof showToast === 'function') showToast(msg, isLate ? 'warning' : 'success');
                 closeModalGateCheck();
                 await loadPerpulanganData(true);
             } else {
@@ -1989,10 +2084,10 @@
 
         // Step 5: Pos Gerbang Check-In (Kembali ke Pondok)
         let step5Status = 'PENDING';
-        if (inAt || st === 'KEMBALI') {
-            step5Status = 'COMPLETED';
-        } else if (st === 'TERLAMBAT') {
+        if (st === 'TERLAMBAT') {
             step5Status = 'LATE';
+        } else if (inAt || st === 'KEMBALI') {
+            step5Status = 'COMPLETED';
         } else if (st === 'KELUAR') {
             step5Status = 'CURRENT';
         }
@@ -2019,9 +2114,9 @@
                     };
                 case 'LATE':
                     return {
-                        circleClass: 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-200 dark:ring-amber-900',
+                        circleClass: 'bg-rose-500 text-white shadow-xs ring-2 ring-rose-200 dark:ring-rose-900',
                         icon: 'fa-triangle-exclamation',
-                        badge: '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 ml-1.5">Terlambat</span>'
+                        badge: '<span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 ml-1.5"><i class="fa-solid fa-triangle-exclamation text-[8px] mr-1"></i>Terlambat</span>'
                     };
                 default: // PENDING
                     return {
@@ -2067,7 +2162,7 @@
                                 ${v1.badge}
                             </div>
                             <div class="text-slate-500 text-[11px]">Kategori: ${escapeHtml(item.kategori || 'Izin')} | Alasan: ${escapeHtml(item.alasan || '-')}</div>
-                            <div class="text-slate-400 text-[10px]">${item.created_at || item.createdAt || '-'}</div>
+                            <div class="text-slate-400 text-[10px]">${formatDateTimeIndo(item.created_at || item.createdAt)}</div>
                         </div>
 
                         <!-- 2. Tier 1 Pengurus -->
@@ -2083,7 +2178,7 @@
                                 ${pengurusAppBy ? `Disetujui oleh: ${escapeHtml(pengurusAppBy)}` : (step2Status === 'COMPLETED' ? 'Telah diverifikasi oleh Pengurus Keamanan' : (step2Status === 'CURRENT' ? 'Menunggu verifikasi pengurus / asatidz piket' : (step2Status === 'REJECTED' ? 'Permohonan ditolak pada Tier 1' : 'Menunggu verifikasi pengurus / asatidz')))}
                                 ${pengurusNote ? `<br>Catatan: "${escapeHtml(pengurusNote)}"` : ''}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${pengurusAppAt || (step2Status === 'COMPLETED' ? 'Terverifikasi' : '-')}</div>
+                            <div class="text-slate-400 text-[10px]">${pengurusAppAt ? formatDateTimeIndo(pengurusAppAt) : (step2Status === 'COMPLETED' ? 'Terverifikasi' : '-')}</div>
                         </div>
 
                         <!-- 3. Tier 2 Dewan Pengasuh -->
@@ -2099,7 +2194,7 @@
                                 ${pengasuhAppBy ? `Disetujui oleh: ${escapeHtml(pengasuhAppBy)}` : (step3Status === 'COMPLETED' ? 'Telah diotorisasi oleh Dewan Pengasuh' : (step3Status === 'CURRENT' ? 'Menunggu otorisasi khusus dewan pengasuh' : (step3Status === 'REJECTED' ? 'Permohonan ditolak oleh Dewan Pengasuh' : 'Menunggu otorisasi dewan pengasuh')))}
                                 ${pengasuhNote ? `<br>Catatan: "${escapeHtml(pengasuhNote)}"` : ''}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${pengasuhAppAt || (step3Status === 'COMPLETED' ? 'Diotorisasi' : '-')}</div>
+                            <div class="text-slate-400 text-[10px]">${pengasuhAppAt ? formatDateTimeIndo(pengasuhAppAt) : (step3Status === 'COMPLETED' ? 'Diotorisasi' : '-')}</div>
                         </div>
 
                         <!-- 4. Pos Gerbang Check-Out -->
@@ -2114,7 +2209,7 @@
                             <div class="text-slate-500 text-[11px]">
                                 ${outBy ? `Petugas: ${escapeHtml(outBy)}` : (step4Status === 'COMPLETED' ? 'Check-out terkonfirmasi di pos gerbang' : (step4Status === 'CURRENT' ? 'Izin resmi aktif, siap check-out di pos gerbang' : 'Belum check-out'))}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${outAt || '-'}</div>
+                            <div class="text-slate-400 text-[10px]">${outAt ? formatDateTimeIndo(outAt) : '-'}</div>
                         </div>
 
                         <!-- 5. Pos Gerbang Check-In -->
@@ -2127,10 +2222,10 @@
                                 ${v5.badge}
                             </div>
                             <div class="text-slate-500 text-[11px]">
-                                ${inBy ? `Petugas: ${escapeHtml(inBy)}` : (step5Status === 'COMPLETED' ? 'Check-in terkonfirmasi, santri telah kembali di pondok' : (step5Status === 'CURRENT' ? 'Santri sedang di luar pondok, menunggu waktu kembali' : 'Belum check-in'))}
-                                ${lateNote ? `<br><span class="text-rose-500 font-bold">Keterlambatan: ${escapeHtml(lateNote)}</span>` : ''}
+                                ${inBy ? `Petugas: ${escapeHtml(inBy)}` : (step5Status === 'COMPLETED' ? 'Check-in terkonfirmasi, santri telah kembali di pondok' : (step5Status === 'LATE' ? 'Santri kembali melewati batas waktu perizinan' : (step5Status === 'CURRENT' ? 'Santri sedang di luar pondok, menunggu waktu kembali' : 'Belum check-in')))}
+                                ${lateNote ? `<br><span class="text-rose-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Keterlambatan: ${escapeHtml(lateNote)}</span>` : ''}
                             </div>
-                            <div class="text-slate-400 text-[10px]">${inAt || '-'}</div>
+                            <div class="text-slate-400 text-[10px]">${inAt ? formatDateTimeIndo(inAt) : '-'}</div>
                         </div>
                     </div>
                 </div>

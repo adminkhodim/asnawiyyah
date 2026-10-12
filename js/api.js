@@ -3595,9 +3595,9 @@
             return await apiPost('perpulangan.reject', { idIzin, alasan });
         }
 
-        async function gateCheckIzin(idIzin, checkType = 'OUT', catatan = '') {
+        async function gateCheckIzin(idIzin, checkType = 'OUT', catatan = '', isLate = false, catatanKeterlambatan = '') {
             const petugas = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Petugas Gerbang';
-            return await apiPost('perpulangan.gateCheck', { idIzin, checkType, catatan, petugas });
+            return await apiPost('perpulangan.gateCheck', { idIzin, checkType, catatan, petugas, isLate, catatanKeterlambatan });
         }
 
         window.getIzinPerpulanganList = getIzinPerpulanganList;
