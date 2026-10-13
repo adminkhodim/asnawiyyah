@@ -3527,9 +3527,9 @@
             {
                 id: "UKS_01_SEMUT",
                 nama: 'Teater "SEMUT"',
-                kategori: "Divisi Teater IKASAPNA",
+                kategori: "Divisi Teater HASANAH",
                 jadwal: "2x Semesta / Tahun",
-                deskripsi: "Unit kegiatan santri PPTQ Asnawiyyah yang berfokus pada pementasan drama atau teater di bawah naungan lembaga semi otonom IKASAPNA. Ditujukan sebagai wadah kreativitas untuk melatih mental dan rasa percaya diri santri saat berada di tengah masyarakat.",
+                deskripsi: "Unit kegiatan santri PPTQ Asnawiyyah yang berfokus pada pementasan drama atau teater di bawah naungan lembaga semi otonom HASANAH. Ditujukan sebagai wadah kreativitas untuk melatih mental dan rasa percaya diri santri saat berada di tengah masyarakat.",
                 gambar: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?q=80&w=800&auto=format&fit=crop",
                 urutan: 1,
                 status: "Aktif"
@@ -3548,8 +3548,8 @@
                 id: "UKS_03_PERPUS",
                 nama: 'Perpustakaan "Bait Al-Hikmah"',
                 kategori: "Pusat Baca Santri",
-                jadwal: "IKASAPNA",
-                deskripsi: "Perpustakaan milik PPTQ Asnawiyyah yang berada di bawah naungan IKASAPNA. Dibangun guna melestarikan budaya membaca di kalangan santri serta menjadi jembatan penghubung antara santri dengan wawasan dunia luar lewat koleksi buku yang tersedia.",
+                jadwal: "HASANAH",
+                deskripsi: "Perpustakaan milik PPTQ Asnawiyyah yang berada di bawah naungan HASANAH. Dibangun guna melestarikan budaya membaca di kalangan santri serta menjadi jembatan penghubung antara santri dengan wawasan dunia luar lewat koleksi buku yang tersedia.",
                 gambar: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800&auto=format&fit=crop",
                 urutan: 3,
                 status: "Aktif"
@@ -8646,7 +8646,7 @@
         window.applyUsersRolePermissions = applyUsersRolePermissions;
 
         // =========================================================================
-        // MODUL REKAP DATA ALUMNI (IKASAPNA) - CONTROLLER ADMIN
+        // MODUL REKAP DATA ALUMNI (HASANAH) - CONTROLLER ADMIN
         // =========================================================================
         let adminAlumniData = [];
 
@@ -9009,7 +9009,7 @@
                 if (cleanWa.startsWith('8')) cleanWa = '62' + cleanWa;
 
                 if (cleanWa) {
-                    waBtn.href = `https://wa.me/${cleanWa}?text=Assalamu'alaikum%20${encodeURIComponent(nama)},%20salam%20silaturahmi%20dari%20Pengurus%20PPTQ%20Asnawiyyah%20(IKASAPNA).`;
+                    waBtn.href = `https://wa.me/${cleanWa}?text=Assalamu'alaikum%20${encodeURIComponent(nama)},%20salam%20silaturahmi%20dari%20Pengurus%20PPTQ%20Asnawiyyah%20(HASANAH).`;
                     waBtn.classList.remove('opacity-50', 'pointer-events-none');
                     if (waText) waText.innerText = `WhatsApp (${item.no_whatsapp})`;
                 } else {
@@ -9174,7 +9174,7 @@
             const link = document.createElement("a");
             const dateStr = new Date().toISOString().slice(0, 10);
             link.setAttribute("href", url);
-            link.setAttribute("download", `Rekap_Data_Alumni_IKASAPNA_${dateStr}.csv`);
+            link.setAttribute("download", `Rekap_Data_Alumni_HASANAH_${dateStr}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

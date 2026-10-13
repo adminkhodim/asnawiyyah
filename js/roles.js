@@ -162,7 +162,7 @@
                 { key: 'santri.edit', label: 'Mengubah Data Santri', desc: 'Izin memperbarui informasi biodata & wali santri' },
                 { key: 'santri.delete', label: 'Menghapus Data Santri', desc: 'Izin menghapus data santri dari database' },
                 { key: 'santri.export', label: 'Import Excel / Massal', desc: 'Izin mengimpor dan mengekspor data santri dari file .xlsx' },
-                { key: 'alumni.view', label: 'Melihat Rekap Alumni (IKASAPNA)', desc: 'Akses melihat direktori data alumni dan sebaran wilayah' },
+                { key: 'alumni.view', label: 'Melihat Rekap Alumni (HASANAH)', desc: 'Akses melihat direktori data alumni dan sebaran wilayah' },
                 { key: 'alumni.manage', label: 'Kelola & Ekspor Data Alumni', desc: 'Izin manajemen status, hapus, dan unduh data alumni' },
                 { key: 'unit.manage', label: 'Unit Kegiatan Santri (UKS)', desc: 'Akses mengelola ekstrakurikuler & kegiatan asrama' },
                 { key: 'wali.view', label: 'Melihat Data Wali Santri', desc: 'Akses melihat daftar akun wali, kontak WA, dan santri terhubung' },
@@ -447,9 +447,9 @@
         {
             key: 'alumni',
             category: 'Kesantrian & Pendidikan',
-            module: 'Rekap Alumni (IKASAPNA)',
+            module: 'Rekap Alumni (HASANAH)',
             icon: 'fa-user-graduate',
-            desc: 'Direktori data alumni, persebaran wilayah, dan ikatan alumni.',
+            desc: 'Direktori data alumni, persebaran wilayah, dan himpunan alumni (HASANAH).',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
