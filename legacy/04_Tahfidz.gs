@@ -3348,3 +3348,29 @@ function getKeaktifanAsatidz(payload, token) {
     };
   }
 }
+
+/**
+ * Menyimpan konfigurasi urutan kurikulum 30 Juz per Program Pesantren ke PropertiesService
+ */
+function saveTahfidzCurriculumSettings(payload, token) {
+  try {
+    const rawMap = payload.curriculumMap || payload;
+    const jsonStr = typeof rawMap === 'string' ? rawMap : JSON.stringify(rawMap);
+    const props = PropertiesService.getScriptProperties();
+    props.setProperty("TAHFIDZ_CURRICULUM_PROGRAMS", jsonStr);
+    return {
+      status: "success",
+      success: true,
+      message: "Pengaturan kurikulum tahfidz berhasil disimpan ke server.",
+      updatedAt: new Date().toISOString()
+    };
+  } catch (err) {
+    console.error("[SAVE TAHFIDZ CURRICULUM ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal menyimpan kurikulum: " + (err.message || err)
+    };
+  }
+}
+

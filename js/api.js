@@ -2324,6 +2324,23 @@
                         });
                     }
                 }
+                else if (action === 'saveTahfidzCurriculum') {
+                    const rowSetting = {
+                        key: payload.key || 'TAHFIDZ_CURRICULUM_PROGRAMS',
+                        value: typeof payload.value === 'string' ? payload.value : JSON.stringify(payload.value || {}),
+                        keterangan: payload.keterangan || 'Konfigurasi kurikulum tahfidz',
+                        updated_at: new Date().toISOString()
+                    };
+                    try {
+                        await fetch(`${sbUrl}/rest/v1/pengaturan?on_conflict=key`, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(rowSetting)
+                        });
+                    } catch (curErr) {
+                        console.warn('[SUPABASE TAHFIDZ CURRICULUM SYNC WARN]', curErr);
+                    }
+                }
 
                 // ==================== 5. BERITA & KABAR PESANTREN ====================
                 else if (action === 'saveBerita' || action === 'updateBerita') {

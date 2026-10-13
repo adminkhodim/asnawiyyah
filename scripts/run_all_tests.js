@@ -26,6 +26,7 @@ const ALL_CANDIDATE_SUITES = [
   { name: 'Redesain Portal Berita NU Online Suite', file: 'scripts/test_nu_news_portal.js' },
   { name: 'Wali Santri Quick Login (NIS & PIN) Suite', file: 'scripts/test_parent_quick_login.js' },
   { name: 'Wali Santri Belum Terhubung & Follow-Up WA Suite', file: 'scripts/test_wali_unlinked.js' },
+  { name: 'Tahfidz 30-Juz Curriculum & Program Flow Suite', file: 'scripts/test_curriculum_programs.js' },
   { name: 'Modular Apps Script Backend Verification', file: 'scratch/test_modular_backend.js' },
   { name: 'P0 Security Remediation Suite', file: 'scratch/test_p0_security_remediation.js' },
   { name: 'P1 Session TTL & Security Expiry Suite', file: 'scratch/test_p1_session_ttl.js' },

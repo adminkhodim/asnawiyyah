@@ -1,0 +1,167 @@
+/**
+ * Test Suite: Modul Kurikulum & Urutan Setoran Hafalan Tahfidz per Program
+ */
+const assert = require('assert');
+
+// Mock localStorage
+const storage = {};
+global.localStorage = {
+    getItem: (key) => storage[key] || null,
+    setItem: (key, val) => { storage[key] = String(val); },
+    removeItem: (key) => { delete storage[key]; }
+};
+
+// Mock APP_CONFIG
+global.APP_CONFIG = { storage: { keys: {} } };
+
+// Import or define logic matching js/tahfidz.js
+const TAHFIDZ_CURRICULUM_PRESETS = {
+    PRESET_A: {
+        id: 'PRESET_A',
+        name: 'Preset A (Mundur-Maju)',
+        order: [
+            30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+        ]
+    },
+    PRESET_B: {
+        id: 'PRESET_B',
+        name: 'Preset B (Juz \'Amma Awal)',
+        order: [
+            30,
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 26, 27, 28, 29
+        ]
+    },
+    PRESET_C: {
+        id: 'PRESET_C',
+        name: 'Preset C (Berurutan Maju)',
+        order: [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 26, 27, 28, 29, 30
+        ]
+    }
+};
+
+const TAHFIDZ_CURRICULUM_STORAGE_KEY = 'ASNAWIYYAH_TAHFIDZ_CURRICULUM_PROGRAMS_V1';
+
+function getTahfidzCurriculumMap() {
+    try {
+        const raw = localStorage.getItem(TAHFIDZ_CURRICULUM_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') return parsed;
+        }
+    } catch (e) {}
+    return {};
+}
+
+function getCurriculumOrderForProgram(programName) {
+    const map = getTahfidzCurriculumMap();
+    const pName = (programName || '').trim();
+    if (pName && map[pName] && Array.isArray(map[pName].order) && map[pName].order.length === 30) {
+        return map[pName].order;
+    }
+    if (pName) {
+        const matchKey = Object.keys(map).find(k => k.toLowerCase() === pName.toLowerCase());
+        if (matchKey && Array.isArray(map[matchKey].order) && map[matchKey].order.length === 30) {
+            return map[matchKey].order;
+        }
+    }
+    return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
+}
+
+function getJuzCurriculumIndex(juz, programName = null) {
+    const order = getCurriculumOrderForProgram(programName);
+    const idx = order.indexOf(Number(juz));
+    return idx !== -1 ? idx : 0;
+}
+
+function parseTahfidzLatestPage(halVal) {
+    if (halVal === null || halVal === undefined || halVal === '') return 1;
+    if (typeof halVal === 'number' && !isNaN(halVal)) {
+        return Math.min(20, Math.max(1, Math.round(halVal)));
+    }
+    const str = String(halVal).trim();
+    const matches = str.match(/\d+/g);
+    if (!matches || matches.length === 0) return 1;
+    const max = Math.max(...matches.map(n => Number(n)).filter(n => !isNaN(n)));
+    return Math.min(20, Math.max(1, max));
+}
+
+function getCurriculumProgress(juz, hal, programName = null) {
+    const r = getJuzCurriculumIndex(juz, programName);
+    const h = parseTahfidzLatestPage(hal);
+    const totalTuntas = r * 20 + h;
+    const percent = Math.min(100, Math.max(1, Math.round((totalTuntas / 600) * 100)));
+    return { rank: r, totalTuntas, percent };
+}
+
+function getNextCurriculumPosition(juz, hal, programName = null) {
+    const order = getCurriculumOrderForProgram(programName);
+    const r = order.indexOf(Number(juz));
+    const safeRank = r !== -1 ? r : 0;
+    const h = Number(hal) || 1;
+    if (h >= 20) {
+        if (safeRank < order.length - 1) {
+            return { juz: order[safeRank + 1], halaman: 1, khatam: false };
+        } else {
+            return { juz: order[safeRank], halaman: 20, khatam: true };
+        }
+    }
+    return { juz: order[safeRank], halaman: h + 1, khatam: false };
+}
+
+console.log("▶️  RUNNING: Modul Kurikulum & Urutan Setoran Hafalan Test Suite...");
+
+// TEST 1: Default fallback ke Preset A (Mulai Juz 30)
+const defaultOrder = getCurriculumOrderForProgram('Tahfidz Intensif');
+assert.strictEqual(defaultOrder[0], 30, 'Urutan pertama Preset A harus Juz 30');
+assert.strictEqual(defaultOrder[9], 21, 'Urutan ke-10 Preset A harus Juz 21');
+assert.strictEqual(defaultOrder[10], 1, 'Urutan ke-11 Preset A harus Juz 1');
+assert.strictEqual(defaultOrder[29], 20, 'Urutan ke-30 Preset A harus Juz 20');
+console.log("  ✅ Test 1 Passed: Default Preset A Mundur-Maju 30-21 lalu 1-20 valid.");
+
+// TEST 2: Konfigurasi Preset B (Juz 30 lalu 1-29) untuk 'Pesantren Tahfidz Anak'
+const curMap = {};
+curMap['Pesantren Tahfidz Anak'] = {
+    order: [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_B.order],
+    updatedAt: new Date().toISOString()
+};
+localStorage.setItem(TAHFIDZ_CURRICULUM_STORAGE_KEY, JSON.stringify(curMap));
+
+const anakOrder = getCurriculumOrderForProgram('Pesantren Tahfidz Anak');
+assert.strictEqual(anakOrder[0], 30, 'Anak urutan 1 harus Juz 30');
+assert.strictEqual(anakOrder[1], 1, 'Anak urutan 2 harus Juz 1');
+assert.strictEqual(anakOrder[29], 29, 'Anak urutan 30 harus Juz 29');
+console.log("  ✅ Test 2 Passed: Preset B Juz 30 lalu 1-29 untuk Pesantren Tahfidz Anak valid.");
+
+// TEST 3: Evaluasi Posisi & Rekomendasi Berikutnya (getNextCurriculumPosition)
+// Pada Program Anak: Setelah Juz 30 Halaman 20, lanjut ke Juz 1 Halaman 1!
+const nextAnak = getNextCurriculumPosition(30, 20, 'Pesantren Tahfidz Anak');
+assert.strictEqual(nextAnak.juz, 1, 'Setelah Juz 30 hlm 20 pada Program Anak harus Juz 1');
+assert.strictEqual(nextAnak.halaman, 1, 'Halaman harus 1');
+
+// Pada Program Intensif (Preset A): Setelah Juz 30 Halaman 20, lanjut ke Juz 29 Halaman 1!
+const nextIntensif = getNextCurriculumPosition(30, 20, 'Tahfidz Intensif');
+assert.strictEqual(nextIntensif.juz, 29, 'Setelah Juz 30 hlm 20 pada Program Intensif harus Juz 29');
+assert.strictEqual(nextIntensif.halaman, 1, 'Halaman harus 1');
+console.log("  ✅ Test 3 Passed: Rekomendasi posisi berikutnya adaptif sesuai program santri.");
+
+// TEST 4: Evaluasi Persentase Capaian (getCurriculumProgress)
+// Santri yang sedang di Juz 1 Halaman 20:
+// - Pada Program Anak (Preset B): Juz 1 berada di urutan rank 1 (total tuntas = 1*20 + 20 = 40 hal -> 7%)
+const progAnak = getCurriculumProgress(1, 20, 'Pesantren Tahfidz Anak');
+assert.strictEqual(progAnak.rank, 1);
+assert.strictEqual(progAnak.totalTuntas, 40);
+
+// - Pada Program Intensif (Preset A): Juz 1 berada di urutan rank 10 (total tuntas = 10*20 + 20 = 220 hal -> 37%)
+const progIntensif = getCurriculumProgress(1, 20, 'Tahfidz Intensif');
+assert.strictEqual(progIntensif.rank, 10);
+assert.strictEqual(progIntensif.totalTuntas, 220);
+console.log("  ✅ Test 4 Passed: Perhitungan akumulasi capaian & persentase akurat per program.");
+
+console.log("🎉 ALL CURRICULUM TEST CASES PASSED SUCCESSFULLY!");

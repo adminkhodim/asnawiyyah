@@ -500,6 +500,17 @@ function doPost(e) {
       return createJsonResponse(deleteTahfidzSesi(sId, token));
     }
 
+    if (action === "saveTahfidzCurriculumSettings" || action === "tahfidz.saveCurriculum" || action === "saveTahfidzCurriculum") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(saveTahfidzCurriculumSettings(payload.data || payload, token));
+    }
+
     // ========================================================
     // DATA PEGAWAI (ASATIDZ & KARYAWAN) ACTIONS (doPost)
     // ========================================================

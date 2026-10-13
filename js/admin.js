@@ -6950,6 +6950,7 @@
         window.deleteProgramReference = deleteProgramReference;
         window.populateAdminStudentProgramDropdown = populateAdminStudentProgramDropdown;
         window.populateAdminStudentProgramFilter = populateAdminStudentProgramFilter;
+        window.getAdminPesantrenPrograms = getAdminPesantrenPrograms;
 
         /**
          * Filter data santri secara real-time
