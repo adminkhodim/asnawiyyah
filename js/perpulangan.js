@@ -1330,13 +1330,59 @@
         const currentActor = (window.ASNIdentity && window.ASNIdentity.currentUser) || {};
         const isWali = (window.ASNIdentity && window.ASNIdentity.currentRole === 'WALI_SANTRI') || (typeof getCurrentUserRole === 'function' && getCurrentUserRole() === 'WALI_SANTRI');
 
+        // Resolusi Nama & ID Wali Santri secara otomatis
+        let resolvedWaliId = isWali ? (currentActor.id || currentActor.userId || currentActor.identityId || '') : (currentActor.id || currentActor.userId || '');
+        let resolvedWaliName = isWali ? (currentActor.name || '') : '';
+        let resolvedWaliPhone = isWali ? (currentActor.phone || currentActor.email || '') : '';
+
+        // Lookup data santri di cache untuk mengisi nama wali jika belum ada
+        const rawStudents = window.adminStudentsData || 
+            (typeof getStoredStudentsData === 'function' ? getStoredStudentsData() : null) ||
+            (localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE') ? JSON.parse(localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE')) : null) || [];
+        
+        const matchedStudent = Array.isArray(rawStudents) ? rawStudents.find(s => 
+            (studentId && (s.id === studentId || s.student_id === studentId || s.studentId === studentId)) ||
+            (studentNis && (s.nis === studentNis || s.studentNis === studentNis)) ||
+            (studentName && (s.name === studentName || s.nama === studentName))
+        ) : null;
+
+        if (matchedStudent) {
+            if (!resolvedWaliName) {
+                resolvedWaliName = matchedStudent.nama_wali || matchedStudent.wali || matchedStudent.nama_ayah || matchedStudent.nama_ibu || '';
+            }
+            if (!resolvedWaliPhone) {
+                resolvedWaliPhone = matchedStudent.no_hp_wali || matchedStudent.no_wa_wali || matchedStudent.telepon_wali || '';
+            }
+            if (!resolvedWaliId && matchedStudent.wali_id) {
+                resolvedWaliId = matchedStudent.wali_id;
+            }
+        }
+
+        // Jika hubungan penjemput adalah orang tua/wali kandung
+        if (!resolvedWaliName && penjemputNama && (penjemputHubungan.toLowerCase().includes('wali') || penjemputHubungan.toLowerCase().includes('orang tua') || penjemputHubungan.toLowerCase().includes('ayah') || penjemputHubungan.toLowerCase().includes('ibu'))) {
+            resolvedWaliName = penjemputNama;
+            if (!resolvedWaliPhone) resolvedWaliPhone = penjemputKontak;
+        }
+
+        // Fallback ke profil actor penginput jika belum ada
+        if (!resolvedWaliName && currentActor.name) {
+            resolvedWaliName = currentActor.name;
+            if (!resolvedWaliPhone && currentActor.phone) resolvedWaliPhone = currentActor.phone;
+        }
+        if (!resolvedWaliId) {
+            resolvedWaliId = currentActor.id || currentActor.userId || 'ADMIN_MANUAL';
+        }
+        if (!resolvedWaliName) {
+            resolvedWaliName = 'Wali Santri';
+        }
+
         const payload = {
             student_id: studentId,
             student_nis: studentNis,
             student_name: studentName,
-            wali_id: isWali ? (currentActor.id || currentActor.userId || '') : '',
-            wali_name: isWali ? (currentActor.name || penjemputNama) : '',
-            wali_phone: isWali ? (currentActor.phone || currentActor.email || penjemputKontak) : '',
+            wali_id: resolvedWaliId,
+            wali_name: resolvedWaliName,
+            wali_phone: resolvedWaliPhone,
             kategori: kategori || 'Izin Biasa',
             alasan: alasan,
             penjemput_nama: penjemputNama,

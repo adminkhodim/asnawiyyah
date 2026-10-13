@@ -2906,6 +2906,59 @@
                         } catch (e) {}
                     }
 
+                    // Resolusi Otomatis Nama Wali Santri & No WA sesuai wali_id di Supabase
+                    if ((!row.wali_name || row.wali_name === 'Wali Santri' || !row.wali_phone) && row.wali_id && row.wali_id !== 'ADMIN_MANUAL') {
+                        try {
+                            // 1. Cek di tabel users Supabase berdasarkan user_id
+                            const uRes = await fetch(`${sbUrl}/rest/v1/users?user_id=eq.${encodeURIComponent(row.wali_id)}&select=name,phone&limit=1`, { headers });
+                            if (uRes.ok) {
+                                const uData = await uRes.json();
+                                if (Array.isArray(uData) && uData.length > 0 && uData[0].name) {
+                                    row.wali_name = uData[0].name;
+                                    if (!row.wali_phone && uData[0].phone) row.wali_phone = uData[0].phone;
+                                }
+                            }
+                            // 2. Jika belum ditemukan, cek di tabel wali_identities berdasarkan identity_id
+                            if (!row.wali_name || row.wali_name === 'Wali Santri') {
+                                const wRes = await fetch(`${sbUrl}/rest/v1/wali_identities?identity_id=eq.${encodeURIComponent(row.wali_id)}&select=name,phone&limit=1`, { headers });
+                                if (wRes.ok) {
+                                    const wData = await wRes.json();
+                                    if (Array.isArray(wData) && wData.length > 0 && wData[0].name) {
+                                        row.wali_name = wData[0].name;
+                                        if (!row.wali_phone && wData[0].phone) row.wali_phone = wData[0].phone;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('[AUTO-RESOLVE WALI SUPABASE WARN]', e);
+                        }
+                    }
+
+                    // 3. Fallback ke profil data santri jika nama wali masih belum terisi
+                    if (!row.wali_name || row.wali_name === 'Wali Santri') {
+                        try {
+                            const cachedStudents = window.adminStudentsData || 
+                                (localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE') ? JSON.parse(localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE')) : null);
+                            if (Array.isArray(cachedStudents) && cachedStudents.length > 0) {
+                                const ms = cachedStudents.find(s => (row.student_nis && s.nis === row.student_nis) || (row.student_id && s.id === row.student_id) || (row.student_name && s.name === row.student_name));
+                                if (ms) {
+                                    if (ms.nama_wali || ms.wali || ms.nama_ayah || ms.nama_ibu) {
+                                        row.wali_name = ms.nama_wali || ms.wali || ms.nama_ayah || ms.nama_ibu;
+                                    }
+                                    if (!row.wali_phone && (ms.no_hp_wali || ms.no_wa_wali || ms.telepon_wali)) {
+                                        row.wali_phone = ms.no_hp_wali || ms.no_wa_wali || ms.telepon_wali;
+                                    }
+                                }
+                            }
+                        } catch (e) {}
+                    }
+
+                    if (!row.wali_name) {
+                        row.wali_name = (row.penjemput_nama && (row.penjemput_hubungan.toLowerCase().includes('wali') || row.penjemput_hubungan.toLowerCase().includes('orang tua') || row.penjemput_hubungan.toLowerCase().includes('ayah') || row.penjemput_hubungan.toLowerCase().includes('ibu'))) 
+                            ? row.penjemput_nama 
+                            : 'Wali Santri';
+                    }
+
                     await fetch(`${sbUrl}/rest/v1/izin_perpulangan`, {
                         method: 'POST',
                         headers,

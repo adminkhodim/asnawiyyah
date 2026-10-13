@@ -289,6 +289,10 @@ function doPost(e) {
       return createJsonResponse(deleteIzinPerpulangan(payload.data || payload, token));
     }
 
+    if (action === "autoFixMissingWaliNames" || action === "perpulangan.autoFixWaliNames") {
+      return createJsonResponse(autoFixMissingWaliNames());
+    }
+
     // ========================================================
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)

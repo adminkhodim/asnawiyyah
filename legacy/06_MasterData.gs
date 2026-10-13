@@ -2735,6 +2735,185 @@ function getIzinPerpulanganData(params = {}, token = null) {
 }
 
 /**
+ * Resolusi otomatis profil Wali Santri (Nama & No Telepon) berdasarkan wali_id
+ * Mencari dari Sheet Users, Sheet Wali_Identities, atau Sheet Students
+ */
+function resolveWaliInfo(waliId, studentId = "", studentNis = "") {
+  waliId = String(waliId || "").trim();
+  studentId = String(studentId || "").trim();
+  studentNis = String(studentNis || "").trim();
+
+  let name = "";
+  let phone = "";
+
+  try {
+    const ss = getDatabaseSpreadsheet();
+    if (!ss) return { name, phone };
+
+    // 1. Cari berdasarkan waliId di sheet Users
+    if (waliId && waliId !== "ADMIN_MANUAL") {
+      const userSheet = ss.getSheetByName("Users");
+      if (userSheet) {
+        const uData = userSheet.getDataRange().getValues();
+        if (uData && uData.length > 1) {
+          const uHeaders = uData[0].map(h => String(h || "").trim().toLowerCase());
+          const idIdx = uHeaders.indexOf("user_id");
+          const nameIdx = uHeaders.indexOf("name");
+          const phoneIdx = uHeaders.indexOf("phone");
+          if (idIdx !== -1 && nameIdx !== -1) {
+            for (let i = 1; i < uData.length; i++) {
+              if (String(uData[i][idIdx] || "").trim().toLowerCase() === waliId.toLowerCase()) {
+                name = String(uData[i][nameIdx] || "").trim();
+                if (phoneIdx !== -1) phone = String(uData[i][phoneIdx] || "").trim();
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Jika belum ditemukan, cari di sheet Wali_Identities
+      if (!name) {
+        const waliSheet = ss.getSheetByName("Wali_Identities");
+        if (waliSheet) {
+          const wData = waliSheet.getDataRange().getValues();
+          if (wData && wData.length > 1) {
+            const wHeaders = wData[0].map(h => String(h || "").trim().toLowerCase());
+            const idIdx = wHeaders.indexOf("identity_id") !== -1 ? wHeaders.indexOf("identity_id") : wHeaders.indexOf("user_id");
+            const nameIdx = wHeaders.indexOf("name");
+            const phoneIdx = wHeaders.indexOf("phone");
+            if (idIdx !== -1 && nameIdx !== -1) {
+              for (let i = 1; i < wData.length; i++) {
+                if (String(wData[i][idIdx] || "").trim().toLowerCase() === waliId.toLowerCase()) {
+                  name = String(wData[i][nameIdx] || "").trim();
+                  if (phoneIdx !== -1) phone = String(wData[i][phoneIdx] || "").trim();
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Jika belum ditemukan atau jika waliId kosong / ADMIN_MANUAL, cari di sheet Students berdasarkan studentId / studentNis
+    if (!name && (studentId || studentNis)) {
+      const stSheet = ss.getSheetByName("Students");
+      if (stSheet) {
+        const sData = stSheet.getDataRange().getValues();
+        if (sData && sData.length > 1) {
+          const sHeaders = sData[0].map(h => String(h || "").trim().toLowerCase());
+          const idIdx = sHeaders.indexOf("id") !== -1 ? sHeaders.indexOf("id") : sHeaders.indexOf("student_id");
+          const nisIdx = sHeaders.indexOf("nis");
+          let waliNameIdx = sHeaders.indexOf("nama_wali");
+          if (waliNameIdx === -1) waliNameIdx = sHeaders.indexOf("wali");
+          if (waliNameIdx === -1) waliNameIdx = sHeaders.indexOf("nama_ayah");
+          if (waliNameIdx === -1) waliNameIdx = sHeaders.indexOf("nama_ibu");
+
+          let waliPhoneIdx = sHeaders.indexOf("no_hp_wali");
+          if (waliPhoneIdx === -1) waliPhoneIdx = sHeaders.indexOf("no_wa_wali");
+          if (waliPhoneIdx === -1) waliPhoneIdx = sHeaders.indexOf("telepon_wali");
+
+          for (let i = 1; i < sData.length; i++) {
+            const rowId = idIdx !== -1 ? String(sData[i][idIdx] || "").trim() : "";
+            const rowNis = nisIdx !== -1 ? String(sData[i][nisIdx] || "").trim() : "";
+            if ((studentId && rowId === studentId) || (studentNis && rowNis === studentNis)) {
+              if (waliNameIdx !== -1) name = String(sData[i][waliNameIdx] || "").trim();
+              if (waliPhoneIdx !== -1 && !phone) phone = String(sData[i][waliPhoneIdx] || "").trim();
+              break;
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[RESOLVE WALI INFO ERROR]", err);
+  }
+
+  return { name, phone };
+}
+
+/**
+ * Memperbaiki dan mengisi otomatis baris-baris izin perpulangan yang Nama_Wali-nya masih kosong
+ */
+function autoFixMissingWaliNames() {
+  try {
+    const sheet = getIzinSheet();
+    if (!sheet) throw new Error("Gagal mengakses database Izin_Perpulangan.");
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) return { status: "success", fixedCount: 0 };
+
+    const headers = data[0].map(h => String(h || "").trim());
+    const idIzinIdx = headers.indexOf("ID_Izin");
+    const stIdIdx = headers.indexOf("Student_ID");
+    const stNisIdx = headers.indexOf("NIS");
+    const waliIdIdx = headers.indexOf("Wali_ID");
+    const waliNameIdx = headers.indexOf("Nama_Wali");
+    const waliPhoneIdx = headers.indexOf("No_WA_Wali");
+    const penjNameIdx = headers.indexOf("Nama_Penjemput");
+    const penjHubIdx = headers.indexOf("Hubungan_Penjemput");
+    const penjKontakIdx = headers.indexOf("Kontak_Penjemput");
+
+    if (waliIdIdx === -1 || waliNameIdx === -1) {
+      throw new Error("Kolom Wali_ID atau Nama_Wali tidak ditemukan di spreadsheet.");
+    }
+
+    let fixedCount = 0;
+    const fixedRows = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const rowNum = i + 1;
+      const currentWaliName = String(data[i][waliNameIdx] || "").trim();
+      const currentWaliPhone = waliPhoneIdx !== -1 ? String(data[i][waliPhoneIdx] || "").trim() : "";
+      const currentWaliId = String(data[i][waliIdIdx] || "").trim();
+      const currentStId = stIdIdx !== -1 ? String(data[i][stIdIdx] || "").trim() : "";
+      const currentStNis = stNisIdx !== -1 ? String(data[i][stNisIdx] || "").trim() : "";
+      const penjName = penjNameIdx !== -1 ? String(data[i][penjNameIdx] || "").trim() : "";
+      const penjHub = penjHubIdx !== -1 ? String(data[i][penjHubIdx] || "").trim().toLowerCase() : "";
+      const penjKontak = penjKontakIdx !== -1 ? String(data[i][penjKontakIdx] || "").trim() : "";
+
+      // Jika Nama_Wali kosong atau bernilai default generik
+      if (!currentWaliName || currentWaliName === "Wali Santri") {
+        const resolved = resolveWaliInfo(currentWaliId, currentStId, currentStNis);
+        let finalName = resolved.name;
+        let finalPhone = resolved.phone || currentWaliPhone;
+
+        if (!finalName && penjName && (penjHub.includes("wali") || penjHub.includes("orang tua") || penjHub.includes("ayah") || penjHub.includes("ibu"))) {
+          finalName = penjName;
+          if (!finalPhone) finalPhone = penjKontak;
+        }
+
+        if (finalName && finalName !== currentWaliName) {
+          sheet.getRange(rowNum, waliNameIdx + 1).setValue(finalName);
+          if (finalPhone && waliPhoneIdx !== -1 && (!currentWaliPhone || currentWaliPhone === "")) {
+            sheet.getRange(rowNum, waliPhoneIdx + 1).setValue(finalPhone);
+          }
+          fixedCount++;
+          fixedRows.push({
+            idIzin: idIzinIdx !== -1 ? data[i][idIzinIdx] : rowNum,
+            waliId: currentWaliId,
+            namaWali: finalName,
+            phone: finalPhone
+          });
+        }
+      }
+    }
+
+    return {
+      status: "success",
+      success: true,
+      message: `Berhasil mengisi otomatis ${fixedCount} data Nama_Wali sesuai Wali_ID di Spreadsheet.`,
+      fixedCount,
+      fixedRows
+    };
+  } catch (err) {
+    console.error("[AUTO FIX WALI ERROR]", err);
+    return { status: "error", success: false, message: err.message };
+  }
+}
+
+/**
  * Menyimpan pengajuan izin baru (Wali Santri / Admin)
  */
 function submitIzinPerpulangan(payload = {}, token = null) {
@@ -2750,14 +2929,14 @@ function submitIzinPerpulangan(payload = {}, token = null) {
     const studentId = String(payload.studentId || payload.student_id || "").trim();
     const studentNis = String(payload.studentNis || payload.student_nis || payload.nis || "").trim();
     const studentName = String(payload.studentName || payload.student_name || payload.nama || "").trim();
-    const waliId = String(payload.waliId || payload.wali_id || "ADMIN_MANUAL").trim();
-    const waliName = String(payload.waliName || payload.wali_name || "Wali Santri").trim();
-    const waliPhone = String(payload.waliPhone || payload.wali_phone || "").trim();
+    let waliId = String(payload.waliId || payload.wali_id || "ADMIN_MANUAL").trim();
+    let waliName = String(payload.waliName || payload.wali_name || "").trim();
+    let waliPhone = String(payload.waliPhone || payload.wali_phone || "").trim();
     const kategori = String(payload.kategori || "Pulang ke Rumah / Libur Terjadwal").trim();
     const alasan = String(payload.alasan || "").trim();
-    const penjemputNama = String(payload.penjemputNama || payload.penjemput_nama || waliName).trim();
+    let penjemputNama = String(payload.penjemputNama || payload.penjemput_nama || "").trim();
     const penjemputHubungan = String(payload.penjemputHubungan || payload.penjemput_hubungan || "Orang Tua").trim();
-    const penjemputKontak = String(payload.penjemputKontak || payload.penjemput_kontak || waliPhone).trim();
+    let penjemputKontak = String(payload.penjemputKontak || payload.penjemput_kontak || "").trim();
     const tglMulai = String(payload.tglMulai || payload.tgl_mulai || "").trim();
     const jamMulai = String(payload.jamMulai || payload.jam_mulai || "08:00").trim();
     const tglKembali = String(payload.tglKembali || payload.tgl_kembali || "").trim();
@@ -2769,6 +2948,22 @@ function submitIzinPerpulangan(payload = {}, token = null) {
     if (!studentName) throw new Error("Nama santri wajib disertakan.");
     if (!tglMulai || !tglKembali) throw new Error("Tanggal berangkat dan tanggal kembali wajib diisi.");
     if (!alasan) throw new Error("Alasan perizinan wajib diisi.");
+
+    // Resolusi Otomatis Nama Wali Santri & No WA sesuai waliId
+    if (!waliName || waliName === "Wali Santri" || !waliPhone) {
+      const resolved = resolveWaliInfo(waliId, studentId, studentNis);
+      if (resolved.name) waliName = resolved.name;
+      if (resolved.phone && !waliPhone) waliPhone = resolved.phone;
+    }
+
+    if (!waliName && penjemputNama && (penjemputHubungan.toLowerCase().includes("wali") || penjemputHubungan.toLowerCase().includes("orang tua") || penjemputHubungan.toLowerCase().includes("ayah") || penjemputHubungan.toLowerCase().includes("ibu"))) {
+      waliName = penjemputNama;
+      if (!waliPhone) waliPhone = penjemputKontak;
+    }
+
+    if (!waliName) waliName = "Wali Santri";
+    if (!penjemputNama) penjemputNama = waliName;
+    if (!penjemputKontak) penjemputKontak = waliPhone;
 
     const newRow = [
       idIzin, studentId, studentNis, studentName,
