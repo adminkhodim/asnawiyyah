@@ -6377,8 +6377,103 @@
             }
         }
 
+        // =====================================================================
+        // REFERENSI MASTER PROGRAM PESANTREN (UNTUK DATA SANTRI & PPDB)
+        // =====================================================================
+        const DEFAULT_PESANTREN_PROGRAMS = [
+            { id: 'prog-tahfidz-intensif', name: 'Tahfidz Intensif', status: 'ACTIVE', description: 'Program hafalan Al-Qur\'an intensif 30 Juz santri mukim' },
+            { id: 'prog-tahfidz-anak', name: 'Pesantren Tahfidz Anak', status: 'ACTIVE', description: 'Pendidikan Al-Qur\'an tahfidz usia dini / dasar' },
+            { id: 'prog-dewasa-putra', name: 'Pesantren Dewasa Putra', status: 'ACTIVE', description: 'Program santri dewasa ikhwan / mahasiswa / pekerja' },
+            { id: 'prog-dewasa-putri', name: 'Pesantren Dewasa Putri', status: 'ACTIVE', description: 'Program santri dewasa akhwat / mahasiswi' },
+            { id: 'prog-kitab-kuning', name: 'Kajian Kitab Kuning', status: 'ACTIVE', description: 'Pendalaman kitab salaf dan gramatika Arab' },
+            { id: 'prog-madrasah-diniyah', name: 'Madrasah Diniyah', status: 'ACTIVE', description: 'Pendidikan formal diniyah takmiliyah' },
+            { id: 'prog-reguler', name: 'Reguler', status: 'ACTIVE', description: 'Program pesantren reguler umum' }
+        ];
+
+        function getAdminPesantrenPrograms() {
+            try {
+                const stored = localStorage.getItem('ASNAWIYYAH_PESANTREN_PROGRAMS_V1');
+                let list = [];
+                if (stored) {
+                    list = JSON.parse(stored);
+                }
+                if (!Array.isArray(list) || list.length === 0) {
+                    list = JSON.parse(JSON.stringify(DEFAULT_PESANTREN_PROGRAMS));
+                }
+
+                // Auto-merge program yang ada di data santri aktual agar tidak hilang
+                if (Array.isArray(adminStudentsData) && adminStudentsData.length > 0) {
+                    const existingNames = new Set(list.map(p => (p.name || '').trim().toLowerCase()));
+                    adminStudentsData.forEach(s => {
+                        const progName = (s.program || '').trim();
+                        if (progName && !existingNames.has(progName.toLowerCase())) {
+                            list.push({
+                                id: 'prog-' + Math.random().toString(36).substring(2, 9),
+                                name: progName,
+                                status: 'ACTIVE',
+                                description: 'Program terdata dari Master Santri'
+                            });
+                            existingNames.add(progName.toLowerCase());
+                        }
+                    });
+                }
+
+                return list;
+            } catch (e) {
+                console.warn("Gagal parse master program:", e);
+                return JSON.parse(JSON.stringify(DEFAULT_PESANTREN_PROGRAMS));
+            }
+        }
+
+        function saveAdminPesantrenPrograms(list) {
+            try {
+                localStorage.setItem('ASNAWIYYAH_PESANTREN_PROGRAMS_V1', JSON.stringify(list));
+            } catch (e) {
+                console.warn("Gagal simpan master program ke localStorage:", e);
+            }
+        }
+
         /**
-         * Isi dropdown filter program dari list santri
+         * Isi opsi dropdown Program Pesantren pada modal Tambah/Edit Santri
+         */
+        function populateAdminStudentProgramDropdown(selectedVal = '') {
+            const selectEl = document.getElementById('admin-student-form-program');
+            if (!selectEl) return;
+
+            const programs = getAdminPesantrenPrograms();
+            let optionsHtml = '';
+            let valFound = false;
+            const targetVal = (selectedVal || '').trim().toLowerCase();
+
+            programs.forEach(prog => {
+                const name = (prog.name || '').trim();
+                if (!name) return;
+                const isSelected = Boolean(targetVal && targetVal === name.toLowerCase());
+                if (isSelected) valFound = true;
+
+                const isInactive = (prog.status || 'ACTIVE').toUpperCase() !== 'ACTIVE';
+                const label = isInactive ? `${name} (Nonaktif)` : name;
+
+                if (!isInactive || isSelected) {
+                    optionsHtml += `<option value="${escapeHtml(name)}" ${isSelected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+                }
+            });
+
+            if (selectedVal && !valFound) {
+                optionsHtml = `<option value="${escapeHtml(selectedVal.trim())}" selected>${escapeHtml(selectedVal.trim())}</option>` + optionsHtml;
+            }
+
+            selectEl.innerHTML = optionsHtml;
+            if (selectedVal) {
+                selectEl.value = selectedVal.trim();
+            } else if (programs.length > 0) {
+                const firstActive = programs.find(p => (p.status || 'ACTIVE').toUpperCase() === 'ACTIVE');
+                if (firstActive) selectEl.value = firstActive.name;
+            }
+        }
+
+        /**
+         * Isi dropdown filter program dari master program dan list santri
          */
         function populateAdminStudentProgramFilter() {
             const selectEl = document.getElementById('admin-student-filter-program');
@@ -6386,21 +6481,302 @@
 
             const currentVal = selectEl.value;
             const programs = new Set();
-            adminStudentsData.forEach(s => {
-                if (s.program && s.program.trim()) {
-                    programs.add(s.program.trim());
-                }
+
+            // Ambil dari master program
+            const masterList = getAdminPesantrenPrograms();
+            masterList.forEach(p => {
+                if (p.name && p.name.trim()) programs.add(p.name.trim());
             });
+
+            // Ambil dari list santri jika ada variasi lain
+            if (Array.isArray(adminStudentsData)) {
+                adminStudentsData.forEach(s => {
+                    if (s.program && s.program.trim()) {
+                        programs.add(s.program.trim());
+                    }
+                });
+            }
 
             let html = '<option value="ALL">Semua Program</option>';
             Array.from(programs).sort().forEach(prog => {
                 html += `<option value="${escapeHtml(prog)}">${escapeHtml(prog)}</option>`;
             });
             selectEl.innerHTML = html;
-            if (currentVal && Array.from(programs).includes(currentVal)) {
+            if (currentVal && (currentVal === 'ALL' || Array.from(programs).includes(currentVal))) {
                 selectEl.value = currentVal;
             }
         }
+
+        /**
+         * Buka modal Kelola Program Pesantren
+         */
+        function openAdminProgramManagerModal() {
+            const modal = document.getElementById('modal-admin-program-manager');
+            if (!modal) return;
+            resetProgramReferenceForm();
+            renderAdminProgramManagerTable();
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Tutup modal Kelola Program Pesantren
+         */
+        function closeAdminProgramManagerModal() {
+            const modal = document.getElementById('modal-admin-program-manager');
+            if (modal) modal.classList.add('hidden');
+            resetProgramReferenceForm();
+            // Sinkronkan dropdown modal santri jika sedang terbuka
+            const currentSelected = document.getElementById('admin-student-form-program')?.value || '';
+            populateAdminStudentProgramDropdown(currentSelected);
+            // Sinkronkan filter santri
+            populateAdminStudentProgramFilter();
+        }
+
+        /**
+         * Reset form tambah/edit program di dalam modal
+         */
+        function resetProgramReferenceForm() {
+            const form = document.getElementById('adminProgramReferenceForm');
+            if (form) form.reset();
+            const idInput = document.getElementById('admin-program-input-id');
+            if (idInput) idInput.value = '';
+            const statusSelect = document.getElementById('admin-program-input-status');
+            if (statusSelect) statusSelect.value = 'ACTIVE';
+
+            const titleEl = document.getElementById('admin-program-form-title');
+            if (titleEl) {
+                titleEl.innerHTML = '<i class="fa-solid fa-circle-plus text-emerald-500"></i><span>Tambah Referensi Program Baru</span>';
+            }
+            const btnText = document.getElementById('admin-program-btn-save-text');
+            if (btnText) btnText.innerText = 'Simpan Program';
+            const btnCancel = document.getElementById('admin-program-btn-cancel-edit');
+            if (btnCancel) btnCancel.classList.add('hidden');
+        }
+
+        /**
+         * Render tabel program di dalam modal kelola
+         */
+        function renderAdminProgramManagerTable() {
+            const tbody = document.getElementById('admin-program-table-body');
+            const badgeCount = document.getElementById('admin-program-badge-count');
+            if (!tbody) return;
+
+            const programs = getAdminPesantrenPrograms();
+            if (badgeCount) badgeCount.innerText = `${programs.length} Program`;
+
+            // Hitung distribusi santri per program dari adminStudentsData
+            const studentCounts = {};
+            if (Array.isArray(adminStudentsData)) {
+                adminStudentsData.forEach(s => {
+                    const p = (s.program || '').trim().toLowerCase();
+                    if (p) studentCounts[p] = (studentCounts[p] || 0) + 1;
+                });
+            }
+
+            if (programs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                            <i class="fa-solid fa-folder-open text-2xl mb-1.5 block"></i>
+                            Belum ada referensi program. Tambahkan program baru di atas.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            programs.forEach((prog, idx) => {
+                const count = studentCounts[(prog.name || '').trim().toLowerCase()] || 0;
+                const isActive = (prog.status || 'ACTIVE').toUpperCase() === 'ACTIVE';
+                const statusBadge = isActive 
+                    ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400">Aktif</span>'
+                    : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Nonaktif</span>';
+
+                const studentBadge = count > 0
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200/60 dark:border-cyan-800/40">${count} Santri</span>`
+                    : '<span class="text-[11px] text-slate-400 dark:text-slate-500">0 Santri</span>';
+
+                html += `
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1f2d3d] transition">
+                        <td class="py-2.5 px-3 text-center text-slate-400 font-semibold">${idx + 1}</td>
+                        <td class="py-2.5 px-3">
+                            <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                <span>${escapeHtml(prog.name)}</span>
+                                ${statusBadge}
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3 hidden sm:table-cell text-slate-500 dark:text-slate-400 text-[11px]">
+                            ${escapeHtml(prog.description || '-')}
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            ${studentBadge}
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <div class="flex items-center justify-center space-x-1.5">
+                                <button type="button" onclick="editProgramReference('${escapeHtml(prog.id)}')" class="w-7 h-7 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center transition active:scale-95" title="Edit Program">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button type="button" onclick="deleteProgramReference('${escapeHtml(prog.id)}')" class="w-7 h-7 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg flex items-center justify-center transition active:scale-95" title="Hapus Program">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        /**
+         * Simpan (Tambah baru / Update) referensi program
+         */
+        function handleSaveProgramReference(event) {
+            if (event) event.preventDefault();
+
+            const idInput = document.getElementById('admin-program-input-id');
+            const nameInput = document.getElementById('admin-program-input-name');
+            const statusSelect = document.getElementById('admin-program-input-status');
+            const descInput = document.getElementById('admin-program-input-desc');
+
+            const progId = (idInput?.value || '').trim();
+            const progName = (nameInput?.value || '').trim();
+            const progStatus = statusSelect?.value || 'ACTIVE';
+            const progDesc = (descInput?.value || '').trim();
+
+            if (!progName) {
+                if (typeof showToast === 'function') showToast("⚠️ Nama program wajib diisi!");
+                return;
+            }
+
+            const list = getAdminPesantrenPrograms();
+
+            if (progId) {
+                // EDIT MODE
+                const idx = list.findIndex(p => p.id === progId);
+                if (idx !== -1) {
+                    // Cek duplikasi nama dengan item lain
+                    const duplicate = list.some((p, i) => i !== idx && (p.name || '').trim().toLowerCase() === progName.toLowerCase());
+                    if (duplicate) {
+                        if (typeof showToast === 'function') showToast("⚠️ Nama program sudah digunakan oleh referensi lain.");
+                        return;
+                    }
+
+                    const oldName = list[idx].name;
+                    list[idx].name = progName;
+                    list[idx].status = progStatus;
+                    list[idx].description = progDesc;
+
+                    // Jika nama berubah, update juga referensi santri di memori jika ada
+                    if (oldName !== progName && Array.isArray(adminStudentsData)) {
+                        adminStudentsData.forEach(s => {
+                            if ((s.program || '').trim().toLowerCase() === oldName.toLowerCase()) {
+                                s.program = progName;
+                            }
+                        });
+                    }
+
+                    saveAdminPesantrenPrograms(list);
+                    if (typeof showToast === 'function') showToast(`✅ Program "${progName}" berhasil diperbarui.`);
+                }
+            } else {
+                // TAMBAH MODE
+                const duplicate = list.some(p => (p.name || '').trim().toLowerCase() === progName.toLowerCase());
+                if (duplicate) {
+                    if (typeof showToast === 'function') showToast("⚠️ Nama program sudah terdaftar!");
+                    return;
+                }
+
+                const newProg = {
+                    id: 'prog-' + Math.random().toString(36).substring(2, 9),
+                    name: progName,
+                    status: progStatus,
+                    description: progDesc
+                };
+                list.push(newProg);
+                saveAdminPesantrenPrograms(list);
+                if (typeof showToast === 'function') showToast(`✅ Program baru "${progName}" berhasil ditambahkan.`);
+            }
+
+            resetProgramReferenceForm();
+            renderAdminProgramManagerTable();
+
+            // Update dropdown di form santri dan filter santri
+            const currentSelected = document.getElementById('admin-student-form-program')?.value || '';
+            populateAdminStudentProgramDropdown(currentSelected || progName);
+            populateAdminStudentProgramFilter();
+        }
+
+        /**
+         * Edit referensi program (isi ke form modal)
+         */
+        function editProgramReference(id) {
+            const list = getAdminPesantrenPrograms();
+            const prog = list.find(p => p.id === id);
+            if (!prog) return;
+
+            document.getElementById('admin-program-input-id').value = prog.id;
+            document.getElementById('admin-program-input-name').value = prog.name || '';
+            document.getElementById('admin-program-input-status').value = prog.status || 'ACTIVE';
+            document.getElementById('admin-program-input-desc').value = prog.description || '';
+
+            const titleEl = document.getElementById('admin-program-form-title');
+            if (titleEl) {
+                titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-500"></i><span>Edit Program: ${escapeHtml(prog.name)}</span>`;
+            }
+            const btnText = document.getElementById('admin-program-btn-save-text');
+            if (btnText) btnText.innerText = 'Perbarui Program';
+            const btnCancel = document.getElementById('admin-program-btn-cancel-edit');
+            if (btnCancel) btnCancel.classList.remove('hidden');
+
+            document.getElementById('admin-program-input-name')?.focus();
+        }
+
+        /**
+         * Hapus referensi program (dengan konfirmasi aman)
+         */
+        function deleteProgramReference(id) {
+            const list = getAdminPesantrenPrograms();
+            const prog = list.find(p => p.id === id);
+            if (!prog) return;
+
+            // Hitung santri yang sedang menggunakan program ini
+            let count = 0;
+            if (Array.isArray(adminStudentsData)) {
+                count = adminStudentsData.filter(s => (s.program || '').trim().toLowerCase() === (prog.name || '').trim().toLowerCase()).length;
+            }
+
+            let confirmMsg = `Hapus referensi program "${prog.name}"?`;
+            if (count > 0) {
+                confirmMsg = `⚠️ PERINGATAN: Program "${prog.name}" saat ini digunakan oleh ${count} data santri!\n\nJika dihapus dari daftar referensi, data santri tidak akan terhapus namun program ini tidak lagi muncul sebagai opsi pilihan baku.\n\nApakah Anda tetap ingin menghapus program ini dari referensi?`;
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            const updatedList = list.filter(p => p.id !== id);
+            saveAdminPesantrenPrograms(updatedList);
+
+            if (typeof showToast === 'function') showToast(`🗑️ Referensi program "${prog.name}" dihapus.`);
+
+            resetProgramReferenceForm();
+            renderAdminProgramManagerTable();
+
+            // Refresh dropdown dan filter
+            const currentSelected = document.getElementById('admin-student-form-program')?.value || '';
+            populateAdminStudentProgramDropdown(currentSelected);
+            populateAdminStudentProgramFilter();
+        }
+
+        window.openAdminProgramManagerModal = openAdminProgramManagerModal;
+        window.closeAdminProgramManagerModal = closeAdminProgramManagerModal;
+        window.resetProgramReferenceForm = resetProgramReferenceForm;
+        window.renderAdminProgramManagerTable = renderAdminProgramManagerTable;
+        window.handleSaveProgramReference = handleSaveProgramReference;
+        window.editProgramReference = editProgramReference;
+        window.deleteProgramReference = deleteProgramReference;
+        window.populateAdminStudentProgramDropdown = populateAdminStudentProgramDropdown;
+        window.populateAdminStudentProgramFilter = populateAdminStudentProgramFilter;
 
         /**
          * Filter data santri secara real-time
@@ -6651,7 +7027,7 @@
                 document.getElementById('admin-student-form-name').value = student.name || '';
                 document.getElementById('admin-student-form-gender').value = (student.gender || 'L').toUpperCase() === 'P' ? 'P' : 'L';
                 document.getElementById('admin-student-form-birthdate').value = student.birthDate || student.birth_date || '';
-                document.getElementById('admin-student-form-program').value = student.program || 'Reguler';
+                populateAdminStudentProgramDropdown(student.program || 'Tahfidz Intensif');
                 document.getElementById('admin-student-form-status').value = (student.status || 'ACTIVE').toUpperCase() === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
                 
                 const photoUrl = student.photoUrl || student.photo_url || '';
@@ -6675,7 +7051,7 @@
                 document.getElementById('admin-student-form-id').value = '';
                 document.getElementById('admin-student-form-photo-url').value = '';
                 document.getElementById('admin-student-form-gender').value = 'L';
-                document.getElementById('admin-student-form-program').value = 'Reguler';
+                populateAdminStudentProgramDropdown('Tahfidz Intensif');
                 document.getElementById('admin-student-form-status').value = 'ACTIVE';
 
                 if (previewImg) previewImg.classList.add('hidden');

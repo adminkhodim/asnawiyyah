@@ -8174,6 +8174,10 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
+                        <button type="button" onclick="openAdminProgramManagerModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95" title="Kelola Referensi Program Pesantren">
+                            <i class="fa-solid fa-graduation-cap text-xs"></i>
+                            <span class="hidden sm:inline">Kelola Program</span>
+                        </button>
                         <button type="button" onclick="openAdminStudentModal()" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
                             <i class="fa-solid fa-user-plus text-xs"></i>
                             <span class="hidden sm:inline">Tambah Santri</span>
@@ -11719,17 +11723,18 @@
 
                         <!-- Program Santri -->
                         <div>
-                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
-                                Program Pesantren <span class="text-rose-500">*</span>
-                            </label>
-                            <input type="text" id="admin-student-form-program" required list="admin-student-program-list" placeholder="Contoh: Tahfidz Al-Qur'an" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
-                            <datalist id="admin-student-program-list">
-                                <option value="Tahfidz Anak"></option>
-                                <option value="Tahfidz Al-Qur'an"></option>
-                                <option value="Kitab Kuning"></option>
-                                <option value="Madrasah Diniyah"></option>
-                                <option value="Reguler"></option>
-                            </datalist>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs">
+                                    Program Pesantren <span class="text-rose-500">*</span>
+                                </label>
+                                <button type="button" onclick="openAdminProgramManagerModal()" class="text-[11px] text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold flex items-center space-x-1 transition active:scale-95" title="Kelola Referensi Program">
+                                    <i class="fa-solid fa-gear text-[10px]"></i>
+                                    <span>Kelola Program</span>
+                                </button>
+                            </div>
+                            <select id="admin-student-form-program" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 focus:bg-white transition">
+                                <!-- Populated dynamically via populateAdminStudentProgramDropdown -->
+                            </select>
                         </div>
 
                         <!-- Status Santri -->
@@ -11778,6 +11783,119 @@
                 <button type="button" id="admin-student-confirm-delete-btn" onclick="executeDeleteAdminStudent()" class="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition active:scale-95 flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-trash"></i>
                     <span>Ya, Hapus</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL KELOLA REFERENSI PROGRAM PESANTREN ==================== -->
+    <div id="modal-admin-program-manager" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] animate-scale-up">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Kelola Program Pesantren</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Referensi pilihan dropdown Program Pesantren pada Data Santri</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminProgramManagerModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition active:scale-95" title="Tutup">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-4 md:p-5 overflow-y-auto space-y-4">
+                <!-- FORM TAMBAH / EDIT PROGRAM -->
+                <div class="bg-slate-50 dark:bg-[#1c2836] p-4 rounded-2xl border border-slate-200/80 dark:border-[#253447]">
+                    <div class="flex items-center justify-between mb-3">
+                        <span id="admin-program-form-title" class="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-circle-plus text-emerald-500"></i>
+                            <span>Tambah Referensi Program Baru</span>
+                        </span>
+                        <button type="button" id="admin-program-btn-cancel-edit" onclick="resetProgramReferenceForm()" class="text-[11px] text-rose-500 hover:text-rose-600 font-bold hidden flex items-center space-x-1">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Batal Edit</span>
+                        </button>
+                    </div>
+
+                    <form id="adminProgramReferenceForm" onsubmit="handleSaveProgramReference(event)" class="space-y-3">
+                        <input type="hidden" id="admin-program-input-id" value="">
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                    Nama Program <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="text" id="admin-program-input-name" required placeholder="Contoh: Tahfidz Intensif" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 transition">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                    Status Program <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="admin-program-input-status" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 transition">
+                                    <option value="ACTIVE">Aktif (ACTIVE)</option>
+                                    <option value="INACTIVE">Nonaktif (INACTIVE)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                                Deskripsi / Catatan Singkat
+                            </label>
+                            <input type="text" id="admin-program-input-desc" placeholder="Contoh: Program santri mukim tahfidz 30 juz..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-[#15202d] text-slate-800 dark:text-slate-100 transition">
+                        </div>
+
+                        <div class="flex items-center justify-end pt-1">
+                            <button type="submit" id="admin-program-btn-save" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span id="admin-program-btn-save-text">Simpan Program</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TABEL REFERENSI PROGRAM -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200">Daftar Referensi Program</h4>
+                            <span id="admin-program-badge-count" class="px-2 py-0.5 bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-400 font-bold text-[10px] rounded-full">0 Program</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-500">Klik Edit / Hapus untuk mengelola</span>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-[#253447]">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-[#253447]">
+                                    <th class="py-2.5 px-3 text-center w-10">No</th>
+                                    <th class="py-2.5 px-3">Nama Program</th>
+                                    <th class="py-2.5 px-3 hidden sm:table-cell">Deskripsi</th>
+                                    <th class="py-2.5 px-3 text-center">Santri Aktif</th>
+                                    <th class="py-2.5 px-3 text-center w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-program-table-body" class="divide-y divide-slate-100 dark:divide-[#253447] text-slate-700 dark:text-slate-200">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-info text-cyan-500"></i>
+                    <span class="hidden sm:inline">Pilihan program aktif langsung tersinkron ke dropdown Santri & Filter.</span>
+                </span>
+                <button type="button" onclick="closeAdminProgramManagerModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition active:scale-95">
+                    Selesai & Tutup
                 </button>
             </div>
         </div>
