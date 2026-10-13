@@ -188,7 +188,17 @@
             // Filter pending approval berdasarkan peran
             let pendingItems = [];
             if (roleUpper === 'PENGASUH') {
-                pendingItems = list.filter(item => String(item.status || '').toUpperCase() === 'MENUNGGU_PENGASUH');
+                pendingItems = list.filter(item => {
+                    const st = String(item.status || '').toUpperCase();
+                    return st === 'MENUNGGU_PENGASUH' || st === 'MENUNGGU_PENGURUS';
+                }).sort((a, b) => {
+                    // Prioritaskan Menunggu Pengasuh di urutan paling atas
+                    const aIsPengasuh = String(a.status || '').toUpperCase() === 'MENUNGGU_PENGASUH';
+                    const bIsPengasuh = String(b.status || '').toUpperCase() === 'MENUNGGU_PENGASUH';
+                    if (aIsPengasuh && !bIsPengasuh) return -1;
+                    if (!aIsPengasuh && bIsPengasuh) return 1;
+                    return 0;
+                });
             } else if (roleUpper === 'SUPER_ADMIN' || roleUpper === 'ADMIN') {
                 pendingItems = list.filter(item => {
                     const st = String(item.status || '').toUpperCase();
@@ -301,7 +311,7 @@
             } else if (typeof showAdminView === 'function') {
                 showAdminView('perpulangan');
             }
-            if (window.ASNPerpulangan && typeof window.ASNPerpulangan.openModalApproval === 'function') {
+            if (izinId && window.ASNPerpulangan && typeof window.ASNPerpulangan.openModalApproval === 'function') {
                 setTimeout(() => {
                     window.ASNPerpulangan.openModalApproval(izinId);
                 }, 300);

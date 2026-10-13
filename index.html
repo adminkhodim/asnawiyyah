@@ -5067,52 +5067,7 @@
                 </div>
             </header>
 
-            <!-- ================= POPOVER PEMBERITAHUAN & APPROVAL IZIN (RESPONSIF MOBILE & DESKTOP) ================= -->
-            <div id="admin-notif-dropdown" class="hidden fixed inset-x-3 top-14 sm:inset-auto sm:right-6 sm:top-14 w-auto sm:w-96 max-w-sm sm:max-w-md mx-auto sm:mx-0 bg-white dark:bg-[#15202d] rounded-3xl shadow-2xl shadow-slate-900/30 dark:shadow-black/80 border border-slate-200/90 dark:border-slate-700/80 p-3.5 z-50 animate-fade-in-up">
-                <!-- Header Notifikasi -->
-                <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
-                            <i class="fa-solid fa-bell"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight">Pemberitahuan Izin</h4>
-                            <p class="text-[9.5px] text-slate-400">Persetujuan perpulangan santri</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <!-- Uji Suara Chime -->
-                        <button type="button" onclick="playApprovalNotificationSound(true)" class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs transition active:scale-95" title="Uji Tanda Suara Notifikasi">
-                            <i class="fa-solid fa-volume-high text-[11px] text-emerald-600 dark:text-emerald-400"></i>
-                        </button>
-                        <span id="admin-notif-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            0 Butuh Tindakan
-                        </span>
-                        <button type="button" onclick="closeAdminNotifDropdown()" class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs transition active:scale-95" title="Tutup">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
 
-                <!-- List Notifikasi Izin / Approval -->
-                <div id="admin-notif-list-container" class="max-h-72 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                    <div class="py-6 text-center text-slate-400 text-xs">
-                        <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
-                        <span>Tidak ada izin santri yang butuh persetujuan saat ini.</span>
-                    </div>
-                </div>
-
-                <!-- Footer Shortcut -->
-                <div class="pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
-                    <button type="button" onclick="showAdminView('perpulangan'); closeAdminNotifDropdown();" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1">
-                        <span>Buka Modul Izin & Perpulangan</span>
-                        <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                    </button>
-                    <span class="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                        <i class="fa-solid fa-bell text-amber-500 text-[9px]"></i> Live Audio Aktif
-                    </span>
-                </div>
-            </div>
 
             <!-- Scrollable Views Container -->
             <div class="flex-1 overflow-y-auto p-2.5 md:p-3.5 lg:p-4 bg-slate-50/70 dark:bg-[#0b131e] custom-scrollbar">
@@ -15754,7 +15709,53 @@
     <script src="js/pwa.js"></script>
 
     <!-- Panduan Penggunaan Controller -->
-    <script src="js/panduan.js"></script>
+    <!-- ================= POPOVER PEMBERITAHUAN & APPROVAL IZIN GLOBAL (RESPONSIF MOBILE & DESKTOP) ================= -->
+    <div id="admin-notif-dropdown" class="hidden fixed inset-x-3 top-14 sm:inset-auto sm:right-6 sm:top-14 w-auto sm:w-96 max-w-sm sm:max-w-md mx-auto sm:mx-0 bg-white dark:bg-[#15202d] rounded-3xl shadow-2xl shadow-slate-900/40 dark:shadow-black/90 border border-slate-200/90 dark:border-slate-700/80 p-4 z-[9999] animate-fade-in-up">
+        <!-- Header Notifikasi -->
+        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm shadow-xs">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight">Pemberitahuan Izin</h4>
+                    <p class="text-[10px] text-slate-400">Persetujuan perpulangan santri</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <!-- Tombol Uji Suara Chime -->
+                <button type="button" onclick="playApprovalNotificationSound(true)" class="h-7 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1 transition active:scale-95 border border-emerald-200 dark:border-emerald-800/60" title="Klik untuk menguji tanda suara lonceng notifikasi">
+                    <i class="fa-solid fa-volume-high text-[11px] text-emerald-600 dark:text-emerald-400"></i>
+                    <span>Tes Suara</span>
+                </button>
+                <span id="admin-notif-status-badge" class="text-[9.5px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    0 Butuh Tindakan
+                </span>
+                <button type="button" onclick="closeAdminNotifDropdown()" class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs transition active:scale-95" title="Tutup">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- List Notifikasi Izin / Approval -->
+        <div id="admin-notif-list-container" class="max-h-72 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
+            <div class="py-6 text-center text-slate-400 text-xs">
+                <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
+                <span>Semua pengajuan izin santri telah ditinjau.</span>
+            </div>
+        </div>
+
+        <!-- Footer Shortcut -->
+        <div class="pt-2.5 mt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+            <button type="button" onclick="openNotificationIzinDetail()" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1">
+                <span>Buka Modul Izin & Perpulangan</span>
+                <i class="fa-solid fa-arrow-right text-[9px]"></i>
+            </button>
+            <span class="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                <i class="fa-solid fa-bell text-amber-500 text-[9px]"></i> Live Audio Aktif
+            </span>
+        </div>
+    </div>
 
     <!-- Data & API Core -->
     <script src="data-maulid-dibai.js"></script>
@@ -15769,19 +15770,19 @@
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js"></script>
     <script src="js/jadwal-sholat.js"></script>
-    <script src="js/roles.js?v=61"></script>
-    <script src="js/admin.js?v=61"></script>
-    <script src="js/alumni.js?v=61"></script>
-    <script src="js/auth.js?v=60"></script>
+    <script src="js/roles.js?v=65"></script>
+    <script src="js/admin.js?v=65"></script>
+    <script src="js/alumni.js?v=65"></script>
+    <script src="js/auth.js?v=65"></script>
     <script src="js/pegawai.js"></script>
     <script src="js/tahfidz.js"></script>
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=64"></script>
+    <script src="js/perpulangan.js?v=65"></script>
 
     <!-- Main Controller & Navigation -->
-    <script src="js/main.js"></script>
+    <script src="js/main.js?v=65"></script>
 </body>
 
 </html>

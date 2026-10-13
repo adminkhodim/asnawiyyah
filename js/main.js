@@ -452,11 +452,23 @@
                 if (typeof applyAdminRoleVisibility === 'function') {
                     applyAdminRoleVisibility();
                 }
+                if (typeof updateHeaderApprovalNotifications === 'function') {
+                    updateHeaderApprovalNotifications();
+                }
+                if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadData === 'function') {
+                    window.ASNPerpulangan.loadData(false);
+                }
             } else if (tabId === 'notifikasi') {
                 loadNotifikasi();
             } else if (tabId === 'beranda') {
                 updateNotifBadge();
                 checkHomePosterPopup();
+                if (typeof updateHeaderApprovalNotifications === 'function') {
+                    updateHeaderApprovalNotifications();
+                }
+                if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadData === 'function') {
+                    window.ASNPerpulangan.loadData(false);
+                }
             } else if (tabId === 'jadwal-sholat') {
                 if (typeof ASNJadwalSholat !== 'undefined') {
                     ASNJadwalSholat.init();
