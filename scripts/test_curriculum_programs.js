@@ -125,27 +125,27 @@ assert.strictEqual(defaultOrder[10], 1, 'Urutan ke-11 Preset A harus Juz 1');
 assert.strictEqual(defaultOrder[29], 20, 'Urutan ke-30 Preset A harus Juz 20');
 console.log("  ✅ Test 1 Passed: Default Preset A Mundur-Maju 30-21 lalu 1-20 valid.");
 
-// TEST 2: Konfigurasi Preset B (Juz 30 lalu 1-29) untuk 'Pesantren Tahfidz Anak'
+// TEST 2: Konfigurasi Preset B (Juz 30 lalu 1-29) untuk 'Tahfidz Remaja' (Remaja)
 const curMap = {};
-curMap['Pesantren Tahfidz Anak'] = {
+curMap['Tahfidz Remaja'] = {
     order: [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_B.order],
     updatedAt: new Date().toISOString()
 };
 localStorage.setItem(TAHFIDZ_CURRICULUM_STORAGE_KEY, JSON.stringify(curMap));
 
-const anakOrder = getCurriculumOrderForProgram('Pesantren Tahfidz Anak');
-assert.strictEqual(anakOrder[0], 30, 'Anak urutan 1 harus Juz 30');
-assert.strictEqual(anakOrder[1], 1, 'Anak urutan 2 harus Juz 1');
-assert.strictEqual(anakOrder[29], 29, 'Anak urutan 30 harus Juz 29');
-console.log("  ✅ Test 2 Passed: Preset B Juz 30 lalu 1-29 untuk Pesantren Tahfidz Anak valid.");
+const remajaOrder = getCurriculumOrderForProgram('Tahfidz Remaja');
+assert.strictEqual(remajaOrder[0], 30, 'Remaja urutan 1 harus Juz 30');
+assert.strictEqual(remajaOrder[1], 1, 'Remaja urutan 2 harus Juz 1');
+assert.strictEqual(remajaOrder[29], 29, 'Remaja urutan 30 harus Juz 29');
+console.log("  ✅ Test 2 Passed: Preset B Juz 30 lalu 1-29 untuk Tahfidz Remaja valid.");
 
 // TEST 3: Evaluasi Posisi & Rekomendasi Berikutnya (getNextCurriculumPosition)
-// Pada Program Anak: Setelah Juz 30 Halaman 20, lanjut ke Juz 1 Halaman 1!
-const nextAnak = getNextCurriculumPosition(30, 20, 'Pesantren Tahfidz Anak');
-assert.strictEqual(nextAnak.juz, 1, 'Setelah Juz 30 hlm 20 pada Program Anak harus Juz 1');
-assert.strictEqual(nextAnak.halaman, 1, 'Halaman harus 1');
+// Pada Program Remaja (Preset B): Setelah Juz 30 Halaman 20, lanjut ke Juz 1 Halaman 1!
+const nextRemaja = getNextCurriculumPosition(30, 20, 'Tahfidz Remaja');
+assert.strictEqual(nextRemaja.juz, 1, 'Setelah Juz 30 hlm 20 pada Program Remaja harus Juz 1');
+assert.strictEqual(nextRemaja.halaman, 1, 'Halaman harus 1');
 
-// Pada Program Intensif (Preset A): Setelah Juz 30 Halaman 20, lanjut ke Juz 29 Halaman 1!
+// Pada Program Intensif / Anak & Pemula (Preset A): Setelah Juz 30 Halaman 20, lanjut ke Juz 29 Halaman 1!
 const nextIntensif = getNextCurriculumPosition(30, 20, 'Tahfidz Intensif');
 assert.strictEqual(nextIntensif.juz, 29, 'Setelah Juz 30 hlm 20 pada Program Intensif harus Juz 29');
 assert.strictEqual(nextIntensif.halaman, 1, 'Halaman harus 1');
@@ -153,10 +153,10 @@ console.log("  ✅ Test 3 Passed: Rekomendasi posisi berikutnya adaptif sesuai p
 
 // TEST 4: Evaluasi Persentase Capaian (getCurriculumProgress)
 // Santri yang sedang di Juz 1 Halaman 20:
-// - Pada Program Anak (Preset B): Juz 1 berada di urutan rank 1 (total tuntas = 1*20 + 20 = 40 hal -> 7%)
-const progAnak = getCurriculumProgress(1, 20, 'Pesantren Tahfidz Anak');
-assert.strictEqual(progAnak.rank, 1);
-assert.strictEqual(progAnak.totalTuntas, 40);
+// - Pada Program Remaja (Preset B): Juz 1 berada di urutan rank 1 (total tuntas = 1*20 + 20 = 40 hal -> 7%)
+const progRemaja = getCurriculumProgress(1, 20, 'Tahfidz Remaja');
+assert.strictEqual(progRemaja.rank, 1);
+assert.strictEqual(progRemaja.totalTuntas, 40);
 
 // - Pada Program Intensif (Preset A): Juz 1 berada di urutan rank 10 (total tuntas = 10*20 + 20 = 220 hal -> 37%)
 const progIntensif = getCurriculumProgress(1, 20, 'Tahfidz Intensif');

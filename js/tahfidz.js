@@ -191,9 +191,9 @@ const SURAH_JUZ_REFERENCE = {
 const TAHFIDZ_CURRICULUM_PRESETS = {
     PRESET_A: {
         id: 'PRESET_A',
-        name: 'Preset A (Mundur-Maju)',
-        badge: 'Standar Pesantren',
-        desc: 'Mulai Juz 30 s/d 21 (10 Juz Akhir), lalu lanjut Juz 1 s/d 20.',
+        name: 'Preset A (Mundur–Maju)',
+        badge: 'Anak & Pemula',
+        desc: 'Mulai Juz 30 s/d 21 (10 Juz Akhir), lalu dilanjutkan Juz 1 s/d 20.',
         order: [
             30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -203,8 +203,8 @@ const TAHFIDZ_CURRICULUM_PRESETS = {
     PRESET_B: {
         id: 'PRESET_B',
         name: 'Preset B (Juz \'Amma Awal)',
-        badge: 'Anak & Pemula',
-        desc: 'Mulai Juz 30 (Juz \'Amma), lalu lanjut urut Juz 1 s/d 29.',
+        badge: 'Remaja',
+        desc: 'Diawali Juz 30 (Juz \'Amma), lalu berurutan maju Juz 1 s/d 29.',
         order: [
             30,
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
