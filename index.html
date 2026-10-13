@@ -8779,8 +8779,8 @@
 
             <!-- ================= VIEW: MODUL KEAKTIFAN ASATIDZ (SUPER ADMIN & PENGASUH) ================= -->
             <div id="admin-view-keaktifan-asatidz" class="hidden space-y-4">
-                <!-- Header Sub-View -->
-                <div class="bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-in-up stagger-1">
+                <!-- Header Sub-View (Terapkan relative z-30 agar popover dropdown periode data tampil di atas Timeline Banner & Kartu KPI) -->
+                <div id="keaktifan-header-subview" class="relative z-30 bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-in-up stagger-1">
                     <div class="flex items-center space-x-3">
                         <button type="button" onclick="backFromAdminModule()"
                             class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
@@ -8804,7 +8804,7 @@
                     <!-- Action Toolbar -->
                     <div class="flex flex-wrap items-center gap-2">
                         <!-- PERIODE DATA DROPDOWN SELECTOR (SESUAI GAMBAR REFERENSI) -->
-                        <div class="relative" id="keaktifan-period-wrapper">
+                        <div class="relative z-40" id="keaktifan-period-wrapper">
                             <button type="button" id="keaktifan-period-trigger-btn" onclick="toggleKeaktifanPeriodDropdown(event)"
                                 class="px-3 py-1.5 bg-white dark:bg-[#16222f] hover:bg-slate-50 dark:hover:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl shadow-xs text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2 transition active:scale-95 cursor-pointer">
                                 <span class="text-slate-400 dark:text-slate-400 text-xs">Periode Data</span>
@@ -16008,7 +16008,7 @@
     <script src="js/tahfidz.js?v=71"></script>
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/keaktifan-asatidz.js"></script>
+    <script src="js/keaktifan-asatidz.js?v=72"></script>
     <script src="js/perpulangan.js?v=66"></script>
 
     <!-- Main Controller & Navigation -->

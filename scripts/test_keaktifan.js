@@ -56,7 +56,7 @@ assert(htmlContent.includes('id="admin-view-keaktifan-asatidz"'), 'Container adm
 assert(htmlContent.includes('id="modal-keaktifan-detail"'), 'Modal modal-keaktifan-detail harus ada di index.html');
 assert(htmlContent.includes('data-view="keaktifan-asatidz"'), 'Nav link data-view="keaktifan-asatidz" harus ada di sidebar');
 assert(htmlContent.includes('data-admin-module="keaktifan-asatidz"'), 'Quick link data-admin-module="keaktifan-asatidz" harus ada di hub & mobile grid');
-assert(htmlContent.includes('src="js/keaktifan-asatidz.js"'), 'Script js/keaktifan-asatidz.js harus disertakan');
+assert(htmlContent.includes('src="js/keaktifan-asatidz.js"') || htmlContent.includes('src="js/keaktifan-asatidz.js?'), 'Script js/keaktifan-asatidz.js harus disertakan');
 
 // Memastikan semua komponen keaktifan terbungkus di dalam admin-view-keaktifan-asatidz (tidak bocor ke dashboard)
 const startTag = '<div id="admin-view-keaktifan-asatidz"';

@@ -406,6 +406,17 @@
     function openKeaktifanPeriodDropdown() {
         const dropdown = document.getElementById('keaktifan-period-dropdown');
         if (!dropdown) return;
+
+        // Naikkan stacking context container agar selalu berada di atas Timeline Banner & Kartu KPI
+        const header = document.getElementById('keaktifan-header-subview');
+        if (header) {
+            header.style.zIndex = '50';
+        }
+        const wrapper = document.getElementById('keaktifan-period-wrapper');
+        if (wrapper) {
+            wrapper.style.zIndex = '60';
+        }
+
         dropdown.classList.remove('hidden');
         // Force reflow
         void dropdown.offsetWidth;
@@ -422,6 +433,14 @@
         dropdown.classList.add('opacity-0', 'scale-95');
         setTimeout(() => {
             dropdown.classList.add('hidden');
+            const header = document.getElementById('keaktifan-header-subview');
+            if (header) {
+                header.style.zIndex = '';
+            }
+            const wrapper = document.getElementById('keaktifan-period-wrapper');
+            if (wrapper) {
+                wrapper.style.zIndex = '';
+            }
         }, 150);
     }
 
