@@ -234,6 +234,19 @@ function doPost(e) {
       );
     }
 
+    if (action === "batchUpdateStudentProgram" || action === "student.batchUpdateProgram") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        batchUpdateStudentProgram(payload.data || payload, token)
+      );
+    }
+
     if (action === "deleteStudent" || action === "student.delete") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {

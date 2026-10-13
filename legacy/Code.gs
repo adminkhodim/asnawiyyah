@@ -1011,6 +1011,19 @@ function doPost(e) {
       );
     }
 
+    if (action === "batchUpdateStudentProgram" || action === "student.batchUpdateProgram") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        batchUpdateStudentProgram(payload.data || payload, token)
+      );
+    }
+
     if (action === "deleteStudent" || action === "student.delete") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {
@@ -13165,6 +13178,73 @@ function saveStudentData(studentObj, token) {
       message: `Santri baru ${inputName} (NIS: ${inputNis}) berhasil ditambahkan ke database.`
     };
   }
+}
+
+/**
+ * Update Massal Program Santri (Batch Update)
+ */
+function batchUpdateStudentProgram(batchObj, token) {
+  let actor = null;
+  if (token) {
+    try {
+      actor = authenticateSession(token);
+      authorizeRole(actor, ["ADMIN", "EDITOR"]);
+    } catch (e) {
+      const legacy = verifySessionToken(token);
+      if (legacy && legacy.role) {
+        actor = { role: legacy.role, identityId: legacy.userId };
+      }
+    }
+  }
+
+  const studentIds = batchObj.studentIds || batchObj.ids || [];
+  const newProgram = String(batchObj.program || "").trim();
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    throw new Error("Daftar santri yang dipilih tidak boleh kosong.");
+  }
+  if (!newProgram) {
+    throw new Error("Program baru harus ditentukan.");
+  }
+
+  const ss = getDatabaseSpreadsheet();
+  const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+  if (!sheet) throw new Error("Tabel Students tidak ditemukan.");
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+
+  let idIdx = headers.indexOf("student_id");
+  let nisIdx = headers.indexOf("nis");
+  if (nisIdx === -1) nisIdx = headers.indexOf("nisn");
+  let progIdx = headers.indexOf("program");
+  if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = headers.indexOf("program_studi");
+  if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+  if (progIdx === -1) {
+    progIdx = headers.length;
+    sheet.getRange(1, progIdx + 1).setValue("program");
+    headers.push("program");
+  }
+
+  const targetSet = new Set(studentIds.map(id => String(id || "").trim()));
+  let updatedCount = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = idIdx !== -1 ? String(data[i][idIdx] || "").trim() : "";
+    const rowNis = nisIdx !== -1 ? String(data[i][nisIdx] || "").trim() : "";
+    if (targetSet.has(rowId) || targetSet.has(rowNis)) {
+      sheet.getRange(i + 1, progIdx + 1).setValue(newProgram);
+      updatedCount++;
+    }
+  }
+
+  return {
+    status: "success",
+    success: true,
+    updatedCount: updatedCount,
+    message: `Berhasil memperbarui program menjadi "${newProgram}" untuk ${updatedCount} santri.`
+  };
 }
 
 /**

@@ -6461,6 +6461,7 @@
         // ==================== DASHBOARD ADMIN: MANAJEMEN DATA SANTRI ====================
         let adminStudentsData = [];
         let filteredAdminStudentsData = [];
+        let selectedAdminStudentIds = new Set();
         let pendingDeleteStudentId = null;
         let selectedStudentPhotoFile = null;
 
@@ -7043,9 +7044,13 @@
                         : `<div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] flex items-center justify-center text-slate-400 text-sm"><i class="fa-solid fa-user"></i></div>`;
 
                     const studentJson = escapeHtml(JSON.stringify(s));
+                    const isChecked = selectedAdminStudentIds.has(id);
 
                     return `
-                        <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836]/60 transition">
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1c2836]/60 transition ${isChecked ? 'bg-cyan-50/40 dark:bg-cyan-950/20' : ''}">
+                            <td class="py-3 px-3 text-center">
+                                <input type="checkbox" class="admin-student-row-checkbox w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500 border-slate-300 dark:border-slate-600 dark:bg-[#1c2836] cursor-pointer" value="${escapeHtml(id)}" ${isChecked ? 'checked' : ''} onchange="handleStudentRowSelectionChange('${escapeHtml(id)}', this.checked)">
+                            </td>
                             <td class="py-3 px-3 font-semibold text-slate-400">${index + 1}</td>
                             <td class="py-3 px-3">${avatarHtml}</td>
                             <td class="py-3 px-3">
@@ -7104,11 +7109,13 @@
                         : `<div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] flex items-center justify-center text-slate-400 text-lg shrink-0"><i class="fa-solid fa-user"></i></div>`;
 
                     const studentJson = escapeHtml(JSON.stringify(s));
+                    const isChecked = selectedAdminStudentIds.has(id);
 
                     return `
-                        <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-3">
+                        <div class="bg-white dark:bg-[#15202d] p-4 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm space-y-3 transition ${isChecked ? 'ring-2 ring-cyan-500/40 bg-cyan-50/20 dark:bg-cyan-950/20' : ''}">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="admin-student-mobile-row-checkbox w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500 border-slate-300 dark:border-slate-600 dark:bg-[#1c2836] cursor-pointer shrink-0" value="${escapeHtml(id)}" ${isChecked ? 'checked' : ''} onchange="handleStudentRowSelectionChange('${escapeHtml(id)}', this.checked)">
                                     ${avatarHtml}
                                     <div>
                                         <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100">${name}</h4>
@@ -7154,6 +7161,273 @@
                         </div>
                     `;
                 }).join('');
+            }
+
+            // Update bulk action bar & header checkbox state
+            updateAdminStudentBulkActionBar();
+        }
+
+        /**
+         * Sinkronkan state checkbox header "Pilih Semua"
+         */
+        function syncSelectAllAdminStudentsCheckbox() {
+            const selectAllCb = document.getElementById('admin-student-select-all');
+            if (!selectAllCb) return;
+            const visibleIds = (filteredAdminStudentsData || []).map(s => s.studentId || s.student_id || '').filter(Boolean);
+            if (visibleIds.length === 0) {
+                selectAllCb.checked = false;
+                selectAllCb.indeterminate = false;
+                return;
+            }
+            const allSelected = visibleIds.every(id => selectedAdminStudentIds.has(id));
+            const someSelected = visibleIds.some(id => selectedAdminStudentIds.has(id));
+            selectAllCb.checked = allSelected;
+            selectAllCb.indeterminate = !allSelected && someSelected;
+        }
+
+        /**
+         * Update Floating Bulk Action Bar tampilan
+         */
+        function updateAdminStudentBulkActionBar() {
+            const bar = document.getElementById('admin-student-bulk-action-bar');
+            const countEl = document.getElementById('admin-student-bulk-count');
+            const count = selectedAdminStudentIds.size;
+            if (countEl) countEl.innerText = count;
+
+            if (bar) {
+                if (count > 0) {
+                    bar.classList.remove('hidden');
+                } else {
+                    bar.classList.add('hidden');
+                }
+            }
+            syncSelectAllAdminStudentsCheckbox();
+        }
+
+        /**
+         * Handler perubahan ceklis pada satu baris santri
+         */
+        function handleStudentRowSelectionChange(studentId, isChecked) {
+            if (!studentId) return;
+            if (isChecked) {
+                selectedAdminStudentIds.add(studentId);
+            } else {
+                selectedAdminStudentIds.delete(studentId);
+            }
+            // Update checkbox di baris desktop & mobile bila ada
+            document.querySelectorAll(`.admin-student-row-checkbox[value="${studentId}"], .admin-student-mobile-row-checkbox[value="${studentId}"]`).forEach(cb => {
+                cb.checked = isChecked;
+            });
+            updateAdminStudentBulkActionBar();
+        }
+
+        /**
+         * Handler pilih semua / hapus semua centang dari header
+         */
+        function toggleSelectAllAdminStudents(isChecked) {
+            const visibleIds = (filteredAdminStudentsData || []).map(s => s.studentId || s.student_id || '').filter(Boolean);
+            if (isChecked) {
+                visibleIds.forEach(id => selectedAdminStudentIds.add(id));
+            } else {
+                visibleIds.forEach(id => selectedAdminStudentIds.delete(id));
+            }
+            // Update seluruh checkbox di DOM tabel & mobile
+            document.querySelectorAll('.admin-student-row-checkbox, .admin-student-mobile-row-checkbox').forEach(cb => {
+                cb.checked = isChecked;
+            });
+            updateAdminStudentBulkActionBar();
+        }
+
+        /**
+         * Batal seluruh pilihan santri terpilih
+         */
+        function clearSelectedAdminStudents() {
+            selectedAdminStudentIds.clear();
+            document.querySelectorAll('.admin-student-row-checkbox, .admin-student-mobile-row-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            const selectAllCb = document.getElementById('admin-student-select-all');
+            if (selectAllCb) {
+                selectAllCb.checked = false;
+                selectAllCb.indeterminate = false;
+            }
+            updateAdminStudentBulkActionBar();
+        }
+
+        /**
+         * Buka Modal Edit Massal Program Santri
+         */
+        function openBulkEditProgramModal() {
+            if (selectedAdminStudentIds.size === 0) {
+                if (typeof showToast === 'function') showToast("⚠️ Pilih minimal satu santri untuk diubah programnya.");
+                return;
+            }
+            if (typeof window.hasPermission === 'function' && !window.hasPermission('santri.edit')) {
+                if (typeof showToast === 'function') showToast("⛔ Anda tidak memiliki izin untuk mengedit data santri.");
+                return;
+            }
+
+            const modal = document.getElementById('modal-admin-student-bulk-program');
+            const countBadge = document.getElementById('bulk-program-selected-count-badge');
+            const namesContainer = document.getElementById('bulk-program-selected-names');
+            const selectTarget = document.getElementById('bulk-student-target-program');
+
+            if (!modal) return;
+
+            // Render nama-nama santri terpilih
+            const selectedList = (adminStudentsData || []).filter(s => selectedAdminStudentIds.has(s.studentId || s.student_id));
+            if (countBadge) countBadge.innerText = `${selectedList.length} Santri`;
+
+            if (namesContainer) {
+                namesContainer.innerHTML = selectedList.map(s => {
+                    const name = escapeHtml(s.name || 'Tanpa Nama');
+                    const prog = escapeHtml(s.program || 'Reguler');
+                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] text-[10px] font-semibold text-slate-700 dark:text-slate-200 shadow-sm">
+                        <span>${name}</span>
+                        <span class="text-[9px] text-cyan-600 dark:text-cyan-400 font-mono">(${prog})</span>
+                    </span>`;
+                }).join('');
+            }
+
+            // Populate pilihan program baru dari referensi
+            if (selectTarget) {
+                const programs = getAdminPesantrenPrograms();
+                let optsHtml = '';
+                programs.forEach(p => {
+                    const name = (p.name || '').trim();
+                    if (!name) return;
+                    optsHtml += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+                });
+                selectTarget.innerHTML = optsHtml;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Tutup Modal Edit Massal Program Santri
+         */
+        function closeBulkEditProgramModal() {
+            const modal = document.getElementById('modal-admin-student-bulk-program');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        /**
+         * Submit Edit Massal Program Santri
+         */
+        async function submitBulkEditProgram(event) {
+            if (event) event.preventDefault();
+
+            const selectTarget = document.getElementById('bulk-student-target-program');
+            const targetProgram = (selectTarget ? selectTarget.value : '').trim();
+            if (!targetProgram) {
+                if (typeof showToast === 'function') showToast("⚠️ Pilih program tujuan terlebih dahulu!");
+                return;
+            }
+
+            const idList = Array.from(selectedAdminStudentIds);
+            if (idList.length === 0) {
+                if (typeof showToast === 'function') showToast("⚠️ Tidak ada santri yang dipilih.");
+                return;
+            }
+
+            const btn = document.getElementById('bulk-program-submit-btn');
+            const btnIcon = document.getElementById('bulk-program-submit-icon');
+            const btnText = document.getElementById('bulk-program-submit-text');
+
+            if (btn) btn.disabled = true;
+            if (btnIcon) btnIcon.className = "fa-solid fa-spinner fa-spin";
+            if (btnText) btnText.innerText = "Menerapkan...";
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+
+                // 1. OPTIMISTIC UPDATE: Perbarui memori & UI seketika
+                const idSet = new Set(idList);
+                const affectedNisList = [];
+                if (Array.isArray(adminStudentsData)) {
+                    adminStudentsData.forEach(s => {
+                        const sid = s.studentId || s.student_id;
+                        if (idSet.has(sid)) {
+                            s.program = targetProgram;
+                            if (s.nis || s.nisn) affectedNisList.push(s.nis || s.nisn);
+                        }
+                    });
+                    window.adminStudentsData = adminStudentsData;
+                    window.adminStudentsList = adminStudentsData;
+                    try {
+                        localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify(adminStudentsData));
+                    } catch(e) {}
+                    if (typeof filterAdminStudentsList === 'function') {
+                        filterAdminStudentsList();
+                    }
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast(`⏳ Memperbarui program untuk ${idList.length} santri...`);
+                }
+
+                // 2. DUAL-WRITE KE SUPABASE (Ultra-cepat via PostgREST in.() filter)
+                const sbUrl = window.ASNAWIYYAH_CONFIG?.supabaseUrl;
+                const sbKey = window.ASNAWIYYAH_CONFIG?.supabaseKey;
+                if (sbUrl && sbKey) {
+                    try {
+                        const inFilter = idList.map(id => `"${id}"`).join(',');
+                        await fetch(`${sbUrl}/rest/v1/students?student_id=in.(${encodeURIComponent(inFilter)})`, {
+                            method: 'PATCH',
+                            headers: {
+                                'apikey': sbKey,
+                                'Authorization': `Bearer ${sbKey}`,
+                                'Content-Type': 'application/json',
+                                'Prefer': 'return=representation'
+                            },
+                            body: JSON.stringify({ program: targetProgram })
+                        });
+                        // Fallback NIS jika ada record dengan student_id berbeda
+                        if (affectedNisList.length > 0) {
+                            const inNis = affectedNisList.map(n => `"${n}"`).join(',');
+                            await fetch(`${sbUrl}/rest/v1/students?nis=in.(${encodeURIComponent(inNis)})`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'apikey': sbKey,
+                                    'Authorization': `Bearer ${sbKey}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ program: targetProgram })
+                            });
+                        }
+                    } catch (sbErr) {
+                        console.warn('[SUPABASE BATCH WRITE WARN]', sbErr);
+                    }
+                }
+
+                // 3. REPLIKASI KE GOOGLE APPS SCRIPT SPREADSHEET
+                if (typeof apiPost === 'function') {
+                    try {
+                        await apiPost("batchUpdateStudentProgram", {
+                            token,
+                            studentIds: idList,
+                            program: targetProgram
+                        });
+                    } catch (gasErr) {
+                        console.warn('[GAS BATCH WRITE WARN]', gasErr);
+                    }
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast(`✅ Program untuk ${idList.length} santri berhasil diubah menjadi "${targetProgram}"!`);
+                }
+
+                closeBulkEditProgramModal();
+                clearSelectedAdminStudents();
+                await loadAdminStudentsData();
+            } catch (err) {
+                console.error("Gagal edit massal program santri:", err);
+                if (typeof showToast === 'function') showToast("❌ Gagal edit massal: " + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
+                if (btnIcon) btnIcon.className = "fa-solid fa-check";
+                if (btnText) btnText.innerText = "Terapkan Perubahan";
             }
         }
 
@@ -9782,6 +10056,14 @@
         window.renderAdminAnalyticsChart = renderAdminAnalyticsChart;
         window.refreshAdminAnalyticsData = refreshAdminAnalyticsData;
         window.triggerAdminHubStaggerAnimation = triggerAdminHubStaggerAnimation;
+
+        // Ekspos Manajemen Seleksi & Bulk Edit Santri
+        window.toggleSelectAllAdminStudents = toggleSelectAllAdminStudents;
+        window.handleStudentRowSelectionChange = handleStudentRowSelectionChange;
+        window.clearSelectedAdminStudents = clearSelectedAdminStudents;
+        window.openBulkEditProgramModal = openBulkEditProgramModal;
+        window.closeBulkEditProgramModal = closeBulkEditProgramModal;
+        window.submitBulkEditProgram = submitBulkEditProgram;
 
         // Auto-initialize analytics chart on DOM ready
         if (typeof document !== 'undefined') {
