@@ -7241,47 +7241,47 @@
                     </div>
                 </div>
 
-                <!-- SUMMARY METRIC CARDS (1 BARIS x 8 KARTU DI DESKTOP) -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 sm:gap-2">
+                <!-- SUMMARY METRIC CARDS (2 BARIS x 4 KARTU DI MOBILE, 1 BARIS x 8 KARTU DI DESKTOP) -->
+                <div class="grid grid-cols-4 lg:grid-cols-8 gap-1.5 sm:gap-2">
                     <!-- Total -->
-                    <div class="bg-white dark:bg-[#15202d] p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs text-center cursor-pointer hover:border-emerald-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('ALL')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tight sm:tracking-wider truncate">Total Izin</div>
-                        <div id="perpulangan-metric-total" class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">0</div>
+                    <div class="bg-white dark:bg-[#15202d] p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs text-center cursor-pointer hover:border-emerald-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('ALL')" title="Total Izin">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Total Izin</div>
+                        <div id="perpulangan-metric-total" class="text-sm sm:text-base md:text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">0</div>
                     </div>
                     <!-- Menunggu Pengurus (Tier 1) -->
-                    <div class="bg-amber-50/70 dark:bg-amber-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-amber-200/60 dark:border-amber-800/40 shadow-xs text-center cursor-pointer hover:border-amber-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGURUS')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight sm:tracking-wider truncate">Tier 1 Pengurus</div>
-                        <div id="perpulangan-metric-pengurus" class="text-base sm:text-lg font-black text-amber-700 dark:text-amber-400 mt-0.5">0</div>
+                    <div class="bg-amber-50/70 dark:bg-amber-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-amber-200/60 dark:border-amber-800/40 shadow-xs text-center cursor-pointer hover:border-amber-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGURUS')" title="Tier 1 Pengurus">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight truncate"><span class="sm:hidden">Tier 1</span><span class="hidden sm:inline">Tier 1 Pengurus</span></div>
+                        <div id="perpulangan-metric-pengurus" class="text-sm sm:text-base md:text-lg font-black text-amber-700 dark:text-amber-400 mt-0.5">0</div>
                     </div>
                     <!-- Menunggu Pengasuh (Tier 2) -->
-                    <div class="bg-purple-50/70 dark:bg-purple-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-purple-200/60 dark:border-purple-800/40 shadow-xs text-center cursor-pointer hover:border-purple-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGASUH')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-tight sm:tracking-wider truncate">Tier 2 Pengasuh</div>
-                        <div id="perpulangan-metric-pengasuh" class="text-base sm:text-lg font-black text-purple-700 dark:text-purple-400 mt-0.5">0</div>
+                    <div class="bg-purple-50/70 dark:bg-purple-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-purple-200/60 dark:border-purple-800/40 shadow-xs text-center cursor-pointer hover:border-purple-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('MENUNGGU_PENGASUH')" title="Tier 2 Pengasuh">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-tight truncate"><span class="sm:hidden">Tier 2</span><span class="hidden sm:inline">Tier 2 Pengasuh</span></div>
+                        <div id="perpulangan-metric-pengasuh" class="text-sm sm:text-base md:text-lg font-black text-purple-700 dark:text-purple-400 mt-0.5">0</div>
                     </div>
                     <!-- Disetujui (Siap Berangkat) -->
-                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs text-center cursor-pointer hover:border-emerald-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('DISETUJUI')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight sm:tracking-wider truncate">Disetujui</div>
-                        <div id="perpulangan-metric-disetujui" class="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400 mt-0.5">0</div>
+                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs text-center cursor-pointer hover:border-emerald-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('DISETUJUI')" title="Disetujui">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight truncate">Disetujui</div>
+                        <div id="perpulangan-metric-disetujui" class="text-sm sm:text-base md:text-lg font-black text-emerald-700 dark:text-emerald-400 mt-0.5">0</div>
                     </div>
                     <!-- Keluar (Di Luar Pondok) -->
-                    <div class="bg-sky-50/70 dark:bg-sky-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-sky-200/60 dark:border-sky-800/40 shadow-xs text-center cursor-pointer hover:border-sky-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('KELUAR')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-tight sm:tracking-wider truncate">Di Luar Pondok</div>
-                        <div id="perpulangan-metric-keluar" class="text-base sm:text-lg font-black text-sky-700 dark:text-sky-400 mt-0.5">0</div>
+                    <div class="bg-sky-50/70 dark:bg-sky-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-sky-200/60 dark:border-sky-800/40 shadow-xs text-center cursor-pointer hover:border-sky-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('KELUAR')" title="Di Luar Pondok">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-tight truncate"><span class="sm:hidden">Di Luar</span><span class="hidden sm:inline">Di Luar Pondok</span></div>
+                        <div id="perpulangan-metric-keluar" class="text-sm sm:text-base md:text-lg font-black text-sky-700 dark:text-sky-400 mt-0.5">0</div>
                     </div>
                     <!-- Selesai (Kembali Tepat Waktu) -->
-                    <div class="bg-teal-50/70 dark:bg-teal-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-teal-200/60 dark:border-teal-800/40 shadow-xs text-center cursor-pointer hover:border-teal-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('KEMBALI')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-tight sm:tracking-wider truncate">Kembali</div>
-                        <div id="perpulangan-metric-kembali" class="text-base sm:text-lg font-black text-teal-700 dark:text-teal-400 mt-0.5">0</div>
+                    <div class="bg-teal-50/70 dark:bg-teal-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-teal-200/60 dark:border-teal-800/40 shadow-xs text-center cursor-pointer hover:border-teal-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('KEMBALI')" title="Kembali">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-tight truncate">Kembali</div>
+                        <div id="perpulangan-metric-kembali" class="text-sm sm:text-base md:text-lg font-black text-teal-700 dark:text-teal-400 mt-0.5">0</div>
                     </div>
                     <!-- Terlambat -->
-                    <div class="bg-rose-50/70 dark:bg-rose-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-rose-200/60 dark:border-rose-800/40 shadow-xs text-center cursor-pointer hover:border-rose-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('TERLAMBAT')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-tight sm:tracking-wider truncate">Terlambat</div>
-                        <div id="perpulangan-metric-terlambat" class="text-base sm:text-lg font-black text-rose-700 dark:text-rose-400 mt-0.5">0</div>
+                    <div class="bg-rose-50/70 dark:bg-rose-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-rose-200/60 dark:border-rose-800/40 shadow-xs text-center cursor-pointer hover:border-rose-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('TERLAMBAT')" title="Terlambat">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-tight truncate">Terlambat</div>
+                        <div id="perpulangan-metric-terlambat" class="text-sm sm:text-base md:text-lg font-black text-rose-700 dark:text-rose-400 mt-0.5">0</div>
                     </div>
                     <!-- Ditolak -->
-                    <div class="bg-red-50/70 dark:bg-red-950/30 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-red-200/60 dark:border-red-800/40 shadow-xs text-center cursor-pointer hover:border-red-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('DITOLAK')">
-                        <div class="text-[9px] sm:text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-tight sm:tracking-wider truncate">Ditolak</div>
-                        <div id="perpulangan-metric-ditolak" class="text-base sm:text-lg font-black text-red-700 dark:text-red-400 mt-0.5">0</div>
+                    <div class="bg-red-50/70 dark:bg-red-950/30 p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl border border-red-200/60 dark:border-red-800/40 shadow-xs text-center cursor-pointer hover:border-red-500 transition active:scale-95" onclick="window.ASNPerpulangan.setFilter('DITOLAK')" title="Ditolak">
+                        <div class="text-[8px] sm:text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-tight truncate">Ditolak</div>
+                        <div id="perpulangan-metric-ditolak" class="text-sm sm:text-base md:text-lg font-black text-red-700 dark:text-red-400 mt-0.5">0</div>
                     </div>
                 </div>
 
@@ -15638,7 +15638,7 @@
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js"></script>
-    <script src="js/perpulangan.js?v=62"></script>
+    <script src="js/perpulangan.js?v=63"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js"></script>
