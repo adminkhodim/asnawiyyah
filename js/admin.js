@@ -7377,11 +7377,48 @@
                 const saveRes = await apiPost("saveStudent", payload);
 
                 if (saveRes && (saveRes.success || saveRes.status === "success")) {
+                    const finalStudentId = (saveRes && (saveRes.studentId || saveRes.student_id)) || payload.studentId || payload.student_id;
+
+                    // 1. Optimistic Update pada State Lokal & UI
+                    if (Array.isArray(adminStudentsData)) {
+                        const targetIdx = adminStudentsData.findIndex(s => 
+                            (finalStudentId && (s.student_id === finalStudentId || s.id === finalStudentId || s.studentId === finalStudentId)) ||
+                            (nis && (s.nis === nis || s.nisn === nis))
+                        );
+                        const updatedRecord = {
+                            id: finalStudentId,
+                            student_id: finalStudentId,
+                            studentId: finalStudentId,
+                            nis: nis,
+                            nik: nik,
+                            name: name,
+                            gender: gender,
+                            birth_date: birthDate,
+                            birthDate: birthDate,
+                            photo_url: photoUrl || (targetIdx !== -1 ? (adminStudentsData[targetIdx].photo_url || adminStudentsData[targetIdx].photoUrl) : ''),
+                            photoUrl: photoUrl || (targetIdx !== -1 ? (adminStudentsData[targetIdx].photoUrl || adminStudentsData[targetIdx].photo_url) : ''),
+                            program: program,
+                            status: status
+                        };
+                        if (targetIdx !== -1) {
+                            adminStudentsData[targetIdx] = { ...adminStudentsData[targetIdx], ...updatedRecord };
+                        } else {
+                            adminStudentsData.unshift(updatedRecord);
+                        }
+                        window.adminStudentsData = adminStudentsData;
+                        window.adminStudentsList = adminStudentsData;
+                        try {
+                            localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify(adminStudentsData));
+                        } catch (cacheErr) {}
+                        if (typeof filterAdminStudentsList === 'function') {
+                            filterAdminStudentsList();
+                        }
+                    }
+
                     if (typeof showToast === 'function') {
                         showToast(saveRes.message || "Data santri berhasil disimpan!");
                     }
-                    // Dual-Write ke Supabase Cloud DB (<50ms)
-                    const finalStudentId = (saveRes && (saveRes.studentId || saveRes.student_id)) || payload.studentId || payload.student_id;
+                    // 2. Dual-Write ke Supabase Cloud DB (<50ms)
                     if (typeof window.syncToSupabaseOnWrite === 'function') {
                         await window.syncToSupabaseOnWrite('saveStudent', { ...payload, studentId: finalStudentId }, saveRes);
                     }

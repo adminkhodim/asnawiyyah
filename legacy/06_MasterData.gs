@@ -1831,6 +1831,9 @@ function getAllStudentsData(token) {
     if (muhafizIdx === -1) muhafizIdx = headers.indexOf("guru");
 
     let progIdx = headers.indexOf("program");
+    if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
+    if (progIdx === -1) progIdx = headers.indexOf("program_studi");
+    if (progIdx === -1) progIdx = headers.indexOf("jenjang");
     let statusIdx = headers.indexOf("status");
     let createdIdx = headers.indexOf("created_at");
     let qrIdx = headers.indexOf("qr_code");
@@ -1962,6 +1965,14 @@ function saveStudentData(studentObj, token) {
   if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
   if (photoIdx === -1) photoIdx = headers.indexOf("foto");
   let progIdx = headers.indexOf("program");
+  if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = headers.indexOf("program_studi");
+  if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+  if (progIdx === -1) {
+    progIdx = headers.length;
+    sheet.getRange(1, progIdx + 1).setValue("program");
+    headers.push("program");
+  }
   let statusIdx = headers.indexOf("status");
 
   const inputId = String(studentObj.studentId || studentObj.student_id || "").trim();

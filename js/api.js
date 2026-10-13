@@ -1901,11 +1901,30 @@
                         program: payload.program || 'Reguler',
                         status: ((payload.status || 'ACTIVE').toUpperCase() === 'AKTIF' || (payload.status || 'ACTIVE').toUpperCase() === 'ACTIVE') ? 'ACTIVE' : 'INACTIVE'
                     };
-                    await fetch(`${sbUrl}/rest/v1/students`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(studentRow)
-                    });
+                    try {
+                        const postRes = await fetch(`${sbUrl}/rest/v1/students?on_conflict=student_id`, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(studentRow)
+                        });
+                        if (!postRes.ok) {
+                            console.warn('[SUPABASE DUAL-WRITE] Upsert student failed (' + postRes.status + '), attempting PATCH fallback...');
+                            const patchRes = await fetch(`${sbUrl}/rest/v1/students?student_id=eq.${encodeURIComponent(studentId)}`, {
+                                method: 'PATCH',
+                                headers,
+                                body: JSON.stringify(studentRow)
+                            });
+                            if (!patchRes.ok && studentRow.nis) {
+                                await fetch(`${sbUrl}/rest/v1/students?nis=eq.${encodeURIComponent(studentRow.nis)}`, {
+                                    method: 'PATCH',
+                                    headers,
+                                    body: JSON.stringify(studentRow)
+                                });
+                            }
+                        }
+                    } catch (netErr) {
+                        console.warn('[SUPABASE DUAL-WRITE EXCEPTION]', netErr);
+                    }
                 }
                 else if (action === 'deleteStudent' || action === 'student.delete') {
                     const studentId = payload.studentId || payload.student_id;
