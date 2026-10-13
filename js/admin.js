@@ -76,6 +76,56 @@
         }
         window.openAdminProfileSettings = openAdminProfileSettings;
 
+        // ================= TANDA SUARA & NOTIFIKASI APPROVAL IZIN (WEB AUDIO API) =================
+        let notificationAudioContext = null;
+
+        function playApprovalNotificationSound(isTest = false) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                if (!notificationAudioContext) {
+                    notificationAudioContext = new AudioCtx();
+                }
+                if (notificationAudioContext.state === 'suspended') {
+                    notificationAudioContext.resume();
+                }
+
+                const now = notificationAudioContext.currentTime;
+
+                // Nada Bell Primer (C6 - 1046.5 Hz)
+                const osc1 = notificationAudioContext.createOscillator();
+                const gain1 = notificationAudioContext.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(1046.5, now);
+                gain1.gain.setValueAtTime(0.32, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                osc1.connect(gain1);
+                gain1.connect(notificationAudioContext.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.55);
+
+                // Nada Harmonik Sekunder (E6 - 1318.5 Hz) - Chime ganda elegan
+                const osc2 = notificationAudioContext.createOscillator();
+                const gain2 = notificationAudioContext.createGain();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(1318.5, now + 0.12);
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.setValueAtTime(0.35, now + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+                osc2.connect(gain2);
+                gain2.connect(notificationAudioContext.destination);
+                osc2.start(now + 0.12);
+                osc2.stop(now + 0.85);
+
+                if (isTest && typeof showAdminToast === 'function') {
+                    showAdminToast('Tanda suara notifikasi approval izin santri aktif!', 'success');
+                }
+            } catch (err) {
+                console.warn('Gagal memainkan audio notifikasi:', err);
+            }
+        }
+        window.playApprovalNotificationSound = playApprovalNotificationSound;
+
         function toggleAdminNotifDropdown(event) {
             if (event) event.stopPropagation();
             const dropdown = document.getElementById('admin-notif-dropdown');
@@ -96,15 +146,43 @@
         }
         window.closeAdminNotifDropdown = closeAdminNotifDropdown;
 
+        // Handler klik tombol notifikasi mobile (Header Utama)
+        function handleMobileNotificationClick(event) {
+            if (event) event.stopPropagation();
+            const role = (window.ASNIdentity && window.ASNIdentity.currentRole) || 
+                         sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                         sessionStorage.getItem('asnawiyyah_admin_role') || 
+                         localStorage.getItem('asnawiyyah_admin_role') || '';
+            const roleUpper = String(role).toUpperCase();
+            const isAuthorized = ['PENGASUH', 'SUPER_ADMIN', 'ADMIN', 'ASATIDZ', 'PENGURUS'].includes(roleUpper);
+
+            if (isAuthorized) {
+                toggleAdminNotifDropdown(event);
+            } else {
+                if (typeof switchTab === 'function') {
+                    switchTab('notifikasi');
+                }
+            }
+        }
+        window.handleMobileNotificationClick = handleMobileNotificationClick;
+
+        let lastPendingApprovalCount = -1;
+
         function updateHeaderApprovalNotifications() {
-            const badgeEl = document.getElementById('admin-notif-badge');
+            const badgeDesktop = document.getElementById('admin-notif-badge');
+            const badgeMobile = document.getElementById('admin-mobile-notif-badge');
+            const badgeMainMobile = document.getElementById('mobile-notif-badge');
+            const badgePengasuhGrid = document.getElementById('pengasuh-perpulangan-badge');
+            const badgeAdminGrid = document.getElementById('admin-perpulangan-badge');
+            const badgeBottomNav = document.getElementById('mobile-nav-pengaturan-badge');
             const statusBadgeEl = document.getElementById('admin-notif-status-badge');
             const container = document.getElementById('admin-notif-list-container');
-            if (!container) return;
 
             const list = (window.ASNPerpulangan && Array.isArray(window.ASNPerpulangan.list)) ? window.ASNPerpulangan.list : [];
             const role = (window.ASNIdentity && window.ASNIdentity.currentRole) || 
-                         sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+                         sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                         sessionStorage.getItem('asnawiyyah_admin_role') || 
+                         localStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
             const roleUpper = String(role).toUpperCase();
 
             // Filter pending approval berdasarkan peran
@@ -116,21 +194,45 @@
                     const st = String(item.status || '').toUpperCase();
                     return st === 'MENUNGGU_PENGURUS' || st === 'MENUNGGU_PENGASUH';
                 });
+            } else if (roleUpper === 'ASATIDZ' || roleUpper === 'PENGURUS') {
+                pendingItems = list.filter(item => String(item.status || '').toUpperCase() === 'MENUNGGU_PENGURUS');
             } else {
                 pendingItems = list.filter(item => String(item.status || '').toUpperCase() === 'MENUNGGU_PENGURUS');
             }
 
             const count = pendingItems.length;
+            const countLabel = count > 99 ? '99+' : String(count);
 
-            // Update Badge Count pada Icon Lonceng
-            if (badgeEl) {
-                if (count > 0) {
-                    badgeEl.innerText = count > 99 ? '99+' : count;
-                    badgeEl.classList.remove('hidden');
-                } else {
-                    badgeEl.classList.add('hidden');
+            const isAuthorizedRole = ['PENGASUH', 'SUPER_ADMIN', 'ADMIN', 'ASATIDZ', 'PENGURUS'].includes(roleUpper);
+
+            // Bunyikan tanda suara jika ada notifikasi baru yang masuk
+            if (isAuthorizedRole && lastPendingApprovalCount !== -1 && count > lastPendingApprovalCount) {
+                const diff = count - lastPendingApprovalCount;
+                playApprovalNotificationSound(false);
+                if (typeof showAdminToast === 'function') {
+                    showAdminToast(`🔔 Ada ${diff} permohonan izin santri baru butuh persetujuan!`, 'info');
                 }
             }
+            lastPendingApprovalCount = count;
+
+            // Helper sinkronisasi badge
+            const updateBadge = (el, isDot = false) => {
+                if (!el) return;
+                if (count > 0 && isAuthorizedRole) {
+                    if (!isDot) el.innerText = countLabel;
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            };
+
+            // Sinkronisasi seluruh badge: desktop header, mobile admin navbar, header utama, pusat kontrol, bottom bar
+            updateBadge(badgeDesktop);
+            updateBadge(badgeMobile);
+            updateBadge(badgeMainMobile);
+            updateBadge(badgePengasuhGrid);
+            updateBadge(badgeAdminGrid);
+            updateBadge(badgeBottomNav, true);
 
             // Update Label Status di Header Popover
             if (statusBadgeEl) {
@@ -141,6 +243,8 @@
                     statusBadgeEl.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700';
                 }
             }
+
+            if (!container) return;
 
             // Render Daftar Kartu Notifikasi
             if (count === 0) {
@@ -153,7 +257,7 @@
                 return;
             }
 
-            container.innerHTML = pendingItems.slice(0, 8).map(item => {
+            container.innerHTML = pendingItems.slice(0, 10).map(item => {
                 const isPengasuhTier = String(item.status || '').toUpperCase() === 'MENUNGGU_PENGASUH';
                 const tierBadge = isPengasuhTier ? 
                     `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200">Tier 2 (Pengasuh)</span>` :
@@ -165,7 +269,7 @@
 
                 return `
                     <div onclick="openNotificationIzinDetail('${item.id}')" 
-                        class="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 hover:bg-emerald-50/60 dark:bg-[#1c2836]/60 dark:hover:bg-emerald-950/30 transition cursor-pointer group">
+                        class="p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 hover:bg-emerald-50/60 dark:bg-[#1c2836]/60 dark:hover:bg-emerald-950/30 transition cursor-pointer group active:scale-[0.99]">
                         <div class="flex items-start justify-between gap-2">
                             <div class="min-w-0">
                                 <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
@@ -191,25 +295,55 @@
 
         function openNotificationIzinDetail(izinId) {
             closeAdminNotifDropdown();
-            if (typeof showAdminView === 'function') {
+            // Arahkan ke modul perpulangan santri
+            if (typeof openAdminModuleFromControlCenter === 'function') {
+                openAdminModuleFromControlCenter('perpulangan');
+            } else if (typeof showAdminView === 'function') {
                 showAdminView('perpulangan');
             }
             if (window.ASNPerpulangan && typeof window.ASNPerpulangan.openModalApproval === 'function') {
                 setTimeout(() => {
                     window.ASNPerpulangan.openModalApproval(izinId);
-                }, 200);
+                }, 300);
             }
         }
         window.openNotificationIzinDetail = openNotificationIzinDetail;
 
+        // Polling notifikasi berkala di background setiap 40 detik
+        if (!window._asnApprovalNotifInterval) {
+            window._asnApprovalNotifInterval = setInterval(() => {
+                const role = (window.ASNIdentity && window.ASNIdentity.currentRole) || 
+                             sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                             sessionStorage.getItem('asnawiyyah_admin_role') || 
+                             localStorage.getItem('asnawiyyah_admin_role') || '';
+                const roleUpper = String(role).toUpperCase();
+                if (['PENGASUH', 'SUPER_ADMIN', 'ADMIN', 'ASATIDZ', 'PENGURUS'].includes(roleUpper)) {
+                    if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadData === 'function') {
+                        window.ASNPerpulangan.loadData(false);
+                    }
+                }
+            }, 40000);
+        }
+
+        // Event listener klik di luar popover & menu dropdown
         document.addEventListener('click', function(e) {
             const wrapper = document.getElementById('admin-user-menu-wrapper');
             if (wrapper && !wrapper.contains(e.target)) {
                 closeAdminUserDropdown();
             }
-            const notifWrapper = document.getElementById('admin-notif-menu-wrapper');
-            if (notifWrapper && !notifWrapper.contains(e.target)) {
-                closeAdminNotifDropdown();
+            
+            const notifDropdown = document.getElementById('admin-notif-dropdown');
+            const notifBtnDesktop = document.getElementById('admin-notif-btn');
+            const notifBtnMobile = document.getElementById('admin-mobile-notif-btn');
+            const notifBtnMainMobile = document.getElementById('main-mobile-notif-btn');
+            if (notifDropdown && !notifDropdown.classList.contains('hidden')) {
+                const isTrigger = (notifBtnDesktop && notifBtnDesktop.contains(e.target)) ||
+                                  (notifBtnMobile && notifBtnMobile.contains(e.target)) ||
+                                  (notifBtnMainMobile && notifBtnMainMobile.contains(e.target));
+                const isInside = notifDropdown.contains(e.target);
+                if (!isTrigger && !isInside) {
+                    closeAdminNotifDropdown();
+                }
             }
         });
 

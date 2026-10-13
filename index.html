@@ -482,11 +482,11 @@
             </button>
 
             <!-- Tombol Notifikasi Mobile -->
-            <button onclick="switchTab('notifikasi')"
+            <button id="main-mobile-notif-btn" type="button" onclick="handleMobileNotificationClick(event)"
                 class="relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-400 flex items-center justify-center text-sm border border-white/10 shadow-sm transition active:scale-95"
-                title="Pusat Notifikasi">
+                title="Pemberitahuan & Approval Izin">
                 <i class="fa-solid fa-bell"></i>
-                <span id="mobile-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow border-2 border-brand-900 leading-none">0</span>
+                <span id="mobile-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full flex items-center justify-center shadow border-2 border-brand-900 leading-none animate-pulse">0</span>
             </button>
         </div>
     </header>
@@ -1857,9 +1857,10 @@
 
                             <!-- 4.1 Izin & Perpulangan Santri -->
                             <button type="button" data-admin-module="perpulangan" onclick="openAdminModuleFromControlCenter('perpulangan')"
-                                class="flex flex-col items-center group transition active:scale-95 text-center">
-                                <div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                class="flex flex-col items-center group transition active:scale-95 text-center relative">
+                                <div class="relative w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
                                     <i class="fa-solid fa-person-walking-luggage"></i>
+                                    <span id="pengasuh-perpulangan-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
                                 </div>
                                 <span class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Perpulangan</span>
                             </button>
@@ -2230,10 +2231,11 @@
 
                             <!-- 4.1 Izin & Perpulangan Santri -->
                             <button type="button" data-admin-module="perpulangan" onclick="openAdminModuleFromControlCenter('perpulangan')"
-                                class="flex flex-col items-center group transition active:scale-95 text-center">
+                                class="flex flex-col items-center group transition active:scale-95 text-center relative">
                                 <div
-                                    class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                    class="relative w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
                                     <i class="fa-solid fa-person-walking-luggage"></i>
+                                    <span id="admin-perpulangan-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
                                 </div>
                                 <span
                                     class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Perpulangan</span>
@@ -4934,14 +4936,21 @@
         <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
             
             <!-- Mobile Admin Header Bar (Back to Pengaturan) -->
-            <div id="admin-mobile-nav-bar" class="lg:hidden px-4 py-3 bg-white dark:bg-[#15202d] border-b border-slate-200 dark:border-[#253447] flex items-center justify-between z-20 shrink-0 shadow-sm">
+            <div id="admin-mobile-nav-bar" class="lg:hidden px-3.5 py-2.5 bg-white dark:bg-[#15202d] border-b border-slate-200 dark:border-[#253447] flex items-center justify-between z-20 shrink-0 shadow-sm relative">
                 <button type="button" onclick="switchTab('pengaturan')" class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-emerald-600 transition active:scale-95">
                     <i class="fa-solid fa-arrow-left text-emerald-600 dark:text-emerald-400"></i>
-                    <span>Kembali ke Pengaturan</span>
+                    <span class="hidden sm:inline">Kembali ke Pengaturan</span>
+                    <span class="sm:hidden">Kembali</span>
                 </button>
                 <div class="flex items-center space-x-2">
+                    <!-- Notification Bell Mobile Admin -->
+                    <button type="button" id="admin-mobile-notif-btn" onclick="toggleAdminNotifDropdown(event)"
+                        class="relative w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs transition active:scale-95" title="Pemberitahuan & Approval Izin">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="admin-mobile-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
+                    </button>
                     <span id="admin-active-role-tag" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 shadow-sm">Super Admin</span>
-                    <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg">Pusat Kontrol</span>
+                    <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg hidden sm:inline">Pusat Kontrol</span>
                 </div>
             </div>
 
@@ -4996,39 +5005,6 @@
                             <i class="fa-solid fa-bell"></i>
                             <span id="admin-notif-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
                         </button>
-
-                        <!-- Notification Popover Card -->
-                        <div id="admin-notif-dropdown" class="hidden absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-[#15202d] rounded-2xl shadow-xl shadow-slate-300/40 dark:shadow-black/60 border border-slate-100 dark:border-slate-700/80 p-3 z-50 animate-fade-in-up">
-                            <!-- Header Notifikasi -->
-                            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
-                                <div class="flex items-center gap-1.5">
-                                    <i class="fa-solid fa-bell text-emerald-600 dark:text-emerald-400 text-xs"></i>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Pemberitahuan Izin Santri</span>
-                                </div>
-                                <span id="admin-notif-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                    0 Butuh Tindakan
-                                </span>
-                            </div>
-
-                            <!-- List Notifikasi Izin / Approval -->
-                            <div id="admin-notif-list-container" class="max-h-72 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                                <div class="py-6 text-center text-slate-400 text-xs">
-                                    <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
-                                    <span>Tidak ada izin santri yang butuh persetujuan saat ini.</span>
-                                </div>
-                            </div>
-
-                            <!-- Footer Shortcut -->
-                            <div class="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
-                                <button type="button" onclick="showAdminView('perpulangan'); closeAdminNotifDropdown();" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1">
-                                    <span>Buka Modul Izin & Perpulangan</span>
-                                    <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                                </button>
-                                <button type="button" onclick="showAdminView('notifikasi'); closeAdminNotifDropdown();" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                                    Broadcast
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- User Account Dropdown Trigger & Popover (Logo Pengguna & Pengaturan Akun) -->
@@ -5090,8 +5066,53 @@
                     </div>
                 </div>
             </header>
-            
-            
+
+            <!-- ================= POPOVER PEMBERITAHUAN & APPROVAL IZIN (RESPONSIF MOBILE & DESKTOP) ================= -->
+            <div id="admin-notif-dropdown" class="hidden fixed inset-x-3 top-14 sm:inset-auto sm:right-6 sm:top-14 w-auto sm:w-96 max-w-sm sm:max-w-md mx-auto sm:mx-0 bg-white dark:bg-[#15202d] rounded-3xl shadow-2xl shadow-slate-900/30 dark:shadow-black/80 border border-slate-200/90 dark:border-slate-700/80 p-3.5 z-50 animate-fade-in-up">
+                <!-- Header Notifikasi -->
+                <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight">Pemberitahuan Izin</h4>
+                            <p class="text-[9.5px] text-slate-400">Persetujuan perpulangan santri</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <!-- Uji Suara Chime -->
+                        <button type="button" onclick="playApprovalNotificationSound(true)" class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs transition active:scale-95" title="Uji Tanda Suara Notifikasi">
+                            <i class="fa-solid fa-volume-high text-[11px] text-emerald-600 dark:text-emerald-400"></i>
+                        </button>
+                        <span id="admin-notif-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#1c2836] dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            0 Butuh Tindakan
+                        </span>
+                        <button type="button" onclick="closeAdminNotifDropdown()" class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs transition active:scale-95" title="Tutup">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- List Notifikasi Izin / Approval -->
+                <div id="admin-notif-list-container" class="max-h-72 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
+                    <div class="py-6 text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
+                        <span>Tidak ada izin santri yang butuh persetujuan saat ini.</span>
+                    </div>
+                </div>
+
+                <!-- Footer Shortcut -->
+                <div class="pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                    <button type="button" onclick="showAdminView('perpulangan'); closeAdminNotifDropdown();" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1">
+                        <span>Buka Modul Izin & Perpulangan</span>
+                        <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                    </button>
+                    <span class="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-bell text-amber-500 text-[9px]"></i> Live Audio Aktif
+                    </span>
+                </div>
+            </div>
 
             <!-- Scrollable Views Container -->
             <div class="flex-1 overflow-y-auto p-2.5 md:p-3.5 lg:p-4 bg-slate-50/70 dark:bg-[#0b131e] custom-scrollbar">
@@ -10403,8 +10424,9 @@
         </button>
         <!-- 5. Pengaturan -->
         <button onclick="switchTab('pengaturan')" id="mobile-nav-pengaturan"
-            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition">
+            class="nav-mob-btn flex flex-col items-center text-emerald-300 transition relative">
             <i class="fa-solid fa-gear text-base"></i>
+            <span id="mobile-nav-pengaturan-badge" class="hidden absolute top-0.5 right-3 min-w-[7px] h-[7px] bg-rose-500 rounded-full ring-2 ring-brand-900 animate-pulse"></span>
             <span class="text-[9px] mt-1">Pengaturan</span>
         </button>
     </div>

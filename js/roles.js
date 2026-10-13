@@ -2563,6 +2563,11 @@
         if (typeof updateHeaderApprovalNotifications === 'function') {
             updateHeaderApprovalNotifications();
         }
+        if (['PENGASUH', 'SUPER_ADMIN', 'ADMIN', 'ASATIDZ', 'PENGURUS'].includes(roleKey)) {
+            if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadData === 'function') {
+                window.ASNPerpulangan.loadData(false);
+            }
+        }
 
         // 10. Terapkan konfigurasi izin secara menyeluruh ke seluruh UI
         applyAllRolePermissionsUI(roleKey);
