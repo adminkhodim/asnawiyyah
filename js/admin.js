@@ -90,35 +90,63 @@
                     notificationAudioContext.resume();
                 }
 
-                const now = notificationAudioContext.currentTime;
+                const ctx = notificationAudioContext;
+                const now = ctx.currentTime;
 
-                // Nada Bell Primer (C6 - 1046.5 Hz)
-                const osc1 = notificationAudioContext.createOscillator();
-                const gain1 = notificationAudioContext.createGain();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(1046.5, now);
-                gain1.gain.setValueAtTime(0.32, now);
-                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
-                osc1.connect(gain1);
-                gain1.connect(notificationAudioContext.destination);
-                osc1.start(now);
-                osc1.stop(now + 0.55);
+                // Master Gain untuk volume keras dan jelas di speaker smartphone/laptop
+                const masterGain = ctx.createGain();
+                masterGain.gain.setValueAtTime(0.92, now);
+                masterGain.connect(ctx.destination);
 
-                // Nada Harmonik Sekunder (E6 - 1318.5 Hz) - Chime ganda elegan
-                const osc2 = notificationAudioContext.createOscillator();
-                const gain2 = notificationAudioContext.createGain();
-                osc2.type = 'triangle';
-                osc2.frequency.setValueAtTime(1318.5, now + 0.12);
-                gain2.gain.setValueAtTime(0, now);
-                gain2.gain.setValueAtTime(0.35, now + 0.12);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
-                osc2.connect(gain2);
-                gain2.connect(notificationAudioContext.destination);
-                osc2.start(now + 0.12);
-                osc2.stop(now + 0.85);
+                // Melodi Arpeggio Chime 4-Nada Elegan & Nyaring (Total durasi ~2.25 detik)
+                // Nada 1: G5 (783.99 Hz)
+                // Nada 2: C6 (1046.50 Hz)
+                // Nada 3: E6 (1318.51 Hz)
+                // Nada 4: G6 (1567.98 Hz) - Sustained Reverb Chime
+                const melodyNotes = [
+                    { freq: 783.99, start: 0.00, dur: 0.65, gain: 0.60 },
+                    { freq: 1046.50, start: 0.20, dur: 0.75, gain: 0.75 },
+                    { freq: 1318.51, start: 0.42, dur: 0.85, gain: 0.80 },
+                    { freq: 1567.98, start: 0.65, dur: 1.60, gain: 0.90 }
+                ];
+
+                melodyNotes.forEach(n => {
+                    const noteStartTime = now + n.start;
+                    const noteEndTime = noteStartTime + n.dur;
+
+                    // Osilator Dasar (Sine Wave - Body nada bulat & tebal)
+                    const oscSine = ctx.createOscillator();
+                    const gainSine = ctx.createGain();
+                    oscSine.type = 'sine';
+                    oscSine.frequency.setValueAtTime(n.freq, noteStartTime);
+
+                    gainSine.gain.setValueAtTime(0, noteStartTime);
+                    gainSine.gain.linearRampToValueAtTime(n.gain, noteStartTime + 0.02);
+                    gainSine.gain.exponentialRampToValueAtTime(0.0001, noteEndTime);
+
+                    oscSine.connect(gainSine);
+                    gainSine.connect(masterGain);
+                    oscSine.start(noteStartTime);
+                    oscSine.stop(noteEndTime);
+
+                    // Osilator Harmoni (Triangle Wave - Gemerincing bell akustik yang menembus kebisingan)
+                    const oscTri = ctx.createOscillator();
+                    const gainTri = ctx.createGain();
+                    oscTri.type = 'triangle';
+                    oscTri.frequency.setValueAtTime(n.freq * 2, noteStartTime);
+
+                    gainTri.gain.setValueAtTime(0, noteStartTime);
+                    gainTri.gain.linearRampToValueAtTime(n.gain * 0.35, noteStartTime + 0.015);
+                    gainTri.gain.exponentialRampToValueAtTime(0.0001, noteStartTime + (n.dur * 0.65));
+
+                    oscTri.connect(gainTri);
+                    gainTri.connect(masterGain);
+                    oscTri.start(noteStartTime);
+                    oscTri.stop(noteStartTime + (n.dur * 0.65));
+                });
 
                 if (isTest && typeof showAdminToast === 'function') {
-                    showAdminToast('Tanda suara notifikasi approval izin santri aktif!', 'success');
+                    showAdminToast('🔔 Tanda suara notifikasi berbunyi nyaring & panjang!', 'success');
                 }
             } catch (err) {
                 console.warn('Gagal memainkan audio notifikasi:', err);
