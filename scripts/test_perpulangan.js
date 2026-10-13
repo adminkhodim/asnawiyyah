@@ -77,7 +77,10 @@ assert(apiJsContent.includes('approveIzinPengurus'), 'approveIzinPengurus harus 
 assert(apiJsContent.includes('approveIzinPengasuh'), 'approveIzinPengasuh harus terdaftar di api.js');
 assert(apiJsContent.includes('rejectPermohonanIzin'), 'rejectPermohonanIzin harus terdaftar di api.js');
 assert(apiJsContent.includes('gateCheckIzin'), 'gateCheckIzin harus terdaftar di api.js');
-// 5. Verifikasi Integrasi Langkah 5: Portal Wali Santri
+assert(apiJsContent.includes('deleteIzinPerpulangan'), 'deleteIzinPerpulangan harus terdaftar di api.js');
+assert(perpulanganContent.includes('confirmDeleteIzin'), 'Fungsi confirmDeleteIzin harus ada di js/perpulangan.js');
+console.log('✅ 5. API Dual-Sync penghapusan izin (Supabase & Spreadsheet) terverifikasi');
+// 6. Verifikasi Integrasi Langkah 5: Portal Wali Santri
 assert(indexHtmlContent.includes('id="parent-perpulangan-tracking-list"'), 'Kontainer tracking pelacakan izin santri harus ada di portal wali santri index.html');
 assert(indexHtmlContent.includes('id="parent-perpulangan-count-badge"'), 'Badge count izin harus ada di portal wali santri index.html');
 

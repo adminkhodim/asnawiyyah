@@ -284,6 +284,11 @@ function doPost(e) {
       return createJsonResponse(gateCheckIzin(payload.data || payload, token));
     }
 
+    if (action === "deleteIzinPerpulangan" || action === "perpulangan.delete") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(deleteIzinPerpulangan(payload.data || payload, token));
+    }
+
     // ========================================================
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)

@@ -543,6 +543,18 @@
                 `;
             }
 
+            // Aksi Hapus Izin: Khusus Pengurus, Admin, Pengasuh, Super Admin (Hapus data dummy / salah input)
+            const canDelete = isSuperAdmin || isAdmin || isPengurus || isPengasuh;
+            if (canDelete) {
+                actionButtons += `
+                    <button type="button" onclick="window.ASNPerpulangan.confirmDeleteIzin('${idIzin}', '${escapeHtml(studentName).replace(/'/g, "\\'")}')" 
+                        class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-400 transition flex items-center justify-center shrink-0 active:scale-95" 
+                        title="Hapus Permanen Data Izin (${idIzin})">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                `;
+            }
+
             // WhatsApp Penjemput Action
             let waButton = '';
             let waButtonMobile = '';
@@ -1833,6 +1845,93 @@
     }
 
     /**
+     * Konfirmasi Hapus Data Izin Perpulangan (Dual-Sync: Supabase & Spreadsheet)
+     */
+    async function confirmDeleteIzin(idIzin, studentName) {
+        if (!idIzin) return;
+
+        let confirmed = false;
+        if (typeof Swal !== 'undefined') {
+            const res = await Swal.fire({
+                title: 'Hapus Data Izin?',
+                html: `Apakah Anda yakin ingin menghapus permanen data izin <b>${escapeHtml(idIzin)}</b> untuk santri <b>${escapeHtml(studentName)}</b>?<br><br><span class="text-xs text-rose-600 font-semibold">⚠️ Data akan dihapus dari Cloud Database Supabase dan Google Spreadsheet.</span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="fa-solid fa-trash-can mr-1"></i> Ya, Hapus',
+                cancelButtonText: 'Batal'
+            });
+            confirmed = res.isConfirmed;
+        } else {
+            confirmed = window.confirm(`Apakah Anda yakin ingin menghapus permanen data izin ${idIzin} untuk "${studentName}"?\n\nData akan dihapus dari Supabase dan Google Spreadsheet.`);
+        }
+
+        if (confirmed) {
+            await executeDeleteIzin(idIzin);
+        }
+    }
+
+    /**
+     * Eksekusi Penghapusan Data Izin (Dual-Sync: Supabase & Google Spreadsheet)
+     */
+    async function executeDeleteIzin(idIzin) {
+        if (!idIzin) return;
+
+        if (typeof showToast === 'function') {
+            showToast(`Sedang menghapus izin ${idIzin} dari Supabase & Spreadsheet...`, 'info');
+        }
+
+        try {
+            // 1. Eksekusi Hapus Langsung ke Supabase REST API (Resilient & Fast)
+            const config = window.ASNAWIYYAH_CONFIG || {};
+            const sbUrl = config.supabaseUrl;
+            const sbKey = config.supabaseKey;
+            if (sbUrl && sbKey) {
+                try {
+                    await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`
+                        }
+                    });
+                } catch (sbErr) {
+                    console.warn('[SUPABASE DIRECT DELETE ERROR]', sbErr);
+                }
+            }
+
+            // 2. Eksekusi Hapus ke Backend Google Apps Script (Spreadsheet)
+            let res = null;
+            if (typeof window.deleteIzinPerpulangan === 'function') {
+                res = await window.deleteIzinPerpulangan(idIzin);
+            } else if (typeof window.apiPost === 'function') {
+                res = await window.apiPost('perpulangan.delete', { idIzin });
+            }
+
+            // 3. Bersihkan memori lokal
+            ASNPerpulangan.list = ASNPerpulangan.list.filter(item => String(item.id_izin || item.id || item.idIzin || '').trim() !== String(idIzin).trim());
+            ASNPerpulangan.filteredList = ASNPerpulangan.filteredList.filter(item => String(item.id_izin || item.id || item.idIzin || '').trim() !== String(idIzin).trim());
+
+            // 4. Hitung ulang statistik & KPI cards
+            calculatePerpulanganMetrics(ASNPerpulangan.list);
+            renderPerpulanganMetrics();
+
+            // 5. Render ulang tabel & kartu mobile
+            renderPerpulanganTable();
+
+            if (typeof showToast === 'function') {
+                showToast(`✅ Data izin ${idIzin} berhasil dihapus dari Supabase dan Spreadsheet.`, 'success');
+            }
+        } catch (err) {
+            console.error('[ASNPerpulangan] Delete error:', err);
+            if (typeof showToast === 'function') {
+                showToast(`Gagal menghapus data izin: ${err.message}`, 'error');
+            }
+        }
+    }
+
+    /**
      * Modal Pratinjau Surat Jalan & Kartu Izin Digital Resmi
      */
     function openModalPrintSuratIzin(idIzin) {
@@ -2586,6 +2685,8 @@
     ASNPerpulangan.openWaliIzinModal = openWaliIzinModal;
     ASNPerpulangan.loadWaliPerpulanganData = loadWaliPerpulanganData;
     ASNPerpulangan.renderWaliIzinTracking = renderWaliIzinTracking;
+    ASNPerpulangan.confirmDeleteIzin = confirmDeleteIzin;
+    ASNPerpulangan.executeDeleteIzin = executeDeleteIzin;
 
     // Export window level alias untuk kemudahan integrasi event handler onclick
     window.loadPerpulanganData = loadPerpulanganData;
@@ -2593,5 +2694,6 @@
     window.closeModalFormIzin = closeModalFormIzin;
     window.openWaliIzinModal = openWaliIzinModal;
     window.loadWaliPerpulanganData = loadWaliPerpulanganData;
+    window.confirmDeleteIzin = confirmDeleteIzin;
 
 })(window, document);

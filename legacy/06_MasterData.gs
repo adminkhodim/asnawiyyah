@@ -3115,3 +3115,59 @@ function gateCheckIzin(payload = {}, token = null) {
     return { status: "error", success: false, message: "Gagal memproses check gerbang: " + err.message };
   }
 }
+
+/**
+ * Menghapus data perizinan santri dari sheet Izin_Perpulangan
+ */
+function deleteIzinPerpulangan(payload = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    if (!sheet) throw new Error("Gagal mengakses database Izin_Perpulangan.");
+
+    const idIzin = String(payload.idIzin || payload.id_izin || payload.id || "").trim();
+    if (!idIzin) throw new Error("ID Izin wajib disertakan.");
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) {
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        message: `Data perizinan ${idIzin} tidak ditemukan di Spreadsheet (tabel kosong).`
+      };
+    }
+
+    const headers = data[0].map(h => String(h || "").trim());
+    const idIdx = headers.indexOf("ID_Izin");
+    if (idIdx === -1) throw new Error("Kolom ID_Izin tidak ditemukan di spreadsheet.");
+
+    let foundRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || "").trim() === idIzin) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    if (foundRow > 1) {
+      sheet.deleteRow(foundRow);
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        message: `Data perizinan ${idIzin} berhasil dihapus dari Spreadsheet.`
+      };
+    } else {
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        message: `Data perizinan ${idIzin} tidak ditemukan di Spreadsheet (sudah terhapus sebelumnya).`
+      };
+    }
+  } catch (err) {
+    console.error("[DELETE IZIN ERROR]", err);
+    return { status: "error", success: false, message: "Gagal menghapus izin dari Spreadsheet: " + err.message };
+  }
+}
+

@@ -1776,7 +1776,8 @@
                 'perpulangan.approvePengurus', 'approveIzinPengurus',
                 'perpulangan.approvePengasuh', 'approveIzinPengasuh',
                 'perpulangan.reject', 'rejectIzin', 'rejectIzinPerpulangan',
-                'perpulangan.gateCheck', 'gateCheckIzin'
+                'perpulangan.gateCheck', 'gateCheckIzin',
+                'perpulangan.delete', 'deleteIzinPerpulangan'
             ].includes(action);
 
             const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
@@ -1835,6 +1836,8 @@
                         fallbackMsg = "Izin disetujui Pengurus Keamanan (Cloud Database).";
                     } else if (action === 'perpulangan.reject' || action === 'rejectIzin' || action === 'rejectIzinPerpulangan') {
                         fallbackMsg = "Izin telah ditolak (Cloud Database).";
+                    } else if (action === 'perpulangan.delete' || action === 'deleteIzinPerpulangan') {
+                        fallbackMsg = "Data izin perpulangan berhasil dihapus dari Cloud Database Supabase.";
                     } else if (action === 'perpulangan.gateCheck' || action === 'gateCheckIzin') {
                         fallbackMsg = "Presensi gerbang santri berhasil dicatat (Cloud Database).";
                     } else {
@@ -3001,6 +3004,15 @@
                         });
                     }
                 }
+                else if (action === 'perpulangan.delete' || action === 'deleteIzinPerpulangan') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    if (id) {
+                        await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
             } catch (syncErr) {
                 console.warn('[SUPABASE DUAL-WRITE SYNC ERROR]', action, syncErr);
             }
@@ -3600,6 +3612,10 @@
             return await apiPost('perpulangan.gateCheck', { idIzin, checkType, catatan, petugas, isLate, catatanKeterlambatan });
         }
 
+        async function deleteIzinPerpulangan(idIzin) {
+            return await apiPost('perpulangan.delete', { idIzin });
+        }
+
         window.getIzinPerpulanganList = getIzinPerpulanganList;
         window.getIzinPerpulanganById = getIzinPerpulanganById;
         window.submitPermohonanIzin = submitPermohonanIzin;
@@ -3607,4 +3623,5 @@
         window.approveIzinPengasuh = approveIzinPengasuh;
         window.rejectPermohonanIzin = rejectPermohonanIzin;
         window.gateCheckIzin = gateCheckIzin;
+        window.deleteIzinPerpulangan = deleteIzinPerpulangan;
 
