@@ -265,6 +265,62 @@ function getCurriculumOrderForProgram(programName) {
     return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
 }
 
+/**
+ * Mendapatkan nama Program Pesantren santri secara akurat
+ * Mengutamakan program tersimpan dan cross-reference ke Master Data Santri
+ */
+function getTahfidzStudentProgram(st) {
+    if (!st) return 'Tahfidz';
+
+    // 1. Cek langsung properti program pada objek santri
+    const directProgram = st.program || st.programPesantren || (st.student && (st.student.program || st.student.programPesantren));
+    if (directProgram && typeof directProgram === 'string' && directProgram.trim() !== '' && directProgram.trim().toLowerCase() !== 'bil hifdhi' && directProgram.trim().toLowerCase() !== 'bil hifdzi') {
+        return directProgram.trim();
+    }
+
+    // 2. Cross-reference ke memory adminStudentsData jika tersedia
+    const targetId = String(st.studentId || st.nis || (st.student && (st.student.studentId || st.student.nis)) || '').trim().toLowerCase();
+    const targetNis = String(st.nis || (st.student && st.student.nis) || '').trim().toLowerCase();
+
+    if (typeof window !== 'undefined' && Array.isArray(window.adminStudentsData) && (targetId || targetNis)) {
+        const found = window.adminStudentsData.find(s => {
+            const sId = String(s.studentId || s.id || '').trim().toLowerCase();
+            const sNis = String(s.nis || '').trim().toLowerCase();
+            return (targetId && (sId === targetId || sNis === targetId)) ||
+                   (targetNis && (sNis === targetNis || sId === targetNis));
+        });
+        if (found && (found.program || found.programPesantren)) {
+            return (found.program || found.programPesantren).trim();
+        }
+    }
+
+    // 3. Cross-reference ke cache localStorage ASNAWIYYAH_STUDENTS_CACHE
+    try {
+        const cached = localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE');
+        if (cached && (targetId || targetNis)) {
+            const list = JSON.parse(cached);
+            if (Array.isArray(list)) {
+                const found = list.find(s => {
+                    const sId = String(s.studentId || s.id || '').trim().toLowerCase();
+                    const sNis = String(s.nis || '').trim().toLowerCase();
+                    return (targetId && (sId === targetId || sNis === targetId)) ||
+                           (targetNis && (sNis === targetNis || sId === targetNis));
+                });
+                if (found && (found.program || found.programPesantren)) {
+                    return (found.program || found.programPesantren).trim();
+                }
+            }
+        }
+    } catch (e) {}
+
+    // 4. Fallback ke kategori halaqah jika ada
+    if (st.kategori && typeof st.kategori === 'string' && st.kategori.trim() !== '' && st.kategori !== 'Semua Kategori') {
+        return st.kategori.trim();
+    }
+
+    return 'Tahfidz';
+}
+
 // Metadata Lengkap 114 Surah Al-Qur'an (Jumlah Ayat, Halaman Standar Mushaf Pojok, & Pemetaan Juz)
 const QURAN_114_SURAHS = [
     { no: 1, name: "Al-Fatihah", ayat: 7, startPage: 1, endPage: 1, juz: [1] },
@@ -1096,7 +1152,17 @@ function populateTahfidzFilters() {
 
     if (selKat) {
         const currentVal = selKat.value;
-        const categories = (ASNTahfidz.data.categories || []).filter(c => c && c !== 'ALL' && c !== 'Semua Kategori');
+        const catSet = new Set((ASNTahfidz.data.categories || []).filter(c => c && c !== 'ALL' && c !== 'Semua Kategori'));
+        (ASNTahfidz.data.students || []).forEach(st => {
+            const p = getTahfidzStudentProgram(st);
+            if (p && p !== 'Tahfidz' && p !== 'Bil Hifdhi' && p !== 'Bil Hifdzi') catSet.add(p);
+        });
+        if (typeof getCurriculumAvailablePrograms === 'function') {
+            getCurriculumAvailablePrograms().forEach(p => {
+                if (p) catSet.add(p);
+            });
+        }
+        const categories = Array.from(catSet);
         let optKat = `<option value="ALL">Semua Kategori</option>`;
         categories.forEach(k => {
             optKat += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
@@ -1245,15 +1311,17 @@ function filterTahfidzList() {
     const anyInHalaqah = all.some(s => isStudentInHalaqah(s));
 
     ASNTahfidz.filteredStudents = all.filter(st => {
-        // Query search
+        const stProg = getTahfidzStudentProgram(st);
         const stHalaqahName = typeof st.halaqah === 'object' ? (st.halaqah?.namaHalaqah || '') : String(st.halaqah || '');
         const matchQ = !q ||
             (st.name && st.name.toLowerCase().includes(q)) ||
             (st.nis && String(st.nis).toLowerCase().includes(q)) ||
+            (stProg && stProg.toLowerCase().includes(q)) ||
             (stHalaqahName && stHalaqahName.toLowerCase().includes(q));
 
-        // Kategori
+        // Kategori / Program
         const matchKat = (kat === 'Semua Kategori' || kat === 'ALL') ||
+            (stProg && stProg.toLowerCase() === kat.toLowerCase()) ||
             (st.program && st.program.toLowerCase() === kat.toLowerCase()) ||
             (st.halaqah && typeof st.halaqah === 'object' && st.halaqah.kategori && st.halaqah.kategori.toLowerCase() === kat.toLowerCase());
 
@@ -1368,7 +1436,8 @@ function renderTahfidzStudentTable() {
 
             const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
             const currentHal = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
-            const curProg = getCurriculumProgress(currentJuz, currentHal, st.program);
+            const studentProgram = getTahfidzStudentProgram(st);
+            const curProg = getCurriculumProgress(currentJuz, currentHal, studentProgram);
             const percent = curProg.percent;
             const onTrackStatus = st.progress?.onTrackStatus || 'Belum Setor';
             const isOnTrack = onTrackStatus.includes('On-Track');
@@ -1397,7 +1466,7 @@ function renderTahfidzStudentTable() {
                         </div>
                         <div class="min-w-0 flex-1">
                             <h4 class="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate" title="${escapeHtml(st.name)}">${escapeHtml(st.name)}</h4>
-                            <p class="text-[9.5px] text-slate-400 truncate">NIS: ${escapeHtml(st.nis || '-')} • Bil Hifdhi</p>
+                            <p class="text-[9.5px] text-slate-500 dark:text-slate-400 truncate">NIS: ${escapeHtml(st.nis || '-')} • <span class="font-bold text-emerald-700 dark:text-emerald-400">${escapeHtml(studentProgram)}</span></p>
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.2 mt-0.5 rounded text-[8.5px] font-bold max-w-full truncate ${inHal ? 'bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40'}" title="${escapeHtml(halaqahName)}">
                                 <span class="w-1.5 h-1.5 rounded-full shrink-0 ${inHal ? 'bg-emerald-500' : 'bg-amber-400'}"></span>
                                 <span class="truncate">${escapeHtml(halaqahName)}</span>
@@ -1545,7 +1614,8 @@ function renderTahfidzStudentTable() {
 
             const currentJuz = Number(cap.juzAktif) || Number(st.progress?.currentJuz) || 30;
             const currentHal = Number(cap.halamanTerakhir) || Number(st.progress?.currentHalaman) || 1;
-            const curProg = getCurriculumProgress(currentJuz, currentHal, st.program);
+            const studentProgram = getTahfidzStudentProgram(st);
+            const curProg = getCurriculumProgress(currentJuz, currentHal, studentProgram);
             const percent = curProg.percent;
             const targetZ = st.target?.ziyadahSesi || 1;
             const targetM = st.target?.murajaahSesi || 2;
@@ -1571,7 +1641,14 @@ function renderTahfidzStudentTable() {
                         </div>
                         <div class="min-w-0">
                             <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(st.name)}</h4>
-                            <p class="text-[10px] text-slate-400">NIS: ${escapeHtml(st.nis || '-')} • <span class="${inHal ? 'text-emerald-600 font-semibold' : 'text-amber-600 dark:text-amber-400 font-semibold'}">${escapeHtml(halaqahName)}</span> ${isExcused ? `<span class="ml-1 px-1.5 py-0.2 rounded text-[8px] font-black ${presStatus === 'SAKIT' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' : (presStatus === 'PULANG' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300')}">${presStatus === 'SAKIT' ? '🏥 Sakit' : (presStatus === 'PULANG' ? '🏠 Pulang' : '📝 Izin')}</span>` : ''}</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">NIS: ${escapeHtml(st.nis || '-')} • <span class="font-bold text-emerald-700 dark:text-emerald-400">${escapeHtml(studentProgram)}</span></p>
+                            <div class="mt-0.5 flex items-center gap-1.5 text-[9px]">
+                                <span class="inline-flex items-center gap-1 font-semibold ${inHal ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
+                                    <span class="w-1.5 h-1.5 rounded-full shrink-0 ${inHal ? 'bg-emerald-500' : 'bg-amber-400'}"></span>
+                                    <span class="truncate">${escapeHtml(halaqahName)}</span>
+                                </span>
+                                ${isExcused ? `<span class="ml-1 px-1.5 py-0.2 rounded text-[8px] font-black ${presStatus === 'SAKIT' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' : (presStatus === 'PULANG' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300')}">${presStatus === 'SAKIT' ? '🏥 Sakit' : (presStatus === 'PULANG' ? '🏠 Pulang' : '📝 Izin')}</span>` : ''}
+                            </div>
                         </div>
                     </div>
                     <button type="button" onclick="openTahfidzCatatModal('${st.studentId}')" class="px-2.5 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow-sm">
@@ -2918,7 +2995,8 @@ async function openTahfidzStudentDetail(studentId, viewerRole = null) {
         const halaqahName = existingStudent.halaqah?.namaHalaqah || existingStudent.halaqah || 'Halaqah Utama';
 
         if (elName) elName.innerText = existingStudent.name || "Santri";
-        if (elNis) elNis.innerText = `NIS: ${existingStudent.nis || '-'} • Bil Hifdhi • ${escapeHtml(halaqahName)}`;
+        const progName = getTahfidzStudentProgram(existingStudent);
+        if (elNis) elNis.innerText = `NIS: ${existingStudent.nis || '-'} • ${progName} • ${escapeHtml(halaqahName)}`;
         if (elAvatar) {
             const initials = (existingStudent.name || 'Santri').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
             elAvatar.innerHTML = existingStudent.photoUrl ? `<img src="${escapeHtml(existingStudent.photoUrl)}" class="w-full h-full object-cover rounded-2xl">` : initials;
@@ -3273,7 +3351,8 @@ function renderTahfidzStudentDetailView() {
     const halaqahName = st.halaqah?.namaHalaqah || st.halaqah || 'Halaqah Utama';
 
     if (elName) elName.innerText = st.name || "Santri";
-    if (elNis) elNis.innerText = `NIS: ${st.nis || '-'} • Bil Hifdhi • ${escapeHtml(halaqahName)}`;
+    const progName = getTahfidzStudentProgram(st);
+    if (elNis) elNis.innerText = `NIS: ${st.nis || '-'} • ${progName} • ${escapeHtml(halaqahName)}`;
     if (elAvatar) {
         const initials = (st.name || 'Santri').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
         elAvatar.innerHTML = st.photoUrl ? `<img src="${escapeHtml(st.photoUrl)}" class="w-full h-full object-cover rounded-2xl">` : initials;

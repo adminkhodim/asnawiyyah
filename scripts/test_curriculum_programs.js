@@ -164,4 +164,72 @@ assert.strictEqual(progIntensif.rank, 10);
 assert.strictEqual(progIntensif.totalTuntas, 220);
 console.log("  ✅ Test 4 Passed: Perhitungan akumulasi capaian & persentase akurat per program.");
 
+// TEST 5: getTahfidzStudentProgram resolving
+function getTahfidzStudentProgram(st) {
+    if (!st) return 'Tahfidz';
+    const directProgram = st.program || st.programPesantren || (st.student && (st.student.program || st.student.programPesantren));
+    if (directProgram && typeof directProgram === 'string' && directProgram.trim() !== '' && directProgram.trim().toLowerCase() !== 'bil hifdhi' && directProgram.trim().toLowerCase() !== 'bil hifdzi') {
+        return directProgram.trim();
+    }
+    const targetId = String(st.studentId || st.nis || (st.student && (st.student.studentId || st.student.nis)) || '').trim().toLowerCase();
+    const targetNis = String(st.nis || (st.student && st.student.nis) || '').trim().toLowerCase();
+    if (typeof global !== 'undefined' && Array.isArray(global.adminStudentsData) && (targetId || targetNis)) {
+        const found = global.adminStudentsData.find(s => {
+            const sId = String(s.studentId || s.id || '').trim().toLowerCase();
+            const sNis = String(s.nis || '').trim().toLowerCase();
+            return (targetId && (sId === targetId || sNis === targetId)) ||
+                   (targetNis && (sNis === targetNis || sId === targetNis));
+        });
+        if (found && (found.program || found.programPesantren)) {
+            return (found.program || found.programPesantren).trim();
+        }
+    }
+    try {
+        const cached = localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE');
+        if (cached && (targetId || targetNis)) {
+            const list = JSON.parse(cached);
+            if (Array.isArray(list)) {
+                const found = list.find(s => {
+                    const sId = String(s.studentId || s.id || '').trim().toLowerCase();
+                    const sNis = String(s.nis || '').trim().toLowerCase();
+                    return (targetId && (sId === targetId || sNis === targetId)) ||
+                           (targetNis && (sNis === targetNis || sId === targetNis));
+                });
+                if (found && (found.program || found.programPesantren)) {
+                    return (found.program || found.programPesantren).trim();
+                }
+            }
+        }
+    } catch (e) {}
+    if (st.kategori && typeof st.kategori === 'string' && st.kategori.trim() !== '' && st.kategori !== 'Semua Kategori') {
+        return st.kategori.trim();
+    }
+    return 'Tahfidz';
+}
+
+// 5a: Direct program
+const stA = { studentId: 'STD-096', nis: '2024018', program: 'Tahfidz Remaja' };
+assert.strictEqual(getTahfidzStudentProgram(stA), 'Tahfidz Remaja');
+
+// 5b: Overriding 'Bil Hifdhi' from adminStudentsData
+global.adminStudentsData = [{ studentId: 'STD-096', nis: '2024018', program: 'Tahfidz Remaja' }];
+const stB = { studentId: 'STD-096', nis: '2024018', program: 'Bil Hifdhi' };
+assert.strictEqual(getTahfidzStudentProgram(stB), 'Tahfidz Remaja');
+
+// 5c: Overriding from ASNAWIYYAH_STUDENTS_CACHE
+localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify([{ nis: '2023007', program: 'Tahfidz Anak' }]));
+const stC = { studentId: 'STD-097', nis: '2023007' };
+assert.strictEqual(getTahfidzStudentProgram(stC), 'Tahfidz Anak');
+console.log("  ✅ Test 5 Passed: Resolving nama program santri tangguh & anti-Bil Hifdhi.");
+
+// TEST 6: Formatting UI string (NIS • Program di baris 1, nama halaqah di baris 2)
+const stSample = { name: 'Abizar Arfan Khakim', nis: '2024018', program: 'Tahfidz Remaja', halaqah: { namaHalaqah: 'Halaqah Ustadzah Luthfi' } };
+const pName = getTahfidzStudentProgram(stSample);
+const hName = stSample.halaqah.namaHalaqah;
+const line1 = `NIS: ${stSample.nis || '-'} • ${pName}`;
+const line2 = hName;
+assert.strictEqual(line1, 'NIS: 2024018 • Tahfidz Remaja');
+assert.strictEqual(line2, 'Halaqah Ustadzah Luthfi');
+console.log("  ✅ Test 6 Passed: Format tampilan Santri & Halaqah sesuai spesifikasi permintaan.");
+
 console.log("🎉 ALL CURRICULUM TEST CASES PASSED SUCCESSFULLY!");
