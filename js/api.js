@@ -1760,7 +1760,9 @@
 
             // Jalankan sinkronisasi Supabase secara proaktif untuk write actions agar Cloud DB selalu termutakhirkan
             const isJadwalWrite = action === 'saveJadwalKegiatan' || action === 'toggleJadwalKegiatan' || action === 'deleteJadwalKegiatan';
-            const isNewsWrite = action === 'saveBerita' || action === 'updateBerita' || action === 'deleteBerita';
+            const isNewsUpdateOrDelete = action === 'updateBerita' || action === 'deleteBerita';
+            const isNewNewsCreate = action === 'saveBerita';
+            const isNewsWrite = isNewsUpdateOrDelete || isNewNewsCreate;
             const isNewsViewWrite = action === 'recordNewsView';
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
@@ -1782,8 +1784,10 @@
 
             const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
 
+            // Catatan: Untuk pembuatan berita baru (saveBerita), tunggu respons resmi Google Apps Script
+            // agar news_id dan slug di Supabase dijamin 100% identik dengan baris di Google Sheets.
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsWrite || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite) {
+            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -1811,15 +1815,22 @@
                 console.warn("[APPS SCRIPT POST FAILED]", netErr);
             }
 
-            // Tunggu sinkronisasi Supabase selesai jika dipanggil
+            // Tunggu sinkronisasi Supabase selesai jika dipanggil sebelumnya
             if (supabaseWritePromise) {
                 await supabaseWritePromise;
-            } else if (result && (result.success || result.status === "success")) {
+            }
+            // Untuk berita baru, sinkronkan ke Supabase membawa news_id, slug, & drive url resmi dari Apps Script
+            if (isNewNewsCreate && result && (result.success || result.status === "success")) {
+                await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
+            } else if (!supabaseWritePromise && result && (result.success || result.status === "success")) {
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             }
 
             // Jika Apps Script gagal/mengembalikan error tapi aksi adalah Tahfidz, Jadwal, Berita, Perpulangan, atau Notifikasi, kembalikan status sukses karena Supabase telah diperbarui
             if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite)) {
+                if (isNewNewsCreate && !supabaseWritePromise) {
+                    await syncToSupabaseOnWrite(action, payload, null).catch(e => console.warn("[OFFLINE SUPABASE DUAL-WRITE WARN]", e));
+                }
                 let fallbackMsg = "Operasi berhasil disimpan ke Cloud Database Supabase";
                 if (isTahfidzWrite) {
                     fallbackMsg = action === 'deleteTahfidzLog' 
@@ -2441,7 +2452,16 @@
                                 headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
                             });
                             if (gRes.ok) {
-                                const rows = await gRes.json();
+                                let rows = await gRes.json();
+                                if (!rows || rows.length === 0) {
+                                    const judulVal = (payload.data && payload.data.judul) || payload.judul;
+                                    if (judulVal) {
+                                        const jRes = await fetch(`${sbUrl}/rest/v1/berita?judul=eq.${encodeURIComponent(judulVal)}&select=news_id,views&limit=1`, {
+                                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                                        });
+                                        if (jRes.ok) rows = await jRes.json();
+                                    }
+                                }
                                 if (rows && rows.length > 0) {
                                     const clientV = Number(payload.views || (payload.data && payload.data.views) || 0);
                                     const currentV = Number(rows[0].views) || 0;

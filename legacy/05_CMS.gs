@@ -528,11 +528,22 @@ function recordNewsView(payload) {
       sheet.getRange(1, 10).setValue("Views");
     }
 
+    var reqNewsId = news_id ? String(news_id).trim() : "";
+    var reqSlug = slug ? String(slug).trim().toLowerCase() : "";
+    var reqJudul = (payload.judul || (payload.data && payload.data.judul)) ? String(payload.judul || payload.data.judul).trim().toLowerCase() : "";
+
     var data = sheet.getDataRange().getValues();
     var targetRow = -1;
     for (var i = 1; i < data.length; i++) {
-      if ((news_id && String(data[i][0]).trim() === String(news_id).trim()) ||
-          (slug && String(data[i][1]).trim() === String(slug).trim())) {
+      var rowId = String(data[i][0] || "").trim();
+      var rowSlug = String(data[i][1] || "").trim().toLowerCase();
+      var rowJudul = String(data[i][3] || "").trim().toLowerCase();
+
+      var matchId = reqNewsId && (rowId === reqNewsId);
+      var matchSlug = reqSlug && (rowSlug === reqSlug || rowSlug.indexOf(reqSlug) === 0 || reqSlug.indexOf(rowSlug) === 0);
+      var matchJudul = reqJudul && (rowJudul === reqJudul);
+
+      if (matchId || matchSlug || matchJudul) {
         targetRow = i + 1; // 1-indexed
         break;
       }

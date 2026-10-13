@@ -1125,6 +1125,7 @@
                 apiPost("recordNewsView", {
                     news_id: news.news_id,
                     slug: news.slug,
+                    judul: news.judul || '',
                     views: Number(news.views) || 0
                 }).catch(err => {
                     console.warn("recordNewsView background sync failed:", err);
