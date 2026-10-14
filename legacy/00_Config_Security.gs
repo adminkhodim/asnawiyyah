@@ -648,14 +648,9 @@ function ensureAuthSheetSchema(sheet, targetName) {
         }
       }
 
-      // 2. Hapus kolom class_name / kelas jika ada pada sheet Students
-      const updatedRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      for (let c = updatedRowValues.length - 1; c >= 0; c--) {
-        const hName = String(updatedRowValues[c] || "").trim().toLowerCase();
-        if (hName === "class_name" || hName === "kelas") {
-          sheet.deleteColumn(c + 1);
-          Logger.log(`[AUTO-MIGRATION] Kolom '${hName}' di sheet '${targetName}' (kolom ${c + 1}) berhasil dihapus.`);
-        }
+      // 2. Pastikan tata letak kolom Students memiliki kelas_sekolah di kolom E (setelah program)
+      if (typeof ensureStudentSheetColumnLayout === 'function') {
+        ensureStudentSheetColumnLayout(sheet);
       }
     }
 

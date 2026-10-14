@@ -1,4 +1,70 @@
 /**
+ * Memastikan tata letak kolom sheet Students:
+ * Kolom A: student_id
+ * Kolom B: nis
+ * Kolom C: name
+ * Kolom D: program
+ * Kolom E: kelas_sekolah (disisipkan tepat di sebelah kolom program, menggeser status dst ke kanan)
+ * Kolom F: status
+ * Kolom G: created_at
+ * Kolom H: birth_date
+ * Kolom I: nik
+ * Kolom J: gender
+ * Kolom K: photo_url
+ * Kolom L: qr_code
+ */
+function ensureStudentSheetColumnLayout(sheet) {
+  if (!sheet) return { changed: false, reason: "No sheet provided" };
+  const lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return { changed: false, reason: "Sheet empty" };
+
+  const headerValues = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const cleanHeaders = headerValues.map(h => String(h || "").trim().toLowerCase());
+
+  let progIdx = cleanHeaders.indexOf("program");
+  if (progIdx === -1) progIdx = cleanHeaders.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = cleanHeaders.indexOf("program_studi");
+  if (progIdx === -1) progIdx = cleanHeaders.indexOf("jenjang");
+
+  if (progIdx === -1) return { changed: false, reason: "Kolom program tidak ditemukan" };
+
+  const progCol1Based = progIdx + 1; // misal D = 4
+  const expectedKelasCol1Based = progCol1Based + 1; // Kolom E = 5
+
+  const currentNextHeader = (cleanHeaders[progIdx + 1] || "");
+  if (currentNextHeader === "kelas_sekolah" || currentNextHeader === "kelas") {
+    if (currentNextHeader !== "kelas_sekolah") {
+      sheet.getRange(1, expectedKelasCol1Based).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+    }
+    return { changed: false, position: expectedKelasCol1Based, message: "Kolom kelas_sekolah sudah di kolom E." };
+  }
+
+  let existingKelasIdx = cleanHeaders.indexOf("kelas_sekolah");
+  if (existingKelasIdx === -1) existingKelasIdx = cleanHeaders.indexOf("kelas");
+
+  let existingData = null;
+  const lastRow = sheet.getLastRow();
+
+  if (existingKelasIdx !== -1) {
+    if (lastRow > 1) {
+      existingData = sheet.getRange(2, existingKelasIdx + 1, lastRow - 1, 1).getValues();
+    }
+    sheet.deleteColumn(existingKelasIdx + 1);
+  }
+
+  sheet.insertColumnAfter(progCol1Based);
+  const newKelasCell = sheet.getRange(1, expectedKelasCol1Based);
+  newKelasCell.setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+
+  if (existingData && existingData.length > 0) {
+    sheet.getRange(2, expectedKelasCol1Based, existingData.length, 1).setValues(existingData);
+  }
+
+  Logger.log("[LAYOUT] Kolom kelas_sekolah berhasil disisipkan di kolom E (setelah program), kolom status dan seterusnya otomatis tergeser ke kanan.");
+  return { changed: true, position: expectedKelasCol1Based, message: "Kolom kelas_sekolah berhasil disisipkan di kolom E." };
+}
+
+/**
  * ============================================================================
  * 06_MasterData.gs
  * PPTQ Asnawiyyah Backend Architecture - Master Data Management
@@ -1784,6 +1850,7 @@ function getAllStudentsData(token) {
         summary: { total: 0, putra: 0, putri: 0, aktif: 0, nonaktif: 0 }
       };
     }
+    ensureStudentSheetColumnLayout(sheet);
 
     const data = sheet.getDataRange().getValues();
     if (!data || data.length < 2) {
@@ -1834,6 +1901,12 @@ function getAllStudentsData(token) {
     if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
     if (progIdx === -1) progIdx = headers.indexOf("program_studi");
     if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+
+    let kelasIdx = headers.indexOf("kelas_sekolah");
+    if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
+    if (kelasIdx === -1) kelasIdx = headers.indexOf("sekolah");
+    if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas_formal");
+
     let statusIdx = headers.indexOf("status");
     let createdIdx = headers.indexOf("created_at");
     let qrIdx = headers.indexOf("qr_code");
@@ -1867,6 +1940,7 @@ function getAllStudentsData(token) {
       }
 
       const program = progIdx !== -1 ? String(row[progIdx] || "Reguler").trim() : "Reguler";
+      const kelasSekolah = kelasIdx !== -1 ? String(row[kelasIdx] || "").trim() : "";
       const statusRaw = statusIdx !== -1 ? String(row[statusIdx] || "ACTIVE").trim().toUpperCase() : "ACTIVE";
       const status = (statusRaw === "ACTIVE" || statusRaw === "AKTIF") ? "ACTIVE" : "INACTIVE";
       const createdAt = createdIdx !== -1 ? String(row[createdIdx] || "").trim() : "";
@@ -1896,6 +1970,8 @@ function getAllStudentsData(token) {
         halaqah: directHalaqah,
         muhafiz: directMuhafiz,
         program: program || "Reguler",
+        kelas_sekolah: kelasSekolah,
+        kelas: kelasSekolah,
         status: status,
         createdAt: createdAt
       });
@@ -1988,6 +2064,7 @@ function saveStudentData(studentObj, token) {
   const inputBirth = normalizeDateString(studentObj.birthDate || studentObj.birth_date || "");
   const inputPhoto = String(studentObj.photoUrl || studentObj.photo_url || "").trim();
   const inputProgram = String(studentObj.program || "Reguler").trim();
+  const inputKelasSekolah = String(studentObj.kelas_sekolah || studentObj.kelasSekolah || studentObj.kelas || "").trim();
   let inputStatus = String(studentObj.status || "ACTIVE").trim().toUpperCase();
   if (inputStatus === "AKTIF" || inputStatus === "ACTIVE") {
     inputStatus = "ACTIVE";
@@ -2019,6 +2096,7 @@ function saveStudentData(studentObj, token) {
     if (birthIdx !== -1) sheet.getRange(foundRow, birthIdx + 1).setValue(inputBirth);
     if (photoIdx !== -1 && inputPhoto) sheet.getRange(foundRow, photoIdx + 1).setValue(inputPhoto);
     if (progIdx !== -1) sheet.getRange(foundRow, progIdx + 1).setValue(inputProgram);
+    if (kelasIdx !== -1) sheet.getRange(foundRow, kelasIdx + 1).setValue(inputKelasSekolah);
     if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(inputStatus);
 
     return {

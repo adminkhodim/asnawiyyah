@@ -656,14 +656,9 @@ function ensureAuthSheetSchema(sheet, targetName) {
         }
       }
 
-      // 2. Hapus kolom class_name / kelas jika ada pada sheet Students
-      const updatedRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      for (let c = updatedRowValues.length - 1; c >= 0; c--) {
-        const hName = String(updatedRowValues[c] || "").trim().toLowerCase();
-        if (hName === "class_name" || hName === "kelas") {
-          sheet.deleteColumn(c + 1);
-          Logger.log(`[AUTO-MIGRATION] Kolom '${hName}' di sheet '${targetName}' (kolom ${c + 1}) berhasil dihapus.`);
-        }
+      // 2. Pastikan tata letak kolom Students memiliki kelas_sekolah di kolom E (setelah program)
+      if (typeof ensureStudentSheetColumnLayout === 'function') {
+        ensureStudentSheetColumnLayout(sheet);
       }
     }
 
@@ -1035,6 +1030,15 @@ function doPost(e) {
       return createJsonResponse(
         batchUpdateStudentClassSchool(payload.data || payload, token)
       );
+    }
+
+    if (action === "autoMigrateStudentColumns" || action === "student.autoMigrateColumns") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const ss = getDatabaseSpreadsheet();
+      const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+      if (!sheet) return createJsonResponse({ status: "error", message: "Sheet Students tidak ditemukan" });
+      const res = ensureStudentSheetColumnLayout(sheet);
+      return createJsonResponse({ status: "success", success: true, message: res.message, detail: res });
     }
 
     if (action === "deleteStudent" || action === "student.delete") {
@@ -2147,7 +2151,7 @@ const AUTH_SHEET_SCHEMAS = Object.freeze({
   [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at", "photo_url"],
   [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at", "photo_url"],
   [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at", "photo_url"],
-  [SHEET_STUDENTS]: ["student_id", "nis", "nik", "name", "gender", "birth_date", "photo_url", "program", "status", "created_at", "qr_code"],
+  [SHEET_STUDENTS]: ["student_id", "nis", "name", "program", "kelas_sekolah", "status", "created_at", "birth_date", "nik", "gender", "photo_url", "qr_code"],
   [SHEET_WALI_SANTRI_MAP]: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"],
   [SHEET_OTP_CHALLENGES]: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"],
   [SHEET_AUTH_SESSIONS]: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"],
@@ -2209,14 +2213,9 @@ function setupAuthSystemSheets() {
             }
           }
 
-          // 2. Hapus kolom class_name / kelas jika ada pada sheet Students
-          const updatedRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-          for (let c = updatedRowValues.length - 1; c >= 0; c--) {
-            const hName = String(updatedRowValues[c] || "").trim().toLowerCase();
-            if (hName === "class_name" || hName === "kelas") {
-              sheet.deleteColumn(c + 1);
-              Logger.log(`[SCHEMA] Kolom '${hName}' di sheet '${sheetName}' (kolom ${c + 1}) berhasil dihapus.`);
-            }
+          // 2. Pastikan tata letak kolom Students memiliki kelas_sekolah di kolom E (setelah program)
+          if (typeof ensureStudentSheetColumnLayout === 'function') {
+            ensureStudentSheetColumnLayout(sheet);
           }
         }
 
@@ -11189,6 +11188,72 @@ function uploadMediaToDrive(formData, token) {
 // >>>>>>>>>>>>>>>>>> BEGIN FILE: 06_MasterData.gs <<<<<<<<<<<<<<<<<<
 
 /**
+ * Memastikan tata letak kolom sheet Students:
+ * Kolom A: student_id
+ * Kolom B: nis
+ * Kolom C: name
+ * Kolom D: program
+ * Kolom E: kelas_sekolah (disisipkan tepat di sebelah kolom program, menggeser status dst ke kanan)
+ * Kolom F: status
+ * Kolom G: created_at
+ * Kolom H: birth_date
+ * Kolom I: nik
+ * Kolom J: gender
+ * Kolom K: photo_url
+ * Kolom L: qr_code
+ */
+function ensureStudentSheetColumnLayout(sheet) {
+  if (!sheet) return { changed: false, reason: "No sheet provided" };
+  const lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return { changed: false, reason: "Sheet empty" };
+
+  const headerValues = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const cleanHeaders = headerValues.map(h => String(h || "").trim().toLowerCase());
+
+  let progIdx = cleanHeaders.indexOf("program");
+  if (progIdx === -1) progIdx = cleanHeaders.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = cleanHeaders.indexOf("program_studi");
+  if (progIdx === -1) progIdx = cleanHeaders.indexOf("jenjang");
+
+  if (progIdx === -1) return { changed: false, reason: "Kolom program tidak ditemukan" };
+
+  const progCol1Based = progIdx + 1; // misal D = 4
+  const expectedKelasCol1Based = progCol1Based + 1; // Kolom E = 5
+
+  const currentNextHeader = (cleanHeaders[progIdx + 1] || "");
+  if (currentNextHeader === "kelas_sekolah" || currentNextHeader === "kelas") {
+    if (currentNextHeader !== "kelas_sekolah") {
+      sheet.getRange(1, expectedKelasCol1Based).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+    }
+    return { changed: false, position: expectedKelasCol1Based, message: "Kolom kelas_sekolah sudah di kolom E." };
+  }
+
+  let existingKelasIdx = cleanHeaders.indexOf("kelas_sekolah");
+  if (existingKelasIdx === -1) existingKelasIdx = cleanHeaders.indexOf("kelas");
+
+  let existingData = null;
+  const lastRow = sheet.getLastRow();
+
+  if (existingKelasIdx !== -1) {
+    if (lastRow > 1) {
+      existingData = sheet.getRange(2, existingKelasIdx + 1, lastRow - 1, 1).getValues();
+    }
+    sheet.deleteColumn(existingKelasIdx + 1);
+  }
+
+  sheet.insertColumnAfter(progCol1Based);
+  const newKelasCell = sheet.getRange(1, expectedKelasCol1Based);
+  newKelasCell.setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+
+  if (existingData && existingData.length > 0) {
+    sheet.getRange(2, expectedKelasCol1Based, existingData.length, 1).setValues(existingData);
+  }
+
+  Logger.log("[LAYOUT] Kolom kelas_sekolah berhasil disisipkan di kolom E (setelah program), kolom status dan seterusnya otomatis tergeser ke kanan.");
+  return { changed: true, position: expectedKelasCol1Based, message: "Kolom kelas_sekolah berhasil disisipkan di kolom E." };
+}
+
+/**
  * ============================================================================
  * 06_MasterData.gs
  * PPTQ Asnawiyyah Backend Architecture - Master Data Management
@@ -12974,6 +13039,7 @@ function getAllStudentsData(token) {
         summary: { total: 0, putra: 0, putri: 0, aktif: 0, nonaktif: 0 }
       };
     }
+    ensureStudentSheetColumnLayout(sheet);
 
     const data = sheet.getDataRange().getValues();
     if (!data || data.length < 2) {
@@ -13024,10 +13090,12 @@ function getAllStudentsData(token) {
     if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
     if (progIdx === -1) progIdx = headers.indexOf("program_studi");
     if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+
     let kelasIdx = headers.indexOf("kelas_sekolah");
     if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
     if (kelasIdx === -1) kelasIdx = headers.indexOf("sekolah");
     if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas_formal");
+
     let statusIdx = headers.indexOf("status");
     let createdIdx = headers.indexOf("created_at");
     let qrIdx = headers.indexOf("qr_code");
@@ -13092,7 +13160,7 @@ function getAllStudentsData(token) {
         muhafiz: directMuhafiz,
         program: program || "Reguler",
         kelas_sekolah: kelasSekolah,
-        kelasSekolah: kelasSekolah,
+        kelas: kelasSekolah,
         status: status,
         createdAt: createdAt
       });
@@ -13170,15 +13238,6 @@ function saveStudentData(studentObj, token) {
     sheet.getRange(1, progIdx + 1).setValue("program");
     headers.push("program");
   }
-  let kelasIdx = headers.indexOf("kelas_sekolah");
-  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
-  if (kelasIdx === -1) kelasIdx = headers.indexOf("sekolah");
-  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas_formal");
-  if (kelasIdx === -1) {
-    kelasIdx = headers.length;
-    sheet.getRange(1, kelasIdx + 1).setValue("kelas_sekolah");
-    headers.push("kelas_sekolah");
-  }
   let statusIdx = headers.indexOf("status");
 
   const inputId = String(studentObj.studentId || studentObj.student_id || "").trim();
@@ -13245,7 +13304,6 @@ function saveStudentData(studentObj, token) {
     if (birthIdx !== -1) newRow[birthIdx] = inputBirth;
     if (photoIdx !== -1) newRow[photoIdx] = inputPhoto;
     if (progIdx !== -1) newRow[progIdx] = inputProgram;
-    if (kelasIdx !== -1) newRow[kelasIdx] = inputKelasSekolah;
     if (statusIdx !== -1) newRow[statusIdx] = inputStatus;
     const createdIdx = headers.indexOf("created_at");
     if (createdIdx !== -1) newRow[createdIdx] = nowIso;
@@ -13328,7 +13386,7 @@ function batchUpdateStudentProgram(batchObj, token) {
 }
 
 /**
- * Hapus Data Santri dari Spreadsheet Students
+ * Update Massal Kelas & Sekolah Santri (Batch Update)
  */
 function batchUpdateStudentClassSchool(batchObj, token) {
   let actor = null;
@@ -13392,6 +13450,9 @@ function batchUpdateStudentClassSchool(batchObj, token) {
   };
 }
 
+/**
+ * Hapus Data Santri dari Spreadsheet Students
+ */
 function deleteStudentData(studentId, token) {
   try {
     if (token) {

@@ -260,6 +260,15 @@ function doPost(e) {
       );
     }
 
+    if (action === "autoMigrateStudentColumns" || action === "student.autoMigrateColumns") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const ss = getDatabaseSpreadsheet();
+      const sheet = getAuthSheet(ss, SHEET_STUDENTS);
+      if (!sheet) return createJsonResponse({ status: "error", message: "Sheet Students tidak ditemukan" });
+      const res = ensureStudentSheetColumnLayout(sheet);
+      return createJsonResponse({ status: "success", success: true, message: res.message, detail: res });
+    }
+
     if (action === "deleteStudent" || action === "student.delete") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {

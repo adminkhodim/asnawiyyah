@@ -249,7 +249,7 @@ const AUTH_SHEET_SCHEMAS = Object.freeze({
   [SHEET_ADMIN_IDENTITIES]: ["identity_id", "email", "name", "role", "status", "created_at", "photo_url"],
   [SHEET_WALI_IDENTITIES]: ["identity_id", "email", "phone", "name", "role", "status", "created_at", "photo_url"],
   [SHEET_PENGASUH_IDENTITIES]: ["identity_id", "email", "phone", "title_name", "role", "status", "created_at", "photo_url"],
-  [SHEET_STUDENTS]: ["student_id", "nis", "nik", "name", "gender", "birth_date", "photo_url", "program", "status", "created_at", "qr_code"],
+  [SHEET_STUDENTS]: ["student_id", "nis", "name", "program", "kelas_sekolah", "status", "created_at", "birth_date", "nik", "gender", "photo_url", "qr_code"],
   [SHEET_WALI_SANTRI_MAP]: ["map_id", "wali_id", "student_id", "relationship", "status", "created_at"],
   [SHEET_OTP_CHALLENGES]: ["challenge_id", "identity_id", "channel", "identifier_hash", "otp_hash", "attempts", "max_attempts", "expires_at", "status", "created_at", "consumed_at", "request_id"],
   [SHEET_AUTH_SESSIONS]: ["session_id", "identity_id", "role", "issued_at", "expires_at", "status", "revoked_at", "created_at", "token_version"],
@@ -311,14 +311,9 @@ function setupAuthSystemSheets() {
             }
           }
 
-          // 2. Hapus kolom class_name / kelas jika ada pada sheet Students
-          const updatedRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-          for (let c = updatedRowValues.length - 1; c >= 0; c--) {
-            const hName = String(updatedRowValues[c] || "").trim().toLowerCase();
-            if (hName === "class_name" || hName === "kelas") {
-              sheet.deleteColumn(c + 1);
-              Logger.log(`[SCHEMA] Kolom '${hName}' di sheet '${sheetName}' (kolom ${c + 1}) berhasil dihapus.`);
-            }
+          // 2. Pastikan tata letak kolom Students memiliki kelas_sekolah di kolom E (setelah program)
+          if (typeof ensureStudentSheetColumnLayout === 'function') {
+            ensureStudentSheetColumnLayout(sheet);
           }
         }
 
