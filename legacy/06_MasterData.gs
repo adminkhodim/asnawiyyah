@@ -2871,6 +2871,104 @@ function syncIzinPerpulanganFromSupabase() {
 }
 
 /**
+ * Sinkronisasi Seluruh Data Santri dari Cloud Supabase ke Google Spreadsheet (Tab Students)
+ * Memperbarui data kolom 'program' (Tahfidz Anak / Tahfidz Remaja) dan 'kelas_sekolah' secara otomatis dan akurat.
+ */
+function syncStudentsFromSupabase() {
+  const ss = getDatabaseSpreadsheet();
+  let sheet = ss.getSheetByName("Students");
+  if (!sheet) {
+    sheet = ss.getSheetByName("data_santri");
+  }
+  if (!sheet) {
+    throw new Error("Sheet Students tidak ditemukan di spreadsheet.");
+  }
+
+  const sbUrl = "https://tkjhfhyabacbyknwrysh.supabase.co";
+  const sbKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRramhmaHlhYmFjYnlrbndyeXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDk1MDMsImV4cCI6MjEwNjM4NTUwM30.uIeUO_v29ztXFUyDAxb_50ybP62BO0ta_QEzgwWFdlo";
+
+  const fetchUrl = sbUrl + "/rest/v1/students?select=*&order=student_id.asc";
+  const resp = UrlFetchApp.fetch(fetchUrl, {
+    method: "GET",
+    headers: {
+      "apikey": sbKey,
+      "Authorization": "Bearer " + sbKey
+    },
+    muteHttpExceptions: true
+  });
+
+  if (resp.getResponseCode() !== 200) {
+    throw new Error("Gagal mengambil data santri dari Supabase: " + resp.getContentText());
+  }
+
+  const list = JSON.parse(resp.getContentText());
+  if (!Array.isArray(list) || list.length === 0) {
+    return { status: "warning", success: false, message: "Tidak ada data santri di Supabase." };
+  }
+
+  const headers = [
+    "student_id",
+    "nis",
+    "name",
+    "program",
+    "kelas_sekolah",
+    "status",
+    "created_at",
+    "birth_date",
+    "nik",
+    "gender",
+    "photo_url",
+    "qr_code"
+  ];
+
+  // 1. Bersihkan data baris lama jika ada
+  const lastRow = sheet.getLastRow();
+  const lastCol = Math.max(sheet.getLastColumn(), headers.length);
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
+  }
+
+  // 2. Set Header resmi di baris 1
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#cffafe");
+  sheet.setFrozenRows(1);
+
+  // 3. Susun data santri bersih
+  const rows = list.map(s => {
+    let safeNis = String(s.nis || "").trim();
+    if (safeNis && safeNis.length > 0) safeNis = "'" + safeNis;
+    let safeNik = String(s.nik || "").trim();
+    if (safeNik && safeNik.length > 0) safeNik = "'" + safeNik;
+
+    return [
+      s.student_id || "",
+      safeNis,
+      s.name || "",
+      s.program || "Tahfidz Intensif",
+      s.kelas_sekolah || "",
+      s.status || "ACTIVE",
+      s.created_at || "",
+      s.birth_date || "",
+      safeNik,
+      s.gender || "L",
+      s.photo_url || "",
+      s.qr_code || ""
+    ];
+  });
+
+  // 4. Tulis seluruh baris secara massal
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+
+  Logger.log(`✅ Berhasil menyinkronkan ${rows.length} santri dari Supabase ke Google Spreadsheet!`);
+  return {
+    status: "success",
+    success: true,
+    total: rows.length,
+    message: `Berhasil menyinkronkan ${rows.length} santri dari Supabase ke Spreadsheet!`
+  };
+}
+
+/**
  * Helper mendapatkan sheet Izin_Perpulangan (dengan auto-create resilien)
  */
 function getIzinSheet() {
