@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.students_new (
     nik VARCHAR(32) DEFAULT '',
     name VARCHAR(255) NOT NULL DEFAULT '',
     gender VARCHAR(10) NOT NULL DEFAULT 'L',
-    birth_date VARCHAR(32) DEFAULT '',
+    birth_date DATE,
     photo_url TEXT DEFAULT '',
     program VARCHAR(128) NOT NULL DEFAULT 'Tahfidz Intensif',
     kelas_sekolah VARCHAR(128) DEFAULT '',
@@ -31,7 +31,7 @@ SELECT
     COALESCE(nik, ''), 
     COALESCE(name, ''), 
     COALESCE(gender, 'L'), 
-    COALESCE(birth_date, ''), 
+    birth_date, 
     COALESCE(photo_url, ''),
     COALESCE(program, 'Tahfidz Intensif'), 
     COALESCE(kelas_sekolah, ''), 
@@ -44,13 +44,13 @@ FROM public.students;
 DROP TABLE public.students CASCADE;
 ALTER TABLE public.students_new RENAME TO students;
 
--- 4. Pasang Index untuk performa query cepat
+-- 4. Pasang Index untuk query cepat
 CREATE UNIQUE INDEX IF NOT EXISTS idx_students_student_id ON public.students (student_id);
 CREATE INDEX IF NOT EXISTS idx_students_nis ON public.students (nis);
 CREATE INDEX IF NOT EXISTS idx_students_program ON public.students (program);
 CREATE INDEX IF NOT EXISTS idx_students_kelas_sekolah ON public.students (kelas_sekolah);
 
--- 5. Pasang kembali Row Level Security (RLS) Policies agar portal admin memiliki akses penuh
+-- 5. Pasang kembali hak akses & Row Level Security (RLS)
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Anon Select Students" ON public.students;
