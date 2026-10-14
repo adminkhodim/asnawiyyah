@@ -7489,6 +7489,7 @@
                         : `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">Putra (L)</span>`;
                     const birth = escapeHtml(s.birthDate || s.birth_date || '-');
                     const prog = escapeHtml(s.program || 'Reguler');
+                    const kelas = escapeHtml(s.kelas_sekolah || s.kelasSekolah || s.kelas || '-');
                     const isActive = (s.status || 'ACTIVE').toUpperCase() === 'ACTIVE';
                     const statusBadge = isActive
                         ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Aktif</span>`
