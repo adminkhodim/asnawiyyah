@@ -6555,8 +6555,10 @@
         // REFERENSI MASTER PROGRAM PESANTREN (UNTUK DATA SANTRI & PPDB)
         // =====================================================================
         const DEFAULT_PESANTREN_PROGRAMS = [
+            { id: 'prog-tahfidz-anak', name: 'Tahfidz Anak', status: 'ACTIVE', description: 'Pendidikan Al-Qur\'an tahfidz usia dini / dasar' },
+            { id: 'prog-tahfidz-remaja', name: 'Tahfidz Remaja', status: 'ACTIVE', description: 'Program hafalan santri usia remaja / sekolah lanjutan' },
             { id: 'prog-tahfidz-intensif', name: 'Tahfidz Intensif', status: 'ACTIVE', description: 'Program hafalan Al-Qur\'an intensif 30 Juz santri mukim' },
-            { id: 'prog-tahfidz-anak', name: 'Pesantren Tahfidz Anak', status: 'ACTIVE', description: 'Pendidikan Al-Qur\'an tahfidz usia dini / dasar' },
+            { id: 'prog-pesantren-tahfidz-anak', name: 'Pesantren Tahfidz Anak', status: 'ACTIVE', description: 'Pendidikan Al-Qur\'an tahfidz usia dini / dasar' },
             { id: 'prog-dewasa-putra', name: 'Pesantren Dewasa Putra', status: 'ACTIVE', description: 'Program santri dewasa ikhwan / mahasiswa / pekerja' },
             { id: 'prog-dewasa-putri', name: 'Pesantren Dewasa Putri', status: 'ACTIVE', description: 'Program santri dewasa akhwat / mahasiswi' },
             { id: 'prog-kitab-kuning', name: 'Kajian Kitab Kuning', status: 'ACTIVE', description: 'Pendalaman kitab salaf dan gramatika Arab' },

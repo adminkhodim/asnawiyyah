@@ -32,6 +32,19 @@
             };
 
             try {
+                if (action === "getSettings" || action === "getPengaturan") {
+                    const settingKey = params.key;
+                    let url = `${sbUrl}/rest/v1/pengaturan?select=*`;
+                    if (settingKey) url += `&key=eq.${encodeURIComponent(settingKey)}`;
+                    const res = await fetch(url, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    if (settingKey && rows.length > 0) {
+                        return { status: "success", data: rows[0] };
+                    }
+                    return { status: "success", data: rows };
+                }
+
                 if (action === "getBanner") {
                     const res = await fetch(`${sbUrl}/rest/v1/banner?status=eq.Aktif&order=urutan.asc`, { headers });
                     if (!res.ok) return null;
@@ -500,23 +513,57 @@
 
                 // 11. Dashboard Tahfidz Al-Qur'an (Fast Read Akselerasi Supabase <350ms)
                 if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard" || action === "auth.tahfidz.dashboard") {
-                    const [stRes, hlRes, lgRes, prRes, ssRes] = await Promise.all([
+                    const [stRes, hlRes, lgRes, prRes, ssRes, curRes] = await Promise.all([
                         fetch(`${sbUrl}/rest/v1/students?order=name.asc`, { headers }),
                         fetch(`${sbUrl}/rest/v1/tahfidz_halaqah?select=*&order=created_at.asc`, { headers }),
                         fetch(`${sbUrl}/rest/v1/tahfidz_logs?select=*&order=tanggal.desc`, { headers }),
                         fetch(`${sbUrl}/rest/v1/tahfidz_presensi?select=*&order=tanggal.desc`, { headers }),
-                        fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?select=*&order=sesi_id.asc`, { headers })
+                        fetch(`${sbUrl}/rest/v1/tahfidz_jadwal_sesi?select=*&order=sesi_id.asc`, { headers }),
+                        fetch(`${sbUrl}/rest/v1/pengaturan?key=eq.TAHFIDZ_CURRICULUM_PROGRAMS`, { headers }).catch(() => null)
                     ]);
                     if (!stRes.ok || !hlRes.ok || !lgRes.ok) return null;
-                    const [rawStudents, rawHalaqahs, rawLogs, rawPresensi, rawSesi] = await Promise.all([
-                        stRes.json(), hlRes.json(), lgRes.json(), prRes.ok ? prRes.json() : [], ssRes.ok ? ssRes.json() : []
+                    const [rawStudents, rawHalaqahs, rawLogs, rawPresensi, rawSesi, rawCurSetting] = await Promise.all([
+                        stRes.json(), hlRes.json(), lgRes.json(), prRes.ok ? prRes.json() : [], ssRes.ok ? ssRes.json() : [],
+                        (curRes && curRes.ok) ? curRes.json().catch(() => []) : []
                     ]);
 
-                    const getJuzCurriculumIndex = (juz) => {
+                    let customCurriculumMap = {};
+                    if (Array.isArray(rawCurSetting) && rawCurSetting.length > 0 && rawCurSetting[0].value) {
+                        try {
+                            customCurriculumMap = typeof rawCurSetting[0].value === 'string' ? JSON.parse(rawCurSetting[0].value) : rawCurSetting[0].value;
+                        } catch(e) {}
+                    }
+
+                    const PRESET_A_ORDER = [
+                        30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+                        1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+                    ];
+                    const PRESET_B_ORDER = [
+                        30,
+                        1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                        21, 22, 23, 24, 25, 26, 27, 28, 29
+                    ];
+
+                    const getJuzCurriculumIndex = (juz, prog = '') => {
                         const j = Number(juz);
-                        if (j >= 21 && j <= 30) return 30 - j;
-                        if (j >= 1 && j <= 20) return 9 + j;
-                        return 0;
+                        const p = String(prog || '').trim();
+                        if (p && customCurriculumMap[p] && Array.isArray(customCurriculumMap[p].order)) {
+                            const idx = customCurriculumMap[p].order.indexOf(j);
+                            if (idx !== -1) return idx;
+                        }
+                        if (p) {
+                            const matchKey = Object.keys(customCurriculumMap).find(k => k.toLowerCase() === p.toLowerCase());
+                            if (matchKey && Array.isArray(customCurriculumMap[matchKey].order)) {
+                                const idx = customCurriculumMap[matchKey].order.indexOf(j);
+                                if (idx !== -1) return idx;
+                            }
+                        }
+                        const pLower = p.toLowerCase();
+                        const order = pLower.includes('remaja') ? PRESET_B_ORDER : PRESET_A_ORDER;
+                        const idx = order.indexOf(j);
+                        return idx !== -1 ? idx : 0;
                     };
 
                     const parseLatestPage = (halVal) => {
@@ -617,11 +664,13 @@
                         let currentHal = 1;
                         let hasZiyadah = false;
 
+                        const studentProg = st.program || '';
+
                         sLogs.forEach(lg => {
                             if (lg.tipe === 'ZIYADAH' && lg.status_setoran !== 'ULANG') {
                                 hasZiyadah = true;
                                 const j = Number(lg.juz) || 30;
-                                const r = getJuzCurriculumIndex(j);
+                                const r = getJuzCurriculumIndex(j, studentProg);
                                 const h = parseLatestPage(lg.halaman_list);
                                 if (r > maxRank || (r === maxRank && h > currentHal)) {
                                     maxRank = r;
@@ -635,7 +684,7 @@
                             if (latestLog && latestLog.juz) {
                                 currentJuz = Number(latestLog.juz) || 30;
                                 currentHal = parseLatestPage(latestLog.halaman_list);
-                                maxRank = getJuzCurriculumIndex(currentJuz);
+                                maxRank = getJuzCurriculumIndex(currentJuz, studentProg);
                             } else {
                                 currentJuz = 30;
                                 currentHal = 1;

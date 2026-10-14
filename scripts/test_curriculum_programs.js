@@ -71,6 +71,13 @@ function getCurriculumOrderForProgram(programName) {
             return map[matchKey].order;
         }
     }
+    const lower = pName.toLowerCase();
+    if (lower.includes('remaja')) {
+        return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_B.order];
+    }
+    if (lower.includes('anak') || lower.includes('pemula') || lower.includes('dasar')) {
+        return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
+    }
     return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
 }
 
@@ -158,10 +165,16 @@ const progRemaja = getCurriculumProgress(1, 20, 'Tahfidz Remaja');
 assert.strictEqual(progRemaja.rank, 1);
 assert.strictEqual(progRemaja.totalTuntas, 40);
 
-// - Pada Program Intensif (Preset A): Juz 1 berada di urutan rank 10 (total tuntas = 10*20 + 20 = 220 hal -> 37%)
-const progIntensif = getCurriculumProgress(1, 20, 'Tahfidz Intensif');
-assert.strictEqual(progIntensif.rank, 10);
-assert.strictEqual(progIntensif.totalTuntas, 220);
+// - Pada Program Remaja (Preset B): Juz 3 berada di urutan rank 3 (Total Juz ditempuh = 4 Juz, BUKAN 13 Juz!)
+const progRemajaJuz3 = getCurriculumProgress(3, 12, 'Tahfidz Remaja');
+assert.strictEqual(progRemajaJuz3.rank, 3, 'Tahfidz Remaja Juz 3 harus rank 3 (4 Juz ditempuh)');
+assert.strictEqual(progRemajaJuz3.rank + 1, 4, 'Total Juz Ditempuh Tahfidz Remaja di Juz 3 harus 4 Juz');
+
+// - Pada Program Anak (Preset A): Juz 3 berada di urutan rank 12 (Total Juz ditempuh = 13 Juz)
+const progAnakJuz3 = getCurriculumProgress(3, 12, 'Tahfidz Anak');
+assert.strictEqual(progAnakJuz3.rank, 12, 'Tahfidz Anak Juz 3 harus rank 12 (13 Juz ditempuh)');
+assert.strictEqual(progAnakJuz3.rank + 1, 13, 'Total Juz Ditempuh Tahfidz Anak di Juz 3 harus 13 Juz');
+
 console.log("  ✅ Test 4 Passed: Perhitungan akumulasi capaian & persentase akurat per program.");
 
 // TEST 5: getTahfidzStudentProgram resolving

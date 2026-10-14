@@ -248,7 +248,10 @@ function getTahfidzCurriculumMap() {
 
 /**
  * Mendapatkan array 30 Juz kurikulum untuk program tertentu
- * Otomatis fallback ke Preset A jika belum diatur khusus
+ * Otomatis memetakan preset kurikulum bawaan pesantren:
+ * - Tahfidz Remaja -> PRESET_B (Juz 30, lalu 1 s/d 29)
+ * - Tahfidz Anak -> PRESET_A (Mundur-Maju: 30 s/d 21, lalu 1 s/d 20)
+ * Jika admin telah mengatur khusus di menu Kurikulum, preferensi admin yang digunakan.
  */
 function getCurriculumOrderForProgram(programName) {
     const map = getTahfidzCurriculumMap();
@@ -262,6 +265,16 @@ function getCurriculumOrderForProgram(programName) {
             return map[matchKey].order;
         }
     }
+
+    // Default kurikulum bawaan per Program Pesantren PPTQ Asnawiyyah
+    const lower = pName.toLowerCase();
+    if (lower.includes('remaja')) {
+        return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_B.order];
+    }
+    if (lower.includes('anak') || lower.includes('pemula') || lower.includes('dasar')) {
+        return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
+    }
+
     return [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
 }
 
@@ -482,17 +495,17 @@ function getCurriculumProgress(juz, hal, programName = null) {
 function calculateTahfidzMetricsHelper(options = {}) {
     const currentJuz = Number(options.currentJuz || 30);
     const currentHal = Number(options.currentHal || 1);
-    const programName = options.programName || options.student?.program || (options.stats && options.stats.program) || null;
+    const programName = options.programName || (typeof getTahfidzStudentProgram === 'function' && options.student ? getTahfidzStudentProgram(options.student) : null) || options.student?.program || options.student?.programPesantren || (options.stats && options.stats.program) || null;
     const stats = options.stats || {};
     const riwayat = options.riwayat || [];
     const target = options.target || {};
 
-    // 1. Capaian Juz Sekarang
+    // 1. Capaian Juz Sekarang & Persentase berdasarkan Kurikulum Program
     const curProg = getCurriculumProgress(currentJuz, currentHal, programName);
-    const percent = stats.progressPercent || curProg.percent;
+    const percent = curProg.percent;
 
-    // 2. Total Juz Kurikulum yang Ditempuh (Opsi 1: Menampilkan total juz yang sudah dilewati sesuai kurikulum)
-    const curriculumJuzIndex = Number(stats.curriculumJuzIndex) || (curProg.rank + 1);
+    // 2. Total Juz Kurikulum yang Ditempuh (Menampilkan total juz yang sudah dilewati sesuai kurikulum program)
+    const curriculumJuzIndex = curProg.rank + 1;
     const jumlahJuzDisetorText = `${curriculumJuzIndex} Juz`;
     const ziyadahLogs = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH' && r.statusSetoran !== 'ULANG');
 
@@ -3093,13 +3106,14 @@ function renderTahfidzEstimasiKhatam() {
     const st = res.student || {};
     const stats = res.stats || {};
     const riwayat = res.riwayat || [];
+    const progName = getTahfidzStudentProgram(st);
 
-    // 1. Hitung total halaman yang sudah tuntas (Max 600 halaman Mushaf Pojok) berbasis kurikulum (30-21 lalu 1-20)
+    // 1. Hitung total halaman yang sudah tuntas (Max 600 halaman Mushaf Pojok) berbasis kurikulum program santri
     const progressJuz = Number(stats.progressJuz || st.progress?.currentJuz || 30);
     const lastHalamanRaw = String(st.setoranTerakhir?.halaman || stats.progressHalaman || '1');
     const lastHalamanNum = parseTahfidzLatestPage(lastHalamanRaw);
 
-    let halamanTuntas = stats.totalHalamanTuntas || getCurriculumProgress(progressJuz, lastHalamanNum).totalTuntas;
+    let halamanTuntas = stats.totalHalamanTuntas || getCurriculumProgress(progressJuz, lastHalamanNum, progName).totalTuntas;
 
     // Validasi dengan riwayat setoran ziyadah unik jika ada
     const ziyadahLogs = riwayat.filter(r => (r.tipe || '').toUpperCase() === 'ZIYADAH' && r.statusSetoran !== 'ULANG');
@@ -3108,7 +3122,7 @@ function renderTahfidzEstimasiKhatam() {
         let maxHlmZiyadah = 1;
         ziyadahLogs.forEach(log => {
             const j = Number(log.juz || 30);
-            const rk = getJuzCurriculumIndex(j);
+            const rk = getJuzCurriculumIndex(j, progName);
             const h = parseTahfidzLatestPage(log.halamanList);
             if (rk > maxRankZiyadah || (rk === maxRankZiyadah && h > maxHlmZiyadah)) {
                 maxRankZiyadah = rk;
@@ -3366,11 +3380,13 @@ function renderTahfidzStudentDetailView() {
 
     const curJuzNo = Number(stats.progressJuz || st.progress?.currentJuz || 30);
     const curHalNo = Number(stats.progressHalaman || st.progress?.currentHalaman || 1);
-    const curJuzIdx = stats.curriculumJuzIndex || (getJuzCurriculumIndex(curJuzNo) + 1);
+    const curJuzIdx = getJuzCurriculumIndex(curJuzNo, progName) + 1;
 
     const unifiedMetrics = calculateTahfidzMetricsHelper({
         currentJuz: curJuzNo,
         currentHal: curHalNo,
+        programName: progName,
+        student: st,
         stats: stats,
         riwayat: res.riwayat || [],
         target: res.target || st.target || {}
@@ -6407,25 +6423,41 @@ let activeCurriculumOrder = [...TAHFIDZ_CURRICULUM_PRESETS.PRESET_A.order];
  * Mengambil dari modul Data Santri (getAdminPesantrenPrograms)
  */
 function getCurriculumAvailablePrograms() {
+    let list = [];
     if (typeof window.getAdminPesantrenPrograms === 'function') {
-        return window.getAdminPesantrenPrograms();
+        list = window.getAdminPesantrenPrograms();
     }
-    try {
-        const stored = localStorage.getItem('ASNAWIYYAH_PESANTREN_PROGRAMS_V1');
-        if (stored) {
-            const list = JSON.parse(stored);
-            if (Array.isArray(list) && list.length > 0) return list;
-        }
-    } catch (e) {}
-    return [
-        { id: 'prog-tahfidz-intensif', name: 'Tahfidz Intensif' },
-        { id: 'prog-tahfidz-anak', name: 'Pesantren Tahfidz Anak' },
-        { id: 'prog-dewasa-putra', name: 'Pesantren Dewasa Putra' },
-        { id: 'prog-dewasa-putri', name: 'Pesantren Dewasa Putri' },
-        { id: 'prog-kitab-kuning', name: 'Kajian Kitab Kuning' },
-        { id: 'prog-madrasah-diniyah', name: 'Madrasah Diniyah' },
-        { id: 'prog-reguler', name: 'Reguler' }
-    ];
+    if (!Array.isArray(list) || list.length === 0) {
+        try {
+            const stored = localStorage.getItem('ASNAWIYYAH_PESANTREN_PROGRAMS_V1');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+            }
+        } catch (e) {}
+    }
+    if (!Array.isArray(list) || list.length === 0) {
+        list = [
+            { id: 'prog-tahfidz-anak', name: 'Tahfidz Anak' },
+            { id: 'prog-tahfidz-remaja', name: 'Tahfidz Remaja' },
+            { id: 'prog-tahfidz-intensif', name: 'Tahfidz Intensif' },
+            { id: 'prog-pesantren-tahfidz-anak', name: 'Pesantren Tahfidz Anak' },
+            { id: 'prog-dewasa-putra', name: 'Pesantren Dewasa Putra' },
+            { id: 'prog-dewasa-putri', name: 'Pesantren Dewasa Putri' },
+            { id: 'prog-kitab-kuning', name: 'Kajian Kitab Kuning' },
+            { id: 'prog-madrasah-diniyah', name: 'Madrasah Diniyah' },
+            { id: 'prog-reguler', name: 'Reguler' }
+        ];
+    }
+    // Pastikan program utama pondok (Tahfidz Anak & Tahfidz Remaja) selalu ada di daftar pilihan
+    const existing = new Set(list.map(p => (p.name || '').trim().toLowerCase()));
+    if (!existing.has('tahfidz anak')) {
+        list.unshift({ id: 'prog-tahfidz-anak', name: 'Tahfidz Anak' });
+    }
+    if (!existing.has('tahfidz remaja')) {
+        list.splice(1, 0, { id: 'prog-tahfidz-remaja', name: 'Tahfidz Remaja' });
+    }
+    return list;
 }
 
 /**
