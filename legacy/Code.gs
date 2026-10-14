@@ -13011,6 +13011,10 @@ function getAllStudentsData(token) {
     if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
     if (progIdx === -1) progIdx = headers.indexOf("program_studi");
     if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+    let kelasIdx = headers.indexOf("kelas_sekolah");
+    if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
+    if (kelasIdx === -1) kelasIdx = headers.indexOf("sekolah");
+    if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas_formal");
     let statusIdx = headers.indexOf("status");
     let createdIdx = headers.indexOf("created_at");
     let qrIdx = headers.indexOf("qr_code");
@@ -13044,6 +13048,7 @@ function getAllStudentsData(token) {
       }
 
       const program = progIdx !== -1 ? String(row[progIdx] || "Reguler").trim() : "Reguler";
+      const kelasSekolah = kelasIdx !== -1 ? String(row[kelasIdx] || "").trim() : "";
       const statusRaw = statusIdx !== -1 ? String(row[statusIdx] || "ACTIVE").trim().toUpperCase() : "ACTIVE";
       const status = (statusRaw === "ACTIVE" || statusRaw === "AKTIF") ? "ACTIVE" : "INACTIVE";
       const createdAt = createdIdx !== -1 ? String(row[createdIdx] || "").trim() : "";
@@ -13073,6 +13078,8 @@ function getAllStudentsData(token) {
         halaqah: directHalaqah,
         muhafiz: directMuhafiz,
         program: program || "Reguler",
+        kelas_sekolah: kelasSekolah,
+        kelasSekolah: kelasSekolah,
         status: status,
         createdAt: createdAt
       });
@@ -13150,6 +13157,15 @@ function saveStudentData(studentObj, token) {
     sheet.getRange(1, progIdx + 1).setValue("program");
     headers.push("program");
   }
+  let kelasIdx = headers.indexOf("kelas_sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas_formal");
+  if (kelasIdx === -1) {
+    kelasIdx = headers.length;
+    sheet.getRange(1, kelasIdx + 1).setValue("kelas_sekolah");
+    headers.push("kelas_sekolah");
+  }
   let statusIdx = headers.indexOf("status");
 
   const inputId = String(studentObj.studentId || studentObj.student_id || "").trim();
@@ -13165,6 +13181,7 @@ function saveStudentData(studentObj, token) {
   const inputBirth = normalizeDateString(studentObj.birthDate || studentObj.birth_date || "");
   const inputPhoto = String(studentObj.photoUrl || studentObj.photo_url || "").trim();
   const inputProgram = String(studentObj.program || "Reguler").trim();
+  const inputKelasSekolah = String(studentObj.kelas_sekolah || studentObj.kelasSekolah || studentObj.kelas || "").trim();
   let inputStatus = String(studentObj.status || "ACTIVE").trim().toUpperCase();
   if (inputStatus === "AKTIF" || inputStatus === "ACTIVE") {
     inputStatus = "ACTIVE";
@@ -13196,6 +13213,7 @@ function saveStudentData(studentObj, token) {
     if (birthIdx !== -1) sheet.getRange(foundRow, birthIdx + 1).setValue(inputBirth);
     if (photoIdx !== -1 && inputPhoto) sheet.getRange(foundRow, photoIdx + 1).setValue(inputPhoto);
     if (progIdx !== -1) sheet.getRange(foundRow, progIdx + 1).setValue(inputProgram);
+    if (kelasIdx !== -1) sheet.getRange(foundRow, kelasIdx + 1).setValue(inputKelasSekolah);
     if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(inputStatus);
 
     return {
@@ -13214,6 +13232,7 @@ function saveStudentData(studentObj, token) {
     if (birthIdx !== -1) newRow[birthIdx] = inputBirth;
     if (photoIdx !== -1) newRow[photoIdx] = inputPhoto;
     if (progIdx !== -1) newRow[progIdx] = inputProgram;
+    if (kelasIdx !== -1) newRow[kelasIdx] = inputKelasSekolah;
     if (statusIdx !== -1) newRow[statusIdx] = inputStatus;
     const createdIdx = headers.indexOf("created_at");
     if (createdIdx !== -1) newRow[createdIdx] = nowIso;

@@ -6531,8 +6531,9 @@
                     if (putriEl) putriEl.innerText = putriCount;
                     if (aktifEl) aktifEl.innerText = aktifCount;
 
-                    // Update Dropdown Filter Program secara dinamis
+                    // Update Dropdown Filter Program & Kelas/Sekolah secara dinamis
                     populateAdminStudentProgramFilter();
+                    populateAdminStudentKelasSekolahFilter();
 
                     // Filter & Render
                     filterAdminStudentsList();
@@ -6952,6 +6953,381 @@
         window.populateAdminStudentProgramFilter = populateAdminStudentProgramFilter;
         window.getAdminPesantrenPrograms = getAdminPesantrenPrograms;
 
+        // =====================================================================
+        // REFERENSI MASTER KELAS & SEKOLAH FORMAL (UNTUK DATA SANTRI)
+        // =====================================================================
+        const DEFAULT_KELAS_SEKOLAH = [
+            { id: 'ks-mi-sd-1', name: 'Kelas 1 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 1' },
+            { id: 'ks-mi-sd-2', name: 'Kelas 2 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 2' },
+            { id: 'ks-mi-sd-3', name: 'Kelas 3 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 3' },
+            { id: 'ks-mi-sd-4', name: 'Kelas 4 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 4' },
+            { id: 'ks-mi-sd-5', name: 'Kelas 5 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 5' },
+            { id: 'ks-mi-sd-6', name: 'Kelas 6 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 6' },
+            { id: 'ks-mts-smp-7', name: 'Kelas 7 MTs / SMP', jenjang: 'MTs/SMP', status: 'ACTIVE', description: 'Menengah pertama kelas 7' },
+            { id: 'ks-mts-smp-8', name: 'Kelas 8 MTs / SMP', jenjang: 'MTs/SMP', status: 'ACTIVE', description: 'Menengah pertama kelas 8' },
+            { id: 'ks-mts-smp-9', name: 'Kelas 9 MTs / SMP', jenjang: 'MTs/SMP', status: 'ACTIVE', description: 'Menengah pertama kelas 9' },
+            { id: 'ks-ma-sma-10', name: 'Kelas 10 MA / SMA / SMK', jenjang: 'MA/SMA/SMK', status: 'ACTIVE', description: 'Menengah atas kelas 10' },
+            { id: 'ks-ma-sma-11', name: 'Kelas 11 MA / SMA / SMK', jenjang: 'MA/SMA/SMK', status: 'ACTIVE', description: 'Menengah atas kelas 11' },
+            { id: 'ks-ma-sma-12', name: 'Kelas 12 MA / SMA / SMK', jenjang: 'MA/SMA/SMK', status: 'ACTIVE', description: 'Menengah atas kelas 12' },
+            { id: 'ks-non-formal', name: 'Non-Formal / Belum Sekolah', jenjang: 'Non-Formal', status: 'ACTIVE', description: 'Santri usia dini / prasekolah / non-formal' },
+            { id: 'ks-kuliah', name: 'Perguruan Tinggi / Mahasiswa', jenjang: 'Perguruan Tinggi', status: 'ACTIVE', description: 'Santri yang sedang menempuh kuliah' }
+        ];
+
+        function getAdminKelasSekolah() {
+            try {
+                const stored = localStorage.getItem('ASNAWIYYAH_KELAS_SEKOLAH_V1');
+                let list = [];
+                if (stored) {
+                    list = JSON.parse(stored);
+                }
+                if (!Array.isArray(list) || list.length === 0) {
+                    list = JSON.parse(JSON.stringify(DEFAULT_KELAS_SEKOLAH));
+                }
+
+                // Auto-merge data kelas_sekolah dari adminStudentsData
+                if (Array.isArray(adminStudentsData) && adminStudentsData.length > 0) {
+                    const existingNames = new Set(list.map(k => (k.name || '').trim().toLowerCase()));
+                    adminStudentsData.forEach(s => {
+                        const ksName = (s.kelas_sekolah || s.kelasSekolah || s.kelas || '').trim();
+                        if (ksName && ksName !== '-' && !existingNames.has(ksName.toLowerCase())) {
+                            list.push({
+                                id: 'ks-' + Math.random().toString(36).substring(2, 9),
+                                name: ksName,
+                                jenjang: 'Lainnya',
+                                status: 'ACTIVE',
+                                description: 'Terdata dari Master Santri'
+                            });
+                            existingNames.add(ksName.toLowerCase());
+                        }
+                    });
+                }
+
+                return list;
+            } catch (e) {
+                console.warn("Gagal parse master kelas sekolah:", e);
+                return JSON.parse(JSON.stringify(DEFAULT_KELAS_SEKOLAH));
+            }
+        }
+
+        function saveAdminKelasSekolah(list) {
+            try {
+                localStorage.setItem('ASNAWIYYAH_KELAS_SEKOLAH_V1', JSON.stringify(list));
+            } catch (e) {
+                console.warn("Gagal simpan master kelas sekolah ke localStorage:", e);
+            }
+        }
+
+        function populateAdminStudentKelasSekolahDropdown(selectedVal = '') {
+            const selectEl = document.getElementById('admin-student-form-kelas-sekolah');
+            if (!selectEl) return;
+
+            const list = getAdminKelasSekolah();
+            let optionsHtml = '<option value="">-- Pilih Kelas & Sekolah --</option>';
+            let valFound = false;
+            const targetVal = (selectedVal || '').trim().toLowerCase();
+
+            list.forEach(item => {
+                const name = (item.name || '').trim();
+                if (!name) return;
+                const isSelected = Boolean(targetVal && targetVal === name.toLowerCase());
+                if (isSelected) valFound = true;
+
+                const isInactive = (item.status || 'ACTIVE').toUpperCase() !== 'ACTIVE';
+                const label = isInactive ? `${name} (Nonaktif)` : name;
+
+                if (!isInactive || isSelected) {
+                    optionsHtml += `<option value="${escapeHtml(name)}" ${isSelected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+                }
+            });
+
+            if (selectedVal && selectedVal.trim() && !valFound) {
+                optionsHtml += `<option value="${escapeHtml(selectedVal.trim())}" selected>${escapeHtml(selectedVal.trim())}</option>`;
+            }
+
+            selectEl.innerHTML = optionsHtml;
+            if (selectedVal) {
+                selectEl.value = selectedVal.trim();
+            }
+        }
+
+        function populateAdminStudentKelasSekolahFilter() {
+            const selectEl = document.getElementById('admin-student-filter-kelas-sekolah');
+            if (!selectEl) return;
+
+            const currentVal = selectEl.value;
+            const setNames = new Set();
+
+            const masterList = getAdminKelasSekolah();
+            masterList.forEach(k => {
+                if ((k.status || 'ACTIVE').toUpperCase() === 'ACTIVE' && (k.name || '').trim()) {
+                    setNames.add(k.name.trim());
+                }
+            });
+
+            if (Array.isArray(adminStudentsData)) {
+                adminStudentsData.forEach(s => {
+                    const ks = (s.kelas_sekolah || s.kelasSekolah || s.kelas || '').trim();
+                    if (ks && ks !== '-') setNames.add(ks);
+                });
+            }
+
+            let html = '<option value="ALL">Semua Kelas & Sekolah</option>';
+            setNames.forEach(name => {
+                const isSelected = currentVal === name ? 'selected' : '';
+                html += `<option value="${escapeHtml(name)}" ${isSelected}>${escapeHtml(name)}</option>`;
+            });
+
+            selectEl.innerHTML = html;
+            if (currentVal && setNames.has(currentVal)) {
+                selectEl.value = currentVal;
+            } else {
+                selectEl.value = 'ALL';
+            }
+        }
+
+        function openAdminClassSchoolManagerModal() {
+            const modal = document.getElementById('modal-admin-class-school-manager');
+            if (!modal) return;
+            resetClassSchoolReferenceForm();
+            renderAdminClassSchoolManagerTable();
+            modal.classList.remove('hidden');
+        }
+
+        function closeAdminClassSchoolManagerModal() {
+            const modal = document.getElementById('modal-admin-class-school-manager');
+            if (modal) modal.classList.add('hidden');
+            resetClassSchoolReferenceForm();
+            const currentSelected = document.getElementById('admin-student-form-kelas-sekolah')?.value || '';
+            populateAdminStudentKelasSekolahDropdown(currentSelected);
+            populateAdminStudentKelasSekolahFilter();
+        }
+
+        function resetClassSchoolReferenceForm() {
+            const form = document.getElementById('adminClassSchoolReferenceForm');
+            if (form) form.reset();
+            const idInput = document.getElementById('admin-class-school-input-id');
+            if (idInput) idInput.value = '';
+            const statusSelect = document.getElementById('admin-class-school-input-status');
+            if (statusSelect) statusSelect.value = 'ACTIVE';
+
+            const titleEl = document.getElementById('admin-class-school-form-title');
+            if (titleEl) {
+                titleEl.innerHTML = '<i class="fa-solid fa-circle-plus text-indigo-500"></i><span>Tambah Referensi Kelas & Sekolah Baru</span>';
+            }
+            const btnText = document.getElementById('admin-class-school-btn-save-text');
+            if (btnText) btnText.innerText = 'Simpan Kelas & Sekolah';
+            const btnCancel = document.getElementById('admin-class-school-btn-cancel-edit');
+            if (btnCancel) btnCancel.classList.add('hidden');
+        }
+
+        function renderAdminClassSchoolManagerTable() {
+            const tbody = document.getElementById('admin-class-school-table-body');
+            const badgeCount = document.getElementById('admin-class-school-badge-count');
+            if (!tbody) return;
+
+            const list = getAdminKelasSekolah();
+            if (badgeCount) badgeCount.innerText = `${list.length} Kelas/Sekolah`;
+
+            const studentCounts = {};
+            if (Array.isArray(adminStudentsData)) {
+                adminStudentsData.forEach(s => {
+                    const ks = (s.kelas_sekolah || s.kelasSekolah || s.kelas || '').trim().toLowerCase();
+                    if (ks) studentCounts[ks] = (studentCounts[ks] || 0) + 1;
+                });
+            }
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                            <i class="fa-solid fa-school-flag text-2xl mb-1.5 block"></i>
+                            Belum ada referensi kelas & sekolah. Tambahkan di atas.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            list.forEach((item, idx) => {
+                const count = studentCounts[(item.name || '').trim().toLowerCase()] || 0;
+                const isActive = (item.status || 'ACTIVE').toUpperCase() === 'ACTIVE';
+                const statusBadge = isActive 
+                    ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400">Aktif</span>'
+                    : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Nonaktif</span>';
+
+                const studentBadge = count > 0
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40">${count} Santri</span>`
+                    : '<span class="text-[11px] text-slate-400 dark:text-slate-500">0 Santri</span>';
+
+                html += `
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-[#1f2d3d] transition">
+                        <td class="py-2.5 px-3 text-center text-slate-400 font-semibold">${idx + 1}</td>
+                        <td class="py-2.5 px-3">
+                            <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                <span>${escapeHtml(item.name)}</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-0.5 sm:hidden">${escapeHtml(item.description || '-')}</div>
+                        </td>
+                        <td class="py-2.5 px-3 hidden sm:table-cell text-slate-500 dark:text-slate-400 text-[11px]">
+                            ${escapeHtml(item.description || '-')}
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            ${studentBadge}
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="editClassSchoolReference('${escapeHtml(item.id)}')" class="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded-lg flex items-center justify-center transition active:scale-95" title="Edit Kelas & Sekolah">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button type="button" onclick="deleteClassSchoolReference('${escapeHtml(item.id)}')" class="w-7 h-7 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg flex items-center justify-center transition active:scale-95" title="Hapus Kelas & Sekolah">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function handleSaveClassSchoolReference(event) {
+            if (event) event.preventDefault();
+
+            const idInput = document.getElementById('admin-class-school-input-id');
+            const nameInput = document.getElementById('admin-class-school-input-name');
+            const statusSelect = document.getElementById('admin-class-school-input-status');
+            const descInput = document.getElementById('admin-class-school-input-desc');
+
+            const itemId = (idInput?.value || '').trim();
+            const itemName = (nameInput?.value || '').trim();
+            const itemStatus = statusSelect?.value || 'ACTIVE';
+            const itemDesc = (descInput?.value || '').trim();
+
+            if (!itemName) {
+                if (typeof showToast === 'function') showToast("⚠️ Nama kelas & sekolah wajib diisi!");
+                return;
+            }
+
+            const list = getAdminKelasSekolah();
+
+            if (itemId) {
+                const idx = list.findIndex(k => k.id === itemId);
+                if (idx !== -1) {
+                    const duplicate = list.some((k, i) => i !== idx && (k.name || '').trim().toLowerCase() === itemName.toLowerCase());
+                    if (duplicate) {
+                        if (typeof showToast === 'function') showToast("⚠️ Nama kelas & sekolah sudah digunakan.");
+                        return;
+                    }
+
+                    const oldName = list[idx].name;
+                    list[idx].name = itemName;
+                    list[idx].status = itemStatus;
+                    list[idx].description = itemDesc;
+
+                    if (oldName !== itemName && Array.isArray(adminStudentsData)) {
+                        adminStudentsData.forEach(s => {
+                            if ((s.kelas_sekolah || s.kelasSekolah || '').trim().toLowerCase() === oldName.toLowerCase()) {
+                                s.kelas_sekolah = itemName;
+                                s.kelasSekolah = itemName;
+                            }
+                        });
+                    }
+
+                    saveAdminKelasSekolah(list);
+                    if (typeof showToast === 'function') showToast(`✅ Kelas & Sekolah "${itemName}" berhasil diperbarui.`);
+                }
+            } else {
+                const duplicate = list.some(k => (k.name || '').trim().toLowerCase() === itemName.toLowerCase());
+                if (duplicate) {
+                    if (typeof showToast === 'function') showToast("⚠️ Nama kelas & sekolah sudah terdaftar!");
+                    return;
+                }
+
+                const newItem = {
+                    id: 'ks-' + Math.random().toString(36).substring(2, 9),
+                    name: itemName,
+                    status: itemStatus,
+                    description: itemDesc
+                };
+                list.push(newItem);
+                saveAdminKelasSekolah(list);
+                if (typeof showToast === 'function') showToast(`✅ Kelas & Sekolah baru "${itemName}" berhasil ditambahkan.`);
+            }
+
+            resetClassSchoolReferenceForm();
+            renderAdminClassSchoolManagerTable();
+
+            const currentSelected = document.getElementById('admin-student-form-kelas-sekolah')?.value || '';
+            populateAdminStudentKelasSekolahDropdown(currentSelected || itemName);
+            populateAdminStudentKelasSekolahFilter();
+        }
+
+        function editClassSchoolReference(id) {
+            const list = getAdminKelasSekolah();
+            const item = list.find(k => k.id === id);
+            if (!item) return;
+
+            document.getElementById('admin-class-school-input-id').value = item.id;
+            document.getElementById('admin-class-school-input-name').value = item.name || '';
+            document.getElementById('admin-class-school-input-status').value = item.status || 'ACTIVE';
+            document.getElementById('admin-class-school-input-desc').value = item.description || '';
+
+            const titleEl = document.getElementById('admin-class-school-form-title');
+            if (titleEl) {
+                titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-500"></i><span>Edit Kelas & Sekolah: ${escapeHtml(item.name)}</span>`;
+            }
+            const btnText = document.getElementById('admin-class-school-btn-save-text');
+            if (btnText) btnText.innerText = 'Perbarui Kelas & Sekolah';
+            const btnCancel = document.getElementById('admin-class-school-btn-cancel-edit');
+            if (btnCancel) btnCancel.classList.remove('hidden');
+
+            document.getElementById('admin-class-school-input-name')?.focus();
+        }
+
+        function deleteClassSchoolReference(id) {
+            const list = getAdminKelasSekolah();
+            const item = list.find(k => k.id === id);
+            if (!item) return;
+
+            let count = 0;
+            if (Array.isArray(adminStudentsData)) {
+                count = adminStudentsData.filter(s => (s.kelas_sekolah || s.kelasSekolah || '').trim().toLowerCase() === (item.name || '').trim().toLowerCase()).length;
+            }
+
+            let confirmMsg = `Hapus referensi "${item.name}"?`;
+            if (count > 0) {
+                confirmMsg = `⚠️ PERINGATAN: Referensi "${item.name}" saat ini digunakan oleh ${count} data santri!\n\nJika dihapus dari daftar referensi, data santri tidak akan terhapus namun pilihan ini tidak lagi muncul sebagai opsi baku.\n\nApakah Anda tetap ingin menghapus?`;
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            const updatedList = list.filter(k => k.id !== id);
+            saveAdminKelasSekolah(updatedList);
+
+            if (typeof showToast === 'function') showToast(`🗑️ Referensi "${item.name}" dihapus.`);
+
+            resetClassSchoolReferenceForm();
+            renderAdminClassSchoolManagerTable();
+
+            const currentSelected = document.getElementById('admin-student-form-kelas-sekolah')?.value || '';
+            populateAdminStudentKelasSekolahDropdown(currentSelected);
+            populateAdminStudentKelasSekolahFilter();
+        }
+
+        window.openAdminClassSchoolManagerModal = openAdminClassSchoolManagerModal;
+        window.closeAdminClassSchoolManagerModal = closeAdminClassSchoolManagerModal;
+        window.resetClassSchoolReferenceForm = resetClassSchoolReferenceForm;
+        window.renderAdminClassSchoolManagerTable = renderAdminClassSchoolManagerTable;
+        window.handleSaveClassSchoolReference = handleSaveClassSchoolReference;
+        window.editClassSchoolReference = editClassSchoolReference;
+        window.deleteClassSchoolReference = deleteClassSchoolReference;
+        window.populateAdminStudentKelasSekolahDropdown = populateAdminStudentKelasSekolahDropdown;
+        window.populateAdminStudentKelasSekolahFilter = populateAdminStudentKelasSekolahFilter;
+        window.getAdminKelasSekolah = getAdminKelasSekolah;
+
         /**
          * Filter data santri secara real-time
          */
@@ -6959,6 +7335,7 @@
             const searchInput = (document.getElementById('admin-student-search')?.value || '').trim().toLowerCase();
             const genderFilter = document.getElementById('admin-student-filter-gender')?.value || 'ALL';
             const programFilter = document.getElementById('admin-student-filter-program')?.value || 'ALL';
+            const kelasFilter = document.getElementById('admin-student-filter-kelas-sekolah')?.value || 'ALL';
             const statusFilter = document.getElementById('admin-student-filter-status')?.value || 'ALL';
 
             filteredAdminStudentsData = adminStudentsData.filter(student => {
@@ -6982,6 +7359,12 @@
                 if (programFilter !== 'ALL') {
                     const prog = (student.program || '').trim();
                     if (prog !== programFilter) return false;
+                }
+
+                // Kelas & Sekolah
+                if (kelasFilter !== 'ALL') {
+                    const ks = (student.kelas_sekolah || student.kelasSekolah || student.kelas || '').trim();
+                    if (ks !== kelasFilter) return false;
                 }
 
                 // Status
@@ -7034,6 +7417,7 @@
                         : `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">L</span>`;
                     const birth = escapeHtml(s.birthDate || s.birth_date || '-');
                     const prog = escapeHtml(s.program || 'Reguler');
+                    const kelas = escapeHtml(s.kelas_sekolah || s.kelasSekolah || s.kelas || '-');
                     const isActive = (s.status || 'ACTIVE').toUpperCase() === 'ACTIVE';
                     const statusBadge = isActive
                         ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Aktif</span>`
@@ -7064,6 +7448,12 @@
                             <td class="py-3 px-3 text-slate-600 dark:text-slate-300">${birth}</td>
                             <td class="py-3 px-3">
                                 <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300">${prog}</span>
+                            </td>
+                            <td class="py-3 px-3">
+                                ${kelas !== '-' 
+                                    ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-800/40">${kelas}</span>`
+                                    : `<span class="text-[11px] text-slate-400 dark:text-slate-500 italic">-</span>`
+                                }
                             </td>
                             <td class="py-3 px-3 text-center">${statusBadge}</td>
                             <td class="py-3 px-3 text-center">
@@ -7136,6 +7526,10 @@
                                     <div class="flex items-center gap-1.5 mt-0.5">
                                         ${genderBadge}
                                         <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">${prog}</span>
+                                    </div>
+                                    <div class="mt-1 text-[11px] flex items-center gap-1 truncate">
+                                        <span class="text-[10px] text-slate-400">Kelas:</span>
+                                        <span class="font-semibold text-indigo-600 dark:text-indigo-400 truncate">${kelas}</span>
                                     </div>
                                 </div>
                                 <div>
@@ -7475,6 +7869,7 @@
                 document.getElementById('admin-student-form-gender').value = (student.gender || 'L').toUpperCase() === 'P' ? 'P' : 'L';
                 document.getElementById('admin-student-form-birthdate').value = student.birthDate || student.birth_date || '';
                 populateAdminStudentProgramDropdown(student.program || 'Tahfidz Intensif');
+                populateAdminStudentKelasSekolahDropdown(student.kelas_sekolah || student.kelasSekolah || student.kelas || '');
                 document.getElementById('admin-student-form-status').value = (student.status || 'ACTIVE').toUpperCase() === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
                 
                 const photoUrl = student.photoUrl || student.photo_url || '';
@@ -7499,6 +7894,7 @@
                 document.getElementById('admin-student-form-photo-url').value = '';
                 document.getElementById('admin-student-form-gender').value = 'L';
                 populateAdminStudentProgramDropdown('Tahfidz Intensif');
+                populateAdminStudentKelasSekolahDropdown('');
                 document.getElementById('admin-student-form-status').value = 'ACTIVE';
 
                 if (previewImg) previewImg.classList.add('hidden');
@@ -7593,6 +7989,7 @@
             const gender = document.getElementById('admin-student-form-gender')?.value || 'L';
             const birthDate = document.getElementById('admin-student-form-birthdate')?.value || '';
             const program = (document.getElementById('admin-student-form-program')?.value || '').trim() || 'Reguler';
+            const kelasSekolah = (document.getElementById('admin-student-form-kelas-sekolah')?.value || '').trim();
             const status = document.getElementById('admin-student-form-status')?.value || 'ACTIVE';
             let photoUrl = document.getElementById('admin-student-form-photo-url')?.value || '';
 
@@ -7646,6 +8043,8 @@
                     photoUrl,
                     photo_url: photoUrl,
                     program,
+                    kelas_sekolah: kelasSekolah,
+                    kelasSekolah: kelasSekolah,
                     status
                 };
 
@@ -7673,6 +8072,8 @@
                             photo_url: photoUrl || (targetIdx !== -1 ? (adminStudentsData[targetIdx].photo_url || adminStudentsData[targetIdx].photoUrl) : ''),
                             photoUrl: photoUrl || (targetIdx !== -1 ? (adminStudentsData[targetIdx].photoUrl || adminStudentsData[targetIdx].photo_url) : ''),
                             program: program,
+                            kelas_sekolah: kelasSekolah,
+                            kelasSekolah: kelasSekolah,
                             status: status
                         };
                         if (targetIdx !== -1) {

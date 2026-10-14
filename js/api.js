@@ -453,6 +453,8 @@
                         gender: s.gender || "L",
                         birth_date: s.birth_date || "",
                         program: s.program || "Tahfidz",
+                        kelas_sekolah: s.kelas_sekolah || s.kelas || "",
+                        kelasSekolah: s.kelas_sekolah || s.kelas || "",
                         status: s.status || "ACTIVE",
                         photo_url: s.photo_url || ""
                     }));
@@ -1910,6 +1912,7 @@
                         birth_date: payload.birthDate || payload.birth_date || null,
                         photo_url: payload.photoUrl || payload.photo_url || null,
                         program: payload.program || 'Reguler',
+                        kelas_sekolah: payload.kelas_sekolah || payload.kelasSekolah || payload.kelas || '',
                         status: ((payload.status || 'ACTIVE').toUpperCase() === 'AKTIF' || (payload.status || 'ACTIVE').toUpperCase() === 'ACTIVE') ? 'ACTIVE' : 'INACTIVE'
                     };
                     try {
