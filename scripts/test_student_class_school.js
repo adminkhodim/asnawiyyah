@@ -67,4 +67,21 @@ console.log('▶️  Test 6: Memverifikasi file migrasi SQL...');
 assert(sqlMigration.includes('ALTER TABLE public.students ADD COLUMN kelas_sekolah'), 'SQL migration harus menambahkan kolom kelas_sekolah');
 console.log('   ✅ SQL migration script verified');
 
+// Test 7: UI & Modal Ubah Kelas & Sekolah Massal
+console.log('▶️  Test 7: Memverifikasi UI & Modal Ubah Kelas & Sekolah Massal...');
+assert(indexHtml.includes('openBulkEditClassSchoolModal()'), 'Tombol openBulkEditClassSchoolModal() harus ada di bulk action bar index.html');
+assert(indexHtml.includes('id="modal-admin-student-bulk-class-school"'), 'Modal modal-admin-student-bulk-class-school harus ada di index.html');
+assert(indexHtml.includes('id="bulk-student-target-class-school"'), 'Select bulk-student-target-class-school harus ada di modal');
+assert(adminJs.includes('function openBulkEditClassSchoolModal()'), 'Fungsi openBulkEditClassSchoolModal() harus ada di js/admin.js');
+assert(adminJs.includes('function closeBulkEditClassSchoolModal()'), 'Fungsi closeBulkEditClassSchoolModal() harus ada di js/admin.js');
+assert(adminJs.includes('function submitBulkEditClassSchool('), 'Fungsi submitBulkEditClassSchool() harus ada di js/admin.js');
+assert(adminJs.includes('window.openBulkEditClassSchoolModal = openBulkEditClassSchoolModal'), 'openBulkEditClassSchoolModal harus diekspos ke window');
+console.log('   ✅ Bulk edit UI, modal, and functions verified');
+
+// Test 8: Backend Google Apps Script Batch Update Kelas & Sekolah
+console.log('▶️  Test 8: Memverifikasi batchUpdateStudentClassSchool di legacy/Code.gs...');
+assert(codeGs.includes('action === "batchUpdateStudentClassSchool"'), 'Router Apps Script harus mendukung action batchUpdateStudentClassSchool');
+assert(codeGs.includes('function batchUpdateStudentClassSchool('), 'Fungsi batchUpdateStudentClassSchool harus diimplementasikan di legacy/Code.gs');
+console.log('   ✅ Apps Script batch update backend verified');
+
 console.log('\n🎉 SELURUH VERIFIKASI KELAS & SEKOLAH DATA SANTRI LULUS 100%!');

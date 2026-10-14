@@ -7827,6 +7827,186 @@
         }
 
         /**
+         * Buka Modal Edit Massal Kelas & Sekolah Santri
+         */
+        function openBulkEditClassSchoolModal() {
+            if (selectedAdminStudentIds.size === 0) {
+                if (typeof showToast === 'function') showToast("⚠️ Pilih minimal satu santri untuk diubah kelas & sekolahnya.");
+                return;
+            }
+            if (typeof window.hasPermission === 'function' && !window.hasPermission('santri.edit')) {
+                if (typeof showToast === 'function') showToast("⛔ Anda tidak memiliki izin untuk mengedit data santri.");
+                return;
+            }
+
+            const modal = document.getElementById('modal-admin-student-bulk-class-school');
+            const countBadge = document.getElementById('bulk-class-school-selected-count-badge');
+            const namesContainer = document.getElementById('bulk-class-school-selected-names');
+            const selectTarget = document.getElementById('bulk-student-target-class-school');
+
+            if (!modal) return;
+
+            // Render nama-nama santri terpilih
+            const selectedList = (adminStudentsData || []).filter(s => selectedAdminStudentIds.has(s.studentId || s.student_id));
+            if (countBadge) countBadge.innerText = `${selectedList.length} Santri`;
+
+            if (namesContainer) {
+                namesContainer.innerHTML = selectedList.map(s => {
+                    const name = escapeHtml(s.name || 'Tanpa Nama');
+                    const cls = escapeHtml(s.kelas_sekolah || s.kelas || '-');
+                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] text-[10px] font-semibold text-slate-700 dark:text-slate-200 shadow-sm">
+                        <span>${name}</span>
+                        <span class="text-[9px] text-indigo-600 dark:text-indigo-400 font-mono">(${cls})</span>
+                    </span>`;
+                }).join('');
+            }
+
+            // Populate pilihan kelas & sekolah dari referensi
+            if (selectTarget) {
+                const list = getAdminKelasSekolah();
+                let optsHtml = '<option value="">-- Pilih Kelas & Sekolah --</option>';
+                optsHtml += '<option value="-">Tanpa Kelas Formal / Belum Ditentukan (-)</option>';
+                list.forEach(item => {
+                    const name = (item.name || '').trim();
+                    if (!name) return;
+                    const cat = item.category ? ` [${item.category}]` : '';
+                    optsHtml += `<option value="${escapeHtml(name)}">${escapeHtml(name)}${escapeHtml(cat)}</option>`;
+                });
+                selectTarget.innerHTML = optsHtml;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Tutup Modal Edit Massal Kelas & Sekolah Santri
+         */
+        function closeBulkEditClassSchoolModal() {
+            const modal = document.getElementById('modal-admin-student-bulk-class-school');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        /**
+         * Submit Edit Massal Kelas & Sekolah Santri
+         */
+        async function submitBulkEditClassSchool(event) {
+            if (event) event.preventDefault();
+
+            const selectTarget = document.getElementById('bulk-student-target-class-school');
+            const targetClassSchool = (selectTarget ? selectTarget.value : '').trim();
+            if (!targetClassSchool) {
+                if (typeof showToast === 'function') showToast("⚠️ Pilih kelas & sekolah tujuan terlebih dahulu!");
+                return;
+            }
+
+            const idList = Array.from(selectedAdminStudentIds);
+            if (idList.length === 0) {
+                if (typeof showToast === 'function') showToast("⚠️ Tidak ada santri yang dipilih.");
+                return;
+            }
+
+            const btn = document.getElementById('bulk-class-school-submit-btn');
+            const btnIcon = document.getElementById('bulk-class-school-submit-icon');
+            const btnText = document.getElementById('bulk-class-school-submit-text');
+
+            if (btn) btn.disabled = true;
+            if (btnIcon) btnIcon.className = "fa-solid fa-spinner fa-spin";
+            if (btnText) btnText.innerText = "Menerapkan...";
+
+            try {
+                const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem("asnawiyyah_admin_token")) || "";
+
+                // 1. OPTIMISTIC UPDATE: Perbarui memori & UI seketika
+                const idSet = new Set(idList);
+                const affectedNisList = [];
+                if (Array.isArray(adminStudentsData)) {
+                    adminStudentsData.forEach(s => {
+                        const sid = s.studentId || s.student_id;
+                        if (idSet.has(sid)) {
+                            s.kelas_sekolah = targetClassSchool;
+                            s.kelas = targetClassSchool;
+                            if (s.nis || s.nisn) affectedNisList.push(s.nis || s.nisn);
+                        }
+                    });
+                    window.adminStudentsData = adminStudentsData;
+                    window.adminStudentsList = adminStudentsData;
+                    try {
+                        localStorage.setItem('ASNAWIYYAH_STUDENTS_CACHE', JSON.stringify(adminStudentsData));
+                    } catch(e) {}
+                    if (typeof filterAdminStudentsList === 'function') {
+                        filterAdminStudentsList();
+                    }
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast(`⏳ Memperbarui kelas & sekolah untuk ${idList.length} santri...`);
+                }
+
+                // 2. DUAL-WRITE KE SUPABASE (Via PostgREST in.() filter)
+                const sbUrl = window.ASNAWIYYAH_CONFIG?.supabaseUrl;
+                const sbKey = window.ASNAWIYYAH_CONFIG?.supabaseKey;
+                if (sbUrl && sbKey) {
+                    try {
+                        const inFilter = idList.map(id => `"${id}"`).join(',');
+                        await fetch(`${sbUrl}/rest/v1/students?student_id=in.(${encodeURIComponent(inFilter)})`, {
+                            method: 'PATCH',
+                            headers: {
+                                'apikey': sbKey,
+                                'Authorization': `Bearer ${sbKey}`,
+                                'Content-Type': 'application/json',
+                                'Prefer': 'return=representation'
+                            },
+                            body: JSON.stringify({ kelas_sekolah: targetClassSchool })
+                        });
+                        // Fallback NIS jika ada record dengan student_id berbeda
+                        if (affectedNisList.length > 0) {
+                            const inNis = affectedNisList.map(n => `"${n}"`).join(',');
+                            await fetch(`${sbUrl}/rest/v1/students?nis=in.(${encodeURIComponent(inNis)})`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'apikey': sbKey,
+                                    'Authorization': `Bearer ${sbKey}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ kelas_sekolah: targetClassSchool })
+                            });
+                        }
+                    } catch (sbErr) {
+                        console.warn('[SUPABASE BATCH WRITE KELAS WARN]', sbErr);
+                    }
+                }
+
+                // 3. REPLIKASI KE GOOGLE APPS SCRIPT SPREADSHEET
+                if (typeof apiPost === 'function') {
+                    try {
+                        await apiPost("batchUpdateStudentClassSchool", {
+                            token,
+                            studentIds: idList,
+                            kelas_sekolah: targetClassSchool
+                        });
+                    } catch (gasErr) {
+                        console.warn('[GAS BATCH WRITE KELAS WARN]', gasErr);
+                    }
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast(`✅ Kelas & Sekolah untuk ${idList.length} santri berhasil diubah menjadi "${targetClassSchool}"!`);
+                }
+
+                closeBulkEditClassSchoolModal();
+                clearSelectedAdminStudents();
+                await loadAdminStudentsData();
+            } catch (err) {
+                console.error("Gagal edit massal kelas santri:", err);
+                if (typeof showToast === 'function') showToast("❌ Gagal edit massal: " + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
+                if (btnIcon) btnIcon.className = "fa-solid fa-check";
+                if (btnText) btnText.innerText = "Terapkan Perubahan";
+            }
+        }
+
+        /**
          * Buka Modal Tambah / Edit Santri
          */
         function openAdminStudentModal(student = null) {
@@ -10466,6 +10646,9 @@
         window.openBulkEditProgramModal = openBulkEditProgramModal;
         window.closeBulkEditProgramModal = closeBulkEditProgramModal;
         window.submitBulkEditProgram = submitBulkEditProgram;
+        window.openBulkEditClassSchoolModal = openBulkEditClassSchoolModal;
+        window.closeBulkEditClassSchoolModal = closeBulkEditClassSchoolModal;
+        window.submitBulkEditClassSchool = submitBulkEditClassSchool;
 
         // Auto-initialize analytics chart on DOM ready
         if (typeof document !== 'undefined') {

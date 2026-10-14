@@ -8297,13 +8297,17 @@
                                 <div class="text-xs md:text-sm font-bold text-white flex items-center gap-1.5">
                                     <span id="admin-student-bulk-count" class="text-cyan-300 font-extrabold text-sm">0</span> Santri Terpilih
                                 </div>
-                                <div class="text-[10px] text-slate-300 hidden sm:block">Siap untuk perubahan program atau status massal</div>
+                                <div class="text-[10px] text-slate-300 hidden sm:block">Siap untuk perubahan program atau kelas & sekolah massal</div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center flex-wrap gap-2">
                             <button type="button" onclick="openBulkEditProgramModal()" class="px-3.5 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 rounded-xl text-xs font-extrabold shadow-md shadow-cyan-500/30 flex items-center gap-1.5 transition active:scale-95">
                                 <i class="fa-solid fa-graduation-cap text-xs"></i>
                                 <span>Ubah Program Massal</span>
+                            </button>
+                            <button type="button" onclick="openBulkEditClassSchoolModal()" class="px-3.5 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white rounded-xl text-xs font-extrabold shadow-md shadow-indigo-500/30 flex items-center gap-1.5 transition active:scale-95">
+                                <i class="fa-solid fa-school text-xs"></i>
+                                <span>Ubah Kelas & Sekolah Massal</span>
                             </button>
                             <button type="button" onclick="clearSelectedAdminStudents()" class="px-3 py-1.5 md:py-2 bg-white/10 hover:bg-white/20 text-slate-200 rounded-xl text-xs font-semibold transition active:scale-95" title="Batal Pilih Semua">
                                 Batal
@@ -11853,6 +11857,69 @@
                     <button type="submit" id="bulk-program-submit-btn" class="px-5 py-2 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-md shadow-cyan-600/30 flex items-center gap-2 transition active:scale-95">
                         <i id="bulk-program-submit-icon" class="fa-solid fa-check"></i>
                         <span id="bulk-program-submit-text">Terapkan Perubahan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL UBAH KELAS & SEKOLAH MASSAL ==================== -->
+    <div id="modal-admin-student-bulk-class-school" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] animate-scale-in">
+            <!-- Modal Header -->
+            <div class="p-4 md:p-5 border-b border-slate-100 dark:border-[#253447] flex justify-between items-center bg-gradient-to-r from-indigo-50/60 to-transparent dark:from-indigo-950/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-base shadow-sm">
+                        <i class="fa-solid fa-school"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm md:text-base text-slate-800 dark:text-slate-100">Ubah Kelas & Sekolah Santri Sekaligus</h3>
+                        <p class="text-[11px] text-slate-400">Terapkan perubahan kelas formal dan jenjang sekolah serentak untuk santri terpilih</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBulkEditClassSchoolModal()" class="w-8 h-8 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1c2836] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body Form -->
+            <form id="adminStudentBulkClassSchoolForm" onsubmit="submitBulkEditClassSchool(event)" class="p-4 md:p-5 space-y-4 text-xs">
+                <!-- Info Santri Terpilih -->
+                <div class="bg-slate-50 dark:bg-[#1c2836]/60 p-3.5 rounded-2xl border border-slate-200 dark:border-[#253447] space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-600 dark:text-slate-300 font-bold text-xs">Daftar Santri Terpilih:</span>
+                        <span id="bulk-class-school-selected-count-badge" class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 font-extrabold text-[11px]">0 Santri</span>
+                    </div>
+                    <div id="bulk-class-school-selected-names" class="max-h-28 overflow-y-auto text-[11px] text-slate-600 dark:text-slate-300 flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-200/60 dark:border-[#253447]">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Pilihan Kelas & Sekolah Target -->
+                <div class="space-y-1.5">
+                    <label for="bulk-student-target-class-school" class="font-bold text-slate-700 dark:text-slate-200 block text-xs">
+                        Pilih Kelas & Sekolah Baru <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="bulk-student-target-class-school" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#253447] text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 transition">
+                        <!-- Populated dynamically via openBulkEditClassSchoolModal -->
+                    </select>
+                    <p class="text-[10px] text-slate-400">Seluruh santri yang tercentang di atas akan dipindahkan ke kelas & sekolah ini.</p>
+                </div>
+
+                <!-- Alert Sinkronisasi Database -->
+                <div class="p-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-300 flex items-start gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up mt-0.5 text-xs text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Perubahan akan disimpan serentak ke Cloud Database Supabase dan Google Spreadsheet. Tampilan tabel akan langsung diperbarui otomatis.</span>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-[#253447]">
+                    <button type="button" onclick="closeBulkEditClassSchoolModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 font-bold rounded-xl transition active:scale-95">
+                        Batal
+                    </button>
+                    <button type="submit" id="bulk-class-school-submit-btn" class="px-5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-md shadow-indigo-600/30 flex items-center gap-2 transition active:scale-95">
+                        <i id="bulk-class-school-submit-icon" class="fa-solid fa-check"></i>
+                        <span id="bulk-class-school-submit-text">Terapkan Perubahan</span>
                     </button>
                 </div>
             </form>
