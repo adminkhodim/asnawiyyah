@@ -86,8 +86,8 @@ console.log('   ✅ Apps Script batch update backend verified');
 
 // Test 9: Otomatisasi Sisip Kolom E (kelas_sekolah) di Google Spreadsheet
 console.log('▶️  Test 9: Memverifikasi fungsi otomatis penyisipan Kolom E (kelas_sekolah) di legacy/Code.gs...');
-assert(codeGs.includes('function ensureStudentSheetColumnLayout('), 'Fungsi ensureStudentSheetColumnLayout harus ada di legacy/Code.gs');
-assert(codeGs.includes('sheet.insertColumnAfter(progCol1Based)'), 'Harus menyisipkan kolom baru tepat setelah kolom program');
+assert(codeGs.includes('function fixStudentColumnE(') || codeGs.includes('function ensureStudentSheetColumnLayout('), 'Fungsi fixStudentColumnE / ensureStudentSheetColumnLayout harus ada di legacy/Code.gs');
+assert(codeGs.includes('sheet.insertColumnAfter'), 'Harus menyisipkan kolom baru tepat setelah kolom program');
 assert(codeGs.includes('"kelas_sekolah"'), 'Header kolom baru harus dinamai kelas_sekolah');
 assert(codeGs.includes('action === "autoMigrateStudentColumns"'), 'Router harus mendukung action autoMigrateStudentColumns');
 console.log('   ✅ Automatic column E layout migration verified');

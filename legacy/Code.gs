@@ -1901,6 +1901,77 @@ function doGet(e) {
 // >>>>>>>>>>>>>>>>>> BEGIN FILE: 02_Auth_RBAC.gs <<<<<<<<<<<<<<<<<<
 
 /**
+ * Memindahkan / menyisipkan kolom 'kelas_sekolah' tepat di sebelah kolom 'program' (Kolom E),
+ * serta menggeser kolom 'status' dan kolom-kolom berikutnya 1 langkah ke kanan.
+ */
+function fixStudentColumnE(sheet) {
+  if (!sheet) {
+    const ss = typeof getDatabaseSpreadsheet === 'function' ? getDatabaseSpreadsheet() : SpreadsheetApp.getActiveSpreadsheet();
+    sheet = ss.getSheetByName("Students");
+  }
+  if (!sheet) {
+    Logger.log("Sheet 'Students' tidak ditemukan.");
+    return "Sheet 'Students' tidak ditemukan.";
+  }
+
+  const lastCol = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+  if (lastCol === 0) return "Sheet kosong.";
+
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+  let progIdx = headers.indexOf("program");
+  if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = headers.indexOf("program_studi");
+  if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+
+  if (progIdx === -1) {
+    Logger.log("Kolom 'program' tidak ditemukan.");
+    return "Kolom 'program' tidak ditemukan.";
+  }
+
+  const targetCol = progIdx + 2; // Kolom E (5)
+  let kelasIdx = headers.indexOf("kelas_sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
+
+  if (kelasIdx === -1) {
+    // Jika belum ada kolom kelas_sekolah, sisipkan tepat setelah program
+    sheet.insertColumnAfter(progIdx + 1);
+    sheet.getRange(1, targetCol).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+    Logger.log("Kolom 'kelas_sekolah' berhasil disisipkan di kolom E.");
+    return "Kolom 'kelas_sekolah' berhasil disisipkan di kolom E.";
+  }
+
+  if (kelasIdx + 1 === targetCol) {
+    Logger.log("Kolom 'kelas_sekolah' sudah tepat di kolom E.");
+    return "Kolom 'kelas_sekolah' sudah tepat di kolom E.";
+  }
+
+  // Jika kolom kelas_sekolah berada di posisi lain (misal kolom L / 12)
+  const currentKelasCol = kelasIdx + 1;
+  const numRows = Math.max(lastRow, 1);
+  const kelasData = sheet.getRange(1, currentKelasCol, numRows, 1).getValues();
+
+  // Hapus kolom lama di posisi L
+  sheet.deleteColumn(currentKelasCol);
+
+  // Sisipkan kolom baru tepat setelah kolom program
+  sheet.insertColumnAfter(progIdx + 1);
+
+  // Pasang data dan format header ke kolom E baru
+  sheet.getRange(1, targetCol, numRows, 1).setValues(kelasData);
+  sheet.getRange(1, targetCol).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+
+  Logger.log("Sukses memindahkan kelas_sekolah dari kolom " + currentKelasCol + " ke kolom E (" + targetCol + ").");
+  return "Sukses memindahkan kelas_sekolah dari kolom " + currentKelasCol + " ke kolom E (" + targetCol + ").";
+}
+
+// Alias agar kompatibel
+function ensureStudentSheetColumnLayout(sheet) {
+  return fixStudentColumnE(sheet);
+}
+
+
+/**
  * ============================================================================
  * 02_Auth_RBAC.gs
  * PPTQ Asnawiyyah Backend Architecture - Identity, Authentication & RBAC
@@ -2204,19 +2275,7 @@ function setupAuthSystemSheets() {
       } else {
         // 1. Auto-rename header nisn -> nis jika ada pada sheet Students
         if (sheetName === SHEET_STUDENTS) {
-          const firstRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-          for (let c = 0; c < firstRowValues.length; c++) {
-            if (String(firstRowValues[c] || "").trim().toLowerCase() === "nisn") {
-              sheet.getRange(1, c + 1).setValue("nis");
-              Logger.log(`[SCHEMA] Header 'nisn' di sheet '${sheetName}' kolom ${c + 1} berhasil diubah menjadi 'nis'.`);
-              break;
-            }
-          }
-
-          // 2. Pastikan tata letak kolom Students memiliki kelas_sekolah di kolom E (setelah program)
-          if (typeof ensureStudentSheetColumnLayout === 'function') {
-            ensureStudentSheetColumnLayout(sheet);
-          }
+          fixStudentColumnE(sheet);
         }
 
         const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h || "").trim().toLowerCase());
@@ -11202,56 +11261,76 @@ function uploadMediaToDrive(formData, token) {
  * Kolom K: photo_url
  * Kolom L: qr_code
  */
-function ensureStudentSheetColumnLayout(sheet) {
-  if (!sheet) return { changed: false, reason: "No sheet provided" };
+/**
+ * Memindahkan / menyisipkan kolom 'kelas_sekolah' tepat di sebelah kolom 'program' (Kolom E),
+ * serta menggeser kolom 'status' dan kolom-kolom berikutnya 1 langkah ke kanan.
+ */
+function fixStudentColumnE(sheet) {
+  if (!sheet) {
+    const ss = typeof getDatabaseSpreadsheet === 'function' ? getDatabaseSpreadsheet() : SpreadsheetApp.getActiveSpreadsheet();
+    sheet = ss.getSheetByName("Students");
+  }
+  if (!sheet) {
+    Logger.log("Sheet 'Students' tidak ditemukan.");
+    return "Sheet 'Students' tidak ditemukan.";
+  }
+
   const lastCol = sheet.getLastColumn();
-  if (lastCol === 0) return { changed: false, reason: "Sheet empty" };
-
-  const headerValues = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-  const cleanHeaders = headerValues.map(h => String(h || "").trim().toLowerCase());
-
-  let progIdx = cleanHeaders.indexOf("program");
-  if (progIdx === -1) progIdx = cleanHeaders.indexOf("program_pesantren");
-  if (progIdx === -1) progIdx = cleanHeaders.indexOf("program_studi");
-  if (progIdx === -1) progIdx = cleanHeaders.indexOf("jenjang");
-
-  if (progIdx === -1) return { changed: false, reason: "Kolom program tidak ditemukan" };
-
-  const progCol1Based = progIdx + 1; // misal D = 4
-  const expectedKelasCol1Based = progCol1Based + 1; // Kolom E = 5
-
-  const currentNextHeader = (cleanHeaders[progIdx + 1] || "");
-  if (currentNextHeader === "kelas_sekolah" || currentNextHeader === "kelas") {
-    if (currentNextHeader !== "kelas_sekolah") {
-      sheet.getRange(1, expectedKelasCol1Based).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
-    }
-    return { changed: false, position: expectedKelasCol1Based, message: "Kolom kelas_sekolah sudah di kolom E." };
-  }
-
-  let existingKelasIdx = cleanHeaders.indexOf("kelas_sekolah");
-  if (existingKelasIdx === -1) existingKelasIdx = cleanHeaders.indexOf("kelas");
-
-  let existingData = null;
   const lastRow = sheet.getLastRow();
+  if (lastCol === 0) return "Sheet kosong.";
 
-  if (existingKelasIdx !== -1) {
-    if (lastRow > 1) {
-      existingData = sheet.getRange(2, existingKelasIdx + 1, lastRow - 1, 1).getValues();
-    }
-    sheet.deleteColumn(existingKelasIdx + 1);
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+  let progIdx = headers.indexOf("program");
+  if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = headers.indexOf("program_studi");
+  if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+
+  if (progIdx === -1) {
+    Logger.log("Kolom 'program' tidak ditemukan.");
+    return "Kolom 'program' tidak ditemukan.";
   }
 
-  sheet.insertColumnAfter(progCol1Based);
-  const newKelasCell = sheet.getRange(1, expectedKelasCol1Based);
-  newKelasCell.setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+  const targetCol = progIdx + 2; // Kolom E (5)
+  let kelasIdx = headers.indexOf("kelas_sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
 
-  if (existingData && existingData.length > 0) {
-    sheet.getRange(2, expectedKelasCol1Based, existingData.length, 1).setValues(existingData);
+  if (kelasIdx === -1) {
+    // Jika belum ada kolom kelas_sekolah, sisipkan tepat setelah program
+    sheet.insertColumnAfter(progIdx + 1);
+    sheet.getRange(1, targetCol).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+    Logger.log("Kolom 'kelas_sekolah' berhasil disisipkan di kolom E.");
+    return "Kolom 'kelas_sekolah' berhasil disisipkan di kolom E.";
   }
 
-  Logger.log("[LAYOUT] Kolom kelas_sekolah berhasil disisipkan di kolom E (setelah program), kolom status dan seterusnya otomatis tergeser ke kanan.");
-  return { changed: true, position: expectedKelasCol1Based, message: "Kolom kelas_sekolah berhasil disisipkan di kolom E." };
+  if (kelasIdx + 1 === targetCol) {
+    Logger.log("Kolom 'kelas_sekolah' sudah tepat di kolom E.");
+    return "Kolom 'kelas_sekolah' sudah tepat di kolom E.";
+  }
+
+  // Jika kolom kelas_sekolah berada di posisi lain (misal kolom L / 12)
+  const currentKelasCol = kelasIdx + 1;
+  const numRows = Math.max(lastRow, 1);
+  const kelasData = sheet.getRange(1, currentKelasCol, numRows, 1).getValues();
+
+  // Hapus kolom lama di posisi L
+  sheet.deleteColumn(currentKelasCol);
+
+  // Sisipkan kolom baru tepat setelah kolom program
+  sheet.insertColumnAfter(progIdx + 1);
+
+  // Pasang data dan format header ke kolom E baru
+  sheet.getRange(1, targetCol, numRows, 1).setValues(kelasData);
+  sheet.getRange(1, targetCol).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+
+  Logger.log("Sukses memindahkan kelas_sekolah dari kolom " + currentKelasCol + " ke kolom E (" + targetCol + ").");
+  return "Sukses memindahkan kelas_sekolah dari kolom " + currentKelasCol + " ke kolom E (" + targetCol + ").";
 }
+
+// Alias agar kompatibel
+function ensureStudentSheetColumnLayout(sheet) {
+  return fixStudentColumnE(sheet);
+}
+
 
 /**
  * ============================================================================

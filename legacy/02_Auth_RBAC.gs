@@ -1,4 +1,75 @@
 /**
+ * Memindahkan / menyisipkan kolom 'kelas_sekolah' tepat di sebelah kolom 'program' (Kolom E),
+ * serta menggeser kolom 'status' dan kolom-kolom berikutnya 1 langkah ke kanan.
+ */
+function fixStudentColumnE(sheet) {
+  if (!sheet) {
+    const ss = typeof getDatabaseSpreadsheet === 'function' ? getDatabaseSpreadsheet() : SpreadsheetApp.getActiveSpreadsheet();
+    sheet = ss.getSheetByName("Students");
+  }
+  if (!sheet) {
+    Logger.log("Sheet 'Students' tidak ditemukan.");
+    return "Sheet 'Students' tidak ditemukan.";
+  }
+
+  const lastCol = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+  if (lastCol === 0) return "Sheet kosong.";
+
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+  let progIdx = headers.indexOf("program");
+  if (progIdx === -1) progIdx = headers.indexOf("program_pesantren");
+  if (progIdx === -1) progIdx = headers.indexOf("program_studi");
+  if (progIdx === -1) progIdx = headers.indexOf("jenjang");
+
+  if (progIdx === -1) {
+    Logger.log("Kolom 'program' tidak ditemukan.");
+    return "Kolom 'program' tidak ditemukan.";
+  }
+
+  const targetCol = progIdx + 2; // Kolom E (5)
+  let kelasIdx = headers.indexOf("kelas_sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
+
+  if (kelasIdx === -1) {
+    // Jika belum ada kolom kelas_sekolah, sisipkan tepat setelah program
+    sheet.insertColumnAfter(progIdx + 1);
+    sheet.getRange(1, targetCol).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+    Logger.log("Kolom 'kelas_sekolah' berhasil disisipkan di kolom E.");
+    return "Kolom 'kelas_sekolah' berhasil disisipkan di kolom E.";
+  }
+
+  if (kelasIdx + 1 === targetCol) {
+    Logger.log("Kolom 'kelas_sekolah' sudah tepat di kolom E.");
+    return "Kolom 'kelas_sekolah' sudah tepat di kolom E.";
+  }
+
+  // Jika kolom kelas_sekolah berada di posisi lain (misal kolom L / 12)
+  const currentKelasCol = kelasIdx + 1;
+  const numRows = Math.max(lastRow, 1);
+  const kelasData = sheet.getRange(1, currentKelasCol, numRows, 1).getValues();
+
+  // Hapus kolom lama di posisi L
+  sheet.deleteColumn(currentKelasCol);
+
+  // Sisipkan kolom baru tepat setelah kolom program
+  sheet.insertColumnAfter(progIdx + 1);
+
+  // Pasang data dan format header ke kolom E baru
+  sheet.getRange(1, targetCol, numRows, 1).setValues(kelasData);
+  sheet.getRange(1, targetCol).setValue("kelas_sekolah").setFontWeight("bold").setBackground("#dcfce7");
+
+  Logger.log("Sukses memindahkan kelas_sekolah dari kolom " + currentKelasCol + " ke kolom E (" + targetCol + ").");
+  return "Sukses memindahkan kelas_sekolah dari kolom " + currentKelasCol + " ke kolom E (" + targetCol + ").";
+}
+
+// Alias agar kompatibel
+function ensureStudentSheetColumnLayout(sheet) {
+  return fixStudentColumnE(sheet);
+}
+
+
+/**
  * ============================================================================
  * 02_Auth_RBAC.gs
  * PPTQ Asnawiyyah Backend Architecture - Identity, Authentication & RBAC
@@ -302,19 +373,7 @@ function setupAuthSystemSheets() {
       } else {
         // 1. Auto-rename header nisn -> nis jika ada pada sheet Students
         if (sheetName === SHEET_STUDENTS) {
-          const firstRowValues = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-          for (let c = 0; c < firstRowValues.length; c++) {
-            if (String(firstRowValues[c] || "").trim().toLowerCase() === "nisn") {
-              sheet.getRange(1, c + 1).setValue("nis");
-              Logger.log(`[SCHEMA] Header 'nisn' di sheet '${sheetName}' kolom ${c + 1} berhasil diubah menjadi 'nis'.`);
-              break;
-            }
-          }
-
-          // 2. Pastikan tata letak kolom Students memiliki kelas_sekolah di kolom E (setelah program)
-          if (typeof ensureStudentSheetColumnLayout === 'function') {
-            ensureStudentSheetColumnLayout(sheet);
-          }
+          fixStudentColumnE(sheet);
         }
 
         const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h || "").trim().toLowerCase());
