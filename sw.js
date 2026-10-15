@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v69';
+const CACHE_NAME = 'asnawiyyah-cache-v70';
 
 const PRECACHE_URLS = [
   '/',

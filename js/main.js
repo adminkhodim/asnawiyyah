@@ -398,6 +398,8 @@
             const mobileBottomNav = document.getElementById('mobile-bottom-nav');
             const mainFooter = document.querySelector('footer');
 
+            const isQuranMenu = (tabId === 'quran-page' || tabId === 'quran-index' || tabId === 'quran-detail');
+
             if (tabId === 'admin') {
                 // Sembunyikan header publik saat di dashboard admin
                 if (mainDesktopHeader) mainDesktopHeader.style.display = 'none';
@@ -419,8 +421,16 @@
                         }
                     }, 100);
                 }
+            } else if (isQuranMenu) {
+                // Khusus Menu Qur'an: Sembunyikan mobile bottom navbar agar halaman mushaf tampil utuh dan leluasa
+                if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
+                if (mainMobileHeader) mainMobileHeader.style.removeProperty('display');
+                if (deskNavMenu) deskNavMenu.style.removeProperty('display');
+                if (deskActionMenu) deskActionMenu.style.removeProperty('display');
+                if (mobileBottomNav) mobileBottomNav.style.display = 'none';
+                if (mainFooter) mainFooter.style.display = 'none';
             } else {
-                // Kembalikan header publik — hapus inline style agar Tailwind classes berlaku kembali
+                // Kembalikan header publik & bottom navbar untuk semua menu selain Qur'an & Admin
                 // Desktop header: class asli = "hidden md:block ..." (hidden di mobile, tampil di desktop)
                 // Mobile header: class asli = "md:hidden ..." (tampil di mobile, hidden di desktop)
                 if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
