@@ -1,7 +1,8 @@
 /**
  * ====================================================================
- * ASNAWIYYAH KOMPAS KIBLAT ENGINE (v2.0)
- * Perhitungan Hisab Arah Kiblat Geodesi Presisi Terhubung Lokasi Perangkat
+ * ASNAWIYYAH KOMPAS KIBLAT ENGINE (v3.0 - Falakiyyah Geodesi Presisi)
+ * Mengadopsi Standar Presisi & Desain Kompas Falak Lembaga Falakiyah NU
+ * Sensor Mutlak: DeviceOrientationAbsolute (Android) & WebkitCompassHeading (iOS)
  * Koordinat Ka'bah: 21° 25' 21" N, 39° 49' 34" E (Makkah al-Mukarramah)
  * ====================================================================
  */
@@ -13,7 +14,7 @@ const ASNKiblat = (function () {
         lng: 39.826206
     };
 
-    // 2. DATABASE KOORDINAT KOTA CADANGAN (Hanya sebagai opsi manual jika GPS dimatikan)
+    // 2. DATABASE KOORDINAT KOTA CADANGAN (Sebagai fallback jika GPS tidak aktif)
     const CITIES = {
         demak: { name: "Kab. Demak (PPTQ Asnawiyyah)", lat: -6.9535, lng: 110.6402 },
         semarang: { name: "Kota Semarang", lat: -6.9667, lng: 110.4167 },
@@ -28,7 +29,7 @@ const ASNKiblat = (function () {
         medan: { name: "Kota Medan", lat: 3.5952, lng: 98.6722 }
     };
 
-    // 3. STATE LOKASI PENGGUNA (MEMPRIORITASKAN SENSOR GPS / LOKASI PERANGKAT)
+    // 3. STATE LOKASI & SENSOR
     let savedLat = null;
     let savedLng = null;
     let savedLocName = null;
@@ -45,21 +46,22 @@ const ASNKiblat = (function () {
         lat: savedLat ? parseFloat(savedLat) : -6.9535,
         lng: savedLng ? parseFloat(savedLng) : 110.6402,
         accuracy: savedAccuracy ? parseFloat(savedAccuracy) : null,
-        locationName: savedLocName || (savedLat ? "Lokasi Perangkat Terdeteksi" : "Menghubungkan Lokasi..."),
+        locationName: savedLocName || (savedLat ? "Lokasi Presisi Terhubung" : "Menghubungkan GPS..."),
         isGps: !!savedLat,
-        sourceType: savedLat ? "saved_gps" : "detecting" // 'detecting' | 'gps' | 'saved_gps' | 'manual'
+        sourceType: savedLat ? "saved_gps" : "detecting"
     };
 
-    let qiblaBearing = 294.5;
+    let qiblaBearing = 294.48; // Standar presisi 2 desimal
     let qiblaDistance = 8335;
     let currentHeading = 0;
     let isCompassListening = false;
     let hasSensorSupport = false;
     let lastVibratedState = false;
     let isRequestingLocation = false;
+    let hasAbsoluteOrientation = false;
 
     // ----------------------------------------------------------------
-    // 4. FORMULA MATEMATIKA FALAK (SPHERICAL TRIGONOMETRY)
+    // 4. FORMULA FALAKIYAH GEODESI (SPHERICAL TRIGONOMETRY)
     // ----------------------------------------------------------------
     function calculateQibla(lat, lng) {
         const toRad = deg => (deg * Math.PI) / 180;
@@ -88,17 +90,211 @@ const ASNKiblat = (function () {
         const distanceKm = Math.round(R * c);
 
         return {
-            bearing: Number(qiblaDeg.toFixed(1)),
+            bearing: Number(qiblaDeg.toFixed(2)),
             distanceKm: distanceKm
         };
     }
 
     // ----------------------------------------------------------------
-    // 5. KONEKSI KE FITUR LOKASI PERANGKAT (HTML5 GEOLOCATION API)
+    // 5. KALKULASI HEADING SENSOR KOMPAS MUTLAK (TRUE/MAGNETIC NORTH)
+    // ----------------------------------------------------------------
+    function extractCompassHeading(event) {
+        // 1. iOS Safari: WebkitCompassHeading memberikan kompas sejati 0-360 derajat
+        if (typeof event.webkitCompassHeading === "number" && !isNaN(event.webkitCompassHeading)) {
+            return event.webkitCompassHeading;
+        }
+
+        // 2. Android Chrome Absolute Orientation
+        if (typeof event.alpha === "number" && !isNaN(event.alpha)) {
+            const beta = event.beta || 0;
+            const gamma = event.gamma || 0;
+
+            // Jika ponsel diletakkan mendatar di atas meja (flat, pitch & roll < 25°)
+            if (Math.abs(beta) < 25 && Math.abs(gamma) < 25) {
+                // Pada permukaan meja datar: alpha adalah rotasi counter-clockwise dari Utara
+                // Heading kompas searah jarum jam (0=U, 90=T, 180=S, 270=B):
+                return (360 - event.alpha + 360) % 360;
+            }
+
+            // Jika ponsel dipegang miring: kalkulasi 3D Tilt-Compensated W3C
+            const degToRad = Math.PI / 180;
+            const a = event.alpha * degToRad;
+            const b = beta * degToRad;
+            const g = gamma * degToRad;
+
+            const cA = Math.cos(a), sA = Math.sin(a);
+            const cB = Math.cos(b), sB = Math.sin(b);
+            const cG = Math.cos(g), sG = Math.sin(g);
+
+            // Vektor hadap atas smartphone diproyeksikan ke bidang horizontal bumi
+            const vx = -cA * sG - sA * sB * cG;
+            const vy = -sA * sG + cA * sB * cG;
+
+            let h = Math.atan2(vx, vy) * (180 / Math.PI);
+            return (h + 360) % 360;
+        }
+
+        return null;
+    }
+
+    function onAbsoluteOrientationEvent(event) {
+        hasSensorSupport = true;
+        hasAbsoluteOrientation = true;
+        const heading = extractCompassHeading(event);
+        if (heading !== null) {
+            currentHeading = (heading + 360) % 360;
+            updateCompassUI(currentHeading);
+        }
+    }
+
+    function onRelativeOrientationEvent(event) {
+        // Hanya gunakan jika event absolute belum pernah dipancarkan
+        if (hasAbsoluteOrientation) return;
+        hasSensorSupport = true;
+        const heading = extractCompassHeading(event);
+        if (heading !== null) {
+            currentHeading = (heading + 360) % 360;
+            updateCompassUI(currentHeading);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 6. UPDATE TAMPILAN KOMPAS REAL-TIME (ALA NU ONLINE)
+    // ----------------------------------------------------------------
+    function updateCompassUI(heading) {
+        const dialEl = document.getElementById("qibla-compass-dial");
+        const needleEl = document.getElementById("qibla-compass-needle");
+        const statusBadgeEl = document.getElementById("qibla-status-badge");
+        const glowHaloEl = document.getElementById("qibla-glow-halo");
+
+        // 1. Putar piringan mata angin kompas sesuai arah hadap smartphone
+        // Di NU Online: piringan berputar sebesar -heading.
+        // Jika ponsel menghadap Kiblat (294.48°):
+        // U (Utara, 0°) akan berada di arah 0 - 294.48 = +65.52° (kanan atas jam 2:30)
+        // B (Barat, 270°) akan berada di arah 270 - 294.48 = -24.48° (kiri atas jam 11:15)
+        if (dialEl) {
+            dialEl.style.transform = `rotate(${-heading}deg)`;
+        }
+
+        // 2. Putar jarum kiblat merah dengan Ka'bah di ujungnya
+        // Posisi jarum Ka'bah relatif terhadap ujung atas smartphone:
+        // needleAngle = (qiblaBearing - heading)
+        // Ketika heading === qiblaBearing (ponsel menghadap lurus ke Ka'bah):
+        // needleAngle = 0° -> Jarum tegak lurus lurus ke ATAS smartphone!
+        const diff = (qiblaBearing - heading + 360) % 360;
+        const needleAngle = diff;
+
+        if (needleEl) {
+            needleEl.style.transform = `rotate(${needleAngle}deg)`;
+        }
+
+        // 3. Toleransi deviasi presisi tepat menghadap kiblat (±2.5°)
+        const isFacingQibla = diff <= 2.5 || diff >= 357.5;
+
+        if (statusBadgeEl) {
+            if (isFacingQibla) {
+                statusBadgeEl.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow-lg animate-pulse border border-emerald-300";
+                statusBadgeEl.innerHTML = `<i class="fa-solid fa-kaaba text-amber-300"></i> Tepat Menghadap Kiblat`;
+                if (glowHaloEl) {
+                    glowHaloEl.classList.remove("opacity-0");
+                    glowHaloEl.classList.add("opacity-100");
+                }
+
+                // Haptic feedback getar halus sekali saat tepat menghadap Ka'bah
+                if (!lastVibratedState) {
+                    lastVibratedState = true;
+                    if (typeof navigator !== "undefined" && navigator.vibrate) {
+                        try {
+                            navigator.vibrate([40, 60, 40]);
+                        } catch (e) {}
+                    }
+                }
+            } else {
+                lastVibratedState = false;
+                if (glowHaloEl) {
+                    glowHaloEl.classList.remove("opacity-100");
+                    glowHaloEl.classList.add("opacity-0");
+                }
+
+                let turnDirection = "";
+                if (diff > 180) {
+                    turnDirection = `Putar ponsel ke kiri ${(360 - diff).toFixed(0)}°`;
+                } else {
+                    turnDirection = `Putar ponsel ke kanan ${diff.toFixed(0)}°`;
+                }
+
+                statusBadgeEl.className = "inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md text-white border border-white/20";
+                statusBadgeEl.innerHTML = `<i class="fa-solid fa-compass text-amber-300"></i> ${turnDirection}`;
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 7. PENANGANAN LISTENER SENSOR KOMPAS
+    // ----------------------------------------------------------------
+    function startCompassListener() {
+        if (isCompassListening) return;
+
+        // Pasang event listener langsung ke deviceorientationabsolute (Android Chrome)
+        try {
+            window.addEventListener("deviceorientationabsolute", onAbsoluteOrientationEvent, true);
+        } catch (e) {}
+
+        // Pasang fallback standard deviceorientation
+        try {
+            window.addEventListener("deviceorientation", onRelativeOrientationEvent, true);
+        } catch (e) {}
+
+        isCompassListening = true;
+
+        // Cek izin sensor khusus iOS Safari 13+
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+            const btnIos = document.getElementById("btn-qibla-request-sensor");
+            if (btnIos) btnIos.classList.remove("hidden");
+        }
+
+        // Cek setelah 2 detik jika perangkat tidak memiliki sensor magnetometer
+        setTimeout(() => {
+            const noticeEl = document.getElementById("qibla-sensor-notice");
+            if (!hasSensorSupport && noticeEl) {
+                noticeEl.classList.remove("hidden");
+            }
+        }, 2000);
+    }
+
+    function requestIosSensorPermission() {
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+            DeviceOrientationEvent.requestPermission()
+                .then(response => {
+                    if (response === "granted") {
+                        const btnIos = document.getElementById("btn-qibla-request-sensor");
+                        if (btnIos) btnIos.classList.add("hidden");
+                        window.addEventListener("deviceorientation", onRelativeOrientationEvent, true);
+                        isCompassListening = true;
+                    } else {
+                        alert("Izin sensor orientasi ditolak. Kompas tidak dapat berputar otomatis.");
+                    }
+                })
+                .catch(err => {
+                    console.warn("Gagal meminta izin sensor iOS:", err);
+                });
+        }
+    }
+
+    function stopCompassListener() {
+        if (!isCompassListening) return;
+        try {
+            window.removeEventListener("deviceorientationabsolute", onAbsoluteOrientationEvent, true);
+            window.removeEventListener("deviceorientation", onRelativeOrientationEvent, true);
+        } catch (e) {}
+        isCompassListening = false;
+    }
+
+    // ----------------------------------------------------------------
+    // 8. HUBUNGKAN FITUR LOKASI PERANGKAT (GPS GEOLOCATION)
     // ----------------------------------------------------------------
     function requestDeviceLocation(interactive = false) {
         if (!navigator || !navigator.geolocation) {
-            updateLocationStatusUI("unsupported", "Perangkat Tidak Mendukung GPS");
             if (interactive) {
                 alert("Browser atau perangkat Anda tidak memiliki fitur akses lokasi Geolocation.");
             }
@@ -108,13 +304,14 @@ const ASNKiblat = (function () {
         if (isRequestingLocation) return;
         isRequestingLocation = true;
 
-        updateLocationStatusUI("requesting", "Mendeteksi Lokasi Perangkat...");
-
         const options = {
-            enableHighAccuracy: true, // Gunakan chip GPS presisi tinggi ponsel
+            enableHighAccuracy: true,
             timeout: 15000,
             maximumAge: interactive ? 0 : 60000
         };
+
+        const locNameEl = document.getElementById("qibla-current-location");
+        if (locNameEl) locNameEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Mendeteksi GPS...`;
 
         navigator.geolocation.getCurrentPosition(
             position => {
@@ -135,52 +332,30 @@ const ASNKiblat = (function () {
                     localStorage.setItem("asnawiyyah_qibla_acc", accuracy.toString());
                 } catch (e) {}
 
-                // Sembunyikan notifikasi izin lokasi jika sempat tampil
-                showPermissionNotice(false);
-
-                // Update UI lokasi terkoneksi
-                updateLocationStatusUI("connected", "Lokasi Perangkat Aktif", accuracy);
                 updateQiblaFromCurrentCoords();
-
-                // Lakukan reverse geocoding untuk mengenali wilayah secara otomatis
                 reverseGeocode(lat, lng);
 
                 if (interactive && typeof showToast === "function") {
-                    showToast(`📍 Lokasi perangkat terhubung presisi (Akurasi: ±${accuracy}m)`);
+                    showToast(`📍 Lokasi presisi terhubung (Akurasi: ±${accuracy}m)`);
                 }
             },
             err => {
                 isRequestingLocation = false;
                 console.warn("Geolocation warning:", err.code, err.message);
 
-                let statusMsg = "Lokasi HP Belum Aktif";
-                if (err.code === 1) { // PERMISSION_DENIED
-                    statusMsg = "Izin Lokasi Belum Diberikan";
-                    showPermissionNotice(true);
-                } else if (err.code === 2) { // POSITION_UNAVAILABLE
-                    statusMsg = "Sinyal GPS Tidak Tersedia";
-                } else if (err.code === 3) { // TIMEOUT
-                    statusMsg = "Waktu GPS Habis, Coba Lagi";
-                }
-
-                updateLocationStatusUI("denied", statusMsg);
-
-                // Jika ada koordinat tersimpan sebelumnya di localStorage, tetap pakai itu
                 if (savedLat && savedLng) {
-                    updateLocationStatusUI("saved", "Memakai Lokasi Tersimpan Terakhir");
-                } else {
                     updateQiblaFromCurrentCoords();
                 }
 
                 if (interactive) {
-                    alert(`Tidak dapat mengakses fitur lokasi perangkat: ${statusMsg}.\n\nTips: Pastikan tombol Lokasi/GPS di smartphone Anda sudah aktif dan berikan izin 'Saat Aplikasi Digunakan' pada browser.`);
+                    alert("Tidak dapat mengakses GPS. Pastikan toggle Lokasi di smartphone aktif dan berikan izin lokasi pada browser.");
                 }
             },
             options
         );
     }
 
-    // Reverse Geocoding Client-Side Otomatis (Mengenali Nama Kota Tanpa Hardcode)
+    // Reverse Geocoding Menghasilkan: "Rejosari, Kec. Karangawen"
     async function reverseGeocode(lat, lng) {
         try {
             const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -195,226 +370,43 @@ const ASNKiblat = (function () {
 
             if (resp.ok) {
                 const data = await resp.json();
-                let parts = [];
-                if (data.locality) parts.push(data.locality);
-                if (data.city && data.city !== data.locality) parts.push(data.city);
-                else if (data.principalSubdivision) parts.push(data.principalSubdivision);
+                let village = data.locality || "";
+                let district = "";
+                let city = data.city || "";
 
-                let detectedName = parts.length > 0 ? parts.join(", ") : (data.city || data.locality || "Lokasi Perangkat Presisi");
-                userCoords.locationName = detectedName;
+                if (Array.isArray(data.localityInfo?.administrative)) {
+                    data.localityInfo.administrative.forEach(item => {
+                        const name = item.name || "";
+                        if (item.adminLevel === 7 || name.toLowerCase().includes("kecamatan") || name.toLowerCase().includes("kec.")) {
+                            district = name.replace(/kecamatan/i, "Kec.").trim();
+                        }
+                    });
+                }
 
+                if (!district && city) {
+                    district = city.includes("Kec.") ? city : `Kec. ${city}`;
+                }
+
+                let finalLabel = "";
+                if (village && district) {
+                    finalLabel = `${village}, ${district}`;
+                } else if (village) {
+                    finalLabel = village;
+                } else if (district) {
+                    finalLabel = district;
+                } else {
+                    finalLabel = data.city || "Lokasi Presisi Perangkat";
+                }
+
+                userCoords.locationName = finalLabel;
                 try {
-                    localStorage.setItem("asnawiyyah_qibla_loc_name", detectedName);
+                    localStorage.setItem("asnawiyyah_qibla_loc_name", finalLabel);
                 } catch (e) {}
 
-                const locLabelEl = document.getElementById("qibla-current-location");
-                if (locLabelEl) locLabelEl.innerText = detectedName;
-
-                const locBtnText = document.getElementById("qibla-loc-text");
-                if (locBtnText) locBtnText.innerText = detectedName;
+                const locEl = document.getElementById("qibla-current-location");
+                if (locEl) locEl.innerText = finalLabel;
             }
-        } catch (e) {
-            // Jika offline atau jaringan lambat, tetap tampilkan teks GPS Presisi
-        }
-    }
-
-    function showPermissionNotice(show) {
-        const noticeEl = document.getElementById("qibla-location-permission-notice");
-        if (noticeEl) {
-            if (show) noticeEl.classList.remove("hidden");
-            else noticeEl.classList.add("hidden");
-        }
-    }
-
-    function updateLocationStatusUI(status, label, accuracy = null) {
-        const btnLoc = document.getElementById("btn-qibla-device-location");
-        const iconLoc = document.getElementById("qibla-loc-icon");
-        const textLoc = document.getElementById("qibla-loc-text");
-        const accBadge = document.getElementById("qibla-loc-acc-badge");
-        const gpsBadge = document.getElementById("qibla-gps-badge");
-        const accLabel = document.getElementById("qibla-accuracy-label");
-
-        if (textLoc) textLoc.innerText = label;
-
-        if (status === "requesting") {
-            if (iconLoc) iconLoc.className = "fa-solid fa-satellite-dish fa-spin text-amber-500";
-            if (btnLoc) {
-                btnLoc.className = "px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95";
-            }
-            if (accBadge) accBadge.classList.add("hidden");
-        } else if (status === "connected" || status === "saved") {
-            if (iconLoc) iconLoc.className = "fa-solid fa-location-crosshairs text-emerald-600 dark:text-emerald-400";
-            if (btnLoc) {
-                btnLoc.className = "px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300/80 dark:border-emerald-700/60 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95";
-            }
-            if (accBadge && accuracy) {
-                accBadge.innerText = `±${accuracy}m`;
-                accBadge.classList.remove("hidden");
-            }
-            if (gpsBadge) gpsBadge.classList.remove("hidden");
-            if (accLabel && accuracy) {
-                accLabel.innerText = `Akurasi GPS ±${accuracy}m`;
-                accLabel.className = "text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold block";
-            }
-        } else {
-            // denied / error
-            if (iconLoc) iconLoc.className = "fa-solid fa-location-dot text-rose-500";
-            if (btnLoc) {
-                btnLoc.className = "px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95";
-            }
-            if (accBadge) accBadge.classList.add("hidden");
-            if (gpsBadge) gpsBadge.classList.add("hidden");
-            if (accLabel) {
-                accLabel.innerText = "GPS Belum Aktif";
-                accLabel.className = "text-[9.5px] text-rose-500 font-semibold block";
-            }
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // 6. HANDLER SENSOR ORIENTASI KOMPAS (MOBILE GYRO/MAGNETOMETER)
-    // ----------------------------------------------------------------
-    function handleOrientation(event) {
-        hasSensorSupport = true;
-        let heading = null;
-
-        // iOS Safari WebKit Heading
-        if (typeof event.webkitCompassHeading !== "undefined") {
-            heading = event.webkitCompassHeading;
-        } else if (event.alpha !== null) {
-            // Android Chrome / Standard DeviceOrientationAbsolute
-            heading = 360 - event.alpha;
-        }
-
-        if (heading === null || isNaN(heading)) return;
-
-        // Normalisasi heading 0 - 360
-        heading = (heading + 360) % 360;
-        currentHeading = heading;
-        updateCompassUI(heading);
-    }
-
-    // ----------------------------------------------------------------
-    // 7. UPDATE TAMPILAN KOMPAS REAL-TIME
-    // ----------------------------------------------------------------
-    function updateCompassUI(heading) {
-        const dialEl = document.getElementById("qibla-compass-dial");
-        const headingDegEl = document.getElementById("qibla-current-heading-val");
-        const statusBadgeEl = document.getElementById("qibla-status-badge");
-        const statusTextEl = document.getElementById("qibla-status-text");
-        const glowRingEl = document.getElementById("qibla-glow-ring");
-
-        if (headingDegEl) {
-            headingDegEl.innerText = Math.round(heading) + "°";
-        }
-
-        // Putar piringan kompas berlawanan dengan arah hadap hp
-        if (dialEl) {
-            dialEl.style.transform = `rotate(${-heading}deg)`;
-        }
-
-        // Sudut deviasi antara arah hadap smartphone dan arah kiblat
-        const diff = Math.abs((heading - qiblaBearing + 360) % 360);
-        const isFacingQibla = diff <= 3 || diff >= 357;
-
-        if (statusBadgeEl && statusTextEl) {
-            if (isFacingQibla) {
-                statusBadgeEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-md animate-pulse";
-                statusBadgeEl.innerHTML = `<i class="fa-solid fa-kaaba text-amber-300"></i> Tepat Menghadap Kiblat`;
-                statusTextEl.innerText = `Posisi sejajar sempurna dengan Ka'bah (Deviasi: ${diff.toFixed(1)}°)`;
-                if (glowRingEl) {
-                    glowRingEl.classList.remove("opacity-0");
-                    glowRingEl.classList.add("opacity-100");
-                }
-
-                // Haptic Feedback saat pertama kali pas
-                if (!lastVibratedState) {
-                    lastVibratedState = true;
-                    if (typeof navigator !== "undefined" && navigator.vibrate) {
-                        try {
-                            navigator.vibrate([40, 60, 40]);
-                        } catch (e) {}
-                    }
-                }
-            } else {
-                lastVibratedState = false;
-                statusBadgeEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-[#1c2836] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700";
-                
-                // Beri panduan putar kanan / kiri
-                let turnDirection = "";
-                let turnDiff = (qiblaBearing - heading + 360) % 360;
-                if (turnDiff > 180) {
-                    turnDirection = `Putar ponsel ke kiri ${(360 - turnDiff).toFixed(0)}°`;
-                } else {
-                    turnDirection = `Putar ponsel ke kanan ${turnDiff.toFixed(0)}°`;
-                }
-
-                statusBadgeEl.innerHTML = `<i class="fa-solid fa-compass text-emerald-600"></i> ${turnDirection}`;
-                statusTextEl.innerText = `Arahkan tanda panah emas ke arah Ka'bah (Target: ${qiblaBearing}°)`;
-                if (glowRingEl) {
-                    glowRingEl.classList.remove("opacity-100");
-                    glowRingEl.classList.add("opacity-0");
-                }
-            }
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // 8. MULAI & HENTIKAN PEMBACAAN SENSOR KOMPAS
-    // ----------------------------------------------------------------
-    function startCompassListener() {
-        if (isCompassListening) return;
-
-        const setupListener = () => {
-            if ("ondeviceorientationabsolute" in window) {
-                window.addEventListener("deviceorientationabsolute", handleOrientation, true);
-            } else if ("ondeviceorientation" in window) {
-                window.addEventListener("deviceorientation", handleOrientation, true);
-            }
-            isCompassListening = true;
-
-            // Cek setelah 1.5 detik jika tidak ada event sensor (desktop / sensor mati)
-            setTimeout(() => {
-                const noticeEl = document.getElementById("qibla-sensor-notice");
-                if (!hasSensorSupport && noticeEl) {
-                    noticeEl.classList.remove("hidden");
-                }
-            }, 1500);
-        };
-
-        // Permintaan Izin Sensor untuk iOS 13+
-        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-            const btnIos = document.getElementById("btn-qibla-request-sensor");
-            if (btnIos) btnIos.classList.remove("hidden");
-        } else {
-            setupListener();
-        }
-    }
-
-    function requestIosSensorPermission() {
-        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response === "granted") {
-                        const btnIos = document.getElementById("btn-qibla-request-sensor");
-                        if (btnIos) btnIos.classList.add("hidden");
-                        window.addEventListener("deviceorientation", handleOrientation, true);
-                        isCompassListening = true;
-                    } else {
-                        alert("Izin sensor orientasi ditolak. Kompas tidak dapat berputar otomatis.");
-                    }
-                })
-                .catch(err => {
-                    console.warn("Gagal meminta izin sensor iOS:", err);
-                });
-        }
-    }
-
-    function stopCompassListener() {
-        if (!isCompassListening) return;
-        window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
-        window.removeEventListener("deviceorientation", handleOrientation, true);
-        isCompassListening = false;
+        } catch (e) {}
     }
 
     // ----------------------------------------------------------------
@@ -425,38 +417,19 @@ const ASNKiblat = (function () {
         qiblaBearing = result.bearing;
         qiblaDistance = result.distanceKm;
 
-        // Update Elemen Info UI
-        const bearingTargetEl = document.getElementById("qibla-target-deg");
-        const distanceEl = document.getElementById("qibla-target-distance");
-        const locLabelEl = document.getElementById("qibla-current-location");
-        const coordLabelEl = document.getElementById("qibla-current-coords");
-        const needleEl = document.getElementById("qibla-compass-needle");
+        const degEl = document.getElementById("qibla-target-deg");
+        const locEl = document.getElementById("qibla-current-location");
+        const distEl = document.getElementById("qibla-target-distance-val");
 
-        if (bearingTargetEl) bearingTargetEl.innerText = `${qiblaBearing}°`;
-        if (distanceEl) distanceEl.innerText = `${qiblaDistance.toLocaleString("id-ID")} km`;
-        if (locLabelEl) locLabelEl.innerText = userCoords.locationName;
-        if (coordLabelEl) {
-            const latStr = Math.abs(userCoords.lat).toFixed(4) + (userCoords.lat >= 0 ? "° LU" : "° LS");
-            const lngStr = Math.abs(userCoords.lng).toFixed(4) + (userCoords.lng >= 0 ? "° BT" : "° BB");
-            coordLabelEl.innerText = `${latStr}, ${lngStr}`;
-        }
+        if (degEl) degEl.innerText = `${qiblaBearing.toFixed(2)}°`;
+        if (locEl) locEl.innerText = userCoords.locationName;
+        if (distEl) distEl.innerText = `${qiblaDistance.toLocaleString("id-ID")} km`;
 
-        // Atur posisi jarum Ka'bah pada piringan kompas
-        if (needleEl) {
-            needleEl.style.transform = `rotate(${qiblaBearing}deg)`;
-        }
-
-        // Terapkan ke kompas static jika heading belum didapat
-        if (!isCompassListening || currentHeading === 0) {
-            updateCompassUI(0);
-        }
+        updateCompassUI(currentHeading);
     }
 
-    // Opsi Manual: Pengguna sengaja memilih kota lain secara manual
     function changeCity(cityKey) {
-        if (!cityKey) return;
-        if (!CITIES[cityKey]) return;
-
+        if (!cityKey || !CITIES[cityKey]) return;
         userCoords = {
             lat: CITIES[cityKey].lat,
             lng: CITIES[cityKey].lng,
@@ -465,20 +438,16 @@ const ASNKiblat = (function () {
             isGps: false,
             sourceType: "manual"
         };
-
-        updateLocationStatusUI("manual", CITIES[cityKey].name);
-        showPermissionNotice(false);
         updateQiblaFromCurrentCoords();
     }
 
     // ----------------------------------------------------------------
-    // 10. INISIALISASI HALAMAN KOMPAS KIBLAT
+    // 10. INISIALISASI
     // ----------------------------------------------------------------
     function init() {
-        // Render dropdown kota manual jika belum terisi
         const selectEl = document.getElementById("qibla-city-select");
         if (selectEl && selectEl.options.length <= 1) {
-            selectEl.innerHTML = `<option value="">-- Pilih Kota Manual --</option>`;
+            selectEl.innerHTML = `<option value="">-- Pilihan Kota Manual --</option>`;
             Object.keys(CITIES).forEach(key => {
                 const opt = document.createElement("option");
                 opt.value = key;
@@ -487,11 +456,8 @@ const ASNKiblat = (function () {
             });
         }
 
-        // Update tampilan dari koordinat yang saat ini tersimpan di memory
         updateQiblaFromCurrentCoords();
         startCompassListener();
-
-        // OTOMATIS HUBUNGKAN KE FITUR LOKASI PERANGKAT PRESISI (GPS)
         requestDeviceLocation(false);
     }
 
@@ -500,7 +466,7 @@ const ASNKiblat = (function () {
         calculateQibla: calculateQibla,
         changeCity: changeCity,
         requestDeviceLocation: requestDeviceLocation,
-        useGpsLocation: () => requestDeviceLocation(true), // Alias kompatibilitas
+        useGpsLocation: () => requestDeviceLocation(true),
         requestIosSensorPermission: requestIosSensorPermission,
         startCompassListener: startCompassListener,
         stopCompassListener: stopCompassListener,

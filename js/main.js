@@ -416,6 +416,8 @@
             const isNewsDetail = (tabId === 'detail-berita');
             const mainElem = document.querySelector('main');
 
+            const isQiblaCompass = (tabId === 'kompas-kiblat');
+
             if (tabId === 'admin') {
                 // Sembunyikan header publik saat di dashboard admin
                 if (mainDesktopHeader) mainDesktopHeader.style.display = 'none';
@@ -447,8 +449,8 @@
                 if (mobileBottomNav) mobileBottomNav.style.display = 'none';
                 if (mainFooter) mainFooter.style.display = 'none';
                 if (mainElem) mainElem.classList.remove('mb-16');
-            } else if (isNewsDetail) {
-                // Khusus Detail Berita: Sembunyikan header mobile & bottom navbar, mengadopsi layout membaca imersif NU Online
+            } else if (isNewsDetail || isQiblaCompass) {
+                // Khusus Detail Berita & Kompas Kiblat: Sembunyikan header mobile & bottom navbar, mengadopsi layout membaca/kompas imersif NU Online
                 if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
                 if (mainMobileHeader) mainMobileHeader.style.display = 'none';
                 if (deskNavMenu) deskNavMenu.style.removeProperty('display');
