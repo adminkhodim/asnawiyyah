@@ -189,6 +189,12 @@
                 else switchTab('quran-index', false);
             } else if (path === '/layanan/portal-ibadah/quran/halaman') {
                 switchTab('quran-page', false);
+            } else if (path === '/layanan/portal-ibadah/arah-kiblat' || path === '/layanan/portal-ibadah/kompas-kiblat') {
+                if (typeof openKompasKiblatPage === 'function') openKompasKiblatPage();
+                else switchTab('kompas-kiblat', false);
+            } else if (path === '/layanan/portal-ibadah/jadwal-sholat') {
+                if (typeof openJadwalSholatPage === 'function') openJadwalSholatPage();
+                else switchTab('jadwal-sholat', false);
             } else if (path.startsWith('/berita/')) {
                 const rawSlug = path.split('/berita/')[1];
                 const slug = rawSlug ? decodeURIComponent(rawSlug.split('/')[0]).trim() : '';
@@ -261,6 +267,12 @@
                 else switchTab('quran-index', false);
             } else if (path === '/layanan/portal-ibadah/quran/halaman') {
                 switchTab('quran-page', false);
+            } else if (path === '/layanan/portal-ibadah/arah-kiblat' || path === '/layanan/portal-ibadah/kompas-kiblat') {
+                if (typeof openKompasKiblatPage === 'function') openKompasKiblatPage();
+                else switchTab('kompas-kiblat', false);
+            } else if (path === '/layanan/portal-ibadah/jadwal-sholat') {
+                if (typeof openJadwalSholatPage === 'function') openJadwalSholatPage();
+                else switchTab('jadwal-sholat', false);
             } else if (path === '/administrator') {
                 const isMobile = window.innerWidth < 768;
                 if (isMobile) {
@@ -358,6 +370,8 @@
                 else if (tabId === 'burdah-index') targetUrl = '/layanan/portal-ibadah/burdah/';
                 else if (tabId === 'tahlil-yasin') targetUrl = '/layanan/portal-ibadah/tahlil-dan-yasin/';
                 else if (tabId === 'quran-page') targetUrl = '/layanan/portal-ibadah/quran/halaman/';
+                else if (tabId === 'jadwal-sholat') targetUrl = '/layanan/portal-ibadah/jadwal-sholat/';
+                else if (tabId === 'kompas-kiblat') targetUrl = '/layanan/portal-ibadah/arah-kiblat/';
 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
@@ -367,7 +381,7 @@
                     tabId === 'layanan-hub' || tabId === 'galeri' || tabId === 'kalender' || tabId === 'ibadah' ||
                     tabId === 'quran-index' || tabId === 'quran-detail' || tabId === 'quran-page' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
-                    tabId === 'burdah-index' || tabId === 'tahlil-yasin' ||
+                    tabId === 'burdah-index' || tabId === 'tahlil-yasin' || tabId === 'jadwal-sholat' || tabId === 'kompas-kiblat' ||
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
@@ -497,6 +511,10 @@
                 if (typeof ASNJadwalSholat !== 'undefined') {
                     ASNJadwalSholat.init();
                 }
+            } else if (tabId === 'kompas-kiblat') {
+                if (typeof ASNKiblat !== 'undefined') {
+                    ASNKiblat.init();
+                }
             } else if (tabId === 'kalender') {
                 if (typeof renderCalendar === 'function') {
                     renderCalendar();
@@ -505,6 +523,10 @@
                 if (typeof renderPublicJadwalKegiatan === 'function') {
                     renderPublicJadwalKegiatan();
                 }
+            }
+
+            if (tabId !== 'kompas-kiblat' && typeof ASNKiblat !== 'undefined') {
+                ASNKiblat.stopCompassListener();
             }
 
             // Nav Mobile

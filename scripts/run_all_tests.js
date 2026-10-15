@@ -28,6 +28,7 @@ const ALL_CANDIDATE_SUITES = [
   { name: 'Wali Santri Belum Terhubung & Follow-Up WA Suite', file: 'scripts/test_wali_unlinked.js' },
   { name: 'Tahfidz 30-Juz Curriculum & Program Flow Suite', file: 'scripts/test_curriculum_programs.js' },
   { name: 'Master Data Santri: Kelas & Sekolah Suite', file: 'scripts/test_student_class_school.js' },
+  { name: 'Kompas Kiblat & Falak Geodesi Verification', file: 'scripts/test_kiblat_compass.js' },
   { name: 'Modular Apps Script Backend Verification', file: 'scratch/test_modular_backend.js' },
   { name: 'P0 Security Remediation Suite', file: 'scratch/test_p0_security_remediation.js' },
   { name: 'P1 Session TTL & Security Expiry Suite', file: 'scratch/test_p1_session_ttl.js' },

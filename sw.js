@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v75';
+const CACHE_NAME = 'asnawiyyah-cache-v76';
 
 const PRECACHE_URLS = [
   '/',
@@ -23,6 +23,7 @@ const PRECACHE_URLS = [
   '/js/ppdb.js',
   '/js/ibadah.js',
   '/js/jadwal-sholat.js',
+  '/js/kiblat.js',
   '/js/roles.js',
   '/js/admin.js',
   '/js/alumni.js',
