@@ -399,6 +399,7 @@
             const mainFooter = document.querySelector('footer');
 
             const isQuranMenu = (tabId === 'quran-page' || tabId === 'quran-index' || tabId === 'quran-detail');
+            const mainElem = document.querySelector('main');
 
             if (tabId === 'admin') {
                 // Sembunyikan header publik saat di dashboard admin
@@ -408,6 +409,7 @@
                 if (deskActionMenu) deskActionMenu.style.display = 'none';
                 if (mobileBottomNav) mobileBottomNav.style.display = 'none';
                 if (mainFooter) mainFooter.style.display = 'none';
+                if (mainElem) mainElem.classList.remove('mb-16');
                 const hasAdminToken = !!(
                     (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
                     (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
@@ -422,13 +424,14 @@
                     }, 100);
                 }
             } else if (isQuranMenu) {
-                // Khusus Menu Qur'an: Sembunyikan mobile bottom navbar agar halaman mushaf tampil utuh dan leluasa
+                // Khusus Menu Qur'an: Sembunyikan mobile bottom navbar dan hapus margin bawah agar halaman mushaf tampil pas 1 layar
                 if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
                 if (mainMobileHeader) mainMobileHeader.style.removeProperty('display');
                 if (deskNavMenu) deskNavMenu.style.removeProperty('display');
                 if (deskActionMenu) deskActionMenu.style.removeProperty('display');
                 if (mobileBottomNav) mobileBottomNav.style.display = 'none';
                 if (mainFooter) mainFooter.style.display = 'none';
+                if (mainElem) mainElem.classList.remove('mb-16');
             } else {
                 // Kembalikan header publik & bottom navbar untuk semua menu selain Qur'an & Admin
                 // Desktop header: class asli = "hidden md:block ..." (hidden di mobile, tampil di desktop)
@@ -439,6 +442,7 @@
                 if (deskActionMenu) deskActionMenu.style.removeProperty('display');
                 if (mobileBottomNav) mobileBottomNav.style.removeProperty('display');
                 if (mainFooter) mainFooter.style.removeProperty('display');
+                if (mainElem) mainElem.classList.add('mb-16');
             }
 
             if (tabId === 'admin') {

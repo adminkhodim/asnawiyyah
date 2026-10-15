@@ -4139,7 +4139,7 @@
         </div>
 
         <!-- ==================== TABS: AL-QUR'AN POJOK (BACA PER HALAMAN 1 JUZ = 20 HALAMAN) ==================== -->
-        <div id="page-quran-page" class="tab-content hidden space-y-1 sm:space-y-2 px-1 sm:px-4 md:px-8 pt-1 sm:pt-2 pb-2 sm:pb-6 max-w-7xl mx-auto">
+        <div id="page-quran-page" class="tab-content hidden space-y-1 sm:space-y-2 px-1 sm:px-4 md:px-8 pt-0.5 sm:pt-2 pb-0 sm:pb-4 max-w-7xl mx-auto">
             <!-- Header Navigasi & Mode Switcher: Dropdown Pilihan Surah & Halaman di Tengah -->
             <div class="flex items-center justify-between bg-white dark:bg-[#15202d] py-1.5 px-2 sm:py-2 sm:px-3 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-2">
                 <!-- 1. KIRI: Tombol Kembali -->
@@ -4183,21 +4183,21 @@
                     <div id="quran-mushaf-image-wrapper"
                         class="relative w-full p-0 overflow-hidden flex flex-col items-center justify-center select-none touch-pan-y bg-white dark:bg-[#070d14] rounded-t-xl transition-colors duration-200">
                         <!-- Skeleton Loader saat gambar memuat -->
-                        <div id="mushaf-img-loading" class="w-full aspect-[2/3] h-[calc(100dvh-88px)] max-h-[calc(100dvh-88px)] sm:max-h-[88vh] bg-slate-100 dark:bg-[#1c2836] animate-pulse flex flex-col items-center justify-center text-slate-400 space-y-2">
+                        <div id="mushaf-img-loading" class="w-full aspect-[2/3] h-[calc(100dvh-150px)] max-h-[calc(100dvh-150px)] sm:max-h-[80vh] bg-slate-100 dark:bg-[#1c2836] animate-pulse flex flex-col items-center justify-center text-slate-400 space-y-2">
                             <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-500"></i>
                             <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Memuat Lembar Mushaf Kemenag...</span>
                         </div>
 
                         <!-- Lembar Gambar Mushaf Kemenag RI (WebP) -->
                         <img id="quran-mushaf-img" alt="Mushaf Standar Kemenag RI"
-                            class="hidden w-full h-[calc(100dvh-88px)] max-h-[calc(100dvh-88px)] sm:max-h-[88vh] object-contain bg-transparent transition-transform duration-200 ease-out origin-center cursor-zoom-in"
+                            class="hidden w-full h-[calc(100dvh-150px)] max-h-[calc(100dvh-150px)] sm:max-h-[80vh] object-contain bg-transparent transition-transform duration-200 ease-out origin-center cursor-zoom-in"
                             onload="if (typeof onMushafImageLoaded === 'function') onMushafImageLoaded()"
                             onerror="if (typeof onMushafImageError === 'function') onMushafImageError()"
                             onclick="if (typeof toggleMushafZoomClick === 'function') toggleMushafZoomClick()" />
                     </div>
 
                     <!-- Sisi Tepi Bawah Mushaf: Pilihan Tema Kertas (Kiri), Kontrol Zoom (Tengah), & Navigasi Halaman < > (Kanan) -->
-                    <div class="w-full bg-slate-50 dark:bg-[#111a24] border-t border-slate-100 dark:border-[#1e2d3d] px-2 sm:px-3 py-1.5 flex items-center justify-between gap-1 sm:gap-2 text-xs">
+                    <div class="w-full bg-slate-50 dark:bg-[#111a24] border-t border-slate-100 dark:border-[#1e2d3d] px-2 sm:px-3 py-1 flex items-center justify-between gap-1 sm:gap-2 text-xs">
                         <!-- 1. KIRI: Pilihan Tema Kertas Mushaf (Malam / Putih / Sepia) -->
                         <div class="flex items-center space-x-0.5 sm:space-x-1 bg-white dark:bg-[#1c2836] border border-slate-200/80 dark:border-[#253447] p-0.5 rounded-lg shadow-2xs shrink-0">
                             <button type="button" id="btn-mushaf-theme-dark" onclick="setMushafTheme('dark')"
