@@ -4141,36 +4141,36 @@
         <!-- ==================== TABS: AL-QUR'AN POJOK (BACA PER HALAMAN 1 JUZ = 20 HALAMAN) ==================== -->
         <div id="page-quran-page" class="tab-content hidden space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-8 pt-3 sm:pt-4 md:pt-6 pb-28 sm:pb-32 max-w-7xl mx-auto">
             <!-- Header Navigasi & Mode Switcher -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-3">
-                <div class="flex items-center space-x-2.5">
+            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-2">
+                <div class="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
                     <button type="button" onclick="openQuranPojokIndexTab()"
                         class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Daftar Halaman">
                         <i class="fa-solid fa-arrow-left text-xs"></i>
                     </button>
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <span id="quran-page-badge" class="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    <div class="min-w-0">
+                        <div class="flex items-center space-x-1.5 sm:space-x-2">
+                            <span id="quran-page-badge" class="text-[9.5px] sm:text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full uppercase tracking-wider truncate">
                                 Mushaf Kemenag RI
                             </span>
-                            <span id="quran-page-juz-info" class="text-xs font-semibold text-slate-500 dark:text-slate-400">Juz 1</span>
+                            <span id="quran-page-juz-info" class="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Juz 1</span>
                         </div>
-                        <h2 id="quran-page-title" class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-0.5">
+                        <h2 id="quran-page-title" class="text-xs sm:text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate">
                             Halaman 1 dari 604
                         </h2>
                     </div>
                 </div>
 
-                <!-- Mode Switcher: Mushaf Gambar (Default) vs Teks Digital -->
-                <div class="flex items-center bg-slate-100 dark:bg-[#1c2836] p-1 rounded-xl w-full sm:w-auto shadow-inner">
+                <!-- Mode Switcher: Icon Only (Mushaf Gambar vs Teks & Audio) di Kanan Atas -->
+                <div class="flex items-center space-x-1 bg-slate-100 dark:bg-[#1c2836] p-1 rounded-xl shrink-0 shadow-inner">
                     <button type="button" id="btn-mode-mushaf" onclick="switchQuranPageViewMode('mushaf')"
-                        class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-sm transition active:scale-95 flex items-center justify-center space-x-1.5">
+                        class="w-8 h-8 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition active:scale-95 flex items-center justify-center cursor-pointer"
+                        title="Mode Mushaf Kemenag RI (Gambar Asli)">
                         <i class="fa-solid fa-book-open text-xs"></i>
-                        <span>Mushaf Kemenag</span>
                     </button>
                     <button type="button" id="btn-mode-text" onclick="switchQuranPageViewMode('text')"
-                        class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg font-bold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition active:scale-95 flex items-center justify-center space-x-1.5">
+                        class="w-8 h-8 rounded-lg font-bold text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-[#253447] transition active:scale-95 flex items-center justify-center cursor-pointer"
+                        title="Mode Teks Digital & Audio Murottal">
                         <i class="fa-solid fa-align-right text-xs"></i>
-                        <span>Teks & Audio</span>
                     </button>
                 </div>
             </div>
@@ -4268,14 +4268,14 @@
                 <!-- Loaded via JS openQuranPage() jika mode teks aktif -->
             </div>
 
-            <!-- Footer Navigasi Bolak-Balik Lembaran Halaman (RTL Mushaf: Grid Anti-Overload) -->
+            <!-- Footer Navigasi Bolak-Balik Lembaran Halaman -->
             <div class="max-w-xl mx-auto w-full p-2 sm:p-3 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-sm mt-3">
                 <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-3">
-                    <!-- KIRI: Halaman Selanjutnya (Membuka ke kiri sesuai arah mushaf RTL) -->
-                    <button type="button" id="btn-page-next" onclick="navigateQuranPage(1)"
-                        class="w-full flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none shadow-sm min-w-0" title="Halaman Selanjutnya">
+                    <!-- KIRI: Halaman Sebelumnya -->
+                    <button type="button" id="btn-page-prev" onclick="navigateQuranPage(-1)"
+                        class="w-full flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none min-w-0 cursor-pointer" title="Halaman Sebelumnya">
                         <i class="fa-solid fa-arrow-left text-[11px] shrink-0"></i>
-                        <span class="truncate">Selanjutnya</span>
+                        <span class="truncate">Sebelumnya</span>
                     </button>
 
                     <!-- TENGAH: Nomor Halaman & Status -->
@@ -4286,10 +4286,10 @@
                         <span class="text-[9px] text-slate-400 block whitespace-nowrap mt-0.5">Mushaf Kemenag</span>
                     </div>
 
-                    <!-- KANAN: Halaman Sebelumnya (Kembali ke kanan sesuai arah mushaf RTL) -->
-                    <button type="button" id="btn-page-prev" onclick="navigateQuranPage(-1)"
-                        class="w-full flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none min-w-0" title="Halaman Sebelumnya">
-                        <span class="truncate">Sebelumnya</span>
+                    <!-- KANAN: Halaman Selanjutnya -->
+                    <button type="button" id="btn-page-next" onclick="navigateQuranPage(1)"
+                        class="w-full flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none shadow-sm min-w-0 cursor-pointer" title="Halaman Selanjutnya">
+                        <span class="truncate">Selanjutnya</span>
                         <i class="fa-solid fa-arrow-right text-[11px] shrink-0"></i>
                     </button>
                 </div>
@@ -16237,7 +16237,7 @@
     <!-- Logic Modules -->
     <script src="js/programs.js"></script>
     <script src="js/ppdb.js"></script>
-    <script src="js/ibadah.js"></script>
+    <script src="js/ibadah.js?v=73"></script>
     <script src="js/jadwal-sholat.js"></script>
     <script src="js/roles.js?v=66"></script>
     <script src="js/admin.js?v=69"></script>

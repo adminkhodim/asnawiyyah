@@ -795,10 +795,10 @@
 
             if (mode === 'mushaf') {
                 if (btnMushaf) {
-                    btnMushaf.className = "flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-sm transition active:scale-95 flex items-center justify-center space-x-1.5";
+                    btnMushaf.className = "w-8 h-8 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition active:scale-95 flex items-center justify-center cursor-pointer";
                 }
                 if (btnText) {
-                    btnText.className = "flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg font-bold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition active:scale-95 flex items-center justify-center space-x-1.5";
+                    btnText.className = "w-8 h-8 rounded-lg font-bold text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-[#253447] transition active:scale-95 flex items-center justify-center cursor-pointer";
                 }
                 if (mushafContainer) mushafContainer.classList.remove('hidden');
                 if (textControls) textControls.classList.add('hidden');
@@ -806,10 +806,10 @@
                 if (badge) badge.innerText = "Mushaf Kemenag RI";
             } else {
                 if (btnText) {
-                    btnText.className = "flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-sm transition active:scale-95 flex items-center justify-center space-x-1.5";
+                    btnText.className = "w-8 h-8 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition active:scale-95 flex items-center justify-center cursor-pointer";
                 }
                 if (btnMushaf) {
-                    btnMushaf.className = "flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg font-bold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition active:scale-95 flex items-center justify-center space-x-1.5";
+                    btnMushaf.className = "w-8 h-8 rounded-lg font-bold text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-[#253447] transition active:scale-95 flex items-center justify-center cursor-pointer";
                 }
                 if (mushafContainer) mushafContainer.classList.add('hidden');
                 if (textControls) textControls.classList.remove('hidden');
