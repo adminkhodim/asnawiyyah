@@ -4140,27 +4140,27 @@
 
         <!-- ==================== TABS: AL-QUR'AN POJOK (BACA PER HALAMAN 1 JUZ = 20 HALAMAN) ==================== -->
         <div id="page-quran-page" class="tab-content hidden space-y-1.5 sm:space-y-3 px-2 sm:px-4 md:px-8 pt-1 sm:pt-3 md:pt-4 pb-24 sm:pb-28 max-w-7xl mx-auto">
-            <!-- Header Navigasi & Mode Switcher -->
-            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] py-1.5 px-2.5 sm:py-2.5 sm:px-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-2">
-                <div class="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
-                    <button type="button" onclick="openQuranPojokIndexTab()"
-                        class="w-7 h-7 sm:w-8 sm:h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali ke Daftar Halaman">
-                        <i class="fa-solid fa-arrow-left text-xs"></i>
-                    </button>
-                    <div class="min-w-0">
-                        <div class="flex items-center space-x-1.5 sm:space-x-2">
-                            <span id="quran-page-badge" class="text-[9px] sm:text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider truncate">
-                                Mushaf Kemenag RI
-                            </span>
-                            <span id="quran-page-juz-info" class="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Juz 1</span>
-                        </div>
-                        <h2 id="quran-page-title" class="text-xs sm:text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate leading-tight">
-                            Halaman 1 dari 604
-                        </h2>
+            <!-- Header Navigasi & Mode Switcher: Dropdown Pilihan Surah & Halaman di Tengah -->
+            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] gap-2">
+                <!-- 1. KIRI: Tombol Kembali -->
+                <button type="button" onclick="openQuranPojokIndexTab()"
+                    class="w-7 h-7 sm:w-8 sm:h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0 cursor-pointer" title="Kembali ke Daftar Halaman">
+                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                </button>
+
+                <!-- 2. TENGAH: Dropdown Pilihan Surah & Halaman (Menggantikan Teks Judul) -->
+                <div class="flex-1 min-w-0 mx-0.5 sm:mx-1">
+                    <div class="relative flex items-center">
+                        <select id="select-jump-page" onchange="jumpToQuranPage(this.value)"
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-[#253447] text-xs font-bold rounded-lg pl-2.5 pr-7 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer appearance-none truncate shadow-2xs"
+                            title="Pilih Surah & Halaman">
+                            <!-- Populated dynamically via JS 1 to 604 -->
+                        </select>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 absolute right-2.5 pointer-events-none"></i>
                     </div>
                 </div>
 
-                <!-- Mode Switcher: Icon Only (Mushaf Gambar vs Teks & Audio) di Kanan Atas -->
+                <!-- 3. KANAN: Mode Switcher: Icon Only (Mushaf Gambar vs Teks & Audio) -->
                 <div class="flex items-center space-x-1 bg-slate-100 dark:bg-[#1c2836] p-0.5 sm:p-1 rounded-xl shrink-0 shadow-inner">
                     <button type="button" id="btn-mode-mushaf" onclick="switchQuranPageViewMode('mushaf')"
                         class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition active:scale-95 flex items-center justify-center cursor-pointer"
@@ -4283,28 +4283,6 @@
             </div>
 
 
-            <!-- Bar Pilihan Halaman & Surah (Dipindah ke Paling Bawah / Di Bawah Tombol Navigasi) -->
-            <div class="max-w-xl mx-auto w-full bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm mt-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs shadow-xs">
-                        <i class="fa-solid fa-book-bookmark"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between gap-1 mb-0.5">
-                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-                                Pilihan Surah & Halaman
-                            </span>
-                            <span id="quran-page-surah-info" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 truncate max-w-[130px] sm:max-w-[200px] text-right">
-                                Memuat...
-                            </span>
-                        </div>
-                        <select id="select-jump-page" onchange="jumpToQuranPage(this.value)"
-                            class="w-full bg-slate-50 dark:bg-[#1c2836] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-[#253447] text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer truncate">
-                            <!-- Options 1 to 604 generated by JS -->
-                        </select>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- ==================== MAULID FEATURE ==================== -->
