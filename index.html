@@ -15717,13 +15717,13 @@
                     </button>
                     <button type="button" onclick="switchPanduanTab(3)" id="panduan-btn-step-3"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-white dark:bg-[#172331] text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-[#1f2f42] flex items-center space-x-1.5 cursor-pointer">
-                        <i class="fa-solid fa-id-card text-[11px]"></i>
-                        <span>3. Sinkron NIS</span>
+                        <i class="fa-solid fa-bolt text-[11px] text-amber-500"></i>
+                        <span>3. Masuk Cepat NIS</span>
                     </button>
                     <button type="button" onclick="switchPanduanTab(4)" id="panduan-btn-step-4"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-white dark:bg-[#172331] text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-[#1f2f42] flex items-center space-x-1.5 cursor-pointer">
-                        <i class="fa-solid fa-key text-[11px]"></i>
-                        <span>4. Verifikasi OTP</span>
+                        <i class="fa-solid fa-shield-halved text-[11px]"></i>
+                        <span>4. Opsi Google &amp; OTP</span>
                     </button>
                     <button type="button" onclick="switchPanduanTab(5)" id="panduan-btn-step-5"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-white dark:bg-[#172331] text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-[#1f2f42] flex items-center space-x-1.5 cursor-pointer">
@@ -15876,75 +15876,110 @@
                     </div>
                 </div>
 
-                <!-- STEP 3: SINKRONISASI NIS -->
+                <!-- STEP 3: MASUK CEPAT NIS (BEBAS OTP) -->
                 <div id="panduan-content-step-3" class="hidden space-y-4">
                     <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#1e2d3d]">
                         <div>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Langkah 3</span>
-                            <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100">Sinkronisasi &amp; Aktivasi Data Santri</h4>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Langkah 3 (Paling Direkomendasikan)</span>
+                            <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100">Masuk Cepat: NIS &amp; PIN Tanggal Lahir (Bebas OTP)</h4>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">Identitas Santri</span>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                            <i class="fa-solid fa-bolt text-amber-500"></i> Instan &amp; Tanpa OTP
+                        </span>
                     </div>
 
                     <div class="rounded-2xl overflow-hidden shadow-md border border-slate-200/80 dark:border-[#1e2d3d] bg-slate-900 group">
-                        <img src="assets/img/panduan/step3-sinkron-nis.svg" alt="Langkah 3: Sinkronisasi NIS Santri"
+                        <img src="assets/img/panduan/step3-sinkron-nis.svg" alt="Langkah 3: Masuk Cepat NIS & PIN Tanggal Lahir Santri"
+                            class="w-full h-auto object-cover max-h-[380px] transition-transform duration-300 group-hover:scale-[1.01]" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/40 flex items-start space-x-2.5">
+                            <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 mt-0.5 text-base shrink-0"></i>
+                            <div class="text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed">
+                                <strong>Kemudahan Terbaru:</strong> Bapak/Ibu Wali Santri kini <strong>tidak perlu lagi menunggu kode OTP</strong> via SMS atau WhatsApp! Cukup gunakan <strong>Nomor Induk Santri (NIS)</strong> dan <strong>Tanggal Lahir</strong> putra/putri Anda sebagai PIN otentikasi keluarga.
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-100 dark:border-[#253447] space-y-1">
+                                <span class="font-bold text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-id-card"></i> 1. Nomor Induk Santri (NIS)
+                                </span>
+                                <p class="text-xs text-slate-600 dark:text-slate-300">
+                                    Masukkan NIS resmi santri (contoh: <code class="font-mono bg-slate-200 dark:bg-slate-800 px-1 rounded text-emerald-700 dark:text-emerald-300 font-bold">2024001</code>). NIS tercantum di kartu santri, mutaba'ah, atau raport santri.
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-100 dark:border-[#253447] space-y-1">
+                                <span class="font-bold text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-cake-candles"></i> 2. PIN Tanggal Lahir Santri
+                                </span>
+                                <p class="text-xs text-slate-600 dark:text-slate-300">
+                                    Pilih tanggal lahir santri sesuai berkas pendaftaran (format: Hari/Bulan/Tahun) sebagai verifikasi privasi keluarga.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] flex items-center justify-between flex-wrap gap-2 text-xs">
+                        <span class="text-slate-600 dark:text-slate-300">
+                            Cukup satu klik untuk langsung membuka dashboard putra-putri tercinta:
+                        </span>
+                        <button type="button" onclick="closePanduanModal(); openParentAuthModal();"
+                            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-md transition inline-flex items-center space-x-2 active:scale-95 cursor-pointer">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                            <span>Buka Form Masuk Wali Santri</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 4: OPSI ALTERNATIF: GOOGLE & EMAIL OTP -->
+                <div id="panduan-content-step-4" class="hidden space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#1e2d3d]">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">Langkah 4 (Opsi Tambahan)</span>
+                            <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100">Masuk via Google 1-Klik atau Email OTP</h4>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300">Opsi Alternatif</span>
+                    </div>
+
+                    <div class="rounded-2xl overflow-hidden shadow-md border border-slate-200/80 dark:border-[#1e2d3d] bg-slate-900 group">
+                        <img src="assets/img/panduan/step4-verifikasi-otp.svg" alt="Langkah 4: Opsi Masuk via Google atau Email OTP"
                             class="w-full h-auto object-cover max-h-[380px] transition-transform duration-300 group-hover:scale-[1.01]" />
                     </div>
 
                     <div class="space-y-3">
                         <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                            Bagi Bapak/Ibu yang pertama kali menggunakan aplikasi, lakukan langkah aktivasi untuk menghubungkan akun wali dengan data putra/putri tercinta:
+                            Bagi Bapak/Ibu yang ingin menautkan akun email pribadi atau lebih nyaman login menggunakan akun Google, tersedia tab <strong>"Google / Email OTP"</strong> pada formulir masuk:
                         </p>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-100 dark:border-[#253447] space-y-1">
-                                <span class="font-bold text-xs text-emerald-700 dark:text-emerald-400">1. Nomor Induk Santri (NIS)</span>
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] space-y-1.5">
+                                <h5 class="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                    <i class="fa-brands fa-google text-rose-500"></i>
+                                    <span>Pilihan A: Google 1-Klik (Instan)</span>
+                                </h5>
                                 <p class="text-xs text-slate-600 dark:text-slate-300">
-                                    Masukkan NIS resmi santri (contoh: <code class="font-mono bg-slate-200 dark:bg-slate-800 px-1 rounded">20240105</code>). NIS tercantum di kartu santri atau buku mutaba'ah/raport santri.
+                                    Cukup klik tombol <strong>"Sign in with Google"</strong>, pilih akun Google di HP Anda, dan akun wali santri langsung terhubung secara aman tanpa kata sandi.
                                 </p>
                             </div>
-                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-100 dark:border-[#253447] space-y-1">
-                                <span class="font-bold text-xs text-emerald-700 dark:text-emerald-400">2. Tanggal Lahir Santri</span>
+
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] space-y-1.5">
+                                <h5 class="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-envelope-open-text text-amber-500"></i>
+                                    <span>Pilihan B: Kode OTP Email</span>
+                                </h5>
                                 <p class="text-xs text-slate-600 dark:text-slate-300">
-                                    Masukkan tanggal lahir santri sebagai verifikasi privasi keluarga agar data capaian santri aman dan terlindungi.
+                                    Masukkan alamat email terdaftar, klik "Kirim Kode OTP", lalu masukkan 6 digit angka yang dikirimkan ke kotak masuk/spam email Anda.
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="text-center pt-2">
-                        <button type="button" onclick="closePanduanModal(); openParentActivationModal();"
-                            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-md transition inline-flex items-center space-x-2 active:scale-95 cursor-pointer">
-                            <i class="fa-solid fa-user-plus"></i>
-                            <span>Buka Formulir Aktivasi Santri Sekarang</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- STEP 4: VERIFIKASI OTP -->
-                <div id="panduan-content-step-4" class="hidden space-y-4">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#1e2d3d]">
-                        <div>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Langkah 4</span>
-                            <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100">Verifikasi Kode Rahasia OTP</h4>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">Keamanan Terenkripsi</span>
-                    </div>
-
-                    <div class="rounded-2xl overflow-hidden shadow-md border border-slate-200/80 dark:border-[#1e2d3d] bg-slate-900 group">
-                        <img src="assets/img/panduan/step4-verifikasi-otp.svg" alt="Langkah 4: Verifikasi OTP WhatsApp"
-                            class="w-full h-auto object-cover max-h-[380px] transition-transform duration-300 group-hover:scale-[1.01]" />
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 space-y-2">
-                            <h5 class="font-bold text-xs text-emerald-800 dark:text-emerald-300 flex items-center">
-                                <i class="fa-solid fa-shield-check mr-1.5"></i> Prosedur Pengiriman Kode OTP Resmi:
-                            </h5>
-                            <ul class="list-disc list-inside space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                                <li>Kode OTP 6 angka dikirimkan via <strong>WhatsApp</strong> atau <strong>Email</strong> resmi pesantren.</li>
-                                <li>Masa berlaku kode OTP adalah <strong>5 menit</strong>.</li>
-                                <li>Ketikkan 6 angka tersebut ke kolom verifikasi aplikasi, lalu buat kata sandi / PIN yang mudah diingat.</li>
-                            </ul>
+                        <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 flex items-start space-x-3 text-xs">
+                            <i class="fa-solid fa-lightbulb text-amber-600 dark:text-amber-400 text-base mt-0.5 shrink-0"></i>
+                            <div class="text-amber-900 dark:text-amber-200">
+                                <strong>Tips Praktis:</strong> Jika mengalami kendala saat menunggu kode email atau tidak memiliki akun Google, gunakan <strong>Langkah 3 (Masuk Cepat NIS &amp; Tanggal Lahir)</strong> yang bisa diakses langsung kapan saja!
+                            </div>
                         </div>
 
                         <div class="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 flex items-start space-x-3 text-xs">
@@ -16038,10 +16073,10 @@
                         <!-- FAQ 2 -->
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] space-y-1.5">
                             <h5 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 flex items-center">
-                                <i class="fa-solid fa-circle-question mr-2 text-emerald-600"></i> Mengapa kode OTP WhatsApp tidak kunjung masuk?
+                                <i class="fa-solid fa-circle-question mr-2 text-emerald-600"></i> Apakah saya harus menunggu kode verifikasi OTP untuk masuk?
                             </h5>
                             <p class="text-xs text-slate-600 dark:text-slate-300 pl-6 leading-relaxed">
-                                Pastikan nomor WhatsApp yang dimasukkan sudah benar dan memiliki jaringan internet. Jika dalam 1 menit belum masuk, klik tombol <em>"Kirim Ulang OTP"</em> atau gunakan opsi <em>"Kirim ke Email"</em>.
+                                <strong>Tidak harus.</strong> Aplikasi Asnawiyyah kini menyediakan fitur <em>Masuk Cepat NIS &amp; PIN Tanggal Lahir (Bebas OTP)</em>. Anda cukup memasukkan nomor NIS santri dan tanggal lahir putra-putri Anda, lalu langsung dapat membuka dashboard secara instan tanpa perlu menunggu kiriman kode OTP.
                             </p>
                         </div>
 
@@ -16214,6 +16249,10 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/keaktifan-asatidz.js?v=72"></script>
     <script src="js/perpulangan.js?v=66"></script>
+
+    <!-- PWA Helper & Panduan Controller -->
+    <script src="js/pwa.js"></script>
+    <script src="js/panduan.js?v=2"></script>
 
     <!-- Main Controller & Navigation -->
     <script src="js/main.js?v=67"></script>

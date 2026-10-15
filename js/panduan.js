@@ -184,11 +184,11 @@ function sharePanduanWA() {
 `Assalamu'alaikum Warahmatullahi Wabarakatuh.
 
 Berikut Panduan Resmi Penggunaan Asnawiyyah App untuk Wali Santri PPTQ Asnawiyyah Demak:
-1. Akses Website: https://asnawiyyah.or.id
-2. Pasang di Layar Utama HP (Android & iPhone)
-3. Aktivasi Akun Wali Santri (NIS & Tanggal Lahir)
-4. Verifikasi Kode OTP Keamanan
-5. Pantau Mutaba'ah Tahfidz, Presensi Sholat, & Informasi Pesantren
+1. Akses Website Resmi: https://asnawiyyah.or.id
+2. Pasang di Layar HP (Tersedia untuk Android & iPhone)
+3. Masuk Cepat (Bebas OTP): Masukkan NIS Santri & PIN Tanggal Lahir
+4. Opsi Alternatif: Masuk 1-Klik Akun Google atau Kode OTP Email
+5. Pantau Mutaba'ah Tahfidz, Presensi Sholat, & Administrasi Santri
 
 Panduan lengkap bergambar dapat dibuka langsung di aplikasi melalui menu Pengaturan > Panduan Penggunaan.
 
