@@ -1361,6 +1361,11 @@
 
             switchTab('detail-berita');
             window.scrollTo({ top: 0, behavior: 'instant' });
+
+            // Pastikan banner slider di halaman berita ter-render
+            if (typeof renderHeroSlider === 'function') {
+                renderHeroSlider();
+            }
         }
 
         function kembaliDariBerita() {
@@ -1456,6 +1461,11 @@
                     slider: document.getElementById('hero-slider-container-desktop'),
                     dots: document.getElementById('hero-dots-container-desktop'),
                     type: 'desktop'
+                },
+                {
+                    slider: document.getElementById('hero-slider-container-news'),
+                    dots: document.getElementById('hero-dots-container-news'),
+                    type: 'mobile'
                 }
             ];
 
@@ -1540,7 +1550,8 @@
 
             const containers = [
                 { slides: document.querySelectorAll('#hero-slider-container .hero-slide'), dots: document.querySelectorAll('#hero-dots-container .hero-dot') },
-                { slides: document.querySelectorAll('#hero-slider-container-desktop .hero-slide'), dots: document.querySelectorAll('#hero-dots-container-desktop .hero-dot') }
+                { slides: document.querySelectorAll('#hero-slider-container-desktop .hero-slide'), dots: document.querySelectorAll('#hero-dots-container-desktop .hero-dot') },
+                { slides: document.querySelectorAll('#hero-slider-container-news .hero-slide'), dots: document.querySelectorAll('#hero-dots-container-news .hero-dot') }
             ];
 
             containers.forEach(({ slides, dots }) => {
