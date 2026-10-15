@@ -399,6 +399,7 @@
             const mainFooter = document.querySelector('footer');
 
             const isQuranMenu = (tabId === 'quran-page' || tabId === 'quran-index' || tabId === 'quran-detail');
+            const isNewsDetail = (tabId === 'detail-berita');
             const mainElem = document.querySelector('main');
 
             if (tabId === 'admin') {
@@ -432,8 +433,17 @@
                 if (mobileBottomNav) mobileBottomNav.style.display = 'none';
                 if (mainFooter) mainFooter.style.display = 'none';
                 if (mainElem) mainElem.classList.remove('mb-16');
+            } else if (isNewsDetail) {
+                // Khusus Detail Berita: Sembunyikan header mobile & bottom navbar, mengadopsi layout membaca imersif NU Online
+                if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
+                if (mainMobileHeader) mainMobileHeader.style.display = 'none';
+                if (deskNavMenu) deskNavMenu.style.removeProperty('display');
+                if (deskActionMenu) deskActionMenu.style.removeProperty('display');
+                if (mobileBottomNav) mobileBottomNav.style.display = 'none';
+                if (mainFooter) mainFooter.style.display = 'none';
+                if (mainElem) mainElem.classList.remove('mb-16');
             } else {
-                // Kembalikan header publik & bottom navbar untuk semua menu selain Qur'an & Admin
+                // Kembalikan header publik & bottom navbar untuk semua menu selain Qur'an, Detail Berita & Admin
                 // Desktop header: class asli = "hidden md:block ..." (hidden di mobile, tampil di desktop)
                 // Mobile header: class asli = "md:hidden ..." (tampil di mobile, hidden di desktop)
                 if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
@@ -1102,6 +1112,74 @@
             }
         }
 
+        // Action Share Cerdas (Native Web Share jika didukung, Fallback Copy Link)
+        function handleNewsShareAction() {
+            const url = getNewsShareUrl();
+            const title = (currentActiveNews && currentActiveNews.judul) ? currentActiveNews.judul : document.title;
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: `Baca warta terkini: ${title}`,
+                    url: url
+                }).catch(() => {});
+            } else {
+                copyShareLink();
+            }
+        }
+
+        // Bookmark Berita (Disimpan di LocalStorage)
+        function toggleBookmarkActiveNews() {
+            if (!currentActiveNews || !currentActiveNews.news_id) return;
+            const id = currentActiveNews.news_id;
+            try {
+                let bookmarks = JSON.parse(localStorage.getItem('asnawiyyah_news_bookmarks') || '[]');
+                const idx = bookmarks.indexOf(id);
+                const icon = document.getElementById('btn-news-bookmark-icon');
+                if (idx > -1) {
+                    bookmarks.splice(idx, 1);
+                    if (icon) icon.className = "fa-regular fa-bookmark text-sm";
+                    showToast("Markah berita dihapus");
+                } else {
+                    bookmarks.push(id);
+                    if (icon) icon.className = "fa-solid fa-bookmark text-sm text-emerald-600 dark:text-emerald-400";
+                    showToast("✅ Berita berhasil disimpan ke markah!");
+                }
+                localStorage.setItem('asnawiyyah_news_bookmarks', JSON.stringify(bookmarks));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function updateBookmarkIconState() {
+            if (!currentActiveNews || !currentActiveNews.news_id) return;
+            try {
+                const bookmarks = JSON.parse(localStorage.getItem('asnawiyyah_news_bookmarks') || '[]');
+                const isBookmarked = bookmarks.includes(currentActiveNews.news_id);
+                const icon = document.getElementById('btn-news-bookmark-icon');
+                if (icon) {
+                    if (isBookmarked) {
+                        icon.className = "fa-solid fa-bookmark text-sm text-emerald-600 dark:text-emerald-400";
+                    } else {
+                        icon.className = "fa-regular fa-bookmark text-sm";
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function toggleNewsFontSizeDropdown() {
+            const dd = document.getElementById('news-fontsize-dropdown');
+            if (dd) dd.classList.toggle('hidden');
+        }
+
+        // Tutup dropdown font size jika klik di luar
+        document.addEventListener('click', (e) => {
+            const dd = document.getElementById('news-fontsize-dropdown');
+            const btn = document.getElementById('btn-news-fontsize-toggle');
+            if (dd && !dd.classList.contains('hidden') && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+                dd.classList.add('hidden');
+            }
+        });
+
         // ---------- PENCATATAN VIEW BERITA ATOMIK (NON-BLOCKING) ----------
         function recordNewsViewApi(news) {
             if (!news || !news.news_id) return;
@@ -1272,14 +1350,25 @@
                 imgContainer.classList.add('hidden');
             }
 
+            // Update icon status markah/bookmark
+            if (typeof updateBookmarkIconState === 'function') {
+                updateBookmarkIconState();
+            }
+
+            // Tutup dropdown ukuran font jika sedang terbuka
+            const dd = document.getElementById('news-fontsize-dropdown');
+            if (dd) dd.classList.add('hidden');
+
             switchTab('detail-berita');
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         function kembaliDariBerita() {
-            if (window.location.pathname.startsWith('/berita/')) {
-                window.history.pushState(null, '', '/');
+            if (previousTabBeforeNews && previousTabBeforeNews !== 'detail-berita') {
+                switchTab(previousTabBeforeNews);
+            } else {
+                switchTab('kabar');
             }
-            switchTab(previousTabBeforeNews || 'beranda');
         }
 
         // ==================== SLIDER BANNER BERANDA (OPTIMIZED SWR) ====================

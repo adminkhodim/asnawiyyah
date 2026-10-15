@@ -4546,123 +4546,147 @@
 
 
 
-        <!-- ==================== TABS KHUSUS: DETAIL BACA BERITA (FULL PAGE) ==================== -->
-        <div id="page-detail-berita" class="tab-content hidden space-y-4">
+        <!-- ==================== TABS KHUSUS: DETAIL BACA BERITA (LAYOUT IMERSIF ALA NU ONLINE) ==================== -->
+        <div id="page-detail-berita" class="tab-content hidden min-h-screen bg-slate-50 dark:bg-[#0b131e] pb-12">
 
-            <!-- Baris Kembali & Kategori Header -->
-            <div
-                class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
-                <button type="button" onclick="kembaliDariBerita()"
-                    class="flex items-center space-x-2 text-xs font-bold text-slate-700 hover:text-brand-700 transition active:scale-95">
-                    <div
-                        class="w-8 h-8 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 rounded-lg flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-arrow-left text-xs"></i>
+            <!-- STICKY TOP BAR ALA NU ONLINE (BERSIH, MINIMALIS & FOKUS BACA) -->
+            <header class="sticky top-0 z-40 bg-white/95 dark:bg-[#15202d]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-[#253447] px-3.5 sm:px-6 py-2.5 transition shadow-2xs">
+                <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
+                    <!-- KIRI: Tombol Kembali + Logo AsnawiyyahNews -->
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <button type="button" onclick="kembaliDariBerita()"
+                            class="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition active:scale-95 shrink-0"
+                            title="Kembali ke AsnawiyyahNews">
+                            <i class="fa-solid fa-arrow-left text-sm"></i>
+                        </button>
+                        <div class="flex items-center gap-1.5 cursor-pointer select-none truncate" onclick="kembaliDariBerita()" title="AsnawiyyahNews">
+                            <span class="text-base sm:text-xl font-black text-emerald-800 dark:text-emerald-400 tracking-tight font-serif truncate">Asnawiyyah<span class="text-emerald-600 dark:text-emerald-300 font-sans font-bold">News</span></span>
+                            <span class="hidden sm:inline-flex items-center gap-0.5 text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs shrink-0">
+                                <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-[9px]"></i>
+                            </span>
+                        </div>
                     </div>
-                    <span>Kembali</span>
-                </button>
-                <span id="detail-news-badge"
-                    class="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-3 py-1 rounded-full uppercase border border-transparent dark:border-emerald-800/40">Kategori</span>
-            </div>
 
-            <!-- Artikel Lengkap -->
-            <article class="bg-white dark:bg-[#15202d] p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-4">
+                    <!-- KANAN: Action Icons ala NU Online (Share, Bookmark, Ukuran Font aA) -->
+                    <div class="flex items-center space-x-1 sm:space-x-1.5 shrink-0 relative">
+                        <!-- Tombol Bagikan / Share -->
+                        <button type="button" onclick="handleNewsShareAction()"
+                            class="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition active:scale-95"
+                            title="Bagikan Artikel">
+                            <i class="fa-solid fa-share-nodes text-sm"></i>
+                        </button>
 
-                <!-- Judul & Meta Data -->
-                <div class="space-y-2.5">
-                    <h1 id="detail-news-title" class="text-base md:text-2xl font-extrabold text-slate-800 dark:text-slate-100 leading-snug">
+                        <!-- Tombol Bookmark / Simpan -->
+                        <button type="button" onclick="toggleBookmarkActiveNews()"
+                            class="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1c2836] transition active:scale-95"
+                            title="Simpan ke Markah">
+                            <i id="btn-news-bookmark-icon" class="fa-regular fa-bookmark text-sm"></i>
+                        </button>
+
+                        <!-- Tombol Pilihan Ukuran Huruf aA -->
+                        <div class="relative">
+                            <button type="button" onclick="toggleNewsFontSizeDropdown()" id="btn-news-fontsize-toggle"
+                                class="px-2 h-8 rounded-lg flex items-center justify-center text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1c2836] font-serif font-black text-sm tracking-tight transition active:scale-95 border border-slate-200/80 dark:border-slate-700/80"
+                                title="Atur Ukuran Teks">
+                                aA
+                            </button>
+                            <!-- Dropdown Ukuran Font -->
+                            <div id="news-fontsize-dropdown" class="hidden absolute right-0 mt-2 w-36 bg-white dark:bg-[#15202d] rounded-2xl shadow-xl border border-slate-200 dark:border-[#253447] p-2 z-50 space-y-1">
+                                <div class="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider px-2 py-0.5">Ukuran Teks</div>
+                                <div class="flex items-center justify-between bg-slate-50 dark:bg-[#1c2836] p-1 rounded-xl">
+                                    <button type="button" onclick="setNewsReaderFontSize('sm')" id="btn-font-sm" class="px-2 py-1 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700" title="Kecil">A-</button>
+                                    <button type="button" onclick="setNewsReaderFontSize('base')" id="btn-font-base" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-brand-700 text-white shadow-xs" title="Normal">A</button>
+                                    <button type="button" onclick="setNewsReaderFontSize('lg')" id="btn-font-lg" class="px-2 py-1 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700" title="Besar">A+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- KONTEN ARTIKEL (LAYOUT ALA NU ONLINE) -->
+            <div class="max-w-3xl mx-auto px-3.5 sm:px-6 pt-3.5 pb-8 space-y-4">
+                <article class="bg-white dark:bg-[#15202d] p-4 sm:p-7 rounded-3xl shadow-xs border border-slate-100 dark:border-[#253447] space-y-4">
+                    
+                    <!-- 1. Kategori & Tanggal (Khas NU Online di atas Judul) -->
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                        <span id="detail-news-badge"
+                            class="font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Kategori</span>
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <span id="detail-news-date" class="text-slate-500 dark:text-slate-400 font-medium">Tanggal</span>
+                    </div>
+
+                    <!-- 2. Judul Berita Utama -->
+                    <h1 id="detail-news-title"
+                        class="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-100 leading-snug tracking-tight">
                         Judul Berita
                     </h1>
-                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3">
-                        <span id="detail-news-date" class="flex items-center"><i class="fa-solid fa-calendar mr-1 text-slate-400"></i> Tanggal</span>
-                        <span>•</span>
-                        <span>Penulis: <strong id="detail-news-author" class="text-brand-700 dark:text-emerald-400 font-semibold">Admin</strong></span>
-                        <span>•</span>
-                        <span id="detail-news-views-badge" class="inline-flex items-center font-bold text-emerald-600 dark:text-emerald-400">
-                            <i class="fa-regular fa-eye mr-1"></i>
+
+                    <!-- 3. Profil Penulis & Metrik Views (Byline Card ala NU Online) -->
+                    <div class="flex items-center gap-2.5 pt-0.5 pb-2 border-b border-slate-100 dark:border-slate-800/80">
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
+                            <i class="fa-solid fa-user-pen text-xs"></i>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs text-slate-800 dark:text-slate-200">
+                            <strong id="detail-news-author" class="font-bold">Admin</strong>
+                            <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-[11px]" title="Penulis Resmi Terverifikasi"></i>
+                        </div>
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <span id="detail-news-views-badge" class="inline-flex items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <i class="fa-regular fa-eye mr-1 text-slate-400"></i>
                             <span id="detail-news-views-count">0</span>&nbsp;kali dibaca
                         </span>
                     </div>
 
-                    <!-- Reader Control Bar: Font Resizer & Quick Share -->
-                    <div class="flex flex-wrap items-center justify-between gap-2.5 py-2 px-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447]">
-                        <!-- Font Size Resizer -->
-                        <div class="flex items-center space-x-1">
-                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
-                                <i class="fa-solid fa-font mr-1"></i>Ukuran:
-                            </span>
-                            <div class="inline-flex items-center p-0.5 bg-white dark:bg-[#15202d] rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-                                <button type="button" onclick="setNewsReaderFontSize('sm')" id="btn-font-sm" title="Ukuran Font Ringkas" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">A-</button>
-                                <button type="button" onclick="setNewsReaderFontSize('base')" id="btn-font-base" title="Ukuran Font Normal" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-brand-700 text-white shadow-xs">A</button>
-                                <button type="button" onclick="setNewsReaderFontSize('lg')" id="btn-font-lg" title="Ukuran Font Besar" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">A+</button>
-                            </div>
-                        </div>
+                    <!-- 4. Foto Utama Berita (16:9 Aspect Ratio) -->
+                    <div id="detail-news-img-container"
+                        class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-2xs">
+                        <img id="detail-news-img" src="" alt="Foto Berita" class="w-full h-full object-cover">
+                    </div>
 
-                        <!-- Quick Social Share Buttons -->
-                        <div class="flex items-center space-x-1.5">
-                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
-                                <i class="fa-solid fa-share-nodes mr-1"></i>Bagikan:
-                            </span>
-                            <button type="button" onclick="shareNewsViaWhatsApp()" title="Bagikan ke WhatsApp" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                    <!-- 5. Ringkasan Cuplikan (Lead Text) -->
+                    <div id="detail-news-summary-box"
+                        class="p-4 bg-emerald-50/60 dark:bg-[#1c2836] border-l-4 border-emerald-600 dark:border-emerald-500 rounded-r-2xl font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed text-sm md:text-base">
+                        <p id="detail-news-summary"></p>
+                    </div>
+
+                    <!-- 6. Isi Berita Lengkap (Rich Content HTML) -->
+                    <div id="detail-news-body"
+                        class="text-slate-800 dark:text-slate-200 leading-relaxed md:leading-loose space-y-4 text-justify news-rich-content pt-1">
+                        <!-- Isi Lengkap Artikel -->
+                    </div>
+
+                    <!-- 7. Bagian Bawah: Opsi Bagikan & Navigasi Berita -->
+                    <div class="pt-5 mt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-3 justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Bagikan:</span>
+                            <button type="button" onclick="shareNewsViaWhatsApp()"
+                                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs active:scale-95"
+                                title="Bagikan ke WhatsApp">
                                 <i class="fa-brands fa-whatsapp text-sm"></i>
-                                <span class="hidden md:inline">WhatsApp</span>
+                                <span>WhatsApp</span>
                             </button>
-                            <button type="button" onclick="shareNewsViaFacebook()" title="Bagikan ke Facebook" class="px-2.5 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                            <button type="button" onclick="shareNewsViaFacebook()"
+                                class="px-3 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs active:scale-95"
+                                title="Bagikan ke Facebook">
                                 <i class="fa-brands fa-facebook-f text-xs"></i>
-                                <span class="hidden md:inline">Facebook</span>
+                                <span class="hidden sm:inline">Facebook</span>
                             </button>
-                            <button type="button" onclick="copyShareLink()" title="Salin Tautan Berita" class="px-2.5 py-1.5 bg-white dark:bg-[#15202d] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1 active:scale-95">
+                            <button type="button" onclick="copyShareLink()"
+                                class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center space-x-1 active:scale-95"
+                                title="Salin Tautan">
                                 <i class="fa-solid fa-link text-xs"></i>
-                                <span class="hidden md:inline">Salin</span>
+                                <span class="hidden sm:inline">Salin</span>
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Foto Utama Berita (16:9) -->
-                <div id="detail-news-img-container"
-                    class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-xs">
-                    <img id="detail-news-img" src="" alt="Foto Berita" class="w-full h-full object-cover">
-                </div>
-
-                <!-- Ringkasan Cuplikan (Lead Text) -->
-                <div id="detail-news-summary-box"
-                    class="p-4 bg-slate-50 dark:bg-[#1c2836] border-l-4 border-brand-700 dark:border-emerald-500 rounded-r-2xl font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed text-sm md:text-base">
-                    <p id="detail-news-summary"></p>
-                </div>
-
-                <!-- Isi Berita Lengkap (Support Rich HTML, Bold, Italic, Justify, Inline Images) -->
-                <div id="detail-news-body"
-                    class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed md:leading-loose space-y-4 text-justify news-rich-content">
-                    <!-- Isi Lengkap Artikel -->
-                </div>
-
-                <!-- Tombol Bagikan & Kembali di Bagian Bawah -->
-                <div class="pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-2.5 justify-between items-center">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Bagikan Artikel:</span>
-                        <button type="button" onclick="shareNewsViaWhatsApp()"
-                            class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
-                            <i class="fa-brands fa-whatsapp text-sm"></i>
-                            <span>WhatsApp</span>
-                        </button>
-                        <button type="button" onclick="shareNewsViaFacebook()"
-                            class="px-3.5 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
-                            <i class="fa-brands fa-facebook-f text-xs"></i>
-                            <span>Facebook</span>
-                        </button>
-                        <button type="button" onclick="copyShareLink()"
-                            class="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
-                            <i class="fa-solid fa-link text-xs"></i>
-                            <span class="hidden sm:inline">Salin Link</span>
+                        <button type="button" onclick="kembaliDariBerita()"
+                            class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition active:scale-95 flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                            <span>AsnawiyyahNews</span>
                         </button>
                     </div>
-                    <button type="button" onclick="kembaliDariBerita()"
-                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition active:scale-95">
-                        <i class="fa-solid fa-arrow-left mr-1.5"></i>
-                        <span>Kembali ke Berita</span>
-                    </button>
-                </div>
-            </article>
+                </article>
+            </div>
 
         </div>
 
