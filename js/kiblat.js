@@ -248,7 +248,8 @@ const ASNKiblat = (function () {
         isCompassListening = true;
 
         // Cek izin sensor khusus iOS Safari 13+
-        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        const isIosDevice = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+        if (isIosDevice && typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
             const btnIos = document.getElementById("btn-qibla-request-sensor");
             if (btnIos) btnIos.classList.remove("hidden");
         }
