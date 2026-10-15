@@ -3584,63 +3584,98 @@
                 </div>
             </section>
 
-            <!-- FITUR UTAMA IBADAH (5 KOLOM HORIZONTAL SEIMBANG) -->
+            <!-- FITUR UTAMA IBADAH (TATANAN 1 BARIS 4 MENU SEIMBANG) -->
             <section class="bg-white dark:bg-[#15202d] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
-                <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5 md:gap-3">
+                <div class="grid grid-cols-4 gap-y-3.5 gap-x-1.5 sm:gap-x-3">
 
+                    <!-- BARIS 1: AMALIAH UTAMA SANTRI -->
                     <!-- 1. Al-Qur'an Digital -->
                     <button type="button" onclick="switchTab('quran-index')"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
-                            class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
+                            class="w-12 h-12 md:w-14 md:h-14 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
                             <i class="fa-solid fa-book-quran"></i>
                         </div>
                         <span
-                            class="text-[9.5px] sm:text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-emerald-600">Al-Qur'an</span>
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-emerald-600">Al-Qur'an</span>
                     </button>
 
                     <!-- 2. Kitab Maulid -->
                     <button type="button" onclick="switchTab('maulid-hub')"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
-                            class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                            class="w-12 h-12 md:w-14 md:h-14 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
                             <i class="fa-solid fa-kaaba"></i>
                         </div>
                         <span
-                            class="text-[9.5px] sm:text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-purple-600">Maulid</span>
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-purple-600">Maulid</span>
                     </button>
 
                     <!-- 3. Tahlil & Yasin -->
                     <button type="button" onclick="openTahlilYasinPage()"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
-                            class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                            class="w-12 h-12 md:w-14 md:h-14 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                             <i class="fa-solid fa-hands-holding"></i>
                         </div>
                         <span
-                            class="text-[9.5px] sm:text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-blue-600">Tahlil & Yasin</span>
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-blue-600">Tahlil & Yasin</span>
                     </button>
 
-                    <!-- 4. Jadwal Sholat & Imsakiyah -->
+                    <!-- 4. Wirid & Dzikir (Menu Wirid Ala NU Online) -->
+                    <button type="button" onclick="openWiridPage()"
+                        class="flex flex-col items-center group transition focus:outline-none">
+                        <div
+                            class="w-12 h-12 md:w-14 md:h-14 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-hands-praying"></i>
+                        </div>
+                        <span
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-indigo-600">Wirid</span>
+                    </button>
+
+                    <!-- BARIS 2: PANDUAN WAKTU & KELENGKAPAN IBADAH -->
+                    <!-- 5. Jadwal Sholat & Imsakiyah -->
                     <button type="button" onclick="openJadwalSholatPage()"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
-                            class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+                            class="w-12 h-12 md:w-14 md:h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
                             <i class="fa-solid fa-clock"></i>
                         </div>
                         <span
-                            class="text-[9.5px] sm:text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-amber-600">Jadwal Sholat</span>
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-amber-600">Jadwal Sholat</span>
                     </button>
 
-                    <!-- 5. Kompas Arah Kiblat (Falakiyah Presisi) -->
+                    <!-- 6. Kompas Arah Kiblat (Falakiyah Presisi) -->
                     <button type="button" onclick="openKompasKiblatPage()"
                         class="flex flex-col items-center group transition focus:outline-none">
                         <div
-                            class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-teal-600 group-hover:text-white transition-all duration-300">
+                            class="w-12 h-12 md:w-14 md:h-14 bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-teal-600 group-hover:text-white transition-all duration-300">
                             <i class="fa-solid fa-compass"></i>
                         </div>
                         <span
-                            class="text-[9.5px] sm:text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-teal-600">Arah Kiblat</span>
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-teal-600">Arah Kiblat</span>
+                    </button>
+
+                    <!-- 7. Qasidah Burdah -->
+                    <button type="button" onclick="openBurdahIndex()"
+                        class="flex flex-col items-center group transition focus:outline-none">
+                        <div
+                            class="w-12 h-12 md:w-14 md:h-14 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-rose-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-scroll"></i>
+                        </div>
+                        <span
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-rose-600">Burdah</span>
+                    </button>
+
+                    <!-- 8. Kalender Hijriah & Kegiatan -->
+                    <button type="button" onclick="switchTab('kalender')"
+                        class="flex flex-col items-center group transition focus:outline-none">
+                        <div
+                            class="w-12 h-12 md:w-14 md:h-14 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:bg-cyan-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <span
+                            class="text-[10px] md:text-xs mt-1.5 sm:mt-2 font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight group-hover:text-cyan-600">Kalender</span>
                     </button>
 
                 </div>
@@ -4044,6 +4079,461 @@
 
             </div>
 
+        </div>
+
+        <!-- ==================== TAB: WIRID HUB (ALA NU ONLINE) ==================== -->
+        <div id="page-wirid-hub" class="tab-content hidden space-y-4 px-3 sm:px-4 md:px-8 py-3 md:py-6 max-w-7xl mx-auto">
+            <!-- BARIS KEMBALI & HEADER UTAMA WIRID -->
+            <div
+                class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <button type="button" onclick="switchTab('ibadah')"
+                    class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition active:scale-95">
+                    <div
+                        class="w-8 h-8 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 rounded-lg flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </div>
+                    <span>Kembali ke Ibadah</span>
+                </button>
+                <div class="text-right">
+                    <span
+                        class="text-[9px] font-extrabold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 px-2.5 py-0.5 rounded-full uppercase tracking-wide">Amaliah Nahdliyin</span>
+                    <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-0.5">Kumpulan Wirid & Dzikir</h2>
+                </div>
+            </div>
+
+            <!-- HERO BANNER WIRID DENGAN AKSEN ISLAMI -->
+            <section
+                class="relative bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 text-white p-5 md:p-6 rounded-2xl overflow-hidden shadow-sm border border-indigo-900/40">
+                <div class="absolute -right-6 -bottom-8 text-white/5 text-9xl pointer-events-none select-none">
+                    <i class="fa-solid fa-hands-praying"></i>
+                </div>
+                <div class="relative z-10 space-y-2 max-w-2xl">
+                    <div class="flex items-center space-x-2">
+                        <span
+                            class="bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-book-open text-[8px]"></i> Referensi NU Online
+                        </span>
+                        <span
+                            class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[9px] font-semibold px-2 py-0.5 rounded-full">
+                            8 Kategori Utama
+                        </span>
+                    </div>
+                    <h1 class="text-lg md:text-2xl font-bold tracking-tight text-white">
+                        Kumpulan Bacaan Wirid, Shalawat & Dzikir
+                    </h1>
+                    <p class="text-xs md:text-sm text-indigo-200/90 leading-relaxed font-arabic" dir="rtl">
+                        أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ
+                    </p>
+                    <p class="text-[11px] md:text-xs text-indigo-200/80 leading-relaxed italic">
+                        "Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram." (QS. Ar-Ra'd: 28)
+                    </p>
+                </div>
+            </section>
+
+            <!-- SEARCH & FILTER CHIPS ALA NU ONLINE -->
+            <div class="space-y-2.5 bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <!-- Input Pencarian -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="wirid-search-input" oninput="filterWiridGrid(this.value)"
+                        placeholder="Cari wirid, shalawat, ratib, hizib, istighotsah..."
+                        class="w-full pl-9 pr-9 py-2.5 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition">
+                    <button type="button" id="wirid-search-clear" onclick="clearWiridSearch()"
+                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Filter Chips Horizontal -->
+                <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
+                    <button type="button" onclick="filterWiridByTag('semua', this)"
+                        class="wirid-chip active px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-indigo-600 text-white shadow-sm transition">
+                        Semua Kategori
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('harian', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Wirid Harian
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('shalawat', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Shalawat
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('ratib', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Ratib
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('hizib', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Hizib
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('istighotsah', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Istighotsah
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('asmaul-husna', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Asmaul Husna
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('manaqib', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Manaqib
+                    </button>
+                    <button type="button" onclick="filterWiridByTag('dalail', this)"
+                        class="wirid-chip px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition">
+                        Dala'ilul Khairat
+                    </button>
+                </div>
+            </div>
+
+            <!-- GRID 8 KATEGORI KERANGKA DAFTAR ISI WIRID (2 KOLOM RESPONSIVE) -->
+            <div id="wirid-categories-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+
+                <!-- 1. WIRID HARIAN -->
+                <div onclick="openWiridCategoryModal('wirid-harian')" data-tags="harian semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-hands-praying"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                                        Wirid Harian
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">الأوراد اليومية</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full uppercase border border-indigo-100 dark:border-indigo-900/50">
+                                6 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Wirid ba'da shalat maktubah (fardhu), dzikir pagi & petang, dzikir sebelum tidur, serta sayyidul istighfar.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 2. SHALAWAT -->
+                <div onclick="openWiridCategoryModal('shalawat')" data-tags="shalawat semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-heart"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                                        Shalawat
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">الصلوات المأثورة</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full uppercase border border-emerald-100 dark:border-emerald-900/50">
+                                35 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Kumpulan shalawat para auliya': Nariyah, Thibbil Qulub, Munjiyat, Al-Fatih, Asyghil, Ibrahimiyyah, Jibril, dll.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 3. ASMAUL HUSNA / MUNAJAT -->
+                <div onclick="openWiridCategoryModal('asmaul-husna')" data-tags="asmaul-husna semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-amber-500/50 dark:hover:border-amber-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-amber-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-gem"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                                        Asmaul Husna
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">الأسماء الحسنى</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full uppercase border border-amber-100 dark:border-amber-900/50">
+                                3 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            99 nama keagungan Allah SWT (Arab, Latin, Terjemah), doa munajat khusus, dan qasidah nadhom amaliah santri.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 4. ISTIGHOTSAH & MUJAHADAH -->
+                <div onclick="openWiridCategoryModal('istighotsah')" data-tags="istighotsah semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
+                                        Istighotsah & Mujahadah
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">الاستغاثة والمجاهدة</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-2.5 py-1 rounded-full uppercase border border-purple-100 dark:border-purple-900/50">
+                                7 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Susunan Istighotsah NU Hadratussyaikh KH. M. Hasyim Asy'ari, Mujahadah Kubro, doa Nishfu Sya'ban, dan tolak bala.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-purple-600 dark:text-purple-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 5. RATIB -->
+                <div onclick="openWiridCategoryModal('ratib')" data-tags="ratib semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-teal-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-scroll"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
+                                        Ratib
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">الرواتب المشهورة</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 px-2.5 py-1 rounded-full uppercase border border-teal-100 dark:border-teal-900/50">
+                                6 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Rangkaian wirid benteng spiritual: Ratib Al-Haddad, Ratib Al-Aththas, Ratib Al-Idrus, Ratib Al-Muhdhar, dll.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-teal-600 dark:text-teal-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 6. HIZIB -->
+                <div onclick="openWiridCategoryModal('hizib')" data-tags="hizib semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-feather-pointed"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                        Hizib
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">الأحزاب المباركة</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-full uppercase border border-blue-100 dark:border-blue-900/50">
+                                9 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Kumpulan hizib thariqah muktabarah: Hizib Nashr, Hizib Bahr, Hizib Nawawi, Hizib Autad, Hizib Wiqayah, Hizib Barqi, dll.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-blue-600 dark:text-blue-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 7. MANAQIB SYEKH ABDUL QADIR -->
+                <div onclick="openWiridCategoryModal('manaqib')" data-tags="manaqib semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-rose-500/50 dark:hover:border-rose-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-rose-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-book-bookmark"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition">
+                                        Manaqib Syekh Abdul Qadir
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">مناقب الشيخ عبد القادر</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full uppercase border border-rose-100 dark:border-rose-900/50">
+                                9 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Kitab Manaqib Jawahirul Ma'ani Sulthanul Auliya' Syekh Abdul Qadir Al-Jailani: riwayat, karomah, fashl dan doa manaqib.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-rose-600 dark:text-rose-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- 8. DALA'ILUL KHAIRAT -->
+                <div onclick="openWiridCategoryModal('dalail')" data-tags="dalail semua"
+                    class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-cyan-500/50 dark:hover:border-cyan-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-11 h-11 rounded-2xl bg-cyan-50 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+                                    <i class="fa-solid fa-book"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition">
+                                        Dala'ilul Khairat
+                                    </h3>
+                                    <span class="text-[11px] font-arabic text-slate-400">دلائل الخيرات</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-extrabold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 px-2.5 py-1 rounded-full uppercase border border-cyan-100 dark:border-cyan-900/50">
+                                13 Bacaan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            Kitab wirid shalawat harian Al-Imam Al-Jazuli: Muqaddimah, Asma'un Nabi, Hizib Senin s.d. Ahad, dan doa penutup.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-cyan-600 dark:text-cyan-400">
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- EMPTY SEARCH STATE -->
+            <div id="wirid-search-empty" class="hidden py-12 text-center space-y-2 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447]">
+                <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 dark:bg-[#1c2836] text-slate-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">Wirid Tidak Ditemukan</h4>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">
+                    Kategori atau bacaan yang Anda cari belum ditemukan. Coba gunakan kata kunci lain seperti "shalawat", "ratib", atau "hizib".
+                </p>
+                <button type="button" onclick="clearWiridSearch()"
+                    class="mt-2 px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-semibold hover:bg-indigo-100 transition">
+                    Tampilkan Semua Kategori
+                </button>
+            </div>
+
+            <!-- NOTICE KONSEP KERANGKA BERTAHAP -->
+            <div class="p-4 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/40 rounded-2xl flex items-start space-x-3 text-xs text-indigo-900 dark:text-indigo-200">
+                <i class="fa-solid fa-circle-info text-indigo-600 dark:text-indigo-400 mt-0.5 text-sm shrink-0"></i>
+                <div class="space-y-1">
+                    <p class="font-bold">Konsep Kerangka Daftar Isi Wirid Aktif</p>
+                    <p class="text-[11px] text-indigo-800/80 dark:text-indigo-300/80 leading-relaxed">
+                        Kerangka daftar isi wirid mengadopsi struktur resmi NU Online (8 kategori utama). Klik pada setiap kategori untuk melihat rincian susunan daftar bacaan. Teks bacaan Arab, Latin, dan terjemahan akan dilengkapi secara bertahap sesuai instruksi Anda.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ==================== MODAL DAFTAR ISI WIRID DETAIL ==================== -->
+        <div id="modal-wirid-detail" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+            <div class="w-full max-w-2xl bg-white dark:bg-[#15202d] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 dark:border-[#253447] max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
+                <!-- Modal Header -->
+                <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-[#253447] flex items-center justify-between bg-slate-50/70 dark:bg-[#1c2836]/60">
+                    <div class="flex items-center space-x-3">
+                        <div id="modal-wirid-icon" class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-solid fa-hands-praying"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="modal-wirid-title" class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
+                                    Daftar Bacaan Wirid
+                                </h3>
+                                <span id="modal-wirid-badge" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
+                                    6 Bacaan
+                                </span>
+                            </div>
+                            <span id="modal-wirid-arabic" class="text-xs font-arabic text-slate-400 block mt-0.5"></span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeWiridCategoryModal()" aria-label="Tutup"
+                        class="w-8 h-8 rounded-full bg-slate-200/70 dark:bg-[#253447] hover:bg-slate-300 dark:hover:bg-[#2e4057] text-slate-600 dark:text-slate-300 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body (Scrollable Daftar Isi) -->
+                <div class="p-4 sm:p-6 overflow-y-auto space-y-4">
+                    <!-- Deskripsi Kategori -->
+                    <p id="modal-wirid-desc" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-[#1c2836] p-3 rounded-xl border border-slate-100 dark:border-[#253447]"></p>
+
+                    <!-- Header List -->
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-ol text-indigo-600"></i> Rincian Susunan Bacaan
+                        </h4>
+                        <span class="text-[10px] text-slate-400">Kerangka Siap Dilengkapi</span>
+                    </div>
+
+                    <!-- Items Container -->
+                    <div id="modal-wirid-items" class="space-y-2">
+                        <!-- Diisi via JavaScript -->
+                    </div>
+
+                    <!-- Kotak Status Pelengkapan Bertahap -->
+                    <div class="p-3.5 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+                        <i class="fa-solid fa-clock-rotate-left text-amber-600 dark:text-amber-400 mt-0.5 shrink-0"></i>
+                        <div class="space-y-0.5">
+                            <p class="font-bold">Status: Konsep Kerangka Daftar Isi</p>
+                            <p class="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                                Susunan daftar isi di atas siap diisi teks bacaan Arab, transliterasi Latin, fadhilah, dan terjemahan secara bertahap sesuai instruksi Anda berikutnya.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-3 sm:p-4 border-t border-slate-100 dark:border-[#253447] bg-slate-50/70 dark:bg-[#1c2836]/60 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check text-emerald-500"></i> Siap Tahap Berikutnya
+                    </span>
+                    <button type="button" onclick="closeWiridCategoryModal()"
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition active:scale-95">
+                        Tutup
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== MAULID HUB ==================== -->

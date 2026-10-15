@@ -1771,3 +1771,299 @@
                 playBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition active:scale-95";
             }
         }
+
+        // ==================== WIRID HUB (REFERENSI NU ONLINE) ====================
+        const ASNWiridData = {
+            'wirid-harian': {
+                title: "Wirid Harian",
+                arabic: "الأوراد اليومية",
+                count: "6 Bacaan",
+                badgeClass: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60",
+                icon: "fa-solid fa-hands-praying",
+                iconClass: "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400",
+                desc: "Kumpulan wirid harian yang biasa diamalkan sehari-hari, meliputi wirid seusai shalat fardhu (maktubah), dzikir pagi, dzikir petang, dzikir sebelum tidur, serta doa pembuka pintu rezeki.",
+                items: [
+                    { no: 1, title: "Wirid Ba'da Shalat Maktubah", sub: "Istighfar, tahlil, tasbih, tahmid, takbir, ayat kursi, dan doa ba'da shalat fardhu.", note: "Amaliah wajib harian santri" },
+                    { no: 2, title: "Dzikir & Doa Pagi Hari", sub: "Bacaan perlindungan pagi hari untuk keberkahan aktivitas dan keselamatan.", note: "Dibaca setelah Subuh hingga terbit matahari" },
+                    { no: 3, title: "Dzikir & Doa Petang Hari", sub: "Bacaan dzikir sore penenang jiwa dan perlindungan malam.", note: "Dibaca setelah Ashar menjelang Maghrib" },
+                    { no: 4, title: "Dzikir Sebelum Tidur", sub: "Ayat kursi, 3 Qul (Al-Ikhlas, Al-Falaq, An-Nas), tasbih fatimah & doa tidur.", note: "Sunnah Rasulullah SAW sebelum beristirahat" },
+                    { no: 5, title: "Sayyidul Istighfar", sub: "Rajanya istighfar untuk memohon ampunan agung kepada Allah SWT.", note: "Keutamaan jaminan surga bagi yang membacanya" },
+                    { no: 6, title: "Dzikir Pembuka Pintu Rezeki", sub: "Untaian dzikir shalawat, istighfar & asmaul husna untuk kelapangan rezeki.", note: "Amaliah ikhtiar batiniah santri" }
+                ]
+            },
+            'shalawat': {
+                title: "Shalawat Nabi",
+                arabic: "الصلوات المأثورة",
+                count: "35 Bacaan",
+                badgeClass: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60",
+                icon: "fa-solid fa-heart",
+                iconClass: "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400",
+                desc: "Kumpulan shalawat muktabarah para auliya' dan shalawat ma'tsurah yang sangat dianjurkan untuk dibaca guna mendatangkan syafaat dan kecintaan kepada Baginda Nabi Muhammad SAW.",
+                items: [
+                    { no: 1, title: "Shalawat Nariyah (Tafrijiyyah)", sub: "Shalawat pelepas kesusahan dan pengabul hajat agung.", note: "Masyhur dibaca 11x / 41x / 4444x" },
+                    { no: 2, title: "Shalawat Thibbil Qulub (Syifa')", sub: "Shalawat obat hati, kesehatan jasmani, dan ketenangan jiwa.", note: "Penawar penyakit hati dan badan" },
+                    { no: 3, title: "Shalawat Munjiyat", sub: "Shalawat penyelamat dari segala marabahaya dan malapetaka.", note: "Dibaca saat munajat dan istighotsah" },
+                    { no: 4, title: "Shalawat Al-Fatih", sub: "Shalawat pembuka pintu kebaikan dan rahasia ilmu para arifin.", note: "Karya Syaikh Ahmad Al-Badawi / Al-Bakri" },
+                    { no: 5, title: "Shalawat Asyghil", sub: "Shalawat permohonan keselamatan kaum muslimin dari kezaliman.", note: "Populer di kalangan Nahdliyin & pesantren" },
+                    { no: 6, title: "Shalawat Ibrahimiyyah", sub: "Shalawat paling afdhal yang dibaca dalam tasyahud shalat.", note: "Muttafaq 'Alaih" },
+                    { no: 7, title: "Shalawat Jibril", sub: "Shalawat pendek penarik rezeki batin dan penyejuk hati.", note: "Shallallahu 'ala Muhammad" },
+                    { no: 8, title: "Shalawat Tarhim", sub: "Shalawat syahdu menjelang adzan Subuh berkumandang.", note: "Karya Syaikh Mahmud Khalil Al-Hushari" }
+                ]
+            },
+            'asmaul-husna': {
+                title: "Asmaul Husna",
+                arabic: "الأسماء الحسنى",
+                count: "3 Bacaan",
+                badgeClass: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60",
+                icon: "fa-solid fa-gem",
+                iconClass: "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400",
+                desc: "99 Nama-Nama Agung Allah SWT beserta khasiat, arti, doa munajat Asmaul Husna, serta nadhom qasidah amaliah santri sebelum memulai pengajian.",
+                items: [
+                    { no: 1, title: "Teks 99 Asmaul Husna Lengkap", sub: "Lafazh Arab, transliterasi Latin, makna bahasa Indonesia & makrifat.", note: "Barang siapa menghafalnya masuk surga" },
+                    { no: 2, title: "Doa Munajat Khusus Asmaul Husna", sub: "Doa tawasul dengan asma-asma Allah setelah membaca 99 nama.", note: "Doa mustajab pembuka kemudahan" },
+                    { no: 3, title: "Nadhom Qasidah Asmaul Husna", sub: "Bismillahi bada'na wal hamdu lirabbina... lantunan amaliah pesantren.", note: "Amalan pembuka majelis & wirid santri" }
+                ]
+            },
+            'istighotsah': {
+                title: "Istighotsah & Mujahadah",
+                arabic: "الاستغاثة والمجاهدة",
+                count: "7 Bacaan",
+                badgeClass: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60",
+                icon: "fa-solid fa-shield-halved",
+                iconClass: "bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400",
+                desc: "Doa permohonan pertolongan mendesak kepada Allah SWT, susunan Hadratussyaikh KH. M. Hasyim Asy'ari dan para masyayikh pendiri Nahdlatul Ulama.",
+                items: [
+                    { no: 1, title: "Istighotsah Nahdlatul Ulama", sub: "Susunan Hadratussyaikh KH. M. Hasyim Asy'ari (Arab, Latin & Terjemah).", note: "Amaliah resmi warga NU se-Indonesia" },
+                    { no: 2, title: "Doa Istighotsah Kubro", sub: "Doa agung penutup istighotsah memohon keselamatan bangsa dan umat.", note: "Dibaca berjamaah pada majelis akbar" },
+                    { no: 3, title: "Mujahadah Asmaul Husna", sub: "Rangkaian dzikir taqarrub ilallah melalui nama-nama Allah.", note: "Pembersih hati dari noda maksiat" },
+                    { no: 4, title: "Doa Malam Nishfu Sya'ban", sub: "Doa berkah umur, rezeki, dan ketetapan iman di malam Nishfu Sya'ban.", note: "Dibaca setelah Yasin 3 putaran" },
+                    { no: 5, title: "Doa Tolak Bala (Li Khamsatun)", sub: "Bait tawasul Ahlul Bait perlindungan wabah dan bala bencana.", note: "Amalan masyhur para sesepuh pesantren" },
+                    { no: 6, title: "Iftitah Istighotsah & Tawasul Fatihah", sub: "Hadhrah tawasul kepada Rasulullah SAW, sahabat, auliya' & ulama nusantara.", note: "Kunci pembuka ijabah doa" },
+                    { no: 7, title: "Doa Penutup Majelis Mujahadah", sub: "Doa istighfar bersama, permohonan istiqamah, dan husnul khatimah.", note: "Penutup khidmat munajat" }
+                ]
+            },
+            'ratib': {
+                title: "Ratib",
+                arabic: "الرواتب المشهورة",
+                count: "6 Bacaan",
+                badgeClass: "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60",
+                icon: "fa-solid fa-scroll",
+                iconClass: "bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400",
+                desc: "Rangkaian susunan wirid dan ayat Al-Qur'an pilihan karya auliya' Hadhramaut yang menjadi benteng perlindungan rumah, keluarga, dan ketenangan batin.",
+                items: [
+                    { no: 1, title: "Ratib Al-Haddad", sub: "Karya Al-Imam Al-Quthb Abdullah bin Alawi Al-Haddad.", note: "Benteng keselamatan kota dan tempat tinggal" },
+                    { no: 2, title: "Ratib Al-Aththas", sub: "Karya Al-Imam Al-Habib Umar bin Abdurrahman Al-Aththas.", note: "Pembersih kotoran hati & perlindungan gaib" },
+                    { no: 3, title: "Ratib Al-Idrus (Syamsis Syumus)", sub: "Karya Al-Habib Abdullah bin Abu Bakar Al-Idrus Al-Akbar.", note: "Matahari dari segala rahasia dzikir" },
+                    { no: 4, title: "Ratib Al-Muhdhar", sub: "Susunan Al-Habib Umar Al-Muhdhar bin Abdurrahman Assegaf.", note: "Wirid pembuka futuh makrifat" },
+                    { no: 5, title: "Ratib Al-Bar", sub: "Karya Al-Habib Ali bin Abu Bakar Al-Bar.", note: "Wirid mustajab amaliah harian" },
+                    { no: 6, title: "Doa Fatihah & Penutup Ratib", sub: "Hadhrah fatihah penutup serta doa istiadzah dari segala godaan.", note: "Penutup pembacaan ratib" }
+                ]
+            },
+            'hizib': {
+                title: "Hizib",
+                arabic: "الأحزاب المباركة",
+                count: "9 Bacaan",
+                badgeClass: "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60",
+                icon: "fa-solid fa-feather-pointed",
+                iconClass: "bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400",
+                desc: "Kumpulan wirid tingkat lanjut yang dirangkai para imam sufi besar, mengandung rahasia ayat, asma ilahi, dan perisai spiritual berkekuatan tinggi.",
+                items: [
+                    { no: 1, title: "Hizib Nashr", sub: "Karya Al-Imam Abul Hasan Asy-Syadzili.", note: "Pertolongan dahsyat mengalahkan musuh & kezaliman" },
+                    { no: 2, title: "Hizib Bahr", sub: "Karya Al-Imam Abul Hasan Asy-Syadzili (Hizib Lautan).", note: "Keselamatan safar, perisai ombak kehidupan" },
+                    { no: 3, title: "Hizib Nawawi", sub: "Karya Al-Imam Yahya bin Syaraf An-Nawawi (Pengarang Kitab Riyadhus Shalihin).", note: "Perisai dari godaan setan, jin, dan manusia jahat" },
+                    { no: 4, title: "Hizib Autad", sub: "Karya Sulthanul Auliya' Syaikh Abdul Qadir Al-Jailani.", note: "Empat tiang penyangga spiritual para wali" },
+                    { no: 5, title: "Hizib Wiqayah", sub: "Karya Asy-Syaikh Al-Akbar Muhyiddin Ibnu Arabi.", note: "Perlindungan rahasia huruf-huruf Al-Qur'an" },
+                    { no: 6, title: "Hizib Barqi (Halilintar)", sub: "Wirid benteng perlindungan diri yang masyhur di kalangan santri.", note: "Kewibawaan dan keteguhan iman" },
+                    { no: 7, title: "Hizib Sakran", sub: "Karya Al-Habib Ali bin Abu Bakar As-Sakran.", note: "Perlindungan dari orang zalim dan mara bahaya" },
+                    { no: 8, title: "Hizib Ikhfa'", sub: "Karya Al-Imam Abul Hasan Asy-Syadzili.", note: "Penyamaran dari pandangan orang-orang yang berniat buruk" },
+                    { no: 9, title: "Hizib Maghrobi", sub: "Wirid perlindungan thariqah masyhur dari tanah Maghrib (Maroko).", note: "Diamalkan dengan sanad keilmuan yang jelas" }
+                ]
+            },
+            'manaqib': {
+                title: "Manaqib Syekh Abdul Qadir",
+                arabic: "مناقب الشيخ عبد القادر",
+                count: "9 Bacaan",
+                badgeClass: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200/60",
+                icon: "fa-solid fa-book-bookmark",
+                iconClass: "bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400",
+                desc: "Kitab Manaqib Jawahirul Ma'ani yang mengisahkan riwayat hidup, akhlak mulia, dan karomah Sulthanul Auliya' Syekh Abdul Qadir Al-Jailani.",
+                items: [
+                    { no: 1, title: "Muqaddimah & Tawasul Fatihah Manaqib", sub: "Hadhrah fatihah pembuka majelis manaqiban kepada Rasulullah dan Syaikh Abdul Qadir.", note: "Adab pembuka pembacaan manaqib" },
+                    { no: 2, title: "Fashl 1: Kelahiran & Nasab Syarif", sub: "Silsilah nasab mulia dari jalur Sayyidina Hasan dan Sayyidina Husein.", note: "Tanda-tanda kewalian sejak masa bayi" },
+                    { no: 3, title: "Fashl 2: Menuntut Ilmu & Akhlak Kejujuran", sub: "Kisah pengorbanan mencari ilmu di Baghdad dan wejangan ibu tentang kejujuran.", note: "Teladan akhlak santri penuntut ilmu" },
+                    { no: 4, title: "Fashl 3: Karomah & Pertolongan Kaum Lemah", sub: "Kisah kasih sayang beliau kepada kaum dhuafa dan mustadh'afin.", note: "Kemurahan hati tiada tara" },
+                    { no: 5, title: "Fashl 4: Wejangan & Khutbah Ruhani", sub: "Intisari nasihat beliau yang menggetarkan hati di majelis Baghdad.", note: "Pembersih hati dan peneguh tauhid" },
+                    { no: 6, title: "Fashl 5: Karamah Ijabah Doa", sub: "Karamah doa beliau yang mustajab dalam menyelamatkan para muridnya.", note: "Kekuasaan Allah yang diperlihatkan lewat kekasih-Nya" },
+                    { no: 7, title: "Fashl 6: Derajat Sulthanul Auliya'", sub: "Penegasan kedudukan beliau sebagai pimpinan para wali di zamannya.", note: "Qadamiy hadzihi 'ala raqabati kulli waliyyillah" },
+                    { no: 8, title: "Fashl 7: Wafat & Wasiat Terakhir", sub: "Detik-detik kepulangan beliau ke hadirat Allah SWT serta wasiat emasnya.", note: "Warisan ajaran istiqamah" },
+                    { no: 9, title: "Doa Penutup Manaqib Jawahirul Ma'ani", sub: "Doa munajat penutup memohon barakah dan terkabulnya segala hajat.", note: "Dibaca khusyuk di akhir manaqiban" }
+                ]
+            },
+            'dalail': {
+                title: "Dala'ilul Khairat",
+                arabic: "دلائل الخيرات",
+                count: "13 Bacaan",
+                badgeClass: "bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200/60",
+                icon: "fa-solid fa-book",
+                iconClass: "bg-cyan-50 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400",
+                desc: "Kitab himpunan shalawat legendaris karya Al-Imam Abu Abdillah Muhammad bin Sulaiman Al-Jazuli yang diamalkan para santri dan ahli thariqah di seluruh dunia.",
+                items: [
+                    { no: 1, title: "Muqaddimah Kitab Dala'ilul Khairat", sub: "Fadhilah shalawat dan latar belakang penyusunan kitab oleh Imam Al-Jazuli.", note: "Kisah sumur dan karomah anak kecil" },
+                    { no: 2, title: "Asmaul Husna Dala'il", sub: "Untaian nama-nama agung Allah SWT pembuka wirid Dala'ilul Khairat.", note: "Taqarrub sebelum melantunkan shalawat" },
+                    { no: 3, title: "Asma'un Nabi SAW (201 Nama Mulia)", sub: "Daftar 201 nama mulia dan gelar Baginda Nabi Muhammad SAW.", note: "Membawa keberkahan dan mahabbah" },
+                    { no: 4, title: "Hizib Wirid Hari Senin (Hizbul Itsnain)", sub: "Bacaan bagian pertama wirid shalawat permulaan pekan.", note: "Hari kelahiran Baginda Rasulullah SAW" },
+                    { no: 5, title: "Hizib Wirid Hari Selasa (Hizbut Tsalasa')", sub: "Bacaan bagian kedua rangkaian shalawat harian Dala'il.", note: "Istiqamah mengalirkan shalawat" },
+                    { no: 6, title: "Hizib Wirid Hari Rabu (Hizbul Arbi'a')", sub: "Bacaan bagian ketiga rangkaian shalawat harian Dala'il.", note: "Kesejukan jiwa di pertengahan pekan" },
+                    { no: 7, title: "Hizib Wirid Hari Kamis (Hizbul Khamis)", sub: "Bacaan bagian keempat rangkaian shalawat harian Dala'il.", note: "Menyongsong malam Sayyidul Ayyam" },
+                    { no: 8, title: "Hizib Wirid Hari Jum'at (Hizbul Jumu'ah)", sub: "Bacaan bagian kelima pada hari paling mulia (Sayyidul Ayyam).", note: "Pahala shalawat berlipat ganda" },
+                    { no: 9, title: "Hizib Wirid Hari Sabtu (Hizbus Sabti)", sub: "Bacaan bagian keenam rangkaian shalawat harian Dala'il.", note: "Peneduh batin di akhir pekan" },
+                    { no: 10, title: "Hizib Wirid Hari Ahad (Hizbul Ahad)", sub: "Bacaan bagian ketujuh rangkaian shalawat harian Dala'il.", note: "Penutup putaran mingguan" },
+                    { no: 11, title: "Hizib Hari Senin Kedua", sub: "Bacaan penyempurna putaran khataman Dala'ilul Khairat.", note: "Menyempurnakan hizib mingguan" },
+                    { no: 12, title: "Doa Selesai Khatam Dala'ilul Khairat", sub: "Doa permohonan syafaat, husnul khatimah, dan kedekatan dengan Rasulullah SAW.", note: "Doa mustajab penutup khatam" },
+                    { no: 13, title: "Qasidah Istighfar Al-Jazuli", sub: "Untaian bait penyesalan dan permohonan maghfirah karya Imam Al-Jazuli.", note: "Munajat tawadhu' hamba" }
+                ]
+            }
+        };
+
+        function openWiridPage(updateUrl = true) {
+            if (typeof switchTab === 'function') {
+                switchTab('wirid-hub', updateUrl);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openWiridCategoryModal(catKey) {
+            const cat = ASNWiridData[catKey];
+            if (!cat) return;
+
+            const modal = document.getElementById('modal-wirid-detail');
+            const titleEl = document.getElementById('modal-wirid-title');
+            const arabicEl = document.getElementById('modal-wirid-arabic');
+            const badgeEl = document.getElementById('modal-wirid-badge');
+            const iconContainer = document.getElementById('modal-wirid-icon');
+            const descEl = document.getElementById('modal-wirid-desc');
+            const itemsContainer = document.getElementById('modal-wirid-items');
+
+            if (titleEl) titleEl.innerText = cat.title;
+            if (arabicEl) arabicEl.innerText = cat.arabic;
+            if (badgeEl) {
+                badgeEl.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase " + (cat.badgeClass || '');
+                badgeEl.innerText = cat.count;
+            }
+            if (iconContainer) {
+                iconContainer.className = "w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 " + (cat.iconClass || '');
+                iconContainer.innerHTML = `<i class="${cat.icon}"></i>`;
+            }
+            if (descEl) descEl.innerText = cat.desc;
+
+            if (itemsContainer) {
+                itemsContainer.innerHTML = cat.items.map(item => `
+                    <div class="p-3 bg-white dark:bg-[#1c2836] rounded-xl border border-slate-100 dark:border-[#253447] shadow-sm flex items-start justify-between gap-3 hover:border-indigo-400 dark:hover:border-indigo-500 transition">
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                ${item.no}
+                            </span>
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                                    ${item.title}
+                                </h5>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    ${item.sub}
+                                </p>
+                                ${item.note ? `<span class="inline-block mt-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md"><i class="fa-solid fa-circle-check text-[9px] mr-1"></i>${item.note}</span>` : ''}
+                            </div>
+                        </div>
+                        <span class="shrink-0 text-[10px] font-semibold text-slate-400 bg-slate-50 dark:bg-[#15202d] border border-slate-200/60 dark:border-[#253447] px-2 py-1 rounded-lg">
+                            Kerangka
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function closeWiridCategoryModal() {
+            const modal = document.getElementById('modal-wirid-detail');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        function filterWiridGrid(searchVal) {
+            const q = (searchVal || '').toLowerCase().trim();
+            const cards = document.querySelectorAll('.wirid-card');
+            const clearBtn = document.getElementById('wirid-search-clear');
+            const emptyState = document.getElementById('wirid-search-empty');
+            let visibleCount = 0;
+
+            if (clearBtn) {
+                if (q.length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (!q || text.includes(q)) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (emptyState) {
+                if (visibleCount === 0) emptyState.classList.remove('hidden');
+                else emptyState.classList.add('hidden');
+            }
+        }
+
+        function clearWiridSearch() {
+            const input = document.getElementById('wirid-search-input');
+            if (input) input.value = '';
+            filterWiridGrid('');
+        }
+
+        function filterWiridByTag(tag, btn) {
+            const chips = document.querySelectorAll('.wirid-chip');
+            chips.forEach(c => {
+                c.classList.remove('active', 'bg-indigo-600', 'text-white', 'shadow-sm');
+                c.classList.add('bg-slate-100', 'dark:bg-[#1c2836]', 'text-slate-600', 'dark:text-slate-300');
+            });
+
+            if (btn) {
+                btn.classList.add('active', 'bg-indigo-600', 'text-white', 'shadow-sm');
+                btn.classList.remove('bg-slate-100', 'dark:bg-[#1c2836]', 'text-slate-600', 'dark:text-slate-300');
+            }
+
+            const cards = document.querySelectorAll('.wirid-card');
+            let visibleCount = 0;
+            const targetTag = (tag || 'semua').toLowerCase();
+
+            cards.forEach(card => {
+                const cardTags = (card.getAttribute('data-tags') || '').toLowerCase();
+                if (targetTag === 'semua' || cardTags.includes(targetTag)) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            const emptyState = document.getElementById('wirid-search-empty');
+            if (emptyState) {
+                if (visibleCount === 0) emptyState.classList.remove('hidden');
+                else emptyState.classList.add('hidden');
+            }
+        }
+
+        window.openWiridPage = openWiridPage;
+        window.openWiridCategoryModal = openWiridCategoryModal;
+        window.closeWiridCategoryModal = closeWiridCategoryModal;
+        window.filterWiridGrid = filterWiridGrid;
+        window.clearWiridSearch = clearWiridSearch;
+        window.filterWiridByTag = filterWiridByTag;
