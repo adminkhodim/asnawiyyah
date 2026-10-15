@@ -198,6 +198,12 @@
             } else if (path === '/layanan/portal-ibadah/wirid') {
                 if (typeof openWiridPage === 'function') openWiridPage(false);
                 else switchTab('wirid-hub', false);
+            } else if (path === '/layanan/portal-ibadah/doa') {
+                if (typeof openDoaPage === 'function') openDoaPage(false);
+                else switchTab('doa-hub', false);
+            } else if (path === '/layanan/portal-ibadah/tutorial-ibadah') {
+                if (typeof openTutorialIbadahPage === 'function') openTutorialIbadahPage(false);
+                else switchTab('tutorial-ibadah-hub', false);
             } else if (path.startsWith('/berita/')) {
                 const rawSlug = path.split('/berita/')[1];
                 const slug = rawSlug ? decodeURIComponent(rawSlug.split('/')[0]).trim() : '';
@@ -279,6 +285,12 @@
             } else if (path === '/layanan/portal-ibadah/wirid') {
                 if (typeof openWiridPage === 'function') openWiridPage(false);
                 else switchTab('wirid-hub', false);
+            } else if (path === '/layanan/portal-ibadah/doa') {
+                if (typeof openDoaPage === 'function') openDoaPage(false);
+                else switchTab('doa-hub', false);
+            } else if (path === '/layanan/portal-ibadah/tutorial-ibadah') {
+                if (typeof openTutorialIbadahPage === 'function') openTutorialIbadahPage(false);
+                else switchTab('tutorial-ibadah-hub', false);
             } else if (path === '/administrator') {
                 const isMobile = window.innerWidth < 768;
                 if (isMobile) {
@@ -379,6 +391,8 @@
                 else if (tabId === 'jadwal-sholat') targetUrl = '/layanan/portal-ibadah/jadwal-sholat/';
                 else if (tabId === 'kompas-kiblat') targetUrl = '/layanan/portal-ibadah/arah-kiblat/';
                 else if (tabId === 'wirid-hub') targetUrl = '/layanan/portal-ibadah/wirid/';
+                else if (tabId === 'doa-hub') targetUrl = '/layanan/portal-ibadah/doa/';
+                else if (tabId === 'tutorial-ibadah-hub') targetUrl = '/layanan/portal-ibadah/tutorial-ibadah/';
 
                 if (window.location.pathname !== targetUrl && (
                     tabId === 'profil' || tabId === 'sejarah-berdirinya' || tabId === 'tujuan-visi-misi' || tabId === 'struktur-kepengurusan' ||
@@ -389,7 +403,7 @@
                     tabId === 'quran-index' || tabId === 'quran-detail' || tabId === 'quran-page' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
                     tabId === 'burdah-index' || tabId === 'tahlil-yasin' || tabId === 'jadwal-sholat' || tabId === 'kompas-kiblat' ||
-                    tabId === 'wirid-hub' ||
+                    tabId === 'wirid-hub' || tabId === 'doa-hub' || tabId === 'tutorial-ibadah-hub' ||
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
