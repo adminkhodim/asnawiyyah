@@ -3884,22 +3884,46 @@
                     </div>
                 </div>
 
-                <!-- Pemilih Kota & GPS Trigger -->
-                <div class="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-[#253447]/60">
-                    <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-[#1c2836] px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-[#283a4e]">
-                        <i class="fa-solid fa-location-dot text-amber-500 text-xs shrink-0"></i>
+                <!-- Kontrol & Status Lokasi Perangkat Realtime (GPS Presisi) -->
+                <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-[#253447]/60">
+                    <!-- Tombol / Indikator Fitur Lokasi Perangkat -->
+                    <button type="button" id="btn-qibla-device-location" onclick="ASNKiblat.requestDeviceLocation(true)"
+                        class="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300/80 dark:border-emerald-700/60 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95"
+                        title="Klik untuk menyinkronkan ulang lokasi perangkat via GPS">
+                        <i id="qibla-loc-icon" class="fa-solid fa-satellite-dish fa-spin text-amber-500"></i>
+                        <span id="qibla-loc-text" class="truncate max-w-[170px] sm:max-w-[210px]">Menghubungkan Lokasi...</span>
+                        <span id="qibla-loc-acc-badge" class="hidden text-[9px] font-mono bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 px-1.5 py-0.5 rounded-full"></span>
+                    </button>
+
+                    <!-- Pilihan Kota Manual Cadangan (Jika GPS Mati) -->
+                    <div class="flex items-center gap-1 bg-slate-50 dark:bg-[#1c2836] px-2 py-1.5 rounded-xl border border-slate-200/80 dark:border-[#283a4e]" title="Pilihan Kota Manual (Hanya jika GPS Tidak Aktif)">
                         <select id="qibla-city-select" onchange="ASNKiblat.changeCity(this.value)"
-                            class="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none cursor-pointer">
-                            <option value="demak">Kab. Demak (PPTQ Asnawiyyah)</option>
+                            aria-label="Pilih Kota Manual"
+                            class="bg-transparent text-[11px] font-semibold text-slate-600 dark:text-slate-300 outline-none cursor-pointer">
+                            <option value="">Pilih Kota Lain...</option>
                         </select>
                     </div>
-                    <button type="button" id="btn-qibla-use-gps" onclick="ASNKiblat.useGpsLocation()"
-                        class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95 shrink-0"
-                        title="Sesuaikan Koordinat dengan Lokasi GPS Anda">
-                        <i class="fa-solid fa-location-crosshairs text-xs"></i>
-                        <span class="hidden sm:inline">Gunakan GPS</span>
-                    </button>
                 </div>
+            </div>
+
+            <!-- Notice Jika Izin Lokasi Perangkat Belum Aktif -->
+            <div id="qibla-location-permission-notice" class="hidden p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-left text-xs text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-start sm:items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-location-crosshairs text-base"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold block text-slate-800 dark:text-slate-100">Hubungkan Fitur Lokasi Perangkat</span>
+                        <span class="text-[11px] text-slate-600 dark:text-slate-300 leading-tight block">
+                            Izinkan akses lokasi (GPS) pada browser/ponsel agar sudut kiblat dihitung presisi langsung dari titik keberadaan Anda.
+                        </span>
+                    </div>
+                </div>
+                <button type="button" onclick="ASNKiblat.requestDeviceLocation(true)"
+                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 shrink-0 inline-flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>Hubungkan GPS</span>
+                </button>
             </div>
 
             <!-- CARD UTAMA KOMPAS INTERAKTIF -->
@@ -4015,17 +4039,17 @@
                         <span id="qibla-target-distance" class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 font-mono">8.335 km</span>
                         <span class="text-[9.5px] text-slate-400 block">Masjidil Haram</span>
                     </div>
-                    <!-- Lokasi Acuan -->
+                    <!-- Lokasi Perangkat -->
                     <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Wilayah Acuan</span>
-                        <span id="qibla-current-location" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate block mt-0.5">Demak</span>
-                        <span class="text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold block">PPTQ Asnawiyyah</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lokasi Perangkat</span>
+                        <span id="qibla-current-location" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate block mt-0.5">Mendeteksi GPS...</span>
+                        <span id="qibla-accuracy-label" class="text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold block">GPS Presisi</span>
                     </div>
-                    <!-- Koordinat Geografis -->
+                    <!-- Koordinat Geografis Presisi -->
                     <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Koordinat</span>
-                        <span id="qibla-current-coords" class="text-[11px] font-bold text-slate-700 dark:text-slate-200 font-mono block mt-0.5">6.9535° S, 110.6402° E</span>
-                        <span class="text-[9.5px] text-slate-400 block">Lintang & Bujur</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Koordinat Presisi</span>
+                        <span id="qibla-current-coords" class="text-[11px] font-bold text-slate-700 dark:text-slate-200 font-mono block mt-0.5">-</span>
+                        <span class="text-[9.5px] text-slate-400 block">Lintang & Bujur HP</span>
                     </div>
                 </div>
             </section>

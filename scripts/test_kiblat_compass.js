@@ -63,4 +63,30 @@ assert.ok(cities.demak, "Kota Demak harus terdaftar");
 assert.ok(cities.semarang, "Kota Semarang harus terdaftar");
 assert.ok(cities.jakarta, "Kota Jakarta harus terdaftar");
 
+// 5. Uji Integrasi Fitur Lokasi Perangkat (Geolocation API)
+let mockGpsCalled = false;
+sandbox.navigator.geolocation = {
+    getCurrentPosition: (success, error, options) => {
+        mockGpsCalled = true;
+        success({
+            coords: {
+                latitude: -6.9541,
+                longitude: 110.6408,
+                accuracy: 6
+            }
+        });
+    }
+};
+
+ASNKiblat.requestDeviceLocation(false);
+assert.ok(mockGpsCalled, "Geolocation.getCurrentPosition harus dipanggil saat requestDeviceLocation()");
+
+const userCoords = ASNKiblat.getUserCoords();
+assert.strictEqual(userCoords.lat, -6.9541, "Latitude pengguna harus terupdate dari GPS");
+assert.strictEqual(userCoords.lng, 110.6408, "Longitude pengguna harus terupdate dari GPS");
+assert.strictEqual(userCoords.accuracy, 6, "Akurasi GPS pengguna harus terupdate (6m)");
+assert.strictEqual(userCoords.isGps, true, "isGps harus true saat koordinat didapat dari perangkat");
+
+console.log("  - Simulasi GPS Presisi: Lat -6.9541, Lng 110.6408 (Akurasi ±6m) -> Sukses!");
 console.log("✅ [PASS] Kompas Kiblat & Falak Geodesi Verification (Passed)");
+

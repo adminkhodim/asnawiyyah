@@ -1,19 +1,19 @@
 /**
  * ====================================================================
- * ASNAWIYYAH KOMPAS KIBLAT ENGINE (v1.0)
- * Perhitungan Hisab Arah Kiblat Berdasarkan Falakiyah Geodesi Bola
+ * ASNAWIYYAH KOMPAS KIBLAT ENGINE (v2.0)
+ * Perhitungan Hisab Arah Kiblat Geodesi Presisi Terhubung Lokasi Perangkat
  * Koordinat Ka'bah: 21° 25' 21" N, 39° 49' 34" E (Makkah al-Mukarramah)
  * ====================================================================
  */
 
 const ASNKiblat = (function () {
-    // 1. KOORDINAT KA'BAH MAKKAH AL-MUKARRAMAH
+    // 1. KOORDINAT TITIK PUSAT KA'BAH MAKKAH AL-MUKARRAMAH
     const KAABA_COORDS = {
         lat: 21.422487,
         lng: 39.826206
     };
 
-    // 2. DATABASE KOORDINAT DEFAULT KOTA
+    // 2. DATABASE KOORDINAT KOTA CADANGAN (Hanya sebagai opsi manual jika GPS dimatikan)
     const CITIES = {
         demak: { name: "Kab. Demak (PPTQ Asnawiyyah)", lat: -6.9535, lng: 110.6402 },
         semarang: { name: "Kota Semarang", lat: -6.9667, lng: 110.4167 },
@@ -28,26 +28,38 @@ const ASNKiblat = (function () {
         medan: { name: "Kota Medan", lat: 3.5952, lng: 98.6722 }
     };
 
-    // State Internal
-    let currentCityKey = localStorage.getItem("asnawiyyah_prayer_city") || "demak";
-    if (!CITIES[currentCityKey]) currentCityKey = "demak";
+    // 3. STATE LOKASI PENGGUNA (MEMPRIORITASKAN SENSOR GPS / LOKASI PERANGKAT)
+    let savedLat = null;
+    let savedLng = null;
+    let savedLocName = null;
+    let savedAccuracy = null;
+
+    try {
+        savedLat = localStorage.getItem("asnawiyyah_qibla_lat");
+        savedLng = localStorage.getItem("asnawiyyah_qibla_lng");
+        savedLocName = localStorage.getItem("asnawiyyah_qibla_loc_name");
+        savedAccuracy = localStorage.getItem("asnawiyyah_qibla_acc");
+    } catch (e) {}
 
     let userCoords = {
-        lat: CITIES[currentCityKey].lat,
-        lng: CITIES[currentCityKey].lng,
-        locationName: CITIES[currentCityKey].name,
-        isGps: false
+        lat: savedLat ? parseFloat(savedLat) : -6.9535,
+        lng: savedLng ? parseFloat(savedLng) : 110.6402,
+        accuracy: savedAccuracy ? parseFloat(savedAccuracy) : null,
+        locationName: savedLocName || (savedLat ? "Lokasi Perangkat Terdeteksi" : "Menghubungkan Lokasi..."),
+        isGps: !!savedLat,
+        sourceType: savedLat ? "saved_gps" : "detecting" // 'detecting' | 'gps' | 'saved_gps' | 'manual'
     };
 
     let qiblaBearing = 294.5;
-    let qiblaDistance = 8342;
+    let qiblaDistance = 8335;
     let currentHeading = 0;
     let isCompassListening = false;
     let hasSensorSupport = false;
     let lastVibratedState = false;
+    let isRequestingLocation = false;
 
     // ----------------------------------------------------------------
-    // 3. FORMULA MATEMATIKA FALAK (SPHERICAL TRIGONOMETRY)
+    // 4. FORMULA MATEMATIKA FALAK (SPHERICAL TRIGONOMETRY)
     // ----------------------------------------------------------------
     function calculateQibla(lat, lng) {
         const toRad = deg => (deg * Math.PI) / 180;
@@ -66,7 +78,7 @@ const ASNKiblat = (function () {
         // Normalisasi ke 0° - 360°
         qiblaDeg = (qiblaDeg + 360) % 360;
 
-        // Jarak Haversine ke Ka'bah (Radius Bumi = 6371 km)
+        // Jarak Great Circle Haversine ke Ka'bah (Radius Bumi = 6371 km)
         const R = 6371;
         const dLat = phi2 - phi1;
         const dLng = deltaLambda;
@@ -82,7 +94,185 @@ const ASNKiblat = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 4. HANDLER SENSOR ORIENTASI KOMPAS (MOBILE GYRO/MAGNETOMETER)
+    // 5. KONEKSI KE FITUR LOKASI PERANGKAT (HTML5 GEOLOCATION API)
+    // ----------------------------------------------------------------
+    function requestDeviceLocation(interactive = false) {
+        if (!navigator || !navigator.geolocation) {
+            updateLocationStatusUI("unsupported", "Perangkat Tidak Mendukung GPS");
+            if (interactive) {
+                alert("Browser atau perangkat Anda tidak memiliki fitur akses lokasi Geolocation.");
+            }
+            return;
+        }
+
+        if (isRequestingLocation) return;
+        isRequestingLocation = true;
+
+        updateLocationStatusUI("requesting", "Mendeteksi Lokasi Perangkat...");
+
+        const options = {
+            enableHighAccuracy: true, // Gunakan chip GPS presisi tinggi ponsel
+            timeout: 15000,
+            maximumAge: interactive ? 0 : 60000
+        };
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                isRequestingLocation = false;
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const accuracy = Math.round(position.coords.accuracy || 0);
+
+                userCoords.lat = lat;
+                userCoords.lng = lng;
+                userCoords.accuracy = accuracy;
+                userCoords.isGps = true;
+                userCoords.sourceType = "gps";
+
+                try {
+                    localStorage.setItem("asnawiyyah_qibla_lat", lat.toString());
+                    localStorage.setItem("asnawiyyah_qibla_lng", lng.toString());
+                    localStorage.setItem("asnawiyyah_qibla_acc", accuracy.toString());
+                } catch (e) {}
+
+                // Sembunyikan notifikasi izin lokasi jika sempat tampil
+                showPermissionNotice(false);
+
+                // Update UI lokasi terkoneksi
+                updateLocationStatusUI("connected", "Lokasi Perangkat Aktif", accuracy);
+                updateQiblaFromCurrentCoords();
+
+                // Lakukan reverse geocoding untuk mengenali wilayah secara otomatis
+                reverseGeocode(lat, lng);
+
+                if (interactive && typeof showToast === "function") {
+                    showToast(`📍 Lokasi perangkat terhubung presisi (Akurasi: ±${accuracy}m)`);
+                }
+            },
+            err => {
+                isRequestingLocation = false;
+                console.warn("Geolocation warning:", err.code, err.message);
+
+                let statusMsg = "Lokasi HP Belum Aktif";
+                if (err.code === 1) { // PERMISSION_DENIED
+                    statusMsg = "Izin Lokasi Belum Diberikan";
+                    showPermissionNotice(true);
+                } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                    statusMsg = "Sinyal GPS Tidak Tersedia";
+                } else if (err.code === 3) { // TIMEOUT
+                    statusMsg = "Waktu GPS Habis, Coba Lagi";
+                }
+
+                updateLocationStatusUI("denied", statusMsg);
+
+                // Jika ada koordinat tersimpan sebelumnya di localStorage, tetap pakai itu
+                if (savedLat && savedLng) {
+                    updateLocationStatusUI("saved", "Memakai Lokasi Tersimpan Terakhir");
+                } else {
+                    updateQiblaFromCurrentCoords();
+                }
+
+                if (interactive) {
+                    alert(`Tidak dapat mengakses fitur lokasi perangkat: ${statusMsg}.\n\nTips: Pastikan tombol Lokasi/GPS di smartphone Anda sudah aktif dan berikan izin 'Saat Aplikasi Digunakan' pada browser.`);
+                }
+            },
+            options
+        );
+    }
+
+    // Reverse Geocoding Client-Side Otomatis (Mengenali Nama Kota Tanpa Hardcode)
+    async function reverseGeocode(lat, lng) {
+        try {
+            const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+            const timeoutId = controller ? setTimeout(() => controller.abort(), 4500) : null;
+            
+            const fetchOptions = controller ? { signal: controller.signal } : {};
+            const resp = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`,
+                fetchOptions
+            );
+            if (timeoutId) clearTimeout(timeoutId);
+
+            if (resp.ok) {
+                const data = await resp.json();
+                let parts = [];
+                if (data.locality) parts.push(data.locality);
+                if (data.city && data.city !== data.locality) parts.push(data.city);
+                else if (data.principalSubdivision) parts.push(data.principalSubdivision);
+
+                let detectedName = parts.length > 0 ? parts.join(", ") : (data.city || data.locality || "Lokasi Perangkat Presisi");
+                userCoords.locationName = detectedName;
+
+                try {
+                    localStorage.setItem("asnawiyyah_qibla_loc_name", detectedName);
+                } catch (e) {}
+
+                const locLabelEl = document.getElementById("qibla-current-location");
+                if (locLabelEl) locLabelEl.innerText = detectedName;
+
+                const locBtnText = document.getElementById("qibla-loc-text");
+                if (locBtnText) locBtnText.innerText = detectedName;
+            }
+        } catch (e) {
+            // Jika offline atau jaringan lambat, tetap tampilkan teks GPS Presisi
+        }
+    }
+
+    function showPermissionNotice(show) {
+        const noticeEl = document.getElementById("qibla-location-permission-notice");
+        if (noticeEl) {
+            if (show) noticeEl.classList.remove("hidden");
+            else noticeEl.classList.add("hidden");
+        }
+    }
+
+    function updateLocationStatusUI(status, label, accuracy = null) {
+        const btnLoc = document.getElementById("btn-qibla-device-location");
+        const iconLoc = document.getElementById("qibla-loc-icon");
+        const textLoc = document.getElementById("qibla-loc-text");
+        const accBadge = document.getElementById("qibla-loc-acc-badge");
+        const gpsBadge = document.getElementById("qibla-gps-badge");
+        const accLabel = document.getElementById("qibla-accuracy-label");
+
+        if (textLoc) textLoc.innerText = label;
+
+        if (status === "requesting") {
+            if (iconLoc) iconLoc.className = "fa-solid fa-satellite-dish fa-spin text-amber-500";
+            if (btnLoc) {
+                btnLoc.className = "px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95";
+            }
+            if (accBadge) accBadge.classList.add("hidden");
+        } else if (status === "connected" || status === "saved") {
+            if (iconLoc) iconLoc.className = "fa-solid fa-location-crosshairs text-emerald-600 dark:text-emerald-400";
+            if (btnLoc) {
+                btnLoc.className = "px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300/80 dark:border-emerald-700/60 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95";
+            }
+            if (accBadge && accuracy) {
+                accBadge.innerText = `±${accuracy}m`;
+                accBadge.classList.remove("hidden");
+            }
+            if (gpsBadge) gpsBadge.classList.remove("hidden");
+            if (accLabel && accuracy) {
+                accLabel.innerText = `Akurasi GPS ±${accuracy}m`;
+                accLabel.className = "text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold block";
+            }
+        } else {
+            // denied / error
+            if (iconLoc) iconLoc.className = "fa-solid fa-location-dot text-rose-500";
+            if (btnLoc) {
+                btnLoc.className = "px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800 text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95";
+            }
+            if (accBadge) accBadge.classList.add("hidden");
+            if (gpsBadge) gpsBadge.classList.add("hidden");
+            if (accLabel) {
+                accLabel.innerText = "GPS Belum Aktif";
+                accLabel.className = "text-[9.5px] text-rose-500 font-semibold block";
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 6. HANDLER SENSOR ORIENTASI KOMPAS (MOBILE GYRO/MAGNETOMETER)
     // ----------------------------------------------------------------
     function handleOrientation(event) {
         hasSensorSupport = true;
@@ -93,11 +283,7 @@ const ASNKiblat = (function () {
             heading = event.webkitCompassHeading;
         } else if (event.alpha !== null) {
             // Android Chrome / Standard DeviceOrientationAbsolute
-            if (event.absolute === true || typeof event.absolute === "undefined") {
-                heading = 360 - event.alpha;
-            } else {
-                heading = 360 - event.alpha;
-            }
+            heading = 360 - event.alpha;
         }
 
         if (heading === null || isNaN(heading)) return;
@@ -109,11 +295,10 @@ const ASNKiblat = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 5. UPDATE TAMPILAN KOMPAS REAL-TIME
+    // 7. UPDATE TAMPILAN KOMPAS REAL-TIME
     // ----------------------------------------------------------------
     function updateCompassUI(heading) {
         const dialEl = document.getElementById("qibla-compass-dial");
-        const needleEl = document.getElementById("qibla-compass-needle");
         const headingDegEl = document.getElementById("qibla-current-heading-val");
         const statusBadgeEl = document.getElementById("qibla-status-badge");
         const statusTextEl = document.getElementById("qibla-status-text");
@@ -175,7 +360,7 @@ const ASNKiblat = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 6. MULAI & HENTIKAN PEMBACAAN SENSOR KOMPAS
+    // 8. MULAI & HENTIKAN PEMBACAAN SENSOR KOMPAS
     // ----------------------------------------------------------------
     function startCompassListener() {
         if (isCompassListening) return;
@@ -233,7 +418,7 @@ const ASNKiblat = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 7. PENANGANAN KOORDINAT & GPS LOKAL
+    // 9. UPDATE PERHITUNGAN KIBLAT DARI KOORDINAT AKTIF
     // ----------------------------------------------------------------
     function updateQiblaFromCurrentCoords() {
         const result = calculateQibla(userCoords.lat, userCoords.lng);
@@ -251,8 +436,8 @@ const ASNKiblat = (function () {
         if (distanceEl) distanceEl.innerText = `${qiblaDistance.toLocaleString("id-ID")} km`;
         if (locLabelEl) locLabelEl.innerText = userCoords.locationName;
         if (coordLabelEl) {
-            const latStr = Math.abs(userCoords.lat).toFixed(4) + (userCoords.lat >= 0 ? "° N" : "° S");
-            const lngStr = Math.abs(userCoords.lng).toFixed(4) + (userCoords.lng >= 0 ? "° E" : "° W");
+            const latStr = Math.abs(userCoords.lat).toFixed(4) + (userCoords.lat >= 0 ? "° LU" : "° LS");
+            const lngStr = Math.abs(userCoords.lng).toFixed(4) + (userCoords.lng >= 0 ? "° BT" : "° BB");
             coordLabelEl.innerText = `${latStr}, ${lngStr}`;
         }
 
@@ -267,101 +452,60 @@ const ASNKiblat = (function () {
         }
     }
 
+    // Opsi Manual: Pengguna sengaja memilih kota lain secara manual
     function changeCity(cityKey) {
+        if (!cityKey) return;
         if (!CITIES[cityKey]) return;
-        currentCityKey = cityKey;
-        try {
-            localStorage.setItem("asnawiyyah_prayer_city", cityKey);
-        } catch (e) {}
 
         userCoords = {
             lat: CITIES[cityKey].lat,
             lng: CITIES[cityKey].lng,
+            accuracy: null,
             locationName: CITIES[cityKey].name,
-            isGps: false
+            isGps: false,
+            sourceType: "manual"
         };
 
-        const gpsBadge = document.getElementById("qibla-gps-badge");
-        if (gpsBadge) gpsBadge.classList.add("hidden");
-
+        updateLocationStatusUI("manual", CITIES[cityKey].name);
+        showPermissionNotice(false);
         updateQiblaFromCurrentCoords();
     }
 
-    function useGpsLocation() {
-        if (!navigator.geolocation) {
-            alert("Perangkat Anda tidak mendukung fitur lokasi GPS.");
-            return;
-        }
-
-        const btnGps = document.getElementById("btn-qibla-use-gps");
-        if (btnGps) {
-            btnGps.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mendeteksi GPS...`;
-            btnGps.disabled = true;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                if (btnGps) {
-                    btnGps.innerHTML = `<i class="fa-solid fa-location-crosshairs"></i> Gunakan GPS`;
-                    btnGps.disabled = false;
-                }
-
-                userCoords = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    locationName: "Lokasi GPS Realtime",
-                    isGps: true
-                };
-
-                const gpsBadge = document.getElementById("qibla-gps-badge");
-                if (gpsBadge) gpsBadge.classList.remove("hidden");
-
-                updateQiblaFromCurrentCoords();
-                if (typeof showToast === "function") {
-                    showToast("✅ Koordinat GPS berhasil disesuaikan secara akurat!");
-                }
-            },
-            err => {
-                if (btnGps) {
-                    btnGps.innerHTML = `<i class="fa-solid fa-location-crosshairs"></i> Gunakan GPS`;
-                    btnGps.disabled = false;
-                }
-                alert("Gagal mengakses lokasi GPS: " + (err.message || "Izin ditolak"));
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-        );
-    }
-
     // ----------------------------------------------------------------
-    // 8. INISIALISASI HALAMAN KOMPAS KIBLAT
+    // 10. INISIALISASI HALAMAN KOMPAS KIBLAT
     // ----------------------------------------------------------------
     function init() {
-        // Render dropdown kota
+        // Render dropdown kota manual jika belum terisi
         const selectEl = document.getElementById("qibla-city-select");
         if (selectEl && selectEl.options.length <= 1) {
-            selectEl.innerHTML = "";
+            selectEl.innerHTML = `<option value="">-- Pilih Kota Manual --</option>`;
             Object.keys(CITIES).forEach(key => {
                 const opt = document.createElement("option");
                 opt.value = key;
                 opt.innerText = CITIES[key].name;
-                if (key === currentCityKey) opt.selected = true;
                 selectEl.appendChild(opt);
             });
         }
 
+        // Update tampilan dari koordinat yang saat ini tersimpan di memory
         updateQiblaFromCurrentCoords();
         startCompassListener();
+
+        // OTOMATIS HUBUNGKAN KE FITUR LOKASI PERANGKAT PRESISI (GPS)
+        requestDeviceLocation(false);
     }
 
     return {
         init: init,
         calculateQibla: calculateQibla,
         changeCity: changeCity,
-        useGpsLocation: useGpsLocation,
+        requestDeviceLocation: requestDeviceLocation,
+        useGpsLocation: () => requestDeviceLocation(true), // Alias kompatibilitas
         requestIosSensorPermission: requestIosSensorPermission,
         startCompassListener: startCompassListener,
         stopCompassListener: stopCompassListener,
-        getCities: () => CITIES
+        getCities: () => CITIES,
+        getUserCoords: () => userCoords
     };
 })();
 
