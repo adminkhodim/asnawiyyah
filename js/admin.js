@@ -6958,13 +6958,15 @@
         // =====================================================================
         // REFERENSI MASTER KELAS & SEKOLAH FORMAL (UNTUK DATA SANTRI)
         // =====================================================================
+        // REFERENSI MASTER KELAS & SEKOLAH FORMAL (UNTUK DATA SANTRI)
+        // =====================================================================
         const DEFAULT_KELAS_SEKOLAH = [
-            { id: 'ks-mi-sd-1', name: 'Kelas 1 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 1' },
-            { id: 'ks-mi-sd-2', name: 'Kelas 2 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 2' },
-            { id: 'ks-mi-sd-3', name: 'Kelas 3 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 3' },
-            { id: 'ks-mi-sd-4', name: 'Kelas 4 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 4' },
-            { id: 'ks-mi-sd-5', name: 'Kelas 5 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 5' },
-            { id: 'ks-mi-sd-6', name: 'Kelas 6 MI / SD', jenjang: 'MI/SD', status: 'ACTIVE', description: 'Pendidikan dasar kelas 6' },
+            { id: 'ks-sdiu-1', name: 'Kelas 1 SDIU Asnawiyyah', jenjang: 'SDIU', status: 'ACTIVE', description: 'Pendidikan dasar kelas 1' },
+            { id: 'ks-sdiu-2', name: 'Kelas 2 SDIU Asnawiyyah', jenjang: 'SDIU', status: 'ACTIVE', description: 'Pendidikan dasar kelas 2' },
+            { id: 'ks-sdiu-3', name: 'Kelas 3 SDIU Asnawiyyah', jenjang: 'SDIU', status: 'ACTIVE', description: 'Pendidikan dasar kelas 3' },
+            { id: 'ks-sdiu-4', name: 'Kelas 4 SDIU Asnawiyyah', jenjang: 'SDIU', status: 'ACTIVE', description: 'Pendidikan dasar kelas 4' },
+            { id: 'ks-sdiu-5', name: 'Kelas 5 SDIU Asnawiyyah', jenjang: 'SDIU', status: 'ACTIVE', description: 'Pendidikan dasar kelas 5' },
+            { id: 'ks-sdiu-6', name: 'Kelas 6 SDIU Asnawiyyah', jenjang: 'SDIU', status: 'ACTIVE', description: 'Pendidikan dasar kelas 6' },
             { id: 'ks-mts-smp-7', name: 'Kelas 7 MTs / SMP', jenjang: 'MTs/SMP', status: 'ACTIVE', description: 'Menengah pertama kelas 7' },
             { id: 'ks-mts-smp-8', name: 'Kelas 8 MTs / SMP', jenjang: 'MTs/SMP', status: 'ACTIVE', description: 'Menengah pertama kelas 8' },
             { id: 'ks-mts-smp-9', name: 'Kelas 9 MTs / SMP', jenjang: 'MTs/SMP', status: 'ACTIVE', description: 'Menengah pertama kelas 9' },
@@ -6974,6 +6976,40 @@
             { id: 'ks-non-formal', name: 'Non-Formal / Belum Sekolah', jenjang: 'Non-Formal', status: 'ACTIVE', description: 'Santri usia dini / prasekolah / non-formal' },
             { id: 'ks-kuliah', name: 'Perguruan Tinggi / Mahasiswa', jenjang: 'Perguruan Tinggi', status: 'ACTIVE', description: 'Santri yang sedang menempuh kuliah' }
         ];
+
+        async function fetchAdminKelasSekolahFromCloud() {
+            try {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const sbUrl = config.supabaseUrl;
+                const sbKey = config.supabaseKey;
+                if (!sbUrl || !sbKey) return null;
+
+                const res = await fetch(`${sbUrl}/rest/v1/pengaturan?key=eq.master_kelas_sekolah&select=value`, {
+                    headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0 && data[0].value) {
+                        const cloudList = JSON.parse(data[0].value);
+                        if (Array.isArray(cloudList) && cloudList.length > 0) {
+                            localStorage.setItem('ASNAWIYYAH_KELAS_SEKOLAH_V1', JSON.stringify(cloudList));
+                            const modal = document.getElementById('modal-admin-class-school-manager');
+                            if (modal && !modal.classList.contains('hidden')) {
+                                renderAdminClassSchoolManagerTable();
+                            }
+                            populateAdminStudentKelasSekolahFilter();
+                            return cloudList;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("[KELAS_SEKOLAH] Gagal sinkronisasi dari cloud:", e);
+            }
+            return null;
+        }
+
+        // Panggil sinkronisasi awal dari cloud Supabase di background
+        setTimeout(fetchAdminKelasSekolahFromCloud, 300);
 
         function getAdminKelasSekolah() {
             try {
@@ -6986,11 +7022,27 @@
                     list = JSON.parse(JSON.stringify(DEFAULT_KELAS_SEKOLAH));
                 }
 
+                // Jika di cache lokal masih menggunakan nama lama 'MI / SD', migrasikan otomatis ke 'SDIU Asnawiyyah'
+                let migrated = false;
+                list.forEach(k => {
+                    if (k.name && /MI\s*\/\s*SD/i.test(k.name)) {
+                        k.name = k.name.replace(/MI\s*\/\s*SD/gi, 'SDIU Asnawiyyah');
+                        if (k.jenjang === 'MI/SD') k.jenjang = 'SDIU';
+                        migrated = true;
+                    }
+                });
+                if (migrated) {
+                    saveAdminKelasSekolah(list);
+                }
+
                 // Auto-merge data kelas_sekolah dari adminStudentsData
                 if (Array.isArray(adminStudentsData) && adminStudentsData.length > 0) {
                     const existingNames = new Set(list.map(k => (k.name || '').trim().toLowerCase()));
                     adminStudentsData.forEach(s => {
-                        const ksName = (s.kelas_sekolah || s.kelasSekolah || s.kelas || '').trim();
+                        let ksName = (s.kelas_sekolah || s.kelasSekolah || s.kelas || '').trim();
+                        if (ksName && /MI\s*\/\s*SD/i.test(ksName)) {
+                            ksName = ksName.replace(/MI\s*\/\s*SD/gi, 'SDIU Asnawiyyah');
+                        }
                         if (ksName && ksName !== '-' && !existingNames.has(ksName.toLowerCase())) {
                             list.push({
                                 id: 'ks-' + Math.random().toString(36).substring(2, 9),
@@ -7017,6 +7069,30 @@
             } catch (e) {
                 console.warn("Gagal simpan master kelas sekolah ke localStorage:", e);
             }
+
+            // Dual-Write Cloud Sync: Simpan ke tabel pengaturan Supabase agar tersinkron otomatis antar PC & Mobile
+            try {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const sbUrl = config.supabaseUrl;
+                const sbKey = config.supabaseKey;
+                if (sbUrl && sbKey) {
+                    fetch(`${sbUrl}/rest/v1/pengaturan`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'resolution=merge-duplicates'
+                        },
+                        body: JSON.stringify({
+                            key: 'master_kelas_sekolah',
+                            value: JSON.stringify(list),
+                            keterangan: 'Master Referensi Kelas & Sekolah Formal',
+                            update_terakhir: new Date().toISOString()
+                        })
+                    }).catch(() => {});
+                }
+            } catch (err) {}
         }
 
         function populateAdminStudentKelasSekolahDropdown(selectedVal = '') {
@@ -7087,12 +7163,59 @@
             }
         }
 
-        function openAdminClassSchoolManagerModal() {
+        async function openAdminClassSchoolManagerModal() {
             const modal = document.getElementById('modal-admin-class-school-manager');
             if (!modal) return;
             resetClassSchoolReferenceForm();
             renderAdminClassSchoolManagerTable();
             modal.classList.remove('hidden');
+            
+            // Tarik pembaruan referensi kelas dari cloud Supabase segera dan render ulang jika ada pembaruan
+            try {
+                const cloudData = await fetchAdminKelasSekolahFromCloud();
+                if (cloudData && !modal.classList.contains('hidden')) {
+                    renderAdminClassSchoolManagerTable();
+                }
+            } catch (err) {
+                console.warn("[KELAS_SEKOLAH] fetch on open failed:", err);
+            }
+        }
+
+        async function syncClassSchoolFromCloudManual(btn) {
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+            if (btn) btn.disabled = true;
+
+            try {
+                const cloudList = await fetchAdminKelasSekolahFromCloud();
+                renderAdminClassSchoolManagerTable();
+                populateAdminStudentKelasSekolahFilter();
+                const currentSelected = document.getElementById('admin-student-form-kelas-sekolah')?.value || '';
+                populateAdminStudentKelasSekolahDropdown(currentSelected);
+
+                const totalCount = Array.isArray(cloudList) ? cloudList.length : getAdminKelasSekolah().length;
+                const msg = `Berhasil menyinkronkan ${totalCount} data Kelas & Sekolah dari Cloud Supabase!`;
+                if (typeof showCustomToast === 'function') {
+                    showCustomToast(msg, 'success');
+                } else if (typeof showToast === 'function') {
+                    showToast(msg, 'success');
+                } else {
+                    alert(msg);
+                }
+            } catch (err) {
+                console.error("Gagal sinkron manual:", err);
+                const errMsg = 'Gagal menyinkronkan data dari Cloud: ' + (err.message || err);
+                if (typeof showCustomToast === 'function') {
+                    showCustomToast(errMsg, 'error');
+                } else if (typeof showToast === 'function') {
+                    showToast(errMsg, 'error');
+                } else {
+                    alert(errMsg);
+                }
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+                if (btn) btn.disabled = false;
+            }
         }
 
         function closeAdminClassSchoolManagerModal() {
@@ -7329,6 +7452,8 @@
         window.populateAdminStudentKelasSekolahDropdown = populateAdminStudentKelasSekolahDropdown;
         window.populateAdminStudentKelasSekolahFilter = populateAdminStudentKelasSekolahFilter;
         window.getAdminKelasSekolah = getAdminKelasSekolah;
+        window.fetchAdminKelasSekolahFromCloud = fetchAdminKelasSekolahFromCloud;
+        window.syncClassSchoolFromCloudManual = syncClassSchoolFromCloudManual;
 
         /**
          * Filter data santri secara real-time

@@ -247,38 +247,66 @@ const ASNKiblat = (function () {
 
         isCompassListening = true;
 
-        // Cek izin sensor khusus iOS Safari 13+
-        const isIosDevice = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent || '');
-        if (isIosDevice && typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        // Cek izin sensor khusus iOS Safari (iOS 13 s.d. iOS 18+)
+        const needsIosSensorPermission = typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function";
+        if (needsIosSensorPermission) {
             const btnIos = document.getElementById("btn-qibla-request-sensor");
             if (btnIos) btnIos.classList.remove("hidden");
         }
 
-        // Cek setelah 2 detik jika perangkat tidak memiliki sensor magnetometer
+        // Cek setelah 2.5 detik jika perangkat tidak memiliki sensor magnetometer
         setTimeout(() => {
             const noticeEl = document.getElementById("qibla-sensor-notice");
             if (!hasSensorSupport && noticeEl) {
-                noticeEl.classList.remove("hidden");
+                // Jangan tampilkan notice jika di iOS tombol izin sensor masih menunggu diklik
+                const btnIos = document.getElementById("btn-qibla-request-sensor");
+                const isWaitingIosPermission = btnIos && !btnIos.classList.contains("hidden");
+                if (!isWaitingIosPermission) {
+                    noticeEl.classList.remove("hidden");
+                }
             }
-        }, 2000);
+        }, 2500);
     }
 
-    function requestIosSensorPermission() {
+    function requestIosSensorPermission(onSuccessCallback) {
         if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
             DeviceOrientationEvent.requestPermission()
                 .then(response => {
                     if (response === "granted") {
                         const btnIos = document.getElementById("btn-qibla-request-sensor");
                         if (btnIos) btnIos.classList.add("hidden");
+                        const noticeEl = document.getElementById("qibla-sensor-notice");
+                        if (noticeEl) noticeEl.classList.add("hidden");
+
                         window.addEventListener("deviceorientation", onRelativeOrientationEvent, true);
                         isCompassListening = true;
+                        hasSensorSupport = true;
+                        if (typeof showToast === "function") {
+                            showToast("🧭 Sensor Kompas iPhone berhasil diaktifkan!");
+                        }
+                        if (typeof onSuccessCallback === "function") {
+                            onSuccessCallback();
+                        }
                     } else {
-                        alert("Izin sensor orientasi ditolak. Kompas tidak dapat berputar otomatis.");
+                        alert("Izin sensor orientasi tidak diberikan. Safari memerlukan izin kompas agar jarum berputar otomatis.");
                     }
                 })
                 .catch(err => {
                     console.warn("Gagal meminta izin sensor iOS:", err);
                 });
+        } else if (typeof onSuccessCallback === "function") {
+            onSuccessCallback();
+        }
+    }
+
+    function syncAllSensorAndLocation(interactive = true) {
+        // Pada iOS, ketukan tombol adalah momen ideal (User Gesture) untuk memicu dialog izin Apple
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+            requestIosSensorPermission(() => {
+                requestDeviceLocation(interactive);
+            });
+        } else {
+            requestDeviceLocation(interactive);
         }
     }
 
@@ -469,6 +497,8 @@ const ASNKiblat = (function () {
         requestDeviceLocation: requestDeviceLocation,
         useGpsLocation: () => requestDeviceLocation(true),
         requestIosSensorPermission: requestIosSensorPermission,
+        syncAllSensorAndLocation: syncAllSensorAndLocation,
+        sync: () => syncAllSensorAndLocation(true),
         startCompassListener: startCompassListener,
         stopCompassListener: stopCompassListener,
         getCities: () => CITIES,

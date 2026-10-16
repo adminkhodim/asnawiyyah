@@ -4065,8 +4065,15 @@
                         <span>Jarak lurus ke Masjidil Haram: <strong id="qibla-target-distance-val" class="text-white font-mono">8.333 km</strong></span>
                     </div>
 
+                    <!-- Tombol Khusus Izin Sensor iOS (Muncul otomatis di iPhone/iPad) -->
+                    <button id="btn-qibla-request-sensor" type="button" onclick="ASNKiblat.requestIosSensorPermission()"
+                        class="hidden w-full max-w-sm mx-auto py-3 px-5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs sm:text-sm rounded-2xl shadow-xl transition active:scale-98 flex items-center justify-center gap-2 border border-amber-200 animate-pulse">
+                        <i class="fa-solid fa-compass text-slate-900 text-base"></i>
+                        <span>Izinkan Akses Sensor Kompas iPhone</span>
+                    </button>
+
                     <!-- Tombol Sinkronisasi GPS / Kalibrasi Putih Elegan -->
-                    <button type="button" onclick="ASNKiblat.requestDeviceLocation(true)"
+                    <button type="button" onclick="ASNKiblat.syncAllSensorAndLocation(true)"
                         class="w-full max-w-sm mx-auto py-3 px-5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition active:scale-98 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
                         <span>Sinkronkan Lokasi & Sensor Kompas</span>
@@ -13745,9 +13752,15 @@
                         <p class="text-[11px] text-slate-500 dark:text-slate-400">Referensi pilihan dropdown Kelas & Sekolah Formal pada Data Santri</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAdminClassSchoolManagerModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition active:scale-95" title="Tutup">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="syncClassSchoolFromCloudManual(this)" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Sinkronkan data dari Cloud Supabase">
+                        <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                        <span>Sinkron Cloud</span>
+                    </button>
+                    <button type="button" onclick="closeAdminClassSchoolManagerModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition active:scale-95" title="Tutup">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Modal Body (Scrollable) -->
@@ -13833,10 +13846,13 @@
 
             <!-- Modal Footer -->
             <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between gap-3 shrink-0">
-                <span class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center space-x-1">
-                    <i class="fa-solid fa-circle-info text-indigo-500"></i>
-                    <span class="hidden sm:inline">Pilihan kelas aktif otomatis tersinkron ke form santri & filter pencarian.</span>
-                </span>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="syncClassSchoolFromCloudManual(this)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm active:scale-95" title="Muat ulang dan sinkronkan referensi dari database Cloud Supabase">
+                        <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+                        <span>Muat Ulang dari Cloud</span>
+                    </button>
+                    <span class="text-[11px] text-slate-400 dark:text-slate-500 hidden sm:inline">Tersinkron otomatis antar HP & PC.</span>
+                </div>
                 <button type="button" onclick="closeAdminClassSchoolManagerModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition active:scale-95">
                     Selesai & Tutup
                 </button>
@@ -17907,11 +17923,11 @@
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js?v=73"></script>
     <script src="js/jadwal-sholat.js"></script>
-    <script src="js/kiblat.js"></script>
+    <script src="js/kiblat.js?v=86"></script>
     <script src="js/roles.js?v=66"></script>
-    <script src="js/admin.js?v=69"></script>
+    <script src="js/admin.js?v=86"></script>
     <script src="js/alumni.js?v=66"></script>
-    <script src="js/auth.js?v=66"></script>
+    <script src="js/auth.js?v=86"></script>
     <script src="js/pegawai.js"></script>
     <script src="js/tahfidz.js?v=71"></script>
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
@@ -17924,7 +17940,7 @@
     <script src="js/panduan.js?v=2"></script>
 
     <!-- Main Controller & Navigation -->
-    <script src="js/main.js?v=67"></script>
+    <script src="js/main.js?v=86"></script>
 </body>
 
 </html>
