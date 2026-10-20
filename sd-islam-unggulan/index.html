@@ -152,7 +152,14 @@
                         <span>Web Pesantren</span>
                     </a>
 
-                    <a href="https://wa.me/6282293199456?text=Assalamu%27alaikum%20Panitia%20PPDB%20SDIU%20Asnawiyyah%2C%20saya%20ingin%20konsultasi%20pendaftaran%20siswa%20baru"
+                    <button type="button" onclick="shareSDIU()"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-brand-700 bg-slate-100 hover:bg-slate-200 transition active:scale-95"
+                        title="Bagikan Halaman Ini">
+                        <i class="fa-solid fa-share-nodes text-xs text-brand-700"></i>
+                        <span class="hidden sm:inline">Bagikan</span>
+                    </button>
+
+                    <a href="https://wa.me/6282322998290?text=Assalamu%27alaikum%20Panitia%20PPDB%20SDIU%20Asnawiyyah%2C%20saya%20ingin%20konsultasi%20pendaftaran%20siswa%20baru"
                         target="_blank" rel="noopener noreferrer"
                         class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition active:scale-95">
                         <i class="fa-brands fa-whatsapp text-sm"></i>
@@ -224,7 +231,7 @@
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </a>
 
-                        <a href="https://wa.me/6282293199456?text=Assalamu%27alaikum%20Admin%20SDIU%20Asnawiyyah%2C%20mohon%20informasi%20lengkap%20sekolah%20dan%20pendaftaran"
+                        <a href="https://wa.me/6282322998290?text=Assalamu%27alaikum%20Admin%20SDIU%20Asnawiyyah%2C%20mohon%20informasi%20lengkap%20sekolah%20dan%20pendaftaran"
                             target="_blank" rel="noopener noreferrer"
                             class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm transition text-center active:scale-95 flex items-center justify-center gap-2">
                             <i class="fa-brands fa-whatsapp text-emerald-400 text-base"></i>
@@ -864,10 +871,11 @@
                         <p class="text-xs text-sdiu-100">
                             Isi biodata dari mana saja melalui portal resmi atau konsultasi langsung dengan panitia via WhatsApp.
                         </p>
-                        <a href="https://wa.me/6282293199456?text=Assalamu%27alaikum%20Panitia%20PPDB%2C%20saya%20ingin%20mendaftar%20online%20SDIU%20Asnawiyyah"
+                        <a href="https://wa.me/6282322998290?text=Assalamu%27alaikum%20Panitia%20PPDB%2C%20saya%20ingin%20mendaftar%20online%20SDIU%20Asnawiyyah"
                             target="_blank" rel="noopener noreferrer"
                             class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-white pt-1">
-                            <span>Daftar Lewat Panitia WA</span>
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                            <span>Daftar Lewat Panitia WA (0823-2299-8290)</span>
                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>
                     </div>
@@ -1029,12 +1037,18 @@
             </p>
 
             <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-                <a href="https://wa.me/6282293199456?text=Assalamu%27alaikum%20Panitia%20PPDB%20SDIU%20Asnawiyyah%2C%20saya%20ingin%20mendaftarkan%20putera-puteri%20saya"
+                <a href="https://wa.me/6282322998290?text=Assalamu%27alaikum%20Panitia%20PPDB%20SDIU%20Asnawiyyah%2C%20saya%20ingin%20mendaftarkan%20putera-puteri%20saya"
                     target="_blank" rel="noopener noreferrer"
                     class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-brand-950 font-black text-sm shadow-2xl transition active:scale-95 flex items-center justify-center gap-2">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
                     <span>Daftar / Konsultasi WhatsApp Sekarang</span>
                 </a>
+
+                <button type="button" onclick="shareSDIU()"
+                    class="w-full sm:w-auto px-6 py-4 rounded-2xl bg-emerald-700/80 hover:bg-emerald-600/90 border border-emerald-400/40 text-white font-bold text-sm transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-amber-300"></i>
+                    <span>Bagikan Halaman SDIU</span>
+                </button>
 
                 <a href="/"
                     class="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm transition flex items-center justify-center gap-2">
@@ -1072,9 +1086,17 @@
         </div>
     </footer>
 
-    <!-- ==================== FLOATING WHATSAPP CTA ==================== -->
-    <div class="fixed bottom-5 right-5 z-50">
-        <a href="https://wa.me/6282293199456?text=Assalamu%27alaikum%20Panitia%20PPDB%20SDIU%20Asnawiyyah%2C%20saya%20ingin%20bertanya%20seputar%20pendaftaran%20siswa%20baru"
+    <!-- ==================== FLOATING ACTION BUTTONS (WA & SHARE) ==================== -->
+    <div class="fixed bottom-5 right-5 z-50 flex items-center gap-2">
+        <!-- Floating Share Button -->
+        <button type="button" onclick="shareSDIU()"
+            class="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 bg-white/95 hover:bg-white text-brand-800 rounded-full shadow-2xl hover:shadow-brand-700/30 transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-brand-200 text-sm sm:text-base cursor-pointer"
+            title="Bagikan Halaman SDIU Asnawiyyah" aria-label="Bagikan Halaman SDIU Asnawiyyah">
+            <i class="fa-solid fa-share-nodes"></i>
+        </button>
+
+        <!-- Floating WhatsApp CTA -->
+        <a href="https://wa.me/6282322998290?text=Assalamu%27alaikum%20Panitia%20PPDB%20SDIU%20Asnawiyyah%2C%20saya%20ingin%20bertanya%20seputar%20pendaftaran%20siswa%20baru"
             target="_blank" rel="noopener noreferrer"
             class="flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-3 rounded-full shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-white/30 text-xs sm:text-sm">
             <i class="fa-brands fa-whatsapp text-lg sm:text-xl"></i>
@@ -1083,6 +1105,192 @@
         </a>
     </div>
 
+    <!-- ==================== MODAL SHARE ==================== -->
+    <div id="shareModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300" onclick="handleShareBackdrop(event)">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 transform scale-95 transition-transform duration-300 space-y-5" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">Bagikan SDIU Asnawiyyah</h3>
+                        <p class="text-xs text-slate-500">Sebarkan informasi kebaikan pendidikan Qur'ani</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeShareModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" aria-label="Tutup">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Pilih media sosial atau salin tautan berikut untuk membagikan info pendaftaran dan profil SD Islam Unggulan Asnawiyyah:
+            </p>
+
+            <!-- Social Share Grid -->
+            <div class="grid grid-cols-4 gap-2.5 text-center">
+                <a id="shareWaBtn" href="#" target="_blank" rel="noopener noreferrer"
+                    class="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition group">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg group-hover:scale-110 transition shadow-sm">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-emerald-950">WhatsApp</span>
+                </a>
+
+                <a id="shareFbBtn" href="#" target="_blank" rel="noopener noreferrer"
+                    class="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition group">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg group-hover:scale-110 transition shadow-sm">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-blue-950">Facebook</span>
+                </a>
+
+                <a id="shareTgBtn" href="#" target="_blank" rel="noopener noreferrer"
+                    class="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 border border-sky-200/60 transition group">
+                    <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center text-lg group-hover:scale-110 transition shadow-sm">
+                        <i class="fa-brands fa-telegram"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-sky-950">Telegram</span>
+                </a>
+
+                <a id="shareTwBtn" href="#" target="_blank" rel="noopener noreferrer"
+                    class="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-300/60 transition group">
+                    <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-lg group-hover:scale-110 transition shadow-sm">
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-950">X (Twitter)</span>
+                </a>
+            </div>
+
+            <!-- Copy Link Box -->
+            <div class="space-y-1.5 pt-1">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tautan Halaman</label>
+                <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200">
+                    <input type="text" id="shareUrlInput" readonly
+                        class="w-full bg-transparent border-0 px-2.5 text-xs text-slate-700 font-medium focus:ring-0 select-all outline-none"
+                        value="https://www.asnawiyyah.or.id/sd-islam-unggulan/">
+                    <button type="button" onclick="copyShareLink()"
+                        class="px-3.5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs transition shrink-0 active:scale-95 flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy text-xs"></i>
+                        <span>Salin</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="shareToast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 hidden bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold items-center gap-2.5 backdrop-blur-md transition-all duration-300">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="shareToastMessage">Tautan berhasil disalin ke clipboard!</span>
+    </div>
+
+    <!-- ==================== SCRIPT HANDLERS ==================== -->
+    <script>
+        const SHARE_TITLE = "SD Islam Unggulan Asnawiyyah - Berbasis Al-Qur'an 30 Juz & Modern";
+        const SHARE_TEXT = "Yuk kenali SD Islam Unggulan (SDIU) Asnawiyyah Pilangwetan Kebonagung Demak. Integrasi pendidikan Al-Qur'an, tahfidz 30 juz, metode Qiroati, akademik unggul, dan coding dasar!";
+        const SHARE_URL = window.location.origin ? (window.location.origin + "/sd-islam-unggulan/") : "https://www.asnawiyyah.or.id/sd-islam-unggulan/";
+
+        function setupShareLinks() {
+            const urlInput = document.getElementById('shareUrlInput');
+            if (urlInput) urlInput.value = SHARE_URL;
+
+            const waBtn = document.getElementById('shareWaBtn');
+            if (waBtn) waBtn.href = "https://api.whatsapp.com/send?text=" + encodeURIComponent(SHARE_TEXT + "\n\nSelengkapnya: " + SHARE_URL);
+
+            const fbBtn = document.getElementById('shareFbBtn');
+            if (fbBtn) fbBtn.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SHARE_URL);
+
+            const tgBtn = document.getElementById('shareTgBtn');
+            if (tgBtn) tgBtn.href = "https://t.me/share/url?url=" + encodeURIComponent(SHARE_URL) + "&text=" + encodeURIComponent(SHARE_TEXT);
+
+            const twBtn = document.getElementById('shareTwBtn');
+            if (twBtn) twBtn.href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(SHARE_TEXT) + "&url=" + encodeURIComponent(SHARE_URL);
+        }
+
+        async function shareSDIU() {
+            setupShareLinks();
+            if (navigator.share && /mobile|android|iphone|ipad|tablet/i.test(navigator.userAgent)) {
+                try {
+                    await navigator.share({
+                        title: SHARE_TITLE,
+                        text: SHARE_TEXT,
+                        url: SHARE_URL
+                    });
+                    return;
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        openShareModal();
+                    }
+                    return;
+                }
+            }
+            openShareModal();
+        }
+
+        function openShareModal() {
+            setupShareLinks();
+            const modal = document.getElementById('shareModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                const card = modal.querySelector('div');
+                if (card) card.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            const card = modal.querySelector('div');
+            if (card) card.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 250);
+        }
+
+        function handleShareBackdrop(e) {
+            if (e.target.id === 'shareModal') {
+                closeShareModal();
+            }
+        }
+
+        async function copyShareLink() {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(SHARE_URL);
+                } else {
+                    const input = document.getElementById('shareUrlInput');
+                    input.select();
+                    input.setSelectionRange(0, 99999);
+                    document.execCommand('copy');
+                }
+                showToast("Tautan berhasil disalin ke clipboard!");
+            } catch (e) {
+                showToast("Gagal menyalin tautan otomatis, silakan salin manual.");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('shareToast');
+            const toastMsg = document.getElementById('shareToastMessage');
+            if (!toast) return;
+            if (toastMsg) toastMsg.textContent = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', setupShareLinks);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeShareModal();
+        });
+    </script>
 </body>
 
 </html>
