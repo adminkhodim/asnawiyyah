@@ -32,7 +32,7 @@
             };
 
             try {
-                if (action === "getSettings" || action === "getPengaturan") {
+                if (action === "getSettings") {
                     const settingKey = params.key;
                     let url = `${sbUrl}/rest/v1/pengaturan?select=*`;
                     if (settingKey) url += `&key=eq.${encodeURIComponent(settingKey)}`;
@@ -1834,11 +1834,12 @@
             ].includes(action);
 
             const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
+            const isSettingsWrite = action === 'savePengaturan';
 
             // Catatan: Untuk pembuatan berita baru (saveBerita), tunggu respons resmi Google Apps Script
             // agar news_id dan slug di Supabase dijamin 100% identik dengan baris di Google Sheets.
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite) {
+            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite || isSettingsWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -2402,6 +2403,31 @@
                         });
                     } catch (curErr) {
                         console.warn('[SUPABASE TAHFIDZ CURRICULUM SYNC WARN]', curErr);
+                    }
+                }
+                else if (action === 'savePengaturan') {
+                    const d = payload.payload || payload.data || payload;
+                    const keys = ['sejarah', 'visi_misi', 'struktur_kepengurusan', 'video_highlight', 'link_instagram', 'link_youtube', 'link_facebook'];
+                    for (const k of keys) {
+                        if (d[k] !== undefined) {
+                            const val = typeof d[k] === 'object' ? JSON.stringify(d[k]) : String(d[k]);
+                            try {
+                                await fetch(`${sbUrl}/rest/v1/pengaturan?on_conflict=key`, {
+                                    method: 'POST',
+                                    headers: {
+                                        ...headers,
+                                        'Prefer': 'resolution=merge-duplicates'
+                                    },
+                                    body: JSON.stringify({
+                                        key: k,
+                                        value: val,
+                                        updated_at: new Date().toISOString()
+                                    })
+                                });
+                            } catch (pErr) {
+                                console.warn('[SUPABASE PENGATURAN SYNC WARN]', k, pErr);
+                            }
+                        }
                     }
                 }
 

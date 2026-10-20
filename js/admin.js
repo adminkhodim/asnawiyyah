@@ -1281,7 +1281,12 @@
             try {
                 const data = await apiGet("getPengaturan");
                 if (data && data.status === "success" && data.data) {
-                    const config = data.data;
+                    let config = data.data;
+                    if (Array.isArray(config)) {
+                        const dict = {};
+                        config.forEach(r => { if (r && r.key) dict[r.key] = r.value; });
+                        config = dict;
+                    }
                     window.APP_CONFIG.sejarah = config.sejarah || "";
                     window.APP_CONFIG.visi_misi = config.visi_misi || "";
                     window.APP_CONFIG.struktur_kepengurusan = config.struktur_kepengurusan || "";
@@ -1300,13 +1305,13 @@
 
             if (containerSejarah) {
                 const textSejarah = window.APP_CONFIG.sejarah || "Sejarah belum ditambahkan.";
-                const pTags = textSejarah.split('\n').filter(t => t.trim() !== '').map(p => `<p>${p}</p>`).join('');
+                const pTags = textSejarah.split('\n').filter(t => t.trim() !== '').map(p => `<p class="leading-relaxed mb-3 last:mb-0">${p}</p>`).join('');
                 containerSejarah.innerHTML = pTags;
             }
 
             if (containerVisiMisi) {
                 const textVisiMisi = window.APP_CONFIG.visi_misi || "Visi misi belum ditambahkan.";
-                const pTags = textVisiMisi.split('\n').filter(t => t.trim() !== '').map(p => `<p>${p}</p>`).join('');
+                const pTags = textVisiMisi.split('\n').filter(t => t.trim() !== '').map(p => `<p class="leading-relaxed mb-3 last:mb-0">${p}</p>`).join('');
                 containerVisiMisi.innerHTML = `
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-10 h-10 rounded-xl bg-white dark:bg-[#1c2836] border border-slate-100 dark:border-[#253447] flex items-center justify-center text-brand-600 dark:text-emerald-400 shadow-sm">
@@ -1333,11 +1338,12 @@
                     containerPengurus.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 dark:text-slate-500 italic py-4">Data kepengurusan belum ditambahkan.</p>`;
                 } else {
                     struct.forEach(p => {
-                        const imgSrc = p.foto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.nama || 'P') + '&background=e0e7ff&color=4f46e5';
+                        const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.nama || 'P') + '&background=047857&color=ffffff&bold=true';
+                        const imgSrc = p.foto || fallbackAvatar;
                         containerPengurus.innerHTML += `
                             <div class="bg-slate-50 dark:bg-[#1c2836] rounded-3xl overflow-hidden border border-slate-100 dark:border-[#253447] p-4 text-center space-y-3 flex flex-col items-center hover:shadow-md transition">
                                 <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-brand-600 shadow-sm shrink-0 bg-white dark:bg-[#15202d]">
-                                    <img src="${imgSrc}" alt="${p.nama}" class="w-full h-full object-cover">
+                                    <img src="${imgSrc}" alt="${p.nama}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallbackAvatar}'">
                                 </div>
                                 <div>
                                     <span class="bg-brand-100 dark:bg-emerald-950/40 text-brand-800 dark:text-emerald-300 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">${p.jabatan || 'Pengurus'}</span>
@@ -1349,6 +1355,9 @@
                 }
             }
         }
+
+        window.loadPublicProfilLembaga = loadPublicProfilLembaga;
+        window.renderPublicProfilLembaga = renderPublicProfilLembaga;
 
         // ==================== DASHBOARD ADMIN: PROFIL LEMBAGA ====================
         let adminPengurusList = [];
@@ -1730,7 +1739,12 @@
 
                 const data = await apiGet("getPengaturan");
                 if (data && data.status === "success" && data.data) {
-                    const config = data.data;
+                    let config = data.data;
+                    if (Array.isArray(config)) {
+                        const dict = {};
+                        config.forEach(r => { if (r && r.key) dict[r.key] = r.value; });
+                        config = dict;
+                    }
                     const sejarahInput = document.getElementById('input-profil-sejarah');
                     const visiMisiInput = document.getElementById('input-profil-visimisi');
                     if (sejarahInput) sejarahInput.value = config.sejarah || "";
@@ -1827,7 +1841,12 @@
                 const data = await apiGet("getPengaturan");
 
                 if (data && data.status === "success" && data.data) {
-                    const config = data.data;
+                    let config = data.data;
+                    if (Array.isArray(config)) {
+                        const dict = {};
+                        config.forEach(r => { if (r && r.key) dict[r.key] = r.value; });
+                        config = dict;
+                    }
                     document.getElementById('input-video-highlight').value = config.video_highlight || "";
                     document.getElementById('input-link-instagram').value = config.link_instagram || "";
                     document.getElementById('input-link-youtube').value = config.link_youtube || "";
@@ -1884,7 +1903,12 @@
                 const data = await apiGet("getPengaturan");
 
                 if (data && data.status === "success" && data.data) {
-                    const config = data.data;
+                    let config = data.data;
+                    if (Array.isArray(config)) {
+                        const dict = {};
+                        config.forEach(r => { if (r && r.key) dict[r.key] = r.value; });
+                        config = dict;
+                    }
 
                     // Update iframe video highlight dengan URL embed resmi
                     const iframeVideo = document.getElementById('highlight-video-iframe') || document.querySelector('iframe[title="Video Dokumentasi PPTQ Asnawiyyah"]');

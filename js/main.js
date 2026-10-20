@@ -48,6 +48,9 @@
             loadNews();
             loadGaleri();
             loadPengaturan();
+            if (typeof loadPublicProfilLembaga === 'function') {
+                loadPublicProfilLembaga();
+            }
             loadUnitKegiatan();
             if (typeof loadJadwalKegiatan === 'function') {
                 loadJadwalKegiatan();
