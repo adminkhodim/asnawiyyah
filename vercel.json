@@ -10,6 +10,14 @@
       "destination": "/index.html"
     },
     {
+      "source": "/sd-islam-unggulan",
+      "destination": "/sd-islam-unggulan/index.html"
+    },
+    {
+      "source": "/sd-islam-unggulan/",
+      "destination": "/sd-islam-unggulan/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

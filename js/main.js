@@ -118,8 +118,9 @@
                 switchTab('struktur-kepengurusan', false);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
-            } else if (path === '/pendidikan/sd-islam-unggulan') {
-                switchTab('sd-islam', false);
+            } else if (path === '/pendidikan/sd-islam-unggulan' || path === '/sd-islam-unggulan' || path === '/sd-islam-unggulan/') {
+                window.location.href = '/sd-islam-unggulan/';
+                return;
             } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
                 switchTab('tahfidz-anak', false);
             } else if (path === '/pendidikan/pesantren-dewasa-putra') {
@@ -238,8 +239,9 @@
                 switchTab('struktur-kepengurusan', false);
             } else if (path === '/pendidikan/semua-program-pilihan') {
                 switchTab('program-pilihan', false);
-            } else if (path === '/pendidikan/sd-islam-unggulan') {
-                switchTab('sd-islam', false);
+            } else if (path === '/pendidikan/sd-islam-unggulan' || path === '/sd-islam-unggulan' || path === '/sd-islam-unggulan/') {
+                window.location.href = '/sd-islam-unggulan/';
+                return;
             } else if (path === '/pendidikan/pesantren-tahfidz-anak') {
                 switchTab('tahfidz-anak', false);
             } else if (path === '/pendidikan/pesantren-dewasa-putra') {
@@ -355,6 +357,12 @@
             // Pada mobile, navigasi ke tab 'pengaturan' tidak memodifikasi URL browser (tetap di URL saat ini / bersih tanpa /pengaturan)
             if (tabId === 'pengaturan' && window.innerWidth < 1024) {
                 updateUrl = false;
+            }
+
+            // Jika membuka SD Islam Unggulan, alihkan langsung ke dedicated landing page
+            if (tabId === 'sd-islam') {
+                window.location.href = '/sd-islam-unggulan/';
+                return;
             }
 
             if (updateUrl) {
