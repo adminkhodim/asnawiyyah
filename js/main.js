@@ -1128,10 +1128,12 @@
 
         // ---------- TOMBOL SHARE BERITA (WHATSAPP, FACEBOOK, SALIN TAUTAN) ----------
         function getNewsShareUrl() {
+            const isLocal = !window.location.origin || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+            const baseOrigin = isLocal ? 'https://asnawiyyah.or.id' : window.location.origin;
             if (currentActiveNews && currentActiveNews.slug) {
-                return `${window.location.origin}/berita/${currentActiveNews.slug}`;
+                return `${baseOrigin}/berita/${currentActiveNews.slug}`;
             }
-            return window.location.href;
+            return isLocal ? 'https://asnawiyyah.or.id' : window.location.href;
         }
 
         function shareNewsViaWhatsApp() {
