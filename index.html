@@ -1543,39 +1543,32 @@
         <!-- ==================== TABS BARU: KALENDER INDONESIA & JAWA ==================== -->
         <div id="page-kalender" class="tab-content hidden space-y-3 sm:space-y-4">
 
-            <!-- BANNER SINKRONISASI KE GOOGLE CALENDAR & HP -->
-            <div class="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 dark:from-emerald-950 dark:via-[#1c2e3d] dark:to-emerald-950 text-white p-3.5 sm:p-4 rounded-2xl md:rounded-3xl shadow-sm border border-emerald-600/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="space-y-0.5 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-300">Sinkronisasi Kalender Digital</span>
-                    </div>
-                    <h3 class="text-xs sm:text-sm font-bold text-white">Hubungkan Agenda Pesantren ke Google Calendar HP</h3>
-                    <p class="text-[10.5px] text-emerald-100/80 leading-snug">Agenda santri, jadwal perpulangan & hari besar otomatis tersinkron dan berbunyi alarm di HP Anda.</p>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+            <!-- ACTION BAR SINKRONISASI KALENDER (1 BARIS RAPI) -->
+            <div class="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 dark:from-emerald-950 dark:via-[#1c2e3d] dark:to-emerald-950 p-2 rounded-2xl md:rounded-3xl shadow-xs border border-emerald-600/30">
+                <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
                     <button type="button" onclick="openModalPengingatPribadi()"
-                        class="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                        class="py-2 px-1 sm:px-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs active:scale-95 truncate"
                         title="Buat Pengingat Pribadi Saya ke Google Calendar">
-                        <i class="fa-solid fa-bell text-xs"></i>
-                        <span>+ Buat Pengingat Pribadi</span>
+                        <i class="fa-solid fa-bell text-xs shrink-0"></i>
+                        <span class="truncate">+ Pengingat<span class="hidden md:inline"> Pribadi</span></span>
                     </button>
                     <button type="button" onclick="subscribeToGoogleCalendar()"
-                        class="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                        class="py-2 px-1 sm:px-2 bg-white hover:bg-emerald-50 text-emerald-950 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs active:scale-95 truncate"
                         title="Langganan ke Google Calendar">
-                        <i class="fa-brands fa-google text-xs text-amber-500"></i>
-                        <span>Google Calendar</span>
+                        <i class="fa-brands fa-google text-xs text-amber-500 shrink-0"></i>
+                        <span class="truncate">Google<span class="hidden sm:inline"> Calendar</span><span class="sm:hidden"> Cal</span></span>
                     </button>
                     <button type="button" onclick="subscribeToAppleCalendar()"
-                        class="px-2.5 py-1.5 bg-emerald-700/60 hover:bg-emerald-600/70 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-white/10 active:scale-95"
+                        class="py-2 px-1 sm:px-2 bg-emerald-700/60 hover:bg-emerald-600/70 text-white rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 border border-white/10 active:scale-95 truncate"
                         title="Apple Calendar (iPhone/iPad) / Outlook">
-                        <i class="fa-brands fa-apple text-xs"></i>
-                        <span class="hidden sm:inline">Apple/HP</span>
+                        <i class="fa-brands fa-apple text-xs shrink-0"></i>
+                        <span class="truncate">Apple / HP</span>
                     </button>
                     <button type="button" onclick="downloadIcalFile()"
-                        class="w-7 h-7 bg-white/10 hover:bg-white/20 text-white rounded-xl flex items-center justify-center transition active:scale-95"
-                        title="Unduh Berkas .ICS">
-                        <i class="fa-solid fa-download text-[11px]"></i>
+                        class="py-2 px-1 sm:px-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 border border-white/10 active:scale-95 truncate"
+                        title="Unduh Berkas Kalender .ICS">
+                        <i class="fa-solid fa-download text-xs shrink-0"></i>
+                        <span class="truncate"><span class="hidden sm:inline">Unduh </span>.ICS</span>
                     </button>
                 </div>
             </div>
