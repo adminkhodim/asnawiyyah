@@ -4429,7 +4429,7 @@
                 </div>
 
                 <!-- 7. MANAQIB SYEKH ABDUL QADIR -->
-                <div onclick="openWiridCategoryModal('manaqib')" data-tags="manaqib semua"
+                <div onclick="openManaqibPage()" data-tags="manaqib semua"
                     class="wirid-card group p-4 sm:p-5 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-200/80 dark:border-[#253447] shadow-sm hover:shadow-lg hover:border-rose-500/50 dark:hover:border-rose-500/50 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="flex items-start justify-between">
@@ -4446,15 +4446,15 @@
                                 </div>
                             </div>
                             <span class="text-[10px] font-extrabold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full uppercase border border-rose-100 dark:border-rose-900/50">
-                                9 Bacaan
+                                9 Bab Lengkap
                             </span>
                         </div>
                         <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                            Kitab Manaqib Jawahirul Ma'ani Sulthanul Auliya' Syekh Abdul Qadir Al-Jailani: riwayat, karomah, fashl dan doa manaqib.
+                            Kitab Al-Lujain Ad-Dani fi Manaqib Syekh Abdul Qadir Al-Jailani: teks Arab murni 9 bab bersumber resmi dari NU Online.
                         </p>
                     </div>
                     <div class="mt-4 pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between text-xs font-semibold text-rose-600 dark:text-rose-400">
-                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-regular fa-folder-open"></i> Buka Daftar Isi</span>
+                        <span class="text-[11px] flex items-center gap-1.5"><i class="fa-solid fa-book-open"></i> Buka Halaman Bacaan</span>
                         <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
@@ -4518,6 +4518,174 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- ==================== TAB: MANAQIB SYEKH ABDUL QADIR AL-JAILANI (HALAMAN PENUH) ==================== -->
+        <div id="page-manaqib" class="tab-content hidden space-y-4 px-3 sm:px-4 md:px-8 py-3 md:py-6 max-w-5xl mx-auto">
+            <!-- Header Navigasi -->
+            <div class="flex items-center justify-between bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447]">
+                <button type="button" onclick="switchTab('wirid-hub')"
+                    class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 transition active:scale-95">
+                    <div class="w-8 h-8 bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-300 rounded-lg flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                    </div>
+                    <span>Kembali ke Wirid</span>
+                </button>
+                <div class="text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                        <span class="text-[9px] font-extrabold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                            Amaliah Nahdliyin
+                        </span>
+                        <span class="text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                            Teks Arab Lengkap
+                        </span>
+                    </div>
+                    <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 mt-1">
+                        Manaqib Syekh Abdul Qadir
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Hero Banner Bernuansa Islami Premium -->
+            <section class="relative bg-gradient-to-r from-rose-950 via-slate-900 to-rose-900 text-white p-5 md:p-6 rounded-2xl overflow-hidden shadow-sm border border-rose-900/40">
+                <div class="absolute -right-6 -bottom-8 text-white/5 text-9xl pointer-events-none select-none">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                </div>
+                <div class="relative z-10 space-y-2 max-w-2xl">
+                    <div class="flex items-center flex-wrap gap-2">
+                        <span class="bg-rose-500/30 border border-rose-400/40 text-rose-200 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-book-open text-[8px]"></i> Referensi: NU Online
+                        </span>
+                        <span class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[9px] font-semibold px-2 py-0.5 rounded-full">
+                            Kitab Al-Lujain Ad-Dani
+                        </span>
+                        <span class="bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[9px] font-semibold px-2 py-0.5 rounded-full">
+                            9 Bab / Fashl
+                        </span>
+                    </div>
+                    <h1 class="text-lg md:text-2xl font-bold tracking-tight text-white">
+                        Kitab Manaqib Jawahirul Ma'ani
+                    </h1>
+                    <p class="text-xs sm:text-sm text-rose-100/90 font-arabic leading-relaxed" dir="rtl">
+                        مَنَاقِبُ سُلْطَانِ الْأَوْلِيَاءِ سَيِّدِنَا الشَّيْخِ عَبْدِ الْقَادِرِ الْجَيْلَانِيِّ رَضِيَ اللهُ عَنْهُ
+                    </p>
+                    <p class="text-[11px] md:text-xs text-rose-200/80 leading-relaxed">
+                        Riwayat hidup, ketinggian nasab, akhlak mulia, karamah, doa manaqib, dan qasidah tawassul. Ditampilkan khusus teks Arab murni berharakat lengkap untuk kelancaran pembacaan majelis.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Sticky / Handy Reading Toolbar (Pilih Bab & Zoom Font Arab) -->
+            <div id="manaqib-reading-area" class="sticky top-2 z-30 space-y-2.5 bg-white/95 dark:bg-[#15202d]/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-md border border-slate-200/80 dark:border-[#253447]">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <!-- Dropdown Pemilih Bab -->
+                    <div class="flex-1 min-w-[200px]">
+                        <label for="manaqib-bab-select" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                            Pilih Bab / Fashl Manaqib:
+                        </label>
+                        <div class="relative">
+                            <select id="manaqib-bab-select" onchange="filterManaqibBab(this.value)"
+                                class="w-full appearance-none pl-3 pr-8 py-2 text-xs font-semibold bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition">
+                                <option value="all">📖 Semua Bab (Tampilkan Lengkap 1 - 9)</option>
+                                <option value="1">Bab 1: Khutbah Kitab & Silsilah Nasab Syarif</option>
+                                <option value="2">Bab 2: Kelahiran di Jilan & Menuntut Ilmu di Baghdad</option>
+                                <option value="3">Bab 3: Riyadhah & Berjumpa Nabi Khidir AS</option>
+                                <option value="4">Bab 4: Pakaian, Majelis & Nasihat Beliau</option>
+                                <option value="5">Bab 5: Ketinggian Akhlak & Kasih Sayang Kaum Lemah</option>
+                                <option value="6">Bab 6: Karamah-Karamah Sulthanul Auliya'</option>
+                                <option value="7">Bab 7: Derajat Kewalian & Qadamiy Hadzihi</option>
+                                <option value="8">Bab 8: Doa Penutup Manaqib Syekh Abdul Qadir</option>
+                                <option value="9">Bab 9: Qasidah Tawassul 'Ibadallah Rijalallah</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar Ukuran Font Arab -->
+                    <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0">
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:inline">
+                            Ukuran Font Arab:
+                        </span>
+                        <div class="flex items-center bg-slate-100 dark:bg-[#1c2836] p-1 rounded-xl border border-slate-200/80 dark:border-[#253447]">
+                            <button type="button" onclick="adjustManaqibFontSize(-2)" title="Perkecil Font"
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-extrabold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-[#15202d] hover:text-rose-600 transition active:scale-95 shadow-none hover:shadow-sm">
+                                A-
+                            </button>
+                            <span id="manaqib-font-size-indicator" onclick="resetManaqibFontSize()" title="Klik untuk Reset (24px)"
+                                class="px-2.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:text-rose-600 transition select-none">
+                                24px
+                            </span>
+                            <button type="button" onclick="adjustManaqibFontSize(2)" title="Perbesar Font"
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-extrabold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-[#15202d] hover:text-rose-600 transition active:scale-95 shadow-none hover:shadow-sm">
+                                A+
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chips Navigasi Cepat Bab Manaqib (Scrollable Horizontal) -->
+                <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pt-1 pb-0.5 text-xs">
+                    <button type="button" data-bab="all" onclick="filterManaqibBab('all')"
+                        class="manaqib-pill-btn active px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-rose-600 text-white shadow-sm transition active:scale-95">
+                        Semua
+                    </button>
+                    <button type="button" data-bab="1" onclick="filterManaqibBab('1')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 1
+                    </button>
+                    <button type="button" data-bab="2" onclick="filterManaqibBab('2')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 2
+                    </button>
+                    <button type="button" data-bab="3" onclick="filterManaqibBab('3')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 3
+                    </button>
+                    <button type="button" data-bab="4" onclick="filterManaqibBab('4')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 4
+                    </button>
+                    <button type="button" data-bab="5" onclick="filterManaqibBab('5')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 5
+                    </button>
+                    <button type="button" data-bab="6" onclick="filterManaqibBab('6')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 6
+                    </button>
+                    <button type="button" data-bab="7" onclick="filterManaqibBab('7')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Bab 7
+                    </button>
+                    <button type="button" data-bab="8" onclick="filterManaqibBab('8')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Doa Manaqib
+                    </button>
+                    <button type="button" data-bab="9" onclick="filterManaqibBab('9')"
+                        class="manaqib-pill-btn px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 dark:bg-[#1c2836] text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 transition active:scale-95">
+                        Qasidah
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kontainer Konten Teks Arab Manaqib Dinamis -->
+            <div id="manaqib-content-container" class="space-y-6 pt-2">
+                <!-- Teks Arab dimuat dinamis dari data-manaqib.js -->
+            </div>
+
+            <!-- Tombol Kembali ke Atas & Navigasi Bawah -->
+            <div class="pt-6 pb-12 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200/80 dark:border-[#253447]">
+                <button type="button" onclick="switchTab('wirid-hub')"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#1c2836] hover:bg-slate-200 dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 text-xs font-bold transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                    <span>Kembali ke Kumpulan Wirid</span>
+                </button>
+                <button type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-bold transition active:scale-95 flex items-center justify-center gap-2 border border-rose-200/60 dark:border-rose-900/40">
+                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                    <span>Kembali ke Atas</span>
+                </button>
+            </div>
         </div>
 
         <!-- ==================== MODAL DAFTAR ISI WIRID DETAIL ==================== -->
@@ -18108,6 +18276,7 @@
     <script src="data-maulid-dibai.js"></script>
     <script src="data-qasidah-burdah.js"></script>
     <script src="data-tahlil-yasin.js"></script>
+    <script src="data-manaqib.js"></script>
     <script src="js/api.js?v=71"></script>
     <script src="js/db-adapter.js?v=60"></script>
     <script src="js/data-programs.js"></script>
@@ -18116,6 +18285,7 @@
     <script src="js/programs.js"></script>
     <script src="js/ppdb.js"></script>
     <script src="js/ibadah.js?v=73"></script>
+    <script src="js/manaqib.js?v=1"></script>
     <script src="js/jadwal-sholat.js"></script>
     <script src="js/kiblat.js?v=86"></script>
     <script src="js/roles.js?v=66"></script>

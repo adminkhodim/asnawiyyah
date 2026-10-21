@@ -1933,6 +1933,12 @@
         }
 
         function openWiridCategoryModal(catKey) {
+            if (catKey === 'manaqib') {
+                if (typeof openManaqibPage === 'function') {
+                    openManaqibPage();
+                    return;
+                }
+            }
             const cat = ASNWiridData[catKey];
             if (!cat) return;
 

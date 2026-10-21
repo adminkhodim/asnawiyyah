@@ -201,6 +201,9 @@
             } else if (path === '/layanan/portal-ibadah/jadwal-sholat') {
                 if (typeof openJadwalSholatPage === 'function') openJadwalSholatPage();
                 else switchTab('jadwal-sholat', false);
+            } else if (path === '/layanan/portal-ibadah/wirid/manaqib' || path === '/wirid/manaqib' || path === '/manaqib') {
+                if (typeof openManaqibPage === 'function') openManaqibPage(false);
+                else switchTab('manaqib', false);
             } else if (path === '/layanan/portal-ibadah/wirid') {
                 if (typeof openWiridPage === 'function') openWiridPage(false);
                 else switchTab('wirid-hub', false);
@@ -291,6 +294,9 @@
             } else if (path === '/layanan/portal-ibadah/jadwal-sholat') {
                 if (typeof openJadwalSholatPage === 'function') openJadwalSholatPage();
                 else switchTab('jadwal-sholat', false);
+            } else if (path === '/layanan/portal-ibadah/wirid/manaqib' || path === '/wirid/manaqib' || path === '/manaqib') {
+                if (typeof openManaqibPage === 'function') openManaqibPage(false);
+                else switchTab('manaqib', false);
             } else if (path === '/layanan/portal-ibadah/wirid') {
                 if (typeof openWiridPage === 'function') openWiridPage(false);
                 else switchTab('wirid-hub', false);
@@ -400,6 +406,7 @@
                 else if (tabId === 'jadwal-sholat') targetUrl = '/layanan/portal-ibadah/jadwal-sholat/';
                 else if (tabId === 'kompas-kiblat') targetUrl = '/layanan/portal-ibadah/arah-kiblat/';
                 else if (tabId === 'wirid-hub') targetUrl = '/layanan/portal-ibadah/wirid/';
+                else if (tabId === 'manaqib') targetUrl = '/layanan/portal-ibadah/wirid/manaqib';
                 else if (tabId === 'doa-hub') targetUrl = '/layanan/portal-ibadah/doa/';
                 else if (tabId === 'tutorial-ibadah-hub') targetUrl = '/layanan/portal-ibadah/tutorial-ibadah/';
 
@@ -412,7 +419,7 @@
                     tabId === 'quran-index' || tabId === 'quran-detail' || tabId === 'quran-page' ||
                     tabId === 'maulid-hub' || tabId === 'maulid-index' || tabId === 'maulid-detail' ||
                     tabId === 'burdah-index' || tabId === 'tahlil-yasin' || tabId === 'jadwal-sholat' || tabId === 'kompas-kiblat' ||
-                    tabId === 'wirid-hub' || tabId === 'doa-hub' || tabId === 'tutorial-ibadah-hub' ||
+                    tabId === 'wirid-hub' || tabId === 'manaqib' || tabId === 'doa-hub' || tabId === 'tutorial-ibadah-hub' ||
                     tabId === 'beranda')) {
                     history.pushState({ tab: tabId }, '', targetUrl);
                 }
