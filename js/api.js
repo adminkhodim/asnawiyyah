@@ -1871,8 +1871,8 @@
             if (supabaseWritePromise) {
                 await supabaseWritePromise;
             }
-            // Untuk berita baru, sinkronkan ke Supabase membawa news_id, slug, & drive url resmi dari Apps Script
-            if (isNewNewsCreate && result && (result.success || result.status === "success")) {
+            // Untuk berita (baik baru maupun perbarui), selalu sinkronkan ulang ke Supabase membawa data resmi (news_id, slug, & drive url resmi) dari Apps Script
+            if (isNewsWrite && result && (result.success || result.status === "success")) {
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             } else if (!supabaseWritePromise && result && (result.success || result.status === "success")) {
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
@@ -2448,6 +2448,14 @@
                     }
 
                     let imgUrl = (response && (response.url || response.gambar_url || response.fileUrl)) || respData.url || fileBase64 || d.gambar || d.gambar_url || d.gambarLama || '';
+
+                    // Normalisasi Google Drive link jika ada
+                    if (imgUrl && (imgUrl.includes('drive.google.com') || imgUrl.includes('googleusercontent.com') || imgUrl.includes('docs.google.com'))) {
+                        const driveMatch = imgUrl.match(/(?:id=|d\/|open\?id=)([a-zA-Z0-9_-]{25,})/);
+                        if (driveMatch && driveMatch[1]) {
+                            imgUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+                        }
+                    }
                     
                     if (!imgUrl || imgUrl.includes('photo-1584286595398-a59f21d313f5')) {
                         imgUrl = 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=1200&auto=format&fit=crop';

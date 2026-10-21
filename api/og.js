@@ -16,28 +16,42 @@ function escapeHtml(str) {
 }
 
 function resolveImageUrl(newsItem) {
-    if (!newsItem) return 'https://asnawiyyah.or.id/assets/img/og-banner.jpg';
+    const DEFAULT_BANNER = 'https://asnawiyyah.or.id/assets/img/og-banner.jpg';
+    if (!newsItem) return DEFAULT_BANNER;
 
     // Periksa semua kemungkinan nama properti gambar di Supabase, GAS, dan form input
     let raw = newsItem.gambar_url || newsItem.foto_url || newsItem.gambar || newsItem.Gambar_URL || newsItem.image || newsItem.thumbnail || '';
     if (typeof raw === 'string') raw = raw.trim();
 
+    // WhatsApp dan Open Graph TIDAK mendukung data:image/ base64 sebagai og:image.
+    // Jika berupa base64, buang agar mencari alternatif gambar URL atau fallback resmi.
+    if (raw.startsWith('data:')) {
+        raw = '';
+    }
+
     // Jika kosong atau gambar placeholder default unsplash, coba cari dari tag <img> di dalam isi berita
     if ((!raw || raw.includes('photo-1584286595398-a59f21d313f5')) && newsItem.isi) {
         const match = String(newsItem.isi).match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (match && match[1] && !match[1].includes('photo-1584286595398-a59f21d313f5')) {
-            raw = match[1].trim();
+        if (match && match[1]) {
+            const foundSrc = match[1].trim();
+            if (!foundSrc.startsWith('data:') && !foundSrc.includes('photo-1584286595398-a59f21d313f5')) {
+                raw = foundSrc;
+            }
         }
     }
 
-    if (!raw || raw.includes('photo-1584286595398-a59f21d313f5')) {
-        return 'https://asnawiyyah.or.id/assets/img/og-banner.jpg';
+    if (!raw || raw.startsWith('data:') || raw.includes('photo-1584286595398-a59f21d313f5')) {
+        return DEFAULT_BANNER;
     }
 
-    // Normalisasi Google Drive link ke direct high-res image link (lh3.googleusercontent.com)
-    const driveMatch = raw.match(/(?:id=|d\/|open\?id=)([a-zA-Z0-9_-]{25,})/);
-    if (driveMatch && driveMatch[1]) {
-        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+    // Normalisasi Google Drive link HANYA jika domain/pola Google Drive terkonfirmasi
+    // (Mencegah false-positive regex pada string panjang acak)
+    const isGoogleDomain = raw.includes('googleusercontent.com') || raw.includes('drive.google.com') || raw.includes('docs.google.com');
+    if (isGoogleDomain) {
+        const driveMatch = raw.match(/(?:id=|d\/|open\?id=)([a-zA-Z0-9_-]{25,})/);
+        if (driveMatch && driveMatch[1]) {
+            return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+        }
     }
 
     // Pastikan URL absolut
@@ -53,6 +67,7 @@ function resolveImageUrl(newsItem) {
 async function fetchNewsItem(slug) {
     if (!slug) return null;
     const cleanSlug = encodeURIComponent(slug.trim());
+    let itemFromSb = null;
 
     // 1. Akselerasi tercepat via Supabase Cloud (<50ms)
     try {
@@ -63,26 +78,39 @@ async function fetchNewsItem(slug) {
         if (sbRes.ok) {
             const rows = await sbRes.json();
             if (Array.isArray(rows) && rows.length > 0) {
-                return rows[0];
+                itemFromSb = rows[0];
+                const rawImg = itemFromSb.gambar_url || itemFromSb.foto_url || '';
+                // Jika data Supabase sudah memiliki URL HTTP yang valid (bukan Base64), langsung return
+                if (rawImg && rawImg.startsWith('http')) {
+                    return itemFromSb;
+                }
             }
         }
     } catch (sbErr) {
         console.warn("Supabase fetch in OG failed, falling back to GAS:", sbErr.message);
     }
 
-    // 2. Fallback via Google Apps Script
+    // 2. Fallback via Google Apps Script (termasuk jika Supabase ada namun gambarnya masih Base64)
     try {
         const scriptUrl = `${GAS_API_URL}?action=getKabar`;
         const response = await fetch(scriptUrl, { signal: AbortSignal.timeout(4000) });
         const data = await response.json();
         if (data && data.status === 'success' && Array.isArray(data.data)) {
-            return data.data.find(n => n.slug === slug || n.news_id === slug) || null;
+            const gasItem = data.data.find(n => n.slug === slug || n.news_id === slug) || null;
+            if (gasItem) {
+                if (itemFromSb) {
+                    // Gabungkan foto valid dari GAS ke data Supabase
+                    itemFromSb.gambar_url = gasItem.gambar || gasItem.Gambar_URL || itemFromSb.gambar_url;
+                    return itemFromSb;
+                }
+                return gasItem;
+            }
         }
     } catch (gasErr) {
         console.warn("GAS fetch in OG failed:", gasErr.message);
     }
 
-    return null;
+    return itemFromSb;
 }
 
 module.exports = async function handler(req, res) {
