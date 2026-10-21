@@ -2057,6 +2057,8 @@ function saveStudentData(studentObj, token) {
   if (genderIdx === -1) genderIdx = headers.indexOf("jenis");
   let birthIdx = headers.indexOf("birth_date");
   if (birthIdx === -1) birthIdx = headers.indexOf("tanggal_lahir");
+  if (birthIdx === -1) birthIdx = headers.indexOf("tgl_lahir");
+  if (birthIdx === -1) birthIdx = headers.indexOf("birthdate");
   let photoIdx = headers.indexOf("photo_url");
   if (photoIdx === -1) photoIdx = headers.indexOf("foto_profil");
   if (photoIdx === -1) photoIdx = headers.indexOf("foto");
@@ -2069,6 +2071,10 @@ function saveStudentData(studentObj, token) {
     sheet.getRange(1, progIdx + 1).setValue("program");
     headers.push("program");
   }
+  let kelasIdx = headers.indexOf("kelas_sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("sekolah");
+  if (kelasIdx === -1) kelasIdx = headers.indexOf("kelas_formal");
   let statusIdx = headers.indexOf("status");
 
   const inputId = String(studentObj.studentId || studentObj.student_id || "").trim();
@@ -2135,6 +2141,7 @@ function saveStudentData(studentObj, token) {
     if (birthIdx !== -1) newRow[birthIdx] = inputBirth;
     if (photoIdx !== -1) newRow[photoIdx] = inputPhoto;
     if (progIdx !== -1) newRow[progIdx] = inputProgram;
+    if (kelasIdx !== -1) newRow[kelasIdx] = inputKelasSekolah;
     if (statusIdx !== -1) newRow[statusIdx] = inputStatus;
     const createdIdx = headers.indexOf("created_at");
     if (createdIdx !== -1) newRow[createdIdx] = nowIso;

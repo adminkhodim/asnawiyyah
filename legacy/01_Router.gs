@@ -226,12 +226,12 @@ function doPost(e) {
       try {
         const actor = authenticateSession(token);
         authorizeRole(actor, ["ADMIN", "EDITOR"]);
-      } catch (authErr) {
-        return createJsonResponse({ status: "error", message: authErr.message });
+        return createJsonResponse(
+          saveStudentData(payload.data || payload, token)
+        );
+      } catch (err) {
+        return createJsonResponse({ status: "error", message: err.message || "Gagal menyimpan data santri." });
       }
-      return createJsonResponse(
-        saveStudentData(payload.data || payload, token)
-      );
     }
 
     if (action === "batchUpdateStudentProgram" || action === "student.batchUpdateProgram") {

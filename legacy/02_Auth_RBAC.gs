@@ -3097,7 +3097,7 @@ function authorizeRole(actor, allowedRoles = []) {
   if (!actor || !actor.role) {
     throw new AuthorizationError("Authentication required.");
   }
-  const role = String(actor.role).toUpperCase();
+  const role = String(actor.role).toUpperCase().replace(/\s+/g, "_");
   if (role === "SUPER_ADMIN" || allowedRoles.includes(actor.role) || allowedRoles.includes(role)) {
     return true;
   }

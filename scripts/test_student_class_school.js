@@ -60,6 +60,8 @@ console.log('▶️  Test 5: Memverifikasi dukungan kolom di legacy/Code.gs...')
 assert(codeGs.includes('kelasIdx = headers.indexOf("kelas_sekolah")'), 'getAllStudentsData harus mendeteksi kolom kelas_sekolah');
 assert(codeGs.includes('kelas_sekolah: kelasSekolah'), 'getAllStudentsData harus mengembalikan properti kelas_sekolah');
 assert(codeGs.includes('inputKelasSekolah'), 'saveStudentData harus menyimpan nilai inputKelasSekolah');
+assert(/function saveStudentData[\s\S]*?let kelasIdx = headers\.indexOf\("kelas_sekolah"\)/.test(codeGs), 'saveStudentData harus mendeklarasikan kelasIdx');
+assert(/function saveStudentData[\s\S]*?headers\.indexOf\("tgl_lahir"\)/.test(codeGs), 'saveStudentData harus mendukung fallback tgl_lahir');
 console.log('   ✅ Apps Script backend integration verified in legacy/Code.gs');
 
 // Test 6: SQL Migration Script
