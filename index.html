@@ -1543,30 +1543,47 @@
         <!-- ==================== TABS BARU: KALENDER INDONESIA & JAWA ==================== -->
         <div id="page-kalender" class="tab-content hidden space-y-3 sm:space-y-4">
 
-            <!-- ACTION BAR SINKRONISASI KALENDER (MINIMALIS ICON-ONLY) -->
-            <div class="bg-white dark:bg-[#15202d] p-1.5 sm:p-2 rounded-2xl md:rounded-3xl shadow-xs border border-slate-100 dark:border-[#253447]">
-                <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
-                    <button type="button" onclick="openModalPengingatPribadi()"
-                        class="py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800/40 flex items-center justify-center transition active:scale-95 shadow-2xs"
-                        title="Buat Pengingat Pribadi Saya ke Google Calendar">
-                        <i class="fa-solid fa-bell text-sm"></i>
-                    </button>
-                    <button type="button" onclick="subscribeToGoogleCalendar()"
-                        class="py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shadow-2xs"
-                        title="Langganan ke Google Calendar">
-                        <i class="fa-brands fa-google text-sm text-amber-500"></i>
-                    </button>
-                    <button type="button" onclick="subscribeToAppleCalendar()"
-                        class="py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shadow-2xs"
-                        title="Apple Calendar (iPhone/iPad) / Kalender Bawaan HP">
-                        <i class="fa-brands fa-apple text-sm text-slate-800 dark:text-slate-100"></i>
-                    </button>
-                    <button type="button" onclick="downloadIcalFile()"
-                        class="py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shadow-2xs"
-                        title="Unduh Berkas Kalender .ICS">
-                        <i class="fa-solid fa-download text-sm text-emerald-600 dark:text-emerald-400"></i>
+            <!-- ACTION BAR SINKRONISASI KALENDER DENGAN FITUR HIDE / UNHIDE -->
+            <div id="cal-sync-wrapper">
+                <!-- 1. KOTAK 4 TOMBOL ICON + TOMBOL HIDE (EXPANDED STATE) -->
+                <div id="cal-sync-buttons-box" class="bg-white dark:bg-[#15202d] p-1.5 sm:p-2 rounded-2xl md:rounded-3xl shadow-xs border border-slate-100 dark:border-[#253447] flex items-center gap-1.5 sm:gap-2 transition-all">
+                    <div class="grid grid-cols-4 gap-1.5 sm:gap-2 flex-1">
+                        <button type="button" onclick="openModalPengingatPribadi()"
+                            class="py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800/40 flex items-center justify-center transition active:scale-95 shadow-2xs"
+                            title="Buat Pengingat Pribadi Saya ke Google Calendar">
+                            <i class="fa-solid fa-bell text-sm"></i>
+                        </button>
+                        <button type="button" onclick="subscribeToGoogleCalendar()"
+                            class="py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shadow-2xs"
+                            title="Langganan ke Google Calendar">
+                            <i class="fa-brands fa-google text-sm text-amber-500"></i>
+                        </button>
+                        <button type="button" onclick="subscribeToAppleCalendar()"
+                            class="py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shadow-2xs"
+                            title="Apple Calendar (iPhone/iPad) / Kalender Bawaan HP">
+                            <i class="fa-brands fa-apple text-sm text-slate-800 dark:text-slate-100"></i>
+                        </button>
+                        <button type="button" onclick="downloadIcalFile()"
+                            class="py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shadow-2xs"
+                            title="Unduh Berkas Kalender .ICS">
+                            <i class="fa-solid fa-download text-sm text-emerald-600 dark:text-emerald-400"></i>
+                        </button>
+                    </div>
+                    <!-- Tombol Sembunyikan (Hide) -->
+                    <button type="button" onclick="toggleCalendarSyncBar()"
+                        class="w-8 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border border-slate-200/70 dark:border-[#253447] flex items-center justify-center transition active:scale-95 shrink-0"
+                        title="Sembunyikan Bilah Tombol">
+                        <i class="fa-solid fa-chevron-up text-xs"></i>
                     </button>
                 </div>
+
+                <!-- 2. TOMBOL TAMPILKAN KEMBALI / UNHIDE (COLLAPSED STATE) -->
+                <button type="button" id="cal-sync-collapsed-pill" onclick="toggleCalendarSyncBar()"
+                    class="w-full py-1.5 px-3 bg-white dark:bg-[#15202d] hover:bg-slate-50 dark:hover:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] text-[10.5px] font-bold text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400 flex items-center justify-center gap-2 shadow-2xs transition active:scale-98 hidden">
+                    <i class="fa-solid fa-bell text-amber-500 text-xs"></i>
+                    <span>Sinkronisasi & Pengingat Kalender HP</span>
+                    <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                </button>
             </div>
 
             <div
@@ -1654,11 +1671,12 @@
 
                 <!-- Agenda Pesantren & Libur Bulan Ini -->
                 <div class="pt-3 border-t border-slate-100 dark:border-[#253447] space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center">
-                            <span class="w-1.5 h-4 bg-brand-600 dark:bg-emerald-500 rounded-full mr-2"></span> Agenda & Hari Besar Islam Bulan Ini
+                    <div class="flex items-center justify-between gap-1.5 min-w-0">
+                        <h3 class="text-[9.5px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center min-w-0 truncate">
+                            <span class="w-1.5 h-3 bg-brand-600 dark:bg-emerald-500 rounded-full mr-1.5 shrink-0"></span>
+                            <span class="truncate">Agenda & Hari Besar Islam Bulan Ini</span>
                         </h3>
-                        <span id="cal-events-count" class="text-[10px] sm:text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/40"></span>
+                        <span id="cal-events-count" class="text-[9px] sm:text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/40 shrink-0 whitespace-nowrap"></span>
                     </div>
                     <div id="calendar-events-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                         <!-- Agenda akan di-render otomatis oleh Javascript -->

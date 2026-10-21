@@ -3652,6 +3652,8 @@
             } else {
                 selectCalDate(year, month, 1, getPasaranJawa(firstDateObj), firstDateObj.getDay());
             }
+
+            initCalendarSyncToggle();
         }
 
         function renderCalendarEvents(events, month) {
@@ -3997,6 +3999,42 @@
             }
         }
 
+        // ==================== FITUR HIDE / UNHIDE ACTION BAR SINKRONISASI ====================
+        function toggleCalendarSyncBar() {
+            const bar = document.getElementById('cal-sync-buttons-box');
+            const pill = document.getElementById('cal-sync-collapsed-pill');
+            if (!bar || !pill) return;
+
+            const isCurrentlyHidden = bar.classList.contains('hidden');
+            if (isCurrentlyHidden) {
+                // Tampilkan kotak 4 tombol, sembunyikan pill
+                bar.classList.remove('hidden');
+                pill.classList.add('hidden');
+                try {
+                    localStorage.setItem('asn_cal_sync_collapsed', '0');
+                } catch (e) {}
+            } else {
+                // Sembunyikan kotak 4 tombol, tampilkan pill
+                bar.classList.add('hidden');
+                pill.classList.remove('hidden');
+                try {
+                    localStorage.setItem('asn_cal_sync_collapsed', '1');
+                } catch (e) {}
+            }
+        }
+
+        function initCalendarSyncToggle() {
+            try {
+                const isCollapsed = localStorage.getItem('asn_cal_sync_collapsed') === '1';
+                const bar = document.getElementById('cal-sync-buttons-box');
+                const pill = document.getElementById('cal-sync-collapsed-pill');
+                if (bar && pill && isCollapsed) {
+                    bar.classList.add('hidden');
+                    pill.classList.remove('hidden');
+                }
+            } catch (e) {}
+        }
+
         window.renderCalendar = renderCalendar;
         window.changeCalMonth = changeCalMonth;
         window.selectCalDate = selectCalDate;
@@ -4012,6 +4050,8 @@
         window.pilihPresetPengingat = pilihPresetPengingat;
         window.togglePengingatJamAllDay = togglePengingatJamAllDay;
         window.submitPengingatPribadi = submitPengingatPribadi;
+        window.toggleCalendarSyncBar = toggleCalendarSyncBar;
+        window.initCalendarSyncToggle = initCalendarSyncToggle;
 
         // =====================================================================
         // MODUL 20: IZIN & PERPULANGAN SANTRI (API CLIENT ADAPTER)
