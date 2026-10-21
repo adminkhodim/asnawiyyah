@@ -4257,11 +4257,22 @@
                         if (item.badge && item.badge.toLowerCase().includes('ekstra')) badgeBg = 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
                         if (item.badge && item.badge.toLowerCase().includes('wali')) badgeBg = 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
 
+                        const safeTitle = (item.kegiatan || '').replace(/'/g, "\\'");
+                        const safeDesc = (item.deskripsi || '').replace(/'/g, "\\'");
+                        const safeWaktu = (item.waktu || '').replace(/'/g, "\\'");
+
                         return `
                             <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1 hover:shadow-xs transition">
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs font-bold text-brand-800 dark:text-emerald-400">${escapeHtml(item.waktu)}</span>
-                                    ${item.badge ? `<span class="text-[9px] ${badgeBg} font-bold px-2 py-0.5 rounded-full">${escapeHtml(item.badge)}</span>` : ''}
+                                    <div class="flex items-center gap-1.5">
+                                        ${item.badge ? `<span class="text-[9px] ${badgeBg} font-bold px-2 py-0.5 rounded-full">${escapeHtml(item.badge)}</span>` : ''}
+                                        <button type="button" onclick="saveEventToPersonalCalendar('${safeTitle}', '${safeDesc}', '${safeWaktu}')"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                                            title="Tambahkan Pengingat ke Kalender Saya">
+                                            <i class="fa-regular fa-bell text-xs"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">${escapeHtml(item.kegiatan)}</h4>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
@@ -4287,14 +4298,23 @@
 
                     bulananContainer.innerHTML = bulananItems.map((item, idx) => {
                         const boxColor = boxColors[idx % boxColors.length];
+                        const safeTitle = (item.kegiatan || '').replace(/'/g, "\\'");
+                        const safeDesc = (item.deskripsi || '').replace(/'/g, "\\'");
+                        const safeWaktu = (item.waktu || '').replace(/'/g, "\\'");
+
                         return `
                             <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-start space-x-3.5 hover:shadow-xs transition">
                                 <div class="w-10 h-10 ${boxColor} rounded-2xl flex items-center justify-center font-bold text-sm shrink-0">
                                     ${escapeHtml(item.badge || ('P-' + (idx + 1)))}
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center justify-between gap-2">
                                         <span class="text-[10px] font-bold text-brand-700 dark:text-emerald-400 uppercase tracking-wider">${escapeHtml(item.waktu)}</span>
+                                        <button type="button" onclick="saveEventToPersonalCalendar('${safeTitle}', '${safeDesc}', '${safeWaktu}')"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                                            title="Tambahkan Pengingat ke Kalender Saya">
+                                            <i class="fa-regular fa-bell text-xs"></i>
+                                        </button>
                                     </div>
                                     <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5">${escapeHtml(item.kegiatan)}</h4>
                                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
@@ -4318,11 +4338,22 @@
                         if (item.waktu.toLowerCase().includes('ramadhan')) badgeBg = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
                         if (item.waktu.toLowerCase().includes('syawal')) badgeBg = 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
 
+                        const safeTitle = (item.kegiatan || '').replace(/'/g, "\\'");
+                        const safeDesc = (item.deskripsi || '').replace(/'/g, "\\'");
+                        const safeWaktu = (item.waktu || '').replace(/'/g, "\\'");
+
                         return `
                             <div class="p-4 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] space-y-1 hover:shadow-xs transition">
-                                <span class="inline-block text-[10px] font-extrabold ${badgeBg} px-2 py-0.5 rounded-md">
-                                    ${escapeHtml(item.waktu)}
-                                </span>
+                                <div class="flex justify-between items-center">
+                                    <span class="inline-block text-[10px] font-extrabold ${badgeBg} px-2 py-0.5 rounded-md">
+                                        ${escapeHtml(item.waktu)}
+                                    </span>
+                                    <button type="button" onclick="saveEventToPersonalCalendar('${safeTitle}', '${safeDesc}', '${safeWaktu}')"
+                                        class="p-1 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                                        title="Tambahkan Pengingat ke Kalender Saya">
+                                        <i class="fa-regular fa-bell text-xs"></i>
+                                    </button>
+                                </div>
                                 <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1">${escapeHtml(item.kegiatan)}</h4>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">${escapeHtml(item.deskripsi || '')}</p>
                             </div>
@@ -4476,6 +4507,8 @@
                 document.getElementById('admin-jdw-kegiatan').value = item.kegiatan || '';
                 document.getElementById('admin-jdw-deskripsi').value = item.deskripsi || '';
                 document.getElementById('admin-jdw-badge').value = item.badge || '';
+                const alarmEl = document.getElementById('admin-jdw-alarm');
+                if (alarmEl) alarmEl.value = item.alarm || '1_day';
                 document.getElementById('admin-jdw-urutan').value = item.urutan || 1;
             } else {
                 if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-plus-circle text-emerald-600 mr-2"></i>Tambah Jadwal Baru`;
@@ -4487,6 +4520,8 @@
                 document.getElementById('admin-jdw-kegiatan').value = '';
                 document.getElementById('admin-jdw-deskripsi').value = '';
                 document.getElementById('admin-jdw-badge').value = '';
+                const alarmEl = document.getElementById('admin-jdw-alarm');
+                if (alarmEl) alarmEl.value = '1_day';
                 const maxUrutan = mockJadwalKegiatanData.filter(j => j.tipe === (currentAdminJadwalFilter !== 'all' ? currentAdminJadwalFilter : 'harian')).length + 1;
                 document.getElementById('admin-jdw-urutan').value = maxUrutan;
             }
@@ -4519,6 +4554,8 @@
             const kegiatan = document.getElementById('admin-jdw-kegiatan').value.trim();
             const deskripsi = document.getElementById('admin-jdw-deskripsi').value.trim();
             const badge = document.getElementById('admin-jdw-badge').value.trim();
+            const alarmEl = document.getElementById('admin-jdw-alarm');
+            const alarm = alarmEl ? alarmEl.value : '1_day';
             const urutan = Number(document.getElementById('admin-jdw-urutan').value) || 1;
 
             if (!waktu || !kegiatan) {
@@ -4534,6 +4571,7 @@
                 kegiatan,
                 deskripsi,
                 badge,
+                alarm,
                 urutan,
                 status
             };

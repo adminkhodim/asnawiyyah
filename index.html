@@ -1542,6 +1542,38 @@
 
         <!-- ==================== TABS BARU: KALENDER INDONESIA & JAWA ==================== -->
         <div id="page-kalender" class="tab-content hidden space-y-3 sm:space-y-4">
+
+            <!-- BANNER SINKRONISASI KE GOOGLE CALENDAR & HP -->
+            <div class="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 dark:from-emerald-950 dark:via-[#1c2e3d] dark:to-emerald-950 text-white p-3.5 sm:p-4 rounded-2xl md:rounded-3xl shadow-sm border border-emerald-600/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-0.5 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-300">Sinkronisasi Kalender Digital</span>
+                    </div>
+                    <h3 class="text-xs sm:text-sm font-bold text-white">Hubungkan Agenda Pesantren ke Google Calendar HP</h3>
+                    <p class="text-[10.5px] text-emerald-100/80 leading-snug">Agenda santri, jadwal perpulangan & hari besar otomatis tersinkron dan berbunyi alarm di HP Anda.</p>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                    <button type="button" onclick="subscribeToGoogleCalendar()"
+                        class="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                        title="Langganan ke Google Calendar">
+                        <i class="fa-brands fa-google text-xs text-amber-500"></i>
+                        <span>Google Calendar</span>
+                    </button>
+                    <button type="button" onclick="subscribeToAppleCalendar()"
+                        class="px-2.5 py-1.5 bg-emerald-700/60 hover:bg-emerald-600/70 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-white/10 active:scale-95"
+                        title="Apple Calendar (iPhone/iPad) / Outlook">
+                        <i class="fa-brands fa-apple text-xs"></i>
+                        <span class="hidden sm:inline">Apple/HP</span>
+                    </button>
+                    <button type="button" onclick="downloadIcalFile()"
+                        class="w-7 h-7 bg-white/10 hover:bg-white/20 text-white rounded-xl flex items-center justify-center transition active:scale-95"
+                        title="Unduh Berkas .ICS">
+                        <i class="fa-solid fa-download text-[11px]"></i>
+                    </button>
+                </div>
+            </div>
+
             <div
                 class="bg-white dark:bg-[#15202d] p-3 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 sm:space-y-4">
 
@@ -17329,14 +17361,25 @@
                     <textarea id="admin-jdw-deskripsi" rows="3" placeholder="Jelaskan ringkasan atau detail kegiatan santri..." class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Label / Tag Badge (Opsional)</label>
                         <input type="text" id="admin-jdw-badge" placeholder="Contoh: Sunnah, Rutin, Utama, P-1" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Nomor Urutan Tampil</label>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Alarm Notifikasi HP</label>
+                        <select id="admin-jdw-alarm" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                            <option value="1_day">H-1 Hari (07.00 WIB)</option>
+                            <option value="3_days">H-3 Hari</option>
+                            <option value="7_days">H-7 Hari (1 Minggu)</option>
+                            <option value="2_hours">2 Jam Sebelum</option>
+                            <option value="none">Tanpa Alarm Otomatis</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Nomor Urutan</label>
                         <input type="number" id="admin-jdw-urutan" value="1" min="1" max="999" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
                     </div>
                 </div>

@@ -3674,19 +3674,27 @@
             }
 
             const shortMonth = namaBulanIndo[month].substring(0, 3);
+            const calYear = currentCalDate.getFullYear();
             container.innerHTML = events.map(ev => `
-                <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-center space-x-3 transition hover:border-emerald-500/40">
-                    <div class="w-10 h-10 ${ev.boxBg} rounded-xl flex flex-col items-center justify-center font-bold shrink-0 shadow-xs">
-                        <span class="text-xs font-extrabold leading-none">${ev.day}</span>
-                        <span class="text-[8px] uppercase font-semibold leading-none mt-0.5">${shortMonth}</span>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${ev.title}</h4>
-                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-md ${ev.badgeClass}">${ev.badgeText}</span>
+                <div class="p-3 bg-slate-50 dark:bg-[#1c2836] rounded-2xl border border-slate-100 dark:border-[#253447] flex items-center justify-between space-x-3 transition hover:border-emerald-500/40">
+                    <div class="flex items-center space-x-3 min-w-0 flex-1">
+                        <div class="w-10 h-10 ${ev.boxBg} rounded-xl flex flex-col items-center justify-center font-bold shrink-0 shadow-xs">
+                            <span class="text-xs font-extrabold leading-none">${ev.day}</span>
+                            <span class="text-[8px] uppercase font-semibold leading-none mt-0.5">${shortMonth}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">${ev.desc}</p>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${ev.title}</h4>
+                                <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-md ${ev.badgeClass}">${ev.badgeText}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">${ev.desc}</p>
+                        </div>
                     </div>
+                    <button type="button" onclick="saveEventToPersonalCalendar('${escapeHtml(ev.title)}', '${escapeHtml(ev.desc)}', ${calYear}, ${month}, ${ev.day})"
+                        class="p-2 rounded-xl bg-white dark:bg-[#253447] hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 border border-slate-200/70 dark:border-slate-700/80 transition active:scale-90 shrink-0"
+                        title="Simpan Pengingat ke Kalender Saya">
+                        <i class="fa-solid fa-bell text-xs"></i>
+                    </button>
                 </div>
             `).join('');
         }
@@ -3750,11 +3758,75 @@
             }
         }
 
+        // ==================== INTEGRASI GOOGLE CALENDAR & SYNC PERANGKAT ====================
+        function getCalendarFeedUrl() {
+            const isLocal = !window.location.origin || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+            const baseOrigin = isLocal ? 'https://asnawiyyah.or.id' : window.location.origin;
+            return `${baseOrigin}/kalender.ics`;
+        }
+
+        function subscribeToGoogleCalendar() {
+            const icsUrl = getCalendarFeedUrl();
+            const gcalUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(icsUrl)}`;
+            window.open(gcalUrl, '_blank');
+        }
+
+        function subscribeToAppleCalendar() {
+            const icsUrl = getCalendarFeedUrl();
+            const webcalUrl = icsUrl.replace(/^https?:\/\//i, 'webcal://');
+            window.location.href = webcalUrl;
+        }
+
+        function downloadIcalFile() {
+            const icsUrl = getCalendarFeedUrl();
+            const a = document.createElement('a');
+            a.href = icsUrl;
+            a.download = 'kalender-asnawiyyah.ics';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            if (typeof showToast === 'function') {
+                showToast("📥 Berkas Kalender Asnawiyyah (.ics) sedang diunduh");
+            }
+        }
+
+        function saveEventToPersonalCalendar(title, desc, year, month, day) {
+            let startYear = new Date().getFullYear();
+            let startMonth = new Date().getMonth();
+            let startDay = new Date().getDate();
+
+            if (typeof year === 'number' && typeof month === 'number' && typeof day === 'number') {
+                startYear = year;
+                startMonth = month;
+                startDay = day;
+            }
+
+            const pad = n => String(n).padStart(2, '0');
+            const startStr = `${startYear}${pad(startMonth + 1)}${pad(startDay)}`;
+            const nextD = new Date(startYear, startMonth, startDay + 1);
+            const endStr = `${nextD.getFullYear()}${pad(nextD.getMonth() + 1)}${pad(nextD.getDate())}`;
+
+            const cleanTitle = (title || 'Agenda Pesantren').trim();
+            let cleanDesc = (desc || 'Kegiatan resmi santri PPTQ Asnawiyyah Demak').trim();
+            if (typeof year === 'string' && year) {
+                cleanDesc = `[Waktu Pelaksanaan: ${year}]\n\n${cleanDesc}`;
+            }
+            const loc = "Pondok Pesantren Tahfidzul Qur'an Asnawiyyah, Pilangwetan, Kebonagung, Demak";
+
+            const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cleanTitle)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(cleanDesc)}&location=${encodeURIComponent(loc)}`;
+            window.open(gcalUrl, '_blank');
+        }
+
         window.renderCalendar = renderCalendar;
         window.changeCalMonth = changeCalMonth;
         window.selectCalDate = selectCalDate;
         window.getHijriDate = getHijriDate;
         window.getPasaranJawa = getPasaranJawa;
+        window.getCalendarFeedUrl = getCalendarFeedUrl;
+        window.subscribeToGoogleCalendar = subscribeToGoogleCalendar;
+        window.subscribeToAppleCalendar = subscribeToAppleCalendar;
+        window.downloadIcalFile = downloadIcalFile;
+        window.saveEventToPersonalCalendar = saveEventToPersonalCalendar;
 
         // =====================================================================
         // MODUL 20: IZIN & PERPULANGAN SANTRI (API CLIENT ADAPTER)

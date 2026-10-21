@@ -18,6 +18,14 @@
       "destination": "/sd-islam-unggulan/index.html"
     },
     {
+      "source": "/kalender.ics",
+      "destination": "/api/kalender"
+    },
+    {
+      "source": "/calendar.ics",
+      "destination": "/api/kalender"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
