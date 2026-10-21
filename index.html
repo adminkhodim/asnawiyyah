@@ -1554,6 +1554,12 @@
                     <p class="text-[10.5px] text-emerald-100/80 leading-snug">Agenda santri, jadwal perpulangan & hari besar otomatis tersinkron dan berbunyi alarm di HP Anda.</p>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                    <button type="button" onclick="openModalPengingatPribadi()"
+                        class="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                        title="Buat Pengingat Pribadi Saya ke Google Calendar">
+                        <i class="fa-solid fa-bell text-xs"></i>
+                        <span>+ Buat Pengingat Pribadi</span>
+                    </button>
                     <button type="button" onclick="subscribeToGoogleCalendar()"
                         class="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
                         title="Langganan ke Google Calendar">
@@ -17389,6 +17395,144 @@
                     <button type="submit" id="admin-jdw-submit-btn" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition active:scale-95 flex items-center space-x-1.5">
                         <i class="fa-solid fa-floppy-disk text-xs"></i>
                         <span id="admin-jdw-submit-text">Simpan Jadwal</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL BUAT PENGINGAT PRIBADI KE GOOGLE CALENDAR ==================== -->
+    <div id="modal-pengingat-pribadi"
+        class="fixed inset-0 bg-black/80 backdrop-blur-md z-[999] flex items-center justify-center p-3 sm:p-4 hidden">
+        <div id="modal-pengingat-pribadi-content"
+            class="bg-white dark:bg-[#111c28] rounded-3xl max-w-lg w-full flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-teal-500/20 transform transition-all duration-300 relative max-h-[92vh] scale-95 opacity-0">
+            
+            <!-- Header Modal -->
+            <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white flex items-center justify-between shrink-0 border-b border-teal-700/40">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-lg font-black shadow-md shrink-0">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="font-extrabold text-sm sm:text-base text-white truncate">Buat Pengingat Pribadi</h3>
+                        <p class="text-[11px] text-teal-200 truncate">Simpan alarm & jadwal santri langsung ke Kalender HP Anda</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeModalPengingatPribadi()"
+                    class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white flex items-center justify-center transition shrink-0 ml-2"
+                    title="Tutup">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Body Modal -->
+            <form id="formPengingatPribadi" onsubmit="submitPengingatPribadi(event, 'gcal')" class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1 custom-scrollbar text-slate-800 dark:text-slate-100">
+                
+                <!-- Quick Preset Chips -->
+                <div>
+                    <label class="block text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Pilih Cepat Contoh Agenda (Klik untuk Mengisi)</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="pilihPresetPengingat('🚗 Sambang Santri Mandiri', 'Jadwal kunjungan santri mandiri ke pondok. Jangan lupa bawa perlengkapan & titipan santri.')" 
+                            class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-[#1c2836] hover:bg-emerald-100 dark:hover:bg-emerald-950 hover:text-emerald-800 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-200 rounded-lg transition border border-slate-200 dark:border-[#253447]">
+                            🚗 Sambang Santri
+                        </button>
+                        <button type="button" onclick="pilihPresetPengingat('💸 Kirim Uang Saku Santri', 'Transfer uang saku bulanan santri dan konfirmasi ke pengurus pesantren.')" 
+                            class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-[#1c2836] hover:bg-emerald-100 dark:hover:bg-emerald-950 hover:text-emerald-800 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-200 rounded-lg transition border border-slate-200 dark:border-[#253447]">
+                            💸 Kirim Uang Saku
+                        </button>
+                        <button type="button" onclick="pilihPresetPengingat('📦 Kirim Paket / Kitab Santri', 'Kirim kiriman paket barang kebutuhan santri / kitab ke alamat pondok.')" 
+                            class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-[#1c2836] hover:bg-emerald-100 dark:hover:bg-emerald-950 hover:text-emerald-800 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-200 rounded-lg transition border border-slate-200 dark:border-[#253447]">
+                            📦 Kirim Paket
+                        </button>
+                        <button type="button" onclick="pilihPresetPengingat('🎒 Jemput Santri Liburan', 'Jemput kepulangan santri liburan pondok tepat waktu sesuai jadwal perpulangan resmi.')" 
+                            class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-[#1c2836] hover:bg-emerald-100 dark:hover:bg-emerald-950 hover:text-emerald-800 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-200 rounded-lg transition border border-slate-200 dark:border-[#253447]">
+                            🎒 Jemput Liburan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Judul -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                        Nama Agenda / Pengingat <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="pengingat-judul" required placeholder="Contoh: Jadwal Sambang Santri Mandiri" 
+                        class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                </div>
+
+                <!-- Grid Tanggal & Waktu -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                            Tanggal Pelaksanaan <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="date" id="pengingat-tanggal" required 
+                            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                    </div>
+                    <div id="pengingat-jam-container">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                            Waktu / Jam Mulai
+                        </label>
+                        <input type="time" id="pengingat-jam" value="08:00" 
+                            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                    </div>
+                </div>
+
+                <!-- Checkbox Seharian Penuh -->
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="pengingat-allday" onchange="togglePengingatJamAllDay()" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4">
+                    <label for="pengingat-allday" class="text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer">
+                        Kegiatan Seharian Penuh (All Day / Tanpa Jam Khusus)
+                    </label>
+                </div>
+
+                <!-- Pilihan Alarm Notifikasi -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                        Pemberitahuan / Waktu Alarm
+                    </label>
+                    <select id="pengingat-alarm" 
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                        <option value="60">1 Jam Sebelum</option>
+                        <option value="30">30 Menit Sebelum</option>
+                        <option value="15">15 Menit Sebelum</option>
+                        <option value="1440" selected>H-1 Hari Sebelumnya (07.00 WIB)</option>
+                        <option value="2880">H-2 Hari Sebelumnya</option>
+                        <option value="0">Tepat Waktu Pelaksanaan</option>
+                    </select>
+                </div>
+
+                <!-- Catatan Tambahan -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                        Catatan / Perlengkapan (Opsional)
+                    </label>
+                    <textarea id="pengingat-catatan" rows="2" placeholder="Contoh: Titipkan obat flu, seragam baru, atau konfirmasi ke ustadz kamar..."
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"></textarea>
+                </div>
+
+                <!-- Lokasi Default -->
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-[#1c2836] border border-slate-200/60 dark:border-[#253447] flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <i class="fa-solid fa-location-dot text-emerald-600 dark:text-emerald-400 text-xs shrink-0"></i>
+                    <span class="truncate">Lokasi: PPTQ Asnawiyyah, Pilangwetan, Kebonagung, Demak</span>
+                </div>
+
+                <!-- Action Footer -->
+                <div class="pt-3 border-t border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
+                    <button type="button" onclick="closeModalPengingatPribadi()"
+                        class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 rounded-xl transition text-center">
+                        Batal
+                    </button>
+                    <button type="button" onclick="submitPengingatPribadi(event, 'ics')"
+                        class="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1c2836] dark:hover:bg-[#253447] text-slate-700 dark:text-slate-200 rounded-xl transition flex items-center justify-center gap-1.5"
+                        title="Unduh berkas .ICS untuk Apple Calendar / Outlook">
+                        <i class="fa-solid fa-download text-xs"></i>
+                        <span>Unduh .ICS (Apple/HP)</span>
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <i class="fa-brands fa-google text-xs text-amber-300"></i>
+                        <span>Simpan ke Google Calendar</span>
                     </button>
                 </div>
             </form>

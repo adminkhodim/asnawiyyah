@@ -3817,6 +3817,186 @@
             window.open(gcalUrl, '_blank');
         }
 
+        // ==================== MODAL PENGINGAT PRIBADI SANTRI / WALI ====================
+        function openModalPengingatPribadi(defaultTitle = '', defaultDate = '') {
+            const modal = document.getElementById('modal-pengingat-pribadi');
+            const content = document.getElementById('modal-pengingat-pribadi-content');
+            const judulInput = document.getElementById('pengingat-judul');
+            const tglInput = document.getElementById('pengingat-tanggal');
+            const jamInput = document.getElementById('pengingat-jam');
+            const allDayCheck = document.getElementById('pengingat-allday');
+            const catatanInput = document.getElementById('pengingat-catatan');
+
+            if (!modal || !content) return;
+
+            if (judulInput) judulInput.value = defaultTitle || '';
+            if (tglInput) {
+                if (defaultDate) {
+                    tglInput.value = defaultDate;
+                } else {
+                    const today = new Date();
+                    const pad = n => String(n).padStart(2, '0');
+                    tglInput.value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+                }
+            }
+            if (jamInput) jamInput.value = '08:00';
+            if (allDayCheck) allDayCheck.checked = false;
+            togglePengingatJamAllDay();
+            if (catatanInput) catatanInput.value = '';
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 30);
+        }
+
+        function closeModalPengingatPribadi() {
+            const modal = document.getElementById('modal-pengingat-pribadi');
+            const content = document.getElementById('modal-pengingat-pribadi-content');
+            if (modal && content) {
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        function pilihPresetPengingat(judul, catatan) {
+            const judulInput = document.getElementById('pengingat-judul');
+            const catatanInput = document.getElementById('pengingat-catatan');
+            if (judulInput) judulInput.value = judul;
+            if (catatanInput) catatanInput.value = catatan;
+        }
+
+        function togglePengingatJamAllDay() {
+            const allDayCheck = document.getElementById('pengingat-allday');
+            const jamContainer = document.getElementById('pengingat-jam-container');
+            if (!jamContainer || !allDayCheck) return;
+            if (allDayCheck.checked) {
+                jamContainer.classList.add('opacity-40', 'pointer-events-none');
+            } else {
+                jamContainer.classList.remove('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        function submitPengingatPribadi(event, exportType = 'gcal') {
+            if (event) event.preventDefault();
+
+            const judul = (document.getElementById('pengingat-judul')?.value || '').trim();
+            const tanggal = document.getElementById('pengingat-tanggal')?.value;
+            const jam = document.getElementById('pengingat-jam')?.value || '08:00';
+            const isAllDay = document.getElementById('pengingat-allday')?.checked || false;
+            const alarmMins = Number(document.getElementById('pengingat-alarm')?.value) || 1440;
+            const catatan = (document.getElementById('pengingat-catatan')?.value || '').trim();
+
+            if (!judul || !tanggal) {
+                if (typeof showToast === 'function') showToast("⚠️ Nama agenda dan tanggal wajib diisi!");
+                return;
+            }
+
+            const pad = n => String(n).padStart(2, '0');
+            const [y, m, d] = tanggal.split('-').map(Number);
+            const loc = "Pondok Pesantren Tahfidzul Qur'an Asnawiyyah, Pilangwetan, Kebonagung, Demak";
+
+            let alarmLabel = 'H-1 Hari Sebelumnya (07.00 WIB)';
+            if (alarmMins === 60) alarmLabel = '1 Jam Sebelum';
+            else if (alarmMins === 30) alarmLabel = '30 Menit Sebelum';
+            else if (alarmMins === 15) alarmLabel = '15 Menit Sebelum';
+            else if (alarmMins === 2880) alarmLabel = 'H-2 Hari Sebelumnya';
+            else if (alarmMins === 0) alarmLabel = 'Tepat Waktu';
+
+            let fullDesc = `Pengingat Pribadi Santri / Wali PPTQ Asnawiyyah Demak.\n\n`;
+            if (catatan) fullDesc += `Catatan: ${catatan}\n\n`;
+            fullDesc += `Waktu Alarm: ${alarmLabel}\nLokasi: ${loc}`;
+
+            if (exportType === 'gcal') {
+                let startStr = '';
+                let endStr = '';
+
+                if (isAllDay) {
+                    startStr = `${y}${pad(m)}${pad(d)}`;
+                    const nextD = new Date(y, m - 1, d + 1);
+                    endStr = `${nextD.getFullYear()}${pad(nextD.getMonth() + 1)}${pad(nextD.getDate())}`;
+                } else {
+                    const [h, min] = jam.split(':').map(Number);
+                    const startD = new Date(y, m - 1, d, h, min);
+                    const endD = new Date(y, m - 1, d, h + 1, min);
+                    startStr = `${startD.getFullYear()}${pad(startD.getMonth() + 1)}${pad(startD.getDate())}T${pad(startD.getHours())}${pad(startD.getMinutes())}00`;
+                    endStr = `${endD.getFullYear()}${pad(endD.getMonth() + 1)}${pad(endD.getDate())}T${pad(endD.getHours())}${pad(endD.getMinutes())}00`;
+                }
+
+                const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(judul)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(fullDesc)}&location=${encodeURIComponent(loc)}`;
+                window.open(gcalUrl, '_blank');
+                closeModalPengingatPribadi();
+                if (typeof showToast === 'function') {
+                    showToast("📅 Membuka Google Calendar untuk menyimpan pengingat...");
+                }
+            } else if (exportType === 'ics') {
+                const nowStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                const uid = 'PRIBADI_' + Date.now() + '@asnawiyyah.or.id';
+                let dtStartLine = '';
+                let dtEndLine = '';
+
+                if (isAllDay) {
+                    const startVal = `${y}${pad(m)}${pad(d)}`;
+                    const nextD = new Date(y, m - 1, d + 1);
+                    const endVal = `${nextD.getFullYear()}${pad(nextD.getMonth() + 1)}${pad(nextD.getDate())}`;
+                    dtStartLine = `DTSTART;VALUE=DATE:${startVal}`;
+                    dtEndLine = `DTEND;VALUE=DATE:${endVal}`;
+                } else {
+                    const [h, min] = jam.split(':').map(Number);
+                    const startVal = `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(min)}00`;
+                    const endVal = `${y}${pad(m)}${pad(d)}T${pad(h + 1)}${pad(min)}00`;
+                    dtStartLine = `DTSTART:${startVal}`;
+                    dtEndLine = `DTEND:${endVal}`;
+                }
+
+                const icsLines = [
+                    'BEGIN:VCALENDAR',
+                    'VERSION:2.0',
+                    'PRODID:-//PPTQ Asnawiyyah//Pengingat Pribadi//ID',
+                    'CALSCALE:GREGORIAN',
+                    'METHOD:PUBLISH',
+                    'BEGIN:VEVENT',
+                    `UID:${uid}`,
+                    `DTSTAMP:${nowStamp}`,
+                    dtStartLine,
+                    dtEndLine,
+                    `SUMMARY:${judul.replace(/[,;\\]/g, ' ')}`,
+                    `DESCRIPTION:${fullDesc.replace(/\n/g, '\\n').replace(/[,;\\]/g, ' ')}`,
+                    `LOCATION:${loc.replace(/[,;\\]/g, ' ')}`
+                ];
+
+                if (alarmMins > 0) {
+                    icsLines.push('BEGIN:VALARM');
+                    icsLines.push('ACTION:DISPLAY');
+                    icsLines.push(`DESCRIPTION:Pengingat: ${judul.replace(/[,;\\]/g, ' ')}`);
+                    icsLines.push(`TRIGGER:-PT${alarmMins}M`);
+                    icsLines.push('END:VALARM');
+                }
+
+                icsLines.push('END:VEVENT');
+                icsLines.push('END:VCALENDAR');
+
+                const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `${judul.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'pengingat'}.ics`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+
+                closeModalPengingatPribadi();
+                if (typeof showToast === 'function') {
+                    showToast("📥 Berkas pengingat (.ics) berhasil diunduh");
+                }
+            }
+        }
+
         window.renderCalendar = renderCalendar;
         window.changeCalMonth = changeCalMonth;
         window.selectCalDate = selectCalDate;
@@ -3827,6 +4007,11 @@
         window.subscribeToAppleCalendar = subscribeToAppleCalendar;
         window.downloadIcalFile = downloadIcalFile;
         window.saveEventToPersonalCalendar = saveEventToPersonalCalendar;
+        window.openModalPengingatPribadi = openModalPengingatPribadi;
+        window.closeModalPengingatPribadi = closeModalPengingatPribadi;
+        window.pilihPresetPengingat = pilihPresetPengingat;
+        window.togglePengingatJamAllDay = togglePengingatJamAllDay;
+        window.submitPengingatPribadi = submitPengingatPribadi;
 
         // =====================================================================
         // MODUL 20: IZIN & PERPULANGAN SANTRI (API CLIENT ADAPTER)
