@@ -1,0 +1,16 @@
+# Folder non-produksi
+legacy/
+docs/
+scripts/
+tests/
+scratch/
+
+# File dokumentasi & config editor
+*.md
+.vscode/
+.github/
+
+# Backup & file sementara
+*.log
+*.tmp
+*.bak
