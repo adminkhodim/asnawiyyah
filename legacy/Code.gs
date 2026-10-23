@@ -1104,6 +1104,35 @@ function doPost(e) {
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
     // ========================================================
+    // Perizinan Asatidz & Delegasi Badal Actions
+    if (action === "initIzinAsatidz" || action === "tahfidz.initIzinAsatidz") {
+      return createJsonResponse(initIzinAsatidzSheet());
+    }
+
+    if (action === "submitIzinAsatidz" || action === "tahfidz.submitIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(submitIzinAsatidz(payload.data || payload, token));
+    }
+
+    if (action === "getIzinAsatidz" || action === "tahfidz.getIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getIzinAsatidzData(payload.data || payload, token));
+    }
+
+    if (action === "approveIzinAsatidz" || action === "tahfidz.approveIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(approveIzinAsatidz(payload.data || payload, token));
+    }
+
+    if (action === "getActiveBadalDelegations" || action === "tahfidz.getActiveBadal") {
+      const p = payload.data || payload;
+      return createJsonResponse({
+        status: "success",
+        success: true,
+        data: getActiveBadalDelegations(p.tanggal, p.sesi)
+      });
+    }
+
     if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard" || action === "auth.tahfidz.dashboard") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getTahfidzDashboard(token));
@@ -1868,6 +1897,22 @@ function doGet(e) {
     if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
       const token = e.parameter.token || null;
       return createJsonResponse(getIzinPerpulanganData(e.parameter, token));
+    }
+
+    // ========================================================
+    // PERIZINAN ASATIDZ ACTIONS (doGet)
+    // ========================================================
+    if (action === "getIzinAsatidz" || action === "tahfidz.getIzinAsatidz") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getIzinAsatidzData(e.parameter, token));
+    }
+
+    if (action === "getActiveBadalDelegations" || action === "tahfidz.getActiveBadal") {
+      return createJsonResponse({
+        status: "success",
+        success: true,
+        data: getActiveBadalDelegations(e.parameter.tanggal, e.parameter.sesi)
+      });
     }
 
     // ========================================================
@@ -6273,11 +6318,19 @@ const SHEET_TAHFIDZ_TARGET = "Tahfidz_Target";
 const SHEET_TAHFIDZ_HALAQAH = "Tahfidz_Halaqah";
 const SHEET_TAHFIDZ_SESI = "Tahfidz_Jadwal_Sesi";
 const SHEET_TAHFIDZ_PRESENSI = "Tahfidz_Presensi";
+const SHEET_IZIN_ASATIDZ = "Izin_Asatidz";
 
 const HEADERS_TAHFIDZ_PRESENSI = [
   "presensi_id", "tanggal", "sesi", "halaqah_id", "nama_halaqah",
   "student_id", "nis", "student_name", "status", "keterangan",
   "muhafiz", "updated_at"
+];
+
+const HEADERS_IZIN_ASATIDZ = [
+  "id_izin", "asatidz_id", "nama_asatidz", "tanggal_mulai", "tanggal_selesai",
+  "sesi", "kategori", "alasan", "badal_id", "nama_badal",
+  "catatan_badal", "lampiran_url", "status", "pengasuh_approved_by",
+  "pengasuh_approved_at", "catatan_pengasuh", "created_at", "updated_at"
 ];
 
 // Urutan Kurikulum Tahfidz Pesantren (Mulai Juz 30 s/d 21, lalu Juz 1 s/d 20)
@@ -7041,6 +7094,21 @@ function initTahfidzSheets(token) {
       existing.push(SHEET_TAHFIDZ_PRESENSI);
     }
 
+    // 4c. Tab: Izin_Asatidz (Perizinan Asatidz & Kelangsungan Halaqah)
+    let sheetIzinAsatidz = ss.getSheetByName(SHEET_IZIN_ASATIDZ);
+    if (!sheetIzinAsatidz) {
+      sheetIzinAsatidz = ss.insertSheet(SHEET_IZIN_ASATIDZ);
+      sheetIzinAsatidz.getRange(1, 1, 1, HEADERS_IZIN_ASATIDZ.length).setValues([HEADERS_IZIN_ASATIDZ]);
+      sheetIzinAsatidz.getRange(1, 1, 1, HEADERS_IZIN_ASATIDZ.length)
+        .setFontWeight("bold")
+        .setBackground("#047857")
+        .setFontColor("#ffffff");
+      sheetIzinAsatidz.setFrozenRows(1);
+      created.push(SHEET_IZIN_ASATIDZ);
+    } else {
+      existing.push(SHEET_IZIN_ASATIDZ);
+    }
+
     // 5. Tab: Roles_Permissions (RBAC Matrix)
     try {
       const rSheet = getOrCreateRolesPermissionsSheet();
@@ -7275,6 +7343,36 @@ function getTahfidzDashboard(token) {
           studentCount: 0
         });
       });
+    }
+
+    // Periksa delegasi badal aktif (Izin Asatidz APPROVED untuk hari ini)
+    let activeDelegations = [];
+    try {
+      activeDelegations = getActiveBadalDelegations();
+      if (activeDelegations && activeDelegations.length > 0) {
+        const delMap = {};
+        activeDelegations.forEach(d => {
+          const key = String(d.namaAsatidz || "").trim().toLowerCase();
+          if (key) delMap[key] = d;
+        });
+
+        halaqahList.forEach(item => {
+          const mKey = String(item.muhafiz || "").trim().toLowerCase();
+          if (delMap[mKey]) {
+            const d = delMap[mKey];
+            item.delegation = {
+              isDelegated: true,
+              badalId: d.badalId,
+              namaBadal: d.namaBadal,
+              sesi: d.sesi,
+              catatanBadal: d.catatanBadal,
+              idIzin: d.idIzin
+            };
+          }
+        });
+      }
+    } catch (eDel) {
+      console.warn("[DASHBOARD HALAQAH DELEGATION CHECK WARN]", eDel);
     }
 
     // 6. Kelompokkan Logs per Santri & Agregasi Halaman Pekanan
@@ -7593,6 +7691,7 @@ function getTahfidzDashboard(token) {
         return Array.from(programSet).sort();
       })(),
       halaqahs: halaqahList,
+      activeDelegations: activeDelegations,
       muhafizMatrix: (function() {
         return halaqahList.map((hlq, idx) => {
           const memberStudents = enrichedStudents.filter(st => {
@@ -8451,10 +8550,41 @@ function getTahfidzHalaqahList(token) {
       }
     }
 
+    // Periksa delegasi badal aktif (Izin Asatidz APPROVED untuk hari ini)
+    let activeDelegations = [];
+    try {
+      activeDelegations = getActiveBadalDelegations();
+      if (activeDelegations && activeDelegations.length > 0) {
+        const delMap = {};
+        activeDelegations.forEach(d => {
+          const key = String(d.namaAsatidz || "").trim().toLowerCase();
+          if (key) delMap[key] = d;
+        });
+
+        list.forEach(item => {
+          const mKey = String(item.muhafiz || "").trim().toLowerCase();
+          if (delMap[mKey]) {
+            const d = delMap[mKey];
+            item.delegation = {
+              isDelegated: true,
+              badalId: d.badalId,
+              namaBadal: d.namaBadal,
+              sesi: d.sesi,
+              catatanBadal: d.catatanBadal,
+              idIzin: d.idIzin
+            };
+          }
+        });
+      }
+    } catch (eDel) {
+      console.warn("[HALAQAH DELEGATION CHECK WARN]", eDel);
+    }
+
     return {
       status: "success",
       success: true,
-      data: list
+      data: list,
+      activeDelegations: activeDelegations
     };
   } catch (err) {
     return { status: "error", success: false, message: err.message };
@@ -9512,6 +9642,371 @@ function saveTahfidzCurriculumSettings(payload, token) {
       success: false,
       message: "Gagal menyimpan kurikulum: " + (err.message || err)
     };
+  }
+}
+
+// ============================================================================
+// MODUL KHUSUS: PERIZINAN ASATIDZ & KELANGSUNGAN HALAQAH TAHFIDZ (BADAL)
+// ============================================================================
+
+/**
+ * 1. Inisialisasi Sheet Izin_Asatidz
+ */
+function initIzinAsatidzSheet(ss) {
+  try {
+    if (!ss) ss = getDatabaseSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_IZIN_ASATIDZ);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_IZIN_ASATIDZ);
+      sheet.getRange(1, 1, 1, HEADERS_IZIN_ASATIDZ.length).setValues([HEADERS_IZIN_ASATIDZ]);
+      sheet.getRange(1, 1, 1, HEADERS_IZIN_ASATIDZ.length)
+        .setFontWeight("bold")
+        .setBackground("#047857")
+        .setFontColor("#ffffff");
+      sheet.setFrozenRows(1);
+      Logger.log(`[SCHEMA AUTO-INIT] Tab '${SHEET_IZIN_ASATIDZ}' berhasil dibuat otomatis di Google Sheets.`);
+    } else {
+      const lastCol = sheet.getLastColumn();
+      if (lastCol === 0) {
+        sheet.getRange(1, 1, 1, HEADERS_IZIN_ASATIDZ.length).setValues([HEADERS_IZIN_ASATIDZ]);
+        sheet.getRange(1, 1, 1, HEADERS_IZIN_ASATIDZ.length)
+          .setFontWeight("bold")
+          .setBackground("#047857")
+          .setFontColor("#ffffff");
+        sheet.setFrozenRows(1);
+      }
+    }
+    return {
+      status: "success",
+      success: true,
+      message: `Tab '${SHEET_IZIN_ASATIDZ}' berhasil disiapkan di Google Sheets.`,
+      sheetName: SHEET_IZIN_ASATIDZ
+    };
+  } catch (err) {
+    console.error("[INIT IZIN ASATIDZ ERROR]", err);
+    return { status: "error", success: false, message: "Gagal menyiapkan tab Izin_Asatidz: " + err.message };
+  }
+}
+
+/**
+ * 2. Helper Mengakses Sheet Izin_Asatidz
+ */
+function getIzinAsatidzSheet() {
+  const ss = getDatabaseSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_IZIN_ASATIDZ);
+  if (!sheet) {
+    initIzinAsatidzSheet(ss);
+    sheet = ss.getSheetByName(SHEET_IZIN_ASATIDZ);
+  }
+  return sheet;
+}
+
+/**
+ * 3. Mengajukan Izin Asatidz (Wajib Menunjuk Ustadz Badal)
+ */
+function submitIzinAsatidz(payload, token) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "ASATIDZ", "PENGASUH"]);
+      } catch (authErr) {
+        verifySessionToken(token);
+      }
+    }
+
+    const data = payload || {};
+    const asatidzId = String(data.asatidzId || (actor && actor.identityId) || "").trim();
+    const namaAsatidz = String(data.namaAsatidz || (actor && actor.identity && (actor.identity.nama || actor.identity.name)) || "").trim();
+    const tglMulai = String(data.tanggalMulai || data.tglMulai || "").trim();
+    const tglSelesai = String(data.tanggalSelesai || data.tglSelesai || tglMulai).trim();
+    const sesi = String(data.sesi || "FULL_DAY").trim().toUpperCase();
+    const kategori = String(data.kategori || "SAKIT").trim().toUpperCase();
+    const alasan = String(data.alasan || "").trim();
+    const badalId = String(data.badalId || "").trim();
+    const namaBadal = String(data.namaBadal || "").trim();
+    const catatanBadal = String(data.catatanBadal || "").trim();
+    const lampiranUrl = String(data.lampiranUrl || "").trim();
+
+    if (!namaAsatidz) throw new Error("Nama Asatidz pemohon wajib diisi.");
+    if (!tglMulai) throw new Error("Tanggal mulai izin wajib ditentukan.");
+    if (!alasan) throw new Error("Alasan perizinan wajib disertakan.");
+    if (!namaBadal) throw new Error("Ustadz Badal (pengganti) wajib dipilih untuk menjamin kelangsungan halaqah.");
+
+    const sheet = getIzinAsatidzSheet();
+    if (!sheet) throw new Error("Gagal mengakses database Izin_Asatidz.");
+
+    const now = new Date();
+    const yearMonth = Utilities.formatDate(now, "GMT+7", "yyyyMM");
+    const count = Math.max(1, sheet.getLastRow());
+    const idIzin = `IZA-${yearMonth}-${String(count).padStart(3, "0")}`;
+    const timestamp = now.toISOString();
+
+    const newRow = [
+      idIzin,
+      asatidzId,
+      namaAsatidz,
+      tglMulai,
+      tglSelesai,
+      sesi,
+      kategori,
+      alasan,
+      badalId,
+      namaBadal,
+      catatanBadal,
+      lampiranUrl,
+      "PENDING",
+      "",
+      "",
+      "",
+      timestamp,
+      timestamp
+    ];
+
+    sheet.appendRow(newRow);
+
+    return {
+      status: "success",
+      success: true,
+      message: "Permohonan izin mengajar berhasil diajukan dan menunggu persetujuan Dewan Pengasuh.",
+      data: {
+        idIzin: idIzin,
+        namaAsatidz: namaAsatidz,
+        namaBadal: namaBadal,
+        tglMulai: tglMulai,
+        tglSelesai: tglSelesai,
+        sesi: sesi,
+        status: "PENDING"
+      }
+    };
+  } catch (err) {
+    console.error("[SUBMIT IZIN ASATIDZ ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal mengajukan izin: " + err.message
+    };
+  }
+}
+
+/**
+ * 4. Mengambil Daftar Data Izin Asatidz
+ */
+function getIzinAsatidzData(params = {}, token = null) {
+  try {
+    let actor = null;
+    if (token) {
+      try {
+        actor = authenticateSession(token);
+      } catch (e) {
+        verifySessionToken(token);
+      }
+    }
+
+    const sheet = getIzinAsatidzSheet();
+    if (!sheet) {
+      return { status: "success", success: true, data: [], summary: { total: 0, pending: 0, approved: 0, rejected: 0 } };
+    }
+
+    const values = sheet.getDataRange().getValues();
+    if (!values || values.length < 2) {
+      return { status: "success", success: true, data: [], summary: { total: 0, pending: 0, approved: 0, rejected: 0 } };
+    }
+
+    const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+    const col = {};
+    headers.forEach((h, idx) => { col[h] = idx; });
+
+    const list = [];
+    let pendingCount = 0;
+    let approvedCount = 0;
+    let rejectedCount = 0;
+
+    for (let i = 1; i < values.length; i++) {
+      const r = values[i];
+      const idIzin = String(r[col["id_izin"]] || "").trim();
+      if (!idIzin) continue;
+
+      const item = {
+        idIzin: idIzin,
+        asatidzId: String(r[col["asatidz_id"]] || "").trim(),
+        namaAsatidz: String(r[col["nama_asatidz"]] || "").trim(),
+        tanggalMulai: String(r[col["tanggal_mulai"]] || "").trim(),
+        tanggalSelesai: String(r[col["tanggal_selesai"]] || "").trim(),
+        sesi: String(r[col["sesi"]] || "FULL_DAY").trim(),
+        kategori: String(r[col["kategori"]] || "SAKIT").trim(),
+        alasan: String(r[col["alasan"]] || "").trim(),
+        badalId: String(r[col["badal_id"]] || "").trim(),
+        namaBadal: String(r[col["nama_badal"]] || "").trim(),
+        catatanBadal: String(r[col["catatan_badal"]] || "").trim(),
+        lampiranUrl: String(r[col["lampiran_url"]] || "").trim(),
+        status: String(r[col["status"]] || "PENDING").trim().toUpperCase(),
+        pengasuhApprovedBy: String(r[col["pengasuh_approved_by"]] || "").trim(),
+        pengasuhApprovedAt: String(r[col["pengasuh_approved_at"]] || "").trim(),
+        catatanPengasuh: String(r[col["catatan_pengasuh"]] || "").trim(),
+        createdAt: String(r[col["created_at"]] || "").trim(),
+        updatedAt: String(r[col["updated_at"]] || "").trim()
+      };
+
+      if (item.status === "PENDING") pendingCount++;
+      else if (item.status === "APPROVED") approvedCount++;
+      else if (item.status === "REJECTED") rejectedCount++;
+
+      // Filter jika parameter diberikan
+      if (params.status && item.status !== String(params.status).trim().toUpperCase()) continue;
+      if (params.asatidzId && item.asatidzId !== String(params.asatidzId).trim()) continue;
+      if (params.badalId && item.badalId !== String(params.badalId).trim()) continue;
+      if (params.tanggal && (item.tanggalMulai > params.tanggal || item.tanggalSelesai < params.tanggal)) continue;
+
+      list.push(item);
+    }
+
+    list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    return {
+      status: "success",
+      success: true,
+      data: list,
+      summary: {
+        total: list.length,
+        pending: pendingCount,
+        approved: approvedCount,
+        rejected: rejectedCount
+      }
+    };
+  } catch (err) {
+    console.error("[GET IZIN ASATIDZ ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memuat data izin asatidz: " + err.message
+    };
+  }
+}
+
+/**
+ * 5. Persetujuan Izin Asatidz oleh Dewan Pengasuh
+ */
+function approveIzinAsatidz(payload, token) {
+  try {
+    let approverName = "Dewan Pengasuh";
+    if (token) {
+      const actor = authenticateSession(token);
+      authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "PENGASUH"]);
+      if (actor.identity && (actor.identity.nama || actor.identity.name)) {
+        approverName = actor.identity.nama || actor.identity.name;
+      }
+    }
+
+    const data = payload || {};
+    const idIzin = String(data.idIzin || data.id || "").trim();
+    const decision = String(data.decision || data.status || "APPROVED").trim().toUpperCase();
+    const catatan = String(data.catatan || data.catatanPengasuh || "").trim();
+
+    if (!idIzin) throw new Error("ID Izin Asatidz wajib disertakan.");
+
+    const sheet = getIzinAsatidzSheet();
+    if (!sheet) throw new Error("Database Izin_Asatidz tidak ditemukan.");
+
+    const values = sheet.getDataRange().getValues();
+    if (!values || values.length < 2) throw new Error("Data izin masih kosong.");
+
+    const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+    const col = {};
+    headers.forEach((h, idx) => { col[h] = idx; });
+
+    let rowIndex = -1;
+    for (let i = 1; i < values.length; i++) {
+      if (String(values[i][col["id_izin"]] || "").trim() === idIzin) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+
+    if (rowIndex === -1) {
+      throw new Error(`Data izin '${idIzin}' tidak ditemukan.`);
+    }
+
+    const nowISO = new Date().toISOString();
+    const finalStatus = (decision === "REJECT" || decision === "REJECTED" || decision === "TOLAK") ? "REJECTED" : "APPROVED";
+
+    sheet.getRange(rowIndex, col["status"] + 1).setValue(finalStatus);
+    sheet.getRange(rowIndex, col["pengasuh_approved_by"] + 1).setValue(approverName);
+    sheet.getRange(rowIndex, col["pengasuh_approved_at"] + 1).setValue(nowISO);
+    sheet.getRange(rowIndex, col["catatan_pengasuh"] + 1).setValue(catatan);
+    sheet.getRange(rowIndex, col["updated_at"] + 1).setValue(nowISO);
+
+    return {
+      status: "success",
+      success: true,
+      message: finalStatus === "APPROVED" 
+        ? "Izin Asatidz berhasil disetujui (Qobul). Pendelegasian halaqah ke Ustadz Badal telah aktif."
+        : "Izin Asatidz telah ditolak.",
+      data: {
+        idIzin: idIzin,
+        status: finalStatus,
+        approvedBy: approverName,
+        approvedAt: nowISO
+      }
+    };
+  } catch (err) {
+    console.error("[APPROVE IZIN ASATIDZ ERROR]", err);
+    return {
+      status: "error",
+      success: false,
+      message: "Gagal memproses persetujuan izin: " + err.message
+    };
+  }
+}
+
+/**
+ * 6. Mengambil Delegasi Badal Aktif pada Tanggal & Sesi Tertentu
+ */
+function getActiveBadalDelegations(dateStr, sesiStr) {
+  try {
+    const today = dateStr || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
+    const sheet = getIzinAsatidzSheet();
+    if (!sheet) return [];
+
+    const values = sheet.getDataRange().getValues();
+    if (!values || values.length < 2) return [];
+
+    const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+    const col = {};
+    headers.forEach((h, idx) => { col[h] = idx; });
+
+    const delegations = [];
+    for (let i = 1; i < values.length; i++) {
+      const r = values[i];
+      const status = String(r[col["status"]] || "").trim().toUpperCase();
+      if (status !== "APPROVED") continue;
+
+      const tMulai = String(r[col["tanggal_mulai"]] || "").trim();
+      const tSelesai = String(r[col["tanggal_selesai"]] || tMulai).trim();
+      if (today < tMulai || today > tSelesai) continue;
+
+      const sesi = String(r[col["sesi"]] || "FULL_DAY").trim().toUpperCase();
+      if (sesiStr && sesi !== "FULL_DAY" && sesi !== String(sesiStr).trim().toUpperCase()) {
+        continue;
+      }
+
+      delegations.push({
+        idIzin: String(r[col["id_izin"]] || "").trim(),
+        asatidzId: String(r[col["asatidz_id"]] || "").trim(),
+        namaAsatidz: String(r[col["nama_asatidz"]] || "").trim(),
+        badalId: String(r[col["badal_id"]] || "").trim(),
+        namaBadal: String(r[col["nama_badal"]] || "").trim(),
+        sesi: sesi,
+        catatanBadal: String(r[col["catatan_badal"]] || "").trim(),
+        tanggalMulai: tMulai,
+        tanggalSelesai: tSelesai
+      });
+    }
+    return delegations;
+  } catch (e) {
+    console.warn("[GET ACTIVE BADAL ERROR]", e);
+    return [];
   }
 }
 

@@ -332,6 +332,35 @@ function doPost(e) {
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
     // ========================================================
+    // Perizinan Asatidz & Delegasi Badal Actions
+    if (action === "initIzinAsatidz" || action === "tahfidz.initIzinAsatidz") {
+      return createJsonResponse(initIzinAsatidzSheet());
+    }
+
+    if (action === "submitIzinAsatidz" || action === "tahfidz.submitIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(submitIzinAsatidz(payload.data || payload, token));
+    }
+
+    if (action === "getIzinAsatidz" || action === "tahfidz.getIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getIzinAsatidzData(payload.data || payload, token));
+    }
+
+    if (action === "approveIzinAsatidz" || action === "tahfidz.approveIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(approveIzinAsatidz(payload.data || payload, token));
+    }
+
+    if (action === "getActiveBadalDelegations" || action === "tahfidz.getActiveBadal") {
+      const p = payload.data || payload;
+      return createJsonResponse({
+        status: "success",
+        success: true,
+        data: getActiveBadalDelegations(p.tanggal, p.sesi)
+      });
+    }
+
     if (action === "getTahfidzDashboard" || action === "tahfidz.dashboard" || action === "auth.tahfidz.dashboard") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getTahfidzDashboard(token));
@@ -1096,6 +1125,22 @@ function doGet(e) {
     if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
       const token = e.parameter.token || null;
       return createJsonResponse(getIzinPerpulanganData(e.parameter, token));
+    }
+
+    // ========================================================
+    // PERIZINAN ASATIDZ ACTIONS (doGet)
+    // ========================================================
+    if (action === "getIzinAsatidz" || action === "tahfidz.getIzinAsatidz") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(getIzinAsatidzData(e.parameter, token));
+    }
+
+    if (action === "getActiveBadalDelegations" || action === "tahfidz.getActiveBadal") {
+      return createJsonResponse({
+        status: "success",
+        success: true,
+        data: getActiveBadalDelegations(e.parameter.tanggal, e.parameter.sesi)
+      });
     }
 
     // ========================================================

@@ -1734,6 +1734,72 @@
                         }
                     };
                 }
+
+                // 16. Izin Asatidz & Delegasi Badal (Fast-Read Supabase <50ms)
+                if (action === "getIzinAsatidz" || action === "tahfidz.getIzinAsatidz") {
+                    let query = `${sbUrl}/rest/v1/izin_asatidz?select=*&order=created_at.desc`;
+                    if (params.asatidzId || params.asatidz_id) {
+                        query += `&asatidz_id=eq.${encodeURIComponent(params.asatidzId || params.asatidz_id)}`;
+                    }
+                    if (params.badalId || params.badal_id) {
+                        query += `&badal_id=eq.${encodeURIComponent(params.badalId || params.badal_id)}`;
+                    }
+                    if (params.status && params.status !== 'ALL') {
+                        query += `&status=eq.${encodeURIComponent(params.status)}`;
+                    }
+                    const res = await fetch(query, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    if (!Array.isArray(rows)) return null;
+
+                    const list = rows.map(r => ({
+                        idIzin: r.id_izin,
+                        id_izin: r.id_izin,
+                        id: r.id_izin,
+                        asatidzId: r.asatidz_id,
+                        asatidz_id: r.asatidz_id,
+                        namaAsatidz: r.nama_asatidz,
+                        nama_asatidz: r.nama_asatidz,
+                        tanggalMulai: r.tanggal_mulai,
+                        tanggal_mulai: r.tanggal_mulai,
+                        tanggalSelesai: r.tanggal_selesai,
+                        tanggal_selesai: r.tanggal_selesai,
+                        sesi: r.sesi,
+                        kategori: r.kategori,
+                        alasan: r.alasan,
+                        badalId: r.badal_id,
+                        badal_id: r.badal_id,
+                        namaBadal: r.nama_badal,
+                        nama_badal: r.nama_badal,
+                        catatanBadal: r.catatan_badal || '',
+                        catatan_badal: r.catatan_badal || '',
+                        lampiranUrl: r.lampiran_url || '',
+                        lampiran_url: r.lampiran_url || '',
+                        status: r.status,
+                        pengasuhApprovedBy: r.pengasuh_approved_by || '',
+                        pengasuh_approved_by: r.pengasuh_approved_by || '',
+                        pengasuhApprovedAt: r.pengasuh_approved_at || '',
+                        pengasuh_approved_at: r.pengasuh_approved_at || '',
+                        catatanPengasuh: r.catatan_pengasuh || '',
+                        catatan_pengasuh: r.catatan_pengasuh || '',
+                        createdAt: r.created_at,
+                        created_at: r.created_at,
+                        updatedAt: r.updated_at,
+                        updated_at: r.updated_at
+                    }));
+
+                    return {
+                        success: true,
+                        status: "success",
+                        data: list,
+                        summary: {
+                            total: list.length,
+                            pending: list.filter(r => r.status === 'PENDING').length,
+                            approved: list.filter(r => r.status === 'APPROVED').length,
+                            rejected: list.filter(r => r.status === 'REJECTED').length
+                        }
+                    };
+                }
             } catch (err) {
                 console.warn("[SUPABASE FETCH ERROR]", action, err);
                 return null;
@@ -3203,6 +3269,62 @@
                     const id = payload.idIzin || payload.id_izin || payload.id;
                     if (id) {
                         await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'DELETE',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                        });
+                    }
+                }
+                else if (action === 'submitIzinAsatidz' || action === 'tahfidz.submitIzinAsatidz') {
+                    const nowIso = new Date().toISOString();
+                    const row = {
+                        id_izin: payload.idIzin || payload.id_izin || '',
+                        asatidz_id: payload.asatidzId || payload.asatidz_id || '',
+                        nama_asatidz: payload.namaAsatidz || payload.nama_asatidz || '',
+                        tanggal_mulai: payload.tanggalMulai || payload.tglMulai || '',
+                        tanggal_selesai: payload.tanggalSelesai || payload.tglSelesai || payload.tanggalMulai || payload.tglMulai || '',
+                        sesi: payload.sesi || 'FULL_DAY',
+                        kategori: payload.kategori || 'SAKIT',
+                        alasan: payload.alasan || '',
+                        badal_id: payload.badalId || payload.badal_id || '',
+                        nama_badal: payload.namaBadal || payload.nama_badal || '',
+                        catatan_badal: payload.catatanBadal || payload.catatan_badal || '',
+                        lampiran_url: payload.lampiranUrl || payload.lampiran_url || '',
+                        status: payload.status || 'PENDING',
+                        created_at: payload.created_at || nowIso,
+                        updated_at: payload.updated_at || nowIso
+                    };
+
+                    await fetch(`${sbUrl}/rest/v1/izin_asatidz`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(row)
+                    });
+                }
+                else if (action === 'approveIzinAsatidz' || action === 'tahfidz.approveIzinAsatidz') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    if (id) {
+                        const nowIso = new Date().toISOString();
+                        const decision = String(payload.decision || payload.status || 'APPROVED').toUpperCase();
+                        const finalStatus = (decision === 'REJECT' || decision === 'REJECTED' || decision === 'TOLAK') ? 'REJECTED' : 'APPROVED';
+                        const patchBody = {
+                            status: finalStatus,
+                            pengasuh_approved_by: payload.approvedBy || payload.pengasuhApprovedBy || 'Dewan Pengasuh',
+                            pengasuh_approved_at: nowIso,
+                            catatan_pengasuh: payload.catatan || payload.catatanPengasuh || '',
+                            updated_at: nowIso
+                        };
+
+                        await fetch(`${sbUrl}/rest/v1/izin_asatidz?id_izin=eq.${encodeURIComponent(id)}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify(patchBody)
+                        });
+                    }
+                }
+                else if (action === 'deleteIzinAsatidz' || action === 'tahfidz.deleteIzinAsatidz') {
+                    const id = payload.idIzin || payload.id_izin || payload.id;
+                    if (id) {
+                        await fetch(`${sbUrl}/rest/v1/izin_asatidz?id_izin=eq.${encodeURIComponent(id)}`, {
                             method: 'DELETE',
                             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
                         });
