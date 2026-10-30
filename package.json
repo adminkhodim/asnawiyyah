@@ -12,6 +12,8 @@
     "backend:pull": "cd legacy && clasp pull",
     "backend:split": "node scripts/split_backend.js",
     "backend:bundle": "node scripts/bundle_backend.js",
+    "admin:split": "node scripts/split_admin.js",
+    "admin:bundle": "node scripts/bundle_admin.js",
     "test:syntax": "node scripts/check_syntax.js",
     "test": "node scripts/run_all_tests.js",
     "validate": "npm run build && npm run test"

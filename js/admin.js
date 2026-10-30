@@ -10850,5 +10850,3 @@
                 renderAdminAnalyticsChart(currentAdminAnalyticsRange || '7d');
             }
         }
-
-
