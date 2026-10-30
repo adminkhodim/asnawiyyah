@@ -2,6 +2,7 @@
 -- SINKRONISASI TOTAL DATA WALI SANTRI & PEMETAAN SANTRI (SPREADSHEET KE SUPABASE)
 -- PPTQ ASNAWIYYAH - CLOUD DATABASE SUPABASE (POSTGRESQL)
 -- Project: tkjhfhyabacbyknwrysh
+-- CATATAN: Seluruh data pribadi (PII) dalam skrip ini telah disanitasi/dimock demi kepatuhan keamanan data.
 -- ============================================================================
 
 -- ============================================================================
@@ -11,62 +12,49 @@ ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.wali_identities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.wali_santri_map ENABLE ROW LEVEL SECURITY;
 
--- 1. Izin Baca Cepat (Fast-Read <50ms) untuk Pengunjung Web & Admin
-DROP POLICY IF EXISTS "Anon Read Users" ON public.users;
-CREATE POLICY "Anon Read Users" ON public.users FOR SELECT TO anon, authenticated USING (true);
-
-DROP POLICY IF EXISTS "Anon Read Wali Identities" ON public.wali_identities;
-CREATE POLICY "Anon Read Wali Identities" ON public.wali_identities FOR SELECT TO anon, authenticated USING (true);
-
-DROP POLICY IF EXISTS "Anon Read Wali Santri Map" ON public.wali_santri_map;
-CREATE POLICY "Anon Read Wali Santri Map" ON public.wali_santri_map FOR SELECT TO anon, authenticated USING (true);
-
--- 2. Izin Tulis untuk Aktivasi Mandiri Wali Santri & Admin
-DROP POLICY IF EXISTS "Anon Insert Wali Users" ON public.users;
-CREATE POLICY "Anon Insert Wali Users" ON public.users FOR INSERT TO anon, authenticated WITH CHECK (role = 'WALI_SANTRI');
-
-DROP POLICY IF EXISTS "Admin Manage Users" ON public.users;
-CREATE POLICY "Admin Manage Users" ON public.users FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
+-- 1. Izin Baca Terproteksi (Service Role & Authenticated)
 DROP POLICY IF EXISTS "Anon Manage Wali Identities" ON public.wali_identities;
-CREATE POLICY "Anon Manage Wali Identities" ON public.wali_identities FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Anon Manage Wali Santri Map" ON public.wali_santri_map;
-CREATE POLICY "Anon Manage Wali Santri Map" ON public.wali_santri_map FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Anon Delete Wali Santri Map" ON public.wali_santri_map;
+
+CREATE POLICY "Service Role Full Access Wali Map" ON public.wali_santri_map 
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service Role Full Access Wali Identities" ON public.wali_identities 
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 
 -- ============================================================================
--- BAGIAN 2: SINKRONISASI TABEL users (MANAJEMEN PENGGUNA TERPADU)
+-- BAGIAN 2: SINKRONISASI TABEL users (MANAJEMEN PENGGUNA TERPADU - DATA SANITASI)
 -- ============================================================================
 INSERT INTO public.users (user_id, email, phone, name, role, status, created_at)
 VALUES
-  ('USR_WLI_2bf386f3bcef', 'iraruswita22@gmail.com', '82242870939', 'Ira Ruswita', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:05:04.994Z'),
-  ('USR_WLI_0f844d427545', 'fasikhatul.munawaroh@gmail.com', '85640286285', 'Fasikhatul Munawaroh', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:23:49.900Z'),
-  ('USR_WLI_bbb8374e004d', 'ka.astrueblue@gmail.com', '895395169988', 'Kasful Asrori/ Luluk Barokah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:24:53.598Z'),
-  ('USR_WLI_392646c0f71c', 'lintangrizky1987@gmail.com', '85935254147', 'Nurohmah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:28:39.235Z'),
-  ('USR_WLI_91d3b7d60e47', 'alrcatir112@gmail.com', '85726959334', 'FITRIYATUN NAFIAH', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:31:14.015Z'),
-  ('USR_WLI_c9099f55ef48', 'all.alimah47@gmail.com', '81228476687', 'Mu''alimah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:34:47.207Z'),
-  ('USR_WLI_50194a43d005', 'burhanalya@gmail.com', '81225040333', 'Burhan Aly Azhar', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:51:48.333Z'),
-  ('USR_WLI_f96f0f952d68', 'saekhulhadi872@gmail.com', '85229446068', 'Saekhul Hadi', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:03:42.462Z'),
-  ('USR_WLI_ad9693f75311', 'milakamilah10@gmail.com', '85727027963', 'Mubrotun kamilah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:04:48.429Z'),
-  ('USR_WLI_e7bd3d1f1316', 'facenovaid@gmail.com', '89653887640', 'Bpk. Nazir', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:30.382Z'),
-  ('USR_WLI_bfc982e5d396', 'mardliyahsiap@gmail.com', '83148481474', 'Muhammad Islahuddin', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:57.566Z'),
-  ('USR_WLI_9d2dd57660eb', 'dulkemplu6@gmail.com', '82314089535', 'Abdul Adlim', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:20:54.974Z'),
-  ('USR_b4ac3d63a39a', 'shopiah1905@gmail.com', '8895236264', 'Shopiah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:23:11.143Z'),
-  ('USR_WLI_a82346c424aa', 'lutfiaturohmah04@gmail.com', '89637476557', 'Alayya naufalyn fikria', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:22.282Z'),
-  ('USR_WLI_5ce00e2a8d35', 'faisalalazis93@gmail.com', '81325324487', 'Nur khasanah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:46.755Z'),
-  ('USR_WLI_c4b2d616e647', 'afifudin079@gmail.com', '85640674693', 'Afifudin', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:55:40.189Z'),
-  ('USR_WLI_4026cc8de2e3', 'eka.septiana8888@gmail.com', '81215480789', 'Eka Septiana Pujaningrum', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:56:46.018Z'),
-  ('USR_WLI_489ceba2514d', 'alanafif29@gmail.com', '895604429383', 'Lisanah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:59:19.429Z'),
-  ('USR_WLI_d9552bf65d4b', 'riyantosulkhan@gmail.com', '85216899942', 'Sulkhan Riyanto', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:07:29.924Z'),
-  ('USR_WLI_cb65d17ec3ee', 'abinasuha02@gmail.com', '81225888950', 'Winarko', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:10:41.010Z'),
-  ('USR_WLI_cd90faebaddb', 'liyahlailiyah131@gmail.com', '81330408602', 'Alvino123@gmail.com 07122009', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:26:28.256Z'),
-  ('USR_WLI_8ba7f5643257', 'sriharyo212@gmail.com', NULL, 'Sriharyo 12', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:27:31.928Z'),
-  ('USR_WLI_057061bf5b8d', 'warnotoprojek@gmail.com', '82322272021', 'Warnoto', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:34:24.749Z'),
-  ('USR_WLI_7c5c4bf2cf6c', 'dmuzaki4@gmail.com', '82244220052', 'Muhamad Ali imron', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:12:06.725Z'),
-  ('USR_WLI_3d6cc31c69ff', 'lurahbu783@gmail.com', '82134038536', 'Ali Mustain S.H / Muzaroah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:13:51.930Z'),
-  ('USR_WLI_bc2ffd3c46c9', 'sitisolekah0592@gmail.com', '895363645642', 'Agus supriyadi/Siti solekah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:41:10.745Z'),
-  ('USR_WLI_e93e161c16d0', 'ahmadghozali339@gmail.com', '87736381437', 'Ali Ma''rup', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:49:28.780Z')
+  ('USR_WLI_2bf386f3bcef', 'wali.santri01@asnawiyyah.sch.id', '6281200000001', 'Wali Santri 01', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:05:04.994Z'),
+  ('USR_WLI_0f844d427545', 'wali.santri02@asnawiyyah.sch.id', '6281200000002', 'Wali Santri 02', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:23:49.900Z'),
+  ('USR_WLI_bbb8374e004d', 'wali.santri03@asnawiyyah.sch.id', '6281200000003', 'Wali Santri 03', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:24:53.598Z'),
+  ('USR_WLI_392646c0f71c', 'wali.santri04@asnawiyyah.sch.id', '6281200000004', 'Wali Santri 04', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:28:39.235Z'),
+  ('USR_WLI_91d3b7d60e47', 'wali.santri05@asnawiyyah.sch.id', '6281200000005', 'Wali Santri 05', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:31:14.015Z'),
+  ('USR_WLI_c9099f55ef48', 'wali.santri06@asnawiyyah.sch.id', '6281200000006', 'Wali Santri 06', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:34:47.207Z'),
+  ('USR_WLI_50194a43d005', 'wali.santri07@asnawiyyah.sch.id', '6281200000007', 'Wali Santri 07', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:51:48.333Z'),
+  ('USR_WLI_f96f0f952d68', 'wali.santri08@asnawiyyah.sch.id', '6281200000008', 'Wali Santri 08', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:03:42.462Z'),
+  ('USR_WLI_ad9693f75311', 'wali.santri09@asnawiyyah.sch.id', '6281200000009', 'Wali Santri 09', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:04:48.429Z'),
+  ('USR_WLI_e7bd3d1f1316', 'wali.santri10@asnawiyyah.sch.id', '6281200000010', 'Wali Santri 10', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:30.382Z'),
+  ('USR_WLI_bfc982e5d396', 'wali.santri11@asnawiyyah.sch.id', '6281200000011', 'Wali Santri 11', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:57.566Z'),
+  ('USR_WLI_9d2dd57660eb', 'wali.santri12@asnawiyyah.sch.id', '6281200000012', 'Wali Santri 12', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:20:54.974Z'),
+  ('USR_b4ac3d63a39a',     'wali.santri13@asnawiyyah.sch.id', '6281200000013', 'Wali Santri 13', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:23:11.143Z'),
+  ('USR_WLI_a82346c424aa', 'wali.santri14@asnawiyyah.sch.id', '6281200000014', 'Wali Santri 14', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:22.282Z'),
+  ('USR_WLI_5ce00e2a8d35', 'wali.santri15@asnawiyyah.sch.id', '6281200000015', 'Wali Santri 15', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:46.755Z'),
+  ('USR_WLI_c4b2d616e647', 'wali.santri16@asnawiyyah.sch.id', '6281200000016', 'Wali Santri 16', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:55:40.189Z'),
+  ('USR_WLI_4026cc8de2e3', 'wali.santri17@asnawiyyah.sch.id', '6281200000017', 'Wali Santri 17', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:56:46.018Z'),
+  ('USR_WLI_489ceba2514d', 'wali.santri18@asnawiyyah.sch.id', '6281200000018', 'Wali Santri 18', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:59:19.429Z'),
+  ('USR_WLI_d9552bf65d4b', 'wali.santri19@asnawiyyah.sch.id', '6281200000019', 'Wali Santri 19', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:07:29.924Z'),
+  ('USR_WLI_cb65d17ec3ee', 'wali.santri20@asnawiyyah.sch.id', '6281200000020', 'Wali Santri 20', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:10:41.010Z'),
+  ('USR_WLI_cd90faebaddb', 'wali.santri21@asnawiyyah.sch.id', '6281200000021', 'Wali Santri 21', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:26:28.256Z'),
+  ('USR_WLI_8ba7f5643257', 'wali.santri22@asnawiyyah.sch.id', NULL,            'Wali Santri 22', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:27:31.928Z'),
+  ('USR_WLI_057061bf5b8d', 'wali.santri23@asnawiyyah.sch.id', '6281200000023', 'Wali Santri 23', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:34:24.749Z'),
+  ('USR_WLI_7c5c4bf2cf6c', 'wali.santri24@asnawiyyah.sch.id', '6281200000024', 'Wali Santri 24', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:12:06.725Z'),
+  ('USR_WLI_3d6cc31c69ff', 'wali.santri25@asnawiyyah.sch.id', '6281200000025', 'Wali Santri 25', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:13:51.930Z'),
+  ('USR_WLI_bc2ffd3c46c9', 'wali.santri26@asnawiyyah.sch.id', '6281200000026', 'Wali Santri 26', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:41:10.745Z'),
+  ('USR_WLI_e93e161c16d0', 'wali.santri27@asnawiyyah.sch.id', '6281200000027', 'Wali Santri 27', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:49:28.780Z')
 ON CONFLICT (user_id) DO UPDATE SET
   name = EXCLUDED.name,
   email = EXCLUDED.email,
@@ -76,37 +64,37 @@ ON CONFLICT (user_id) DO UPDATE SET
 
 
 -- ============================================================================
--- BAGIAN 3: SINKRONISASI TABEL wali_identities (IDENTITY & PROFIL WALI)
+-- BAGIAN 3: SINKRONISASI TABEL wali_identities (IDENTITY & PROFIL WALI - DATA SANITASI)
 -- ============================================================================
 INSERT INTO public.wali_identities (identity_id, email, phone, name, role, status, created_at)
 VALUES
-  ('USR_WLI_2bf386f3bcef', 'iraruswita22@gmail.com', '82242870939', 'Ira Ruswita', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:05:04.994Z'),
-  ('USR_WLI_0f844d427545', 'fasikhatul.munawaroh@gmail.com', '85640286285', 'Fasikhatul Munawaroh', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:23:49.900Z'),
-  ('USR_WLI_bbb8374e004d', 'ka.astrueblue@gmail.com', '895395169988', 'Kasful Asrori/ Luluk Barokah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:24:53.598Z'),
-  ('USR_WLI_392646c0f71c', 'lintangrizky1987@gmail.com', '85935254147', 'Nurohmah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:28:39.235Z'),
-  ('USR_WLI_91d3b7d60e47', 'alrcatir112@gmail.com', '85726959334', 'FITRIYATUN NAFIAH', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:31:14.015Z'),
-  ('USR_WLI_c9099f55ef48', 'all.alimah47@gmail.com', '81228476687', 'Mu''alimah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:34:47.207Z'),
-  ('USR_WLI_50194a43d005', 'burhanalya@gmail.com', '81225040333', 'Burhan Aly Azhar', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:51:48.333Z'),
-  ('USR_WLI_f96f0f952d68', 'saekhulhadi872@gmail.com', '85229446068', 'Saekhul Hadi', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:03:42.462Z'),
-  ('USR_WLI_ad9693f75311', 'milakamilah10@gmail.com', '85727027963', 'Mubrotun kamilah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:04:48.429Z'),
-  ('USR_WLI_e7bd3d1f1316', 'facenovaid@gmail.com', '89653887640', 'Bpk. Nazir', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:30.382Z'),
-  ('USR_WLI_bfc982e5d396', 'mardliyahsiap@gmail.com', '83148481474', 'Muhammad Islahuddin', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:57.566Z'),
-  ('USR_WLI_9d2dd57660eb', 'dulkemplu6@gmail.com', '82314089535', 'Abdul Adlim', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:20:54.974Z'),
-  ('USR_b4ac3d63a39a', 'shopiah1905@gmail.com', '8895236264', 'Shopiah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:23:11.143Z'),
-  ('USR_WLI_a82346c424aa', 'lutfiaturohmah04@gmail.com', '89637476557', 'Alayya naufalyn fikria', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:22.282Z'),
-  ('USR_WLI_5ce00e2a8d35', 'faisalalazis93@gmail.com', '81325324487', 'Nur khasanah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:46.755Z'),
-  ('USR_WLI_c4b2d616e647', 'afifudin079@gmail.com', '85640674693', 'Afifudin', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:55:40.189Z'),
-  ('USR_WLI_4026cc8de2e3', 'eka.septiana8888@gmail.com', '81215480789', 'Eka Septiana Pujaningrum', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:56:46.018Z'),
-  ('USR_WLI_489ceba2514d', 'alanafif29@gmail.com', '895604429383', 'Lisanah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:59:19.429Z'),
-  ('USR_WLI_d9552bf65d4b', 'riyantosulkhan@gmail.com', '85216899942', 'Sulkhan Riyanto', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:07:29.924Z'),
-  ('USR_WLI_cb65d17ec3ee', 'abinasuha02@gmail.com', '81225888950', 'Winarko', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:10:41.010Z'),
-  ('USR_WLI_cd90faebaddb', 'liyahlailiyah131@gmail.com', '81330408602', 'Alvino123@gmail.com 07122009', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:26:28.256Z'),
-  ('USR_WLI_8ba7f5643257', 'sriharyo212@gmail.com', NULL, 'Sriharyo 12', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:27:31.928Z'),
-  ('USR_WLI_057061bf5b8d', 'warnotoprojek@gmail.com', '82322272021', 'Warnoto', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:34:24.749Z'),
-  ('USR_WLI_7c5c4bf2cf6c', 'dmuzaki4@gmail.com', '82244220052', 'Muhamad Ali imron', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:12:06.725Z'),
-  ('USR_WLI_3d6cc31c69ff', 'lurahbu783@gmail.com', '82134038536', 'Ali Mustain S.H / Muzaroah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:13:51.930Z'),
-  ('USR_WLI_bc2ffd3c46c9', 'sitisolekah0592@gmail.com', '895363645642', 'Agus supriyadi/Siti solekah', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:41:10.745Z'),
-  ('USR_WLI_e93e161c16d0', 'ahmadghozali339@gmail.com', '87736381437', 'Ali Ma''rup', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:49:28.780Z')
+  ('USR_WLI_2bf386f3bcef', 'wali.santri01@asnawiyyah.sch.id', '6281200000001', 'Wali Santri 01', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:05:04.994Z'),
+  ('USR_WLI_0f844d427545', 'wali.santri02@asnawiyyah.sch.id', '6281200000002', 'Wali Santri 02', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:23:49.900Z'),
+  ('USR_WLI_bbb8374e004d', 'wali.santri03@asnawiyyah.sch.id', '6281200000003', 'Wali Santri 03', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:24:53.598Z'),
+  ('USR_WLI_392646c0f71c', 'wali.santri04@asnawiyyah.sch.id', '6281200000004', 'Wali Santri 04', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:28:39.235Z'),
+  ('USR_WLI_91d3b7d60e47', 'wali.santri05@asnawiyyah.sch.id', '6281200000005', 'Wali Santri 05', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:31:14.015Z'),
+  ('USR_WLI_c9099f55ef48', 'wali.santri06@asnawiyyah.sch.id', '6281200000006', 'Wali Santri 06', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:34:47.207Z'),
+  ('USR_WLI_50194a43d005', 'wali.santri07@asnawiyyah.sch.id', '6281200000007', 'Wali Santri 07', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T12:51:48.333Z'),
+  ('USR_WLI_f96f0f952d68', 'wali.santri08@asnawiyyah.sch.id', '6281200000008', 'Wali Santri 08', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:03:42.462Z'),
+  ('USR_WLI_ad9693f75311', 'wali.santri09@asnawiyyah.sch.id', '6281200000009', 'Wali Santri 09', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:04:48.429Z'),
+  ('USR_WLI_e7bd3d1f1316', 'wali.santri10@asnawiyyah.sch.id', '6281200000010', 'Wali Santri 10', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:30.382Z'),
+  ('USR_WLI_bfc982e5d396', 'wali.santri11@asnawiyyah.sch.id', '6281200000011', 'Wali Santri 11', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:18:57.566Z'),
+  ('USR_WLI_9d2dd57660eb', 'wali.santri12@asnawiyyah.sch.id', '6281200000012', 'Wali Santri 12', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:20:54.974Z'),
+  ('USR_b4ac3d63a39a',     'wali.santri13@asnawiyyah.sch.id', '6281200000013', 'Wali Santri 13', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:23:11.143Z'),
+  ('USR_WLI_a82346c424aa', 'wali.santri14@asnawiyyah.sch.id', '6281200000014', 'Wali Santri 14', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:22.282Z'),
+  ('USR_WLI_5ce00e2a8d35', 'wali.santri15@asnawiyyah.sch.id', '6281200000015', 'Wali Santri 15', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:26:46.755Z'),
+  ('USR_WLI_c4b2d616e647', 'wali.santri16@asnawiyyah.sch.id', '6281200000016', 'Wali Santri 16', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:55:40.189Z'),
+  ('USR_WLI_4026cc8de2e3', 'wali.santri17@asnawiyyah.sch.id', '6281200000017', 'Wali Santri 17', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:56:46.018Z'),
+  ('USR_WLI_489ceba2514d', 'wali.santri18@asnawiyyah.sch.id', '6281200000018', 'Wali Santri 18', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T13:59:19.429Z'),
+  ('USR_WLI_d9552bf65d4b', 'wali.santri19@asnawiyyah.sch.id', '6281200000019', 'Wali Santri 19', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:07:29.924Z'),
+  ('USR_WLI_cb65d17ec3ee', 'wali.santri20@asnawiyyah.sch.id', '6281200000020', 'Wali Santri 20', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:10:41.010Z'),
+  ('USR_WLI_cd90faebaddb', 'wali.santri21@asnawiyyah.sch.id', '6281200000021', 'Wali Santri 21', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:26:28.256Z'),
+  ('USR_WLI_8ba7f5643257', 'wali.santri22@asnawiyyah.sch.id', NULL,            'Wali Santri 22', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:27:31.928Z'),
+  ('USR_WLI_057061bf5b8d', 'wali.santri23@asnawiyyah.sch.id', '6281200000023', 'Wali Santri 23', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T14:34:24.749Z'),
+  ('USR_WLI_7c5c4bf2cf6c', 'wali.santri24@asnawiyyah.sch.id', '6281200000024', 'Wali Santri 24', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:12:06.725Z'),
+  ('USR_WLI_3d6cc31c69ff', 'wali.santri25@asnawiyyah.sch.id', '6281200000025', 'Wali Santri 25', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:13:51.930Z'),
+  ('USR_WLI_bc2ffd3c46c9', 'wali.santri26@asnawiyyah.sch.id', '6281200000026', 'Wali Santri 26', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:41:10.745Z'),
+  ('USR_WLI_e93e161c16d0', 'wali.santri27@asnawiyyah.sch.id', '6281200000027', 'Wali Santri 27', 'WALI_SANTRI', 'ACTIVE', '2026-10-10T15:49:28.780Z')
 ON CONFLICT (identity_id) DO UPDATE SET
   name = EXCLUDED.name,
   email = EXCLUDED.email,

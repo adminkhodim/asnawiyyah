@@ -756,3 +756,94 @@ function normalizeDateString(val) {
   return s;
 }
 
+
+
+/**
+ * ============================================================================
+ * SUPABASE SERVER-SIDE REPLICATOR ENGINE (GAS -> SUPABASE via SERVICE_ROLE)
+ * ============================================================================
+ * Menghubungkan Google Apps Script langsung ke Supabase REST API menggunakan
+ * service_role key yang tersimpan secara privat di ScriptProperties.
+ * Memastikan data di Google Sheets dan Supabase selalu sinkron secara otomatis.
+ * ============================================================================
+ */
+
+function getSupabaseServerConfig() {
+  const url = getServerSecret("SUPABASE_URL", "https://tkjhfhyabacbyknwrysh.supabase.co");
+  const key = getServerSecret("SUPABASE_SERVICE_ROLE_KEY", "");
+  return {
+    url: String(url || "").replace(/\/+$/, ""),
+    key: String(key || "").trim(),
+    isConfigured: Boolean(url && key)
+  };
+}
+
+/**
+ * Konfigurasi Supabase Service Role Key ke ScriptProperties (Jalankan 1x dari Apps Script Editor)
+ */
+function setupSupabaseServiceRole(serviceRoleKey, customUrl) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    if (serviceRoleKey) {
+      props.setProperty("SUPABASE_SERVICE_ROLE_KEY", String(serviceRoleKey).trim());
+    }
+    if (customUrl) {
+      props.setProperty("SUPABASE_URL", String(customUrl).trim());
+    }
+    Logger.log("✅ Supabase Service Role Key berhasil dikonfigurasi di PropertiesService!");
+    return { success: true, message: "Kunci service_role Supabase berhasil disimpan." };
+  } catch (e) {
+    Logger.log("❌ Gagal menyimpan service_role key: " + e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Replikasi generik data ke Supabase REST API
+ */
+function replicateToSupabase(endpointPath, method, payload) {
+  const config = getSupabaseServerConfig();
+  if (!config.isConfigured) {
+    // Graceful bypass jika admin belum menyetel service_role key di ScriptProperties
+    return { success: false, skipped: true, reason: "SUPABASE_SERVICE_ROLE_KEY not configured" };
+  }
+
+  const cleanPath = endpointPath.startsWith("/") ? endpointPath : ("/" + endpointPath);
+  const targetUrl = config.url + cleanPath;
+  const httpMethod = (method || "POST").toUpperCase();
+
+  const headers = {
+    "apikey": config.key,
+    "Authorization": "Bearer " + config.key,
+    "Content-Type": "application/json",
+    "Prefer": "return=representation,resolution=merge-duplicates"
+  };
+
+  const options = {
+    method: httpMethod,
+    headers: headers,
+    muteHttpExceptions: true
+  };
+
+  if (payload && (httpMethod === "POST" || httpMethod === "PATCH" || httpMethod === "PUT")) {
+    options.payload = JSON.stringify(payload);
+  }
+
+  try {
+    const response = UrlFetchApp.fetch(targetUrl, options);
+    const code = response.getResponseCode();
+    const body = response.getContentText();
+
+    if (code >= 200 && code < 300) {
+      let data = null;
+      try { data = JSON.parse(body); } catch (e) { data = body; }
+      return { success: true, status: code, data: data };
+    } else {
+      console.warn(`[SUPABASE REPL WARN] ${httpMethod} ${cleanPath} HTTP ${code}: ${body.substring(0, 150)}`);
+      return { success: false, status: code, error: body };
+    }
+  } catch (err) {
+    console.warn(`[SUPABASE REPL ERROR] ${httpMethod} ${cleanPath}: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+}

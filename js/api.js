@@ -1944,52 +1944,13 @@
                 await syncToSupabaseOnWrite(action, payload, result).catch(e => console.warn("[DUAL-WRITE CATCH]", e));
             }
 
-            // Jika Apps Script gagal/mengembalikan error tapi aksi adalah Tahfidz, Jadwal, Berita, Perpulangan, atau Notifikasi, kembalikan status sukses karena Supabase telah diperbarui
-            if ((!result || (result.status === "error" && !result.success)) && (isJadwalWrite || isNewsWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite)) {
-                if (isNewNewsCreate && !supabaseWritePromise) {
-                    await syncToSupabaseOnWrite(action, payload, null).catch(e => console.warn("[OFFLINE SUPABASE DUAL-WRITE WARN]", e));
-                }
-                let fallbackMsg = "Operasi berhasil disimpan ke Cloud Database Supabase";
-                if (isTahfidzWrite) {
-                    fallbackMsg = action === 'deleteTahfidzLog' 
-                        ? "Catatan setoran berhasil dihapus dari Cloud Database Supabase" 
-                        : "Setoran tahfidz santri berhasil disimpan ke Cloud Database Supabase";
-                } else if (isNewsWrite) {
-                    fallbackMsg = "Berita berhasil dipublikasikan ke Cloud Database Supabase";
-                } else if (isJadwalWrite) {
-                    fallbackMsg = "Jadwal kegiatan berhasil disimpan ke Cloud Database Supabase";
-                } else if (isPerpulanganWrite) {
-                    if (action === 'perpulangan.approvePengasuh' || action === 'approveIzinPengasuh') {
-                        fallbackMsg = "Izin resmi disetujui Pengasuh (Cloud Database).";
-                    } else if (action === 'perpulangan.approvePengurus' || action === 'approveIzinPengurus') {
-                        fallbackMsg = "Izin disetujui Pengurus Keamanan (Cloud Database).";
-                    } else if (action === 'perpulangan.reject' || action === 'rejectIzin' || action === 'rejectIzinPerpulangan') {
-                        fallbackMsg = "Izin telah ditolak (Cloud Database).";
-                    } else if (action === 'perpulangan.delete' || action === 'deleteIzinPerpulangan') {
-                        fallbackMsg = "Data izin perpulangan berhasil dihapus dari Cloud Database Supabase.";
-                    } else if (action === 'perpulangan.gateCheck' || action === 'gateCheckIzin') {
-                        fallbackMsg = "Presensi gerbang santri berhasil dicatat (Cloud Database).";
-                    } else {
-                        fallbackMsg = "Permohonan izin berhasil diajukan ke Cloud Database.";
-                    }
-                } else if (isNotifikasiWrite) {
-                    fallbackMsg = "Notifikasi berhasil diperbarui di Cloud Database Supabase";
-                }
-
-                const idIzinVal = payload.idIzin || payload.id_izin || (payload.data && (payload.data.idIzin || payload.data.id_izin));
-                const nextStatusVal = (action === 'perpulangan.approvePengasuh' || action === 'approveIzinPengasuh') 
-                    ? 'DISETUJUI' 
-                    : ((action === 'perpulangan.approvePengurus' || action === 'approveIzinPengurus') 
-                        ? 'MENUNGGU_PENGASUH' 
-                        : ((action === 'perpulangan.reject' || action === 'rejectIzin' || action === 'rejectIzinPerpulangan') ? 'DITOLAK' : undefined));
-
-                return { 
-                    success: true, 
-                    status: "success", 
-                    message: fallbackMsg,
-                    idIzin: idIzinVal,
-                    newStatus: nextStatusVal,
-                    logId: payload.logId || payload.log_id || ('TFZ-' + Date.now())
+            // Security Remediation (P1): Jangan palsukan status berhasil jika Apps Script gagal.
+            // Transparansi status transaksi wajib dipertahankan agar tidak terjadi desinkronisasi data.
+            if (!result || (result.status === "error" && !result.success)) {
+                return result || {
+                    success: false,
+                    status: "error",
+                    message: "Gagal menghubungkan ke backend server. Periksa koneksi internet Anda."
                 };
             }
 
@@ -2002,6 +1963,12 @@
          * langsung tereplikasi secara instan ke Cloud PostgreSQL Supabase pada SEMUA modul.
          */
         async function syncToSupabaseOnWrite(action, payload = {}, response = {}) {
+            // Security Remediation (P0/P1):
+            // Mutasi langsung dari browser client via public anon key dinonaktifkan.
+            // Seluruh hak INSERT/UPDATE/DELETE telah dicabut dari role anon di PostgreSQL RLS.
+            // Mutasi resmi hanya dikelola via backend berotentikasi.
+            return;
+            
             const config = window.ASNAWIYYAH_CONFIG || {};
             const sbUrl = config.supabaseUrl;
             const sbKey = config.supabaseKey;

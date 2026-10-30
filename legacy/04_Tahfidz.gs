@@ -1693,6 +1693,13 @@ function saveTahfidzLog(payload, token) {
       console.warn("[SYNC CAPAIAN WARN]", capErr);
     }
 
+    // Replikasi Server-Side ke Supabase (via service_role key)
+    try {
+      replicateToSupabase("/rest/v1/tahfidz_logs", "POST", rowMap);
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION TAHFIDZ WARN]", sbErr);
+    }
+
     return {
       status: "success",
       success: true,
@@ -1743,6 +1750,14 @@ function deleteTahfidzLog(logId, token) {
         } catch (syncErr) {
           console.warn("[DELETE LOG SYNC ERROR]", syncErr);
         }
+
+        // Replikasi Server-Side Hapus ke Supabase (via service_role key)
+        try {
+          replicateToSupabase(`/rest/v1/tahfidz_logs?log_id=eq.${encodeURIComponent(cleanLogId)}`, "DELETE");
+        } catch (sbErr) {
+          console.warn("[SUPABASE REPLICATION DELETE TAHFIDZ WARN]", sbErr);
+        }
+
         return {
           status: "success",
           success: true,

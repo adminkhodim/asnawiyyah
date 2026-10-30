@@ -29,4 +29,4 @@ ALTER TABLE IF EXISTS public.users
 UPDATE public.users 
 SET last_seen_at = timezone('utc'::text, now())
 WHERE role IN ('SUPER_ADMIN', 'ADMIN') 
-   OR email IN ('izzatatabik@gmail.com', 'adminkhodim@gmail.com');
+   OR email IN ('admin@asnawiyyah.sch.id', 'superadmin@asnawiyyah.sch.id');

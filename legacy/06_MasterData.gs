@@ -2125,6 +2125,24 @@ function saveStudentData(studentObj, token) {
     if (kelasIdx !== -1) sheet.getRange(foundRow, kelasIdx + 1).setValue(inputKelasSekolah);
     if (statusIdx !== -1) sheet.getRange(foundRow, statusIdx + 1).setValue(inputStatus);
 
+    // Replikasi Server-Side Update Santri ke Supabase (via service_role)
+    try {
+      replicateToSupabase("/rest/v1/students?on_conflict=student_id", "POST", {
+        student_id: inputId,
+        nis: inputNis,
+        nik: inputNik || null,
+        name: inputName,
+        gender: inputGender,
+        birth_date: inputBirth || null,
+        photo_url: inputPhoto || null,
+        program: inputProgram,
+        kelas_sekolah: inputKelasSekolah,
+        status: inputStatus
+      });
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION UPDATE STUDENT WARN]", sbErr);
+    }
+
     return {
       status: "success",
       success: true,
@@ -2147,6 +2165,25 @@ function saveStudentData(studentObj, token) {
     if (createdIdx !== -1) newRow[createdIdx] = nowIso;
 
     sheet.appendRow(newRow);
+
+    // Replikasi Server-Side Insert Santri Baru ke Supabase (via service_role)
+    try {
+      replicateToSupabase("/rest/v1/students?on_conflict=student_id", "POST", {
+        student_id: newStudentId,
+        nis: inputNis,
+        nik: inputNik || null,
+        name: inputName,
+        gender: inputGender,
+        birth_date: inputBirth || null,
+        photo_url: inputPhoto || null,
+        program: inputProgram,
+        kelas_sekolah: inputKelasSekolah,
+        status: inputStatus
+      });
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION INSERT STUDENT WARN]", sbErr);
+    }
+
     return {
       status: "success",
       success: true,
@@ -2350,6 +2387,13 @@ function deleteStudentData(studentId, token) {
     }
 
     sheet.deleteRow(targetRow);
+
+    // Replikasi Server-Side Hapus Santri ke Supabase (via service_role)
+    try {
+      replicateToSupabase(`/rest/v1/students?student_id=eq.${encodeURIComponent(cleanId)}`, "DELETE");
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION DELETE STUDENT WARN]", sbErr);
+    }
 
     // Bersihkan relasi di Wali_Santri_Map jika ada
     try {
@@ -3430,6 +3474,19 @@ function approveIzinPengurus(payload = {}, token = null) {
     }
     sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
 
+    // Replikasi Server-Side Update Status Izin ke Supabase (via service_role)
+    try {
+      replicateToSupabase(`/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, "PATCH", {
+        status: nextStatus,
+        pengurus_approved_by: actorName,
+        pengurus_approved_at: nowIso,
+        pengurus_catatan: catatan,
+        updated_at: nowIso
+      });
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION IZIN PENGURUS WARN]", sbErr);
+    }
+
     return {
       status: "success",
       success: true,
@@ -3532,6 +3589,19 @@ function approveIzinPengasuh(payload = {}, token = null) {
       sheet.getRange(foundRow, rejectIdx + 1).setValue(catatan || "Ditolak oleh Dewan Pengasuh");
     }
     sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+
+    // Replikasi Server-Side Update Status Izin ke Supabase (via service_role)
+    try {
+      replicateToSupabase(`/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, "PATCH", {
+        status: nextStatus,
+        pengasuh_approved_by: actorName,
+        pengasuh_approved_at: nowIso,
+        pengasuh_catatan: catatan,
+        updated_at: nowIso
+      });
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION IZIN PENGASUH WARN]", sbErr);
+    }
 
     return {
       status: "success",

@@ -4,8 +4,8 @@
   "private": true,
   "description": "Portal Resmi PPTQ Asnawiyyah Pilangwetan",
   "scripts": {
-    "build:css": "tailwindcss -i ./css/input.css -o ./css/styles.min.css --minify",
-    "watch:css": "tailwindcss -i ./css/input.css -o ./css/styles.min.css --watch",
+    "build:css": "npx tailwindcss -i ./css/input.css -o ./css/styles.min.css --minify",
+    "watch:css": "npx tailwindcss -i ./css/input.css -o ./css/styles.min.css --watch",
     "build": "npm run build:css",
     "backend:status": "cd legacy && clasp status",
     "backend:push": "cd legacy && clasp push -f",

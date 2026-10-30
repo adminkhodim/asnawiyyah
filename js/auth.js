@@ -128,6 +128,10 @@ async function authApiPost(action, payload = {}) {
                 localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN) ||
                 sessionStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) ||
                 localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN) || "";
+        // Security Remediation (P1): Segera bersihkan kredensial sensitif dari localStorage
+        if (localStorage.getItem(ASN_STORAGE_KEYS.ADMIN_TOKEN)) localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
+        if (localStorage.getItem(ASN_STORAGE_KEYS.PARENT_TOKEN)) localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+        if (localStorage.getItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN)) localStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
     }
 
     const bodyPayload = { action, ...payload };
@@ -817,11 +821,12 @@ const ASNIdentity = {
     setPengasuhSession(token, pengasuhData) {
         if (!token) return;
         sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN, token);
-        localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN, token);
         sessionStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(pengasuhData || {}));
-        localStorage.setItem(ASN_STORAGE_KEYS.PENGASUH_DATA, JSON.stringify(pengasuhData || {}));
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, 'PENGASUH');
-        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, 'PENGASUH');
+        // Security Remediation (P1): Jangan persistensikan token/kredensial ke localStorage demi mitigasi XSS
+        localStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_TOKEN);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PENGASUH_DATA);
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
         this.currentRole = ASN_ROLES.PENGASUH;
         this.currentUser = pengasuhData;
         if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
@@ -836,11 +841,12 @@ const ASNIdentity = {
         if (!token) return;
         const role = (adminData && adminData.role) || ASN_ROLES.ADMIN;
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
-        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_TOKEN, token);
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, role);
-        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_ROLE, role);
         sessionStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(adminData || {}));
-        localStorage.setItem(ASN_STORAGE_KEYS.ADMIN_DATA, JSON.stringify(adminData || {}));
+        // Security Remediation (P1): Jangan persistensikan token/kredensial ke localStorage demi mitigasi XSS
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_TOKEN);
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_ROLE);
+        localStorage.removeItem(ASN_STORAGE_KEYS.ADMIN_DATA);
         this.currentRole = role;
         this.currentUser = adminData;
         if (typeof isAdminLoggedIn !== 'undefined') isAdminLoggedIn = true;
@@ -854,11 +860,12 @@ const ASNIdentity = {
     setParentSession(token, parentData, students) {
         if (!token) return;
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_TOKEN, token);
-        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_TOKEN, token);
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(parentData || {}));
-        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_DATA, JSON.stringify(parentData || {}));
         sessionStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(students || []));
-        localStorage.setItem(ASN_STORAGE_KEYS.PARENT_STUDENTS, JSON.stringify(students || []));
+        // Security Remediation (P1): Jangan persistensikan token/kredensial ke localStorage demi mitigasi XSS
+        localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_TOKEN);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_DATA);
+        localStorage.removeItem(ASN_STORAGE_KEYS.PARENT_STUDENTS);
         this.currentRole = ASN_ROLES.WALI_SANTRI;
         this.currentUser = parentData;
         this.linkedStudents = Array.isArray(students) ? students : [];
@@ -3158,8 +3165,10 @@ function checkAuthState() {
     ASNIdentity.resolveIdentity();
     ASNIdentity.renderAccountCenterUI();
 
-    const token = localStorage.getItem('user_token');
-    const userDataStr = localStorage.getItem('user_data');
+    const token = sessionStorage.getItem('user_token') || localStorage.getItem('user_token');
+    const userDataStr = sessionStorage.getItem('user_data') || localStorage.getItem('user_data');
+    if (localStorage.getItem('user_token')) localStorage.removeItem('user_token');
+    if (localStorage.getItem('user_data')) localStorage.removeItem('user_data');
     
     const legacyLoggedInView = document.getElementById('profile-logged-in');
     const legacyLoggedOutView = document.getElementById('profile-logged-out');
@@ -3201,8 +3210,10 @@ async function handleEmailAuth(e) {
         const data = await response.json();
         
         if (data.success) {
-            localStorage.setItem('user_token', data.token);
-            localStorage.setItem('user_data', JSON.stringify(data.user));
+            sessionStorage.setItem('user_token', data.token);
+            sessionStorage.setItem('user_data', JSON.stringify(data.user));
+            localStorage.removeItem('user_token');
+            localStorage.removeItem('user_data');
             checkAuthState();
             if (typeof showToast === 'function') showToast('Login berhasil!');
         } else {
@@ -3275,8 +3286,10 @@ async function submitOtp(e) {
         
         const data = await response.json();
         if (data.success) {
-            localStorage.setItem('user_token', data.token);
-            localStorage.setItem('user_data', JSON.stringify(data.user));
+            sessionStorage.setItem('user_token', data.token);
+            sessionStorage.setItem('user_data', JSON.stringify(data.user));
+            localStorage.removeItem('user_token');
+            localStorage.removeItem('user_data');
             
             sessionStorage.removeItem('temp_reg_email');
             sessionStorage.removeItem('temp_reg_password');
@@ -3799,3 +3812,7 @@ window.switchParentAuthMethod = switchParentAuthMethod;
 window.handleParentQuickLoginNis = handleParentQuickLoginNis;
 window.ASNIdentity = ASNIdentity;
 window.ASNAuthAPI = ASNAuthAPI;
+window.ASN_ROLES = ASN_ROLES;
+window.ASN_STATES = ASN_STATES;
+window.isAsnAdminRole = isAsnAdminRole;
+window.ASN_STORAGE_KEYS = ASN_STORAGE_KEYS;
