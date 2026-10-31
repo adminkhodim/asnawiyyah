@@ -74,3 +74,32 @@ Setelah `Code.gs` diperbarui dan Script Properties disetel:
 4. Pada dropdown **Version**, pilih **New version**.
 5. Klik tombol **Deploy**.
 6. Pastikan URL Web App (`/exec`) tetap sama dengan yang tercantum di `index.html`.
+
+---
+
+## 6. Konfigurasi `SUPABASE_SERVICE_ROLE_KEY` & Replikasi Server-Side
+
+Untuk menjaga keamanan tingkat tinggi, frontend browser dilarang melakukan operasi mutasi langsung ke Supabase dengan anon key. Seluruh operasi tulis dialirkan melalui Google Apps Script, yang kemudian mereplikasi perubahan ke Supabase menggunakan kunci berwenang tinggi (`service_role` secret key).
+
+### Langkah Konfigurasi Otomatis (1x Jalan):
+1. Buka project Google Apps Script Anda.
+2. Di bilah menu atas dropdown fungsi, pilih:
+   ```text
+   setupSupabaseServiceRole
+   ```
+3. Klik tombol **Run** (Jalankan).
+4. Periksa **Execution log** untuk memastikan pesan:
+   ```text
+   ✅ Supabase Service Role Key berhasil dikonfigurasi di PropertiesService!
+   ```
+
+---
+
+## 7. Rekonsiliasi Data Historis (Google Sheets -> Supabase)
+
+Bila terdapat riwayat data di Google Spreadsheet yang perlu disinkronkan ke Supabase:
+1. Buka Google Spreadsheet database PPTQ Asnawiyyah Anda.
+2. Pada bilah menu atas, klik menu kustom:
+   **PPTQ Asnawiyyah** $\rightarrow$ **🔄 Sinkronkan Seluruh Riwayat ke Supabase**.
+3. Sistem akan secara otomatis memproses master santri, setoran tahfidz, capaian tahfidz, izin perpulangan, dan data pegawai tanpa jeda dan tanpa risiko data duplikat (*idempotent upsert*).
+
