@@ -161,7 +161,14 @@ const genderL = sandbox.normalizeSyncGender_('Laki-laki');
 const genderP = sandbox.normalizeSyncGender_('Perempuan');
 assert.strictEqual(genderL, 'Putra', 'Laki-laki harus dinormalisasi menjadi Putra');
 assert.strictEqual(genderP, 'Putri', 'Perempuan harus dinormalisasi menjadi Putri');
-console.log('  ✅ [PASS] Sanitasi & formatters (Date ISO, Gender Putra/Putri) terverifikasi.');
+
+// Uji normalisasi jam perpulangan (mencegah error VARCHAR(16))
+const timeDate = new Date('1899-12-30T17:00:00');
+const parsedTimeDate = sandbox.formatSyncTimeHHmm_(timeDate, '17:00');
+assert.strictEqual(parsedTimeDate.length <= 16, true, 'formatSyncTimeHHmm_ harus <= 16 karakter');
+const parsedTimeString = sandbox.formatSyncTimeHHmm_('17:00 WIB', '17:00');
+assert.strictEqual(parsedTimeString, '17:00', 'formatSyncTimeHHmm_ harus mengekstrak HH:mm');
+console.log('  ✅ [PASS] Sanitasi & formatters (Date ISO, Time HH:mm <= 16 chars, Gender Putra/Putri) terverifikasi.');
 
 // 4. Uji Eksekusi Master Orchestrator
 replicatedRequests = [];

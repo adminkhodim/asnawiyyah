@@ -895,6 +895,26 @@ function formatSyncDateTimeIso_(val) {
   return null;
 }
 
+function formatSyncTimeHHmm_(val, defaultTime) {
+  defaultTime = defaultTime || "08:00";
+  if (!val) return defaultTime;
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return defaultTime;
+    const h = String(val.getHours()).padStart(2, "0");
+    const m = String(val.getMinutes()).padStart(2, "0");
+    return h + ":" + m;
+  }
+  const s = String(val).trim();
+  if (!s) return defaultTime;
+  const match = s.match(/(\d{1,2})[:.](\d{2})/);
+  if (match) {
+    const h = String(match[1]).padStart(2, "0");
+    const m = String(match[2]);
+    return h + ":" + m;
+  }
+  return s.substring(0, 16);
+}
+
 function normalizeSyncGender_(val) {
   if (!val) return "Putra";
   const s = String(val).trim().toUpperCase();
@@ -1217,17 +1237,17 @@ function syncHistoricalIzinPerpulanganToSupabase(ss) {
       student_nis: String(sNis || sId),
       student_name: String(sName || "Santri"),
       wali_id: wIdIdx !== -1 && cleanSyncVal_(row[wIdIdx]) ? String(row[wIdIdx]) : "WALI_SYSTEM",
-      wali_name: wNameIdx !== -1 ? cleanSyncVal_(row[wNameIdx]) : null,
-      wali_phone: wPhoneIdx !== -1 ? cleanSyncVal_(row[wPhoneIdx]) : null,
+      wali_name: wNameIdx !== -1 && cleanSyncVal_(row[wNameIdx]) ? String(row[wNameIdx]).trim().substring(0, 255) : null,
+      wali_phone: wPhoneIdx !== -1 && cleanSyncVal_(row[wPhoneIdx]) ? String(row[wPhoneIdx]).trim().substring(0, 32) : null,
       kategori: normalizeSyncIzinKategori_(katIdx !== -1 ? row[katIdx] : null),
       alasan: alasanVal,
-      penjemput_nama: pJemputIdx !== -1 ? cleanSyncVal_(row[pJemputIdx]) : null,
-      penjemput_hubungan: pHubIdx !== -1 && cleanSyncVal_(row[pHubIdx]) ? String(row[pHubIdx]).trim() : "Orang Tua",
-      penjemput_kontak: pKontakIdx !== -1 ? cleanSyncVal_(row[pKontakIdx]) : null,
+      penjemput_nama: pJemputIdx !== -1 && cleanSyncVal_(row[pJemputIdx]) ? String(row[pJemputIdx]).trim().substring(0, 128) : null,
+      penjemput_hubungan: pHubIdx !== -1 && cleanSyncVal_(row[pHubIdx]) ? String(row[pHubIdx]).trim().substring(0, 64) : "Orang Tua",
+      penjemput_kontak: pKontakIdx !== -1 && cleanSyncVal_(row[pKontakIdx]) ? String(row[pKontakIdx]).trim().substring(0, 32) : null,
       tgl_mulai: tglMulaiVal,
-      jam_mulai: jamMulaiIdx !== -1 && cleanSyncVal_(row[jamMulaiIdx]) ? String(row[jamMulaiIdx]).trim() : "08:00",
+      jam_mulai: formatSyncTimeHHmm_(jamMulaiIdx !== -1 ? row[jamMulaiIdx] : null, "08:00"),
       tgl_kembali: tglKembaliVal,
-      jam_kembali: jamKembaliIdx !== -1 && cleanSyncVal_(row[jamKembaliIdx]) ? String(row[jamKembaliIdx]).trim() : "17:00",
+      jam_kembali: formatSyncTimeHHmm_(jamKembaliIdx !== -1 ? row[jamKembaliIdx] : null, "17:00"),
       status: normalizeSyncIzinStatus_(stIdx !== -1 ? row[stIdx] : null),
       created_at: crtIdx !== -1 ? formatSyncDateTimeIso_(row[crtIdx]) : formatSyncDateTimeIso_(new Date())
     });
