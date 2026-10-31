@@ -847,3 +847,524 @@ function replicateToSupabase(endpointPath, method, payload) {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * ============================================================================
+ * MODUL REKONSILIASI & SINKRONISASI BATCH (Google Sheets -> Supabase)
+ * ============================================================================
+ * Memindahkan seluruh data riwayat historis dari Google Sheets ke Supabase
+ * menggunakan service_role key melalui REST API. Aman, idempoten (upsert on_conflict),
+ * dan terbagi dalam batch agar tidak melampaui kuota eksekusi Apps Script.
+ * ============================================================================
+ */
+
+function formatSyncDateIso_(val) {
+  if (!val) return null;
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return null;
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, "0");
+    const d = String(val.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+  const s = String(val).trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+  return null;
+}
+
+function formatSyncDateTimeIso_(val) {
+  if (!val) return null;
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return null;
+    return val.toISOString();
+  }
+  const s = String(val).trim();
+  if (!s) return null;
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+  return null;
+}
+
+function normalizeSyncGender_(val) {
+  if (!val) return "Putra";
+  const s = String(val).trim().toUpperCase();
+  if (s === "L" || s.indexOf("LAKI") !== -1 || s.indexOf("PUTRA") !== -1 || s === "PRIA") return "Putra";
+  if (s === "P" || s.indexOf("PEREMPUAN") !== -1 || s.indexOf("PUTRI") !== -1 || s === "WANITA") return "Putri";
+  return "Putra";
+}
+
+function cleanSyncVal_(val) {
+  if (val === null || val === undefined) return null;
+  const s = String(val).trim();
+  return s === "" ? null : s;
+}
+
+/**
+ * 1. Batch Sync Master Santri (Students -> Supabase students)
+ */
+function syncHistoricalStudentsToSupabase(ss) {
+  ss = ss || getDatabaseSpreadsheet();
+  let sheet = ss.getSheetByName("Students");
+  if (!sheet) sheet = ss.getSheetByName("data_santri");
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { domain: "students", total: 0, synced: 0, message: "Sheet Students kosong atau tidak ditemukan." };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/\s+/g, "_"));
+  const idIdx = headers.indexOf("student_id");
+  const nisIdx = headers.indexOf("nis") !== -1 ? headers.indexOf("nis") : headers.indexOf("nisn");
+  const nameIdx = headers.indexOf("name") !== -1 ? headers.indexOf("name") : headers.indexOf("nama");
+  const genderIdx = headers.indexOf("gender") !== -1 ? headers.indexOf("gender") : headers.indexOf("jenis_kelamin");
+  const birthIdx = headers.indexOf("birth_date") !== -1 ? headers.indexOf("birth_date") : headers.indexOf("tanggal_lahir");
+  const nikIdx = headers.indexOf("nik");
+  const photoIdx = headers.indexOf("photo_url") !== -1 ? headers.indexOf("photo_url") : headers.indexOf("foto");
+  const progIdx = headers.indexOf("program");
+  const classIdx = headers.indexOf("kelas_sekolah") !== -1 ? headers.indexOf("kelas_sekolah") : headers.indexOf("kelas");
+  const statusIdx = headers.indexOf("status");
+
+  const records = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const nis = nisIdx !== -1 ? cleanSyncVal_(row[nisIdx]) : null;
+    const name = nameIdx !== -1 ? cleanSyncVal_(row[nameIdx]) : null;
+    if (!nis && !name) continue;
+
+    let studentId = idIdx !== -1 ? cleanSyncVal_(row[idIdx]) : null;
+    if (!studentId) {
+      studentId = nis ? ("STD_" + nis) : ("STD_" + Utilities.getUuid().replace(/-/g, "").substring(0, 10));
+    }
+
+    records.push({
+      student_id: String(studentId),
+      nis: String(nis || studentId),
+      nik: nikIdx !== -1 ? cleanSyncVal_(row[nikIdx]) : null,
+      name: String(name || "Santri"),
+      gender: normalizeSyncGender_(genderIdx !== -1 ? row[genderIdx] : "Putra"),
+      birth_date: birthIdx !== -1 ? formatSyncDateIso_(row[birthIdx]) : null,
+      photo_url: photoIdx !== -1 ? cleanSyncVal_(row[photoIdx]) : null,
+      program: progIdx !== -1 && cleanSyncVal_(row[progIdx]) ? String(row[progIdx]).trim() : "Reguler",
+      kelas_sekolah: classIdx !== -1 && cleanSyncVal_(row[classIdx]) ? String(row[classIdx]).trim() : "-",
+      status: statusIdx !== -1 && cleanSyncVal_(row[statusIdx]) ? String(row[statusIdx]).trim().toUpperCase() : "AKTIF"
+    });
+  }
+
+  let totalSynced = 0;
+  const errors = [];
+  const BATCH_SIZE = 50;
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase("/rest/v1/students?on_conflict=student_id", "POST", batch);
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC STUDENTS BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL STUDENTS] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "students", total: records.length, synced: totalSynced, errors: errors };
+}
+
+/**
+ * 2. Batch Sync Setoran Tahfidz (Tahfidz_Logs -> Supabase tahfidz_logs)
+ */
+function syncHistoricalTahfidzLogsToSupabase(ss) {
+  ss = ss || getDatabaseSpreadsheet();
+  const sheet = ss.getSheetByName("Tahfidz_Logs");
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { domain: "tahfidz_logs", total: 0, synced: 0, message: "Sheet Tahfidz_Logs kosong atau tidak ditemukan." };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+  const idIdx = headers.findIndex(h => h === "logid" || h === "id");
+  const sIdIdx = headers.findIndex(h => h === "studentid");
+  const nisIdx = headers.findIndex(h => h === "nis");
+  const nameIdx = headers.findIndex(h => h === "studentname" || h === "nama");
+  const genderIdx = headers.findIndex(h => h === "gender" || h === "jeniskelamin");
+  const tglIdx = headers.findIndex(h => h === "tanggal" || h === "date");
+  const sesiIdx = headers.findIndex(h => h === "sesi");
+  const tipeIdx = headers.findIndex(h => h === "tipe");
+  const juzIdx = headers.findIndex(h => h === "juz");
+  const halIdx = headers.findIndex(h => h === "halamanlist" || h === "halaman");
+  const totIdx = headers.findIndex(h => h === "totalhalaman");
+  const nilaiIdx = headers.findIndex(h => h === "nilai");
+  const muhIdx = headers.findIndex(h => h === "muhafiz" || h === "pembina");
+  const stIdx = headers.findIndex(h => h === "statussetoran" || h === "status");
+  const catIdx = headers.findIndex(h => h === "catatan" || h === "keterangan");
+  const crtIdx = headers.findIndex(h => h === "createdat");
+
+  const records = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    let logId = idIdx !== -1 ? cleanSyncVal_(row[idIdx]) : null;
+    let sId = sIdIdx !== -1 ? cleanSyncVal_(row[sIdIdx]) : null;
+    const nis = nisIdx !== -1 ? cleanSyncVal_(row[nisIdx]) : null;
+    const sName = nameIdx !== -1 ? cleanSyncVal_(row[nameIdx]) : null;
+
+    if (!sId && !nis && !sName) continue;
+    if (!sId) sId = nis ? ("STD_" + nis) : "STD_UNKNOWN";
+    if (!logId) logId = "LOG_" + Utilities.getUuid().replace(/-/g, "").substring(0, 12);
+
+    const tipeVal = tipeIdx !== -1 && cleanSyncVal_(row[tipeIdx]) ? String(row[tipeIdx]).trim().toUpperCase() : "ZIYADAH";
+    const statusVal = stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "LANJUT";
+
+    records.push({
+      log_id: String(logId),
+      student_id: String(sId),
+      nis: nis ? String(nis) : null,
+      student_name: String(sName || "Santri"),
+      gender: genderIdx !== -1 ? normalizeSyncGender_(row[genderIdx]) : "Putra",
+      tanggal: tglIdx !== -1 ? formatSyncDateIso_(row[tglIdx]) : formatSyncDateIso_(new Date()),
+      sesi: sesiIdx !== -1 && cleanSyncVal_(row[sesiIdx]) ? String(row[sesiIdx]).trim() : "Pagi",
+      tipe: tipeVal,
+      juz: juzIdx !== -1 ? (Number(row[juzIdx]) || 1) : 1,
+      halaman_list: halIdx !== -1 && cleanSyncVal_(row[halIdx]) ? String(row[halIdx]).trim() : "1",
+      total_halaman: totIdx !== -1 ? (Number(row[totIdx]) || 1) : 1,
+      nilai: nilaiIdx !== -1 && cleanSyncVal_(row[nilaiIdx]) ? String(row[nilaiIdx]).trim().toUpperCase() : "JAYYID",
+      muhafiz: muhIdx !== -1 && cleanSyncVal_(row[muhIdx]) ? String(row[muhIdx]).trim() : "Ustadz Pembina",
+      status_setoran: statusVal,
+      catatan: catIdx !== -1 ? cleanSyncVal_(row[catIdx]) : null,
+      created_at: crtIdx !== -1 ? formatSyncDateTimeIso_(row[crtIdx]) : formatSyncDateTimeIso_(new Date())
+    });
+  }
+
+  let totalSynced = 0;
+  const errors = [];
+  const BATCH_SIZE = 50;
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase("/rest/v1/tahfidz_logs?on_conflict=log_id", "POST", batch);
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC TAHFIDZ LOGS BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL TAHFIDZ LOGS] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "tahfidz_logs", total: records.length, synced: totalSynced, errors: errors };
+}
+
+/**
+ * 3. Batch Sync Capaian Tahfidz (Tahfidz_Capaian -> Supabase tahfidz_capaian)
+ */
+function syncHistoricalTahfidzCapaianToSupabase(ss) {
+  ss = ss || getDatabaseSpreadsheet();
+  // Jalankan kalkulasi deduplikasi capaian terlebih dahulu jika tersedia
+  if (typeof syncTahfidzCapaianSheet_ === "function") {
+    try {
+      syncTahfidzCapaianSheet_(ss);
+    } catch (e) {
+      console.warn("[SYNC CAPAIAN PRE-CALC WARN]", e);
+    }
+  }
+
+  const sheet = ss.getSheetByName("Tahfidz_Capaian");
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { domain: "tahfidz_capaian", total: 0, synced: 0, message: "Sheet Tahfidz_Capaian kosong atau tidak ditemukan." };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+  const sIdIdx = headers.findIndex(h => h === "studentid" || h === "id");
+  const nameIdx = headers.findIndex(h => h === "studentname" || h === "nama");
+  const juzIdx = headers.findIndex(h => h === "juzaktif" || h === "juz");
+  const halIdx = headers.findIndex(h => h === "halamanfinal" || h === "halamanterakhir" || h === "halaman");
+  const totTuntasIdx = headers.findIndex(h => h === "totalhalamantuntas");
+  const stIdx = headers.findIndex(h => h === "statusterakhir" || h === "status");
+  const hlqIdIdx = headers.findIndex(h => h === "halaqahid");
+  const hlqNameIdx = headers.findIndex(h => h === "namahalaqah");
+  const muhIdx = headers.findIndex(h => h === "muhafizpembina" || h === "muhafiz");
+  const sabqiIdx = headers.findIndex(h => h === "sabqihalaman");
+  const manzilJuzIdx = headers.findIndex(h => h === "manziljuz");
+  const manzilHalIdx = headers.findIndex(h => h === "manzilhalaman");
+  const putaranIdx = headers.findIndex(h => h === "manzilputaran");
+  const totMurojaahIdx = headers.findIndex(h => h === "totalhalamanmurojaah");
+  const updIdx = headers.findIndex(h => h === "updatedat");
+
+  const records = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const sId = sIdIdx !== -1 ? cleanSyncVal_(row[sIdIdx]) : null;
+    const sName = nameIdx !== -1 ? cleanSyncVal_(row[nameIdx]) : null;
+    if (!sId) continue;
+
+    records.push({
+      student_id: String(sId).toUpperCase(),
+      student_name: String(sName || sId),
+      juz_aktif: juzIdx !== -1 && cleanSyncVal_(row[juzIdx]) ? String(row[juzIdx]) : "30",
+      halaman_terakhir: halIdx !== -1 && cleanSyncVal_(row[halIdx]) ? String(row[halIdx]) : "1",
+      total_halaman_tuntas: totTuntasIdx !== -1 ? (Number(row[totTuntasIdx]) || 0) : 0,
+      status_terakhir: stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]) : "LANJUT",
+      halaqah_id: hlqIdIdx !== -1 ? cleanSyncVal_(row[hlqIdIdx]) : null,
+      nama_halaqah: hlqNameIdx !== -1 ? cleanSyncVal_(row[hlqNameIdx]) : null,
+      muhafiz_pembina: muhIdx !== -1 ? cleanSyncVal_(row[muhIdx]) : null,
+      sabqi_halaman: sabqiIdx !== -1 ? cleanSyncVal_(row[sabqiIdx]) : null,
+      manzil_juz: manzilJuzIdx !== -1 ? cleanSyncVal_(row[manzilJuzIdx]) : null,
+      manzil_halaman: manzilHalIdx !== -1 ? cleanSyncVal_(row[manzilHalIdx]) : null,
+      manzil_putaran: putaranIdx !== -1 ? (Number(row[putaranIdx]) || 1) : 1,
+      total_halaman_murojaah: totMurojaahIdx !== -1 ? (Number(row[totMurojaahIdx]) || 0) : 0,
+      updated_at: updIdx !== -1 ? formatSyncDateTimeIso_(row[updIdx]) : formatSyncDateTimeIso_(new Date())
+    });
+  }
+
+  let totalSynced = 0;
+  const errors = [];
+  const BATCH_SIZE = 50;
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase("/rest/v1/tahfidz_capaian?on_conflict=student_id", "POST", batch);
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC CAPAIAN BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL CAPAIAN] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "tahfidz_capaian", total: records.length, synced: totalSynced, errors: errors };
+}
+
+/**
+ * 4. Batch Sync Izin Perpulangan (Izin_Perpulangan -> Supabase izin_perpulangan)
+ */
+function syncHistoricalIzinPerpulanganToSupabase(ss) {
+  ss = ss || getDatabaseSpreadsheet();
+  const sheet = ss.getSheetByName("Izin_Perpulangan");
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { domain: "izin_perpulangan", total: 0, synced: 0, message: "Sheet Izin_Perpulangan kosong atau tidak ditemukan." };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+  const idIdx = headers.findIndex(h => h === "idizin" || h === "id");
+  const sIdIdx = headers.findIndex(h => h === "studentid");
+  const nisIdx = headers.findIndex(h => h === "studentnis" || h === "nis");
+  const nameIdx = headers.findIndex(h => h === "studentname" || h === "namasantri" || h === "nama");
+  const wIdIdx = headers.findIndex(h => h === "waliid");
+  const wNameIdx = headers.findIndex(h => h === "waliname" || h === "namawali");
+  const wPhoneIdx = headers.findIndex(h => h === "waliphone" || h === "hpwali");
+  const katIdx = headers.findIndex(h => h === "kategori");
+  const kepIdx = headers.findIndex(h => h === "keperluan");
+  const mulIdx = headers.findIndex(h => h === "tanggalmulai" || h === "tglmulai");
+  const selIdx = headers.findIndex(h => h === "tanggalselesai" || h === "tglselesai");
+  const jamIdx = headers.findIndex(h => h === "jamkembali");
+  const stIdx = headers.findIndex(h => h === "status");
+  const pJemputIdx = headers.findIndex(h => h === "penjemputnama");
+  const pStatIdx = headers.findIndex(h => h === "penjemputstatus");
+  const crtIdx = headers.findIndex(h => h === "createdat");
+
+  const records = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    let idIzin = idIdx !== -1 ? cleanSyncVal_(row[idIdx]) : null;
+    let sId = sIdIdx !== -1 ? cleanSyncVal_(row[sIdIdx]) : null;
+    const sNis = nisIdx !== -1 ? cleanSyncVal_(row[nisIdx]) : null;
+    const sName = nameIdx !== -1 ? cleanSyncVal_(row[nameIdx]) : null;
+
+    if (!idIzin && !sName) continue;
+    if (!idIzin) idIzin = "IZN-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd") + "-" + Utilities.getUuid().substring(0, 4).toUpperCase();
+    if (!sId) sId = sNis ? ("STD_" + sNis) : "STD_UNKNOWN";
+
+    records.push({
+      id_izin: String(idIzin),
+      student_id: String(sId),
+      student_nis: String(sNis || sId),
+      student_name: String(sName || "Santri"),
+      wali_id: wIdIdx !== -1 && cleanSyncVal_(row[wIdIdx]) ? String(row[wIdIdx]) : "WALI_SYSTEM",
+      wali_name: wNameIdx !== -1 ? cleanSyncVal_(row[wNameIdx]) : null,
+      wali_phone: wPhoneIdx !== -1 ? cleanSyncVal_(row[wPhoneIdx]) : null,
+      kategori: katIdx !== -1 && cleanSyncVal_(row[katIdx]) ? String(row[katIdx]).trim() : "Lainnya",
+      keperluan: kepIdx !== -1 && cleanSyncVal_(row[kepIdx]) ? String(row[kepIdx]).trim() : "-",
+      tanggal_mulai: mulIdx !== -1 ? formatSyncDateIso_(row[mulIdx]) : formatSyncDateIso_(new Date()),
+      tanggal_selesai: selIdx !== -1 ? formatSyncDateIso_(row[selIdx]) : formatSyncDateIso_(new Date()),
+      jam_kembali: jamIdx !== -1 && cleanSyncVal_(row[jamIdx]) ? String(row[jamIdx]).trim() : "17:00",
+      status: stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "PENDING",
+      penjemput_nama: pJemputIdx !== -1 ? cleanSyncVal_(row[pJemputIdx]) : null,
+      penjemput_status: pStatIdx !== -1 ? cleanSyncVal_(row[pStatIdx]) : null,
+      created_at: crtIdx !== -1 ? formatSyncDateTimeIso_(row[crtIdx]) : formatSyncDateTimeIso_(new Date())
+    });
+  }
+
+  let totalSynced = 0;
+  const errors = [];
+  const BATCH_SIZE = 50;
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase("/rest/v1/izin_perpulangan?on_conflict=id_izin", "POST", batch);
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC IZIN BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL IZIN] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "izin_perpulangan", total: records.length, synced: totalSynced, errors: errors };
+}
+
+/**
+ * 5. Batch Sync Pegawai (Pegawai -> Supabase pegawai)
+ */
+function syncHistoricalPegawaiToSupabase(ss) {
+  ss = ss || getDatabaseSpreadsheet();
+  const sheet = ss.getSheetByName("Pegawai");
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { domain: "pegawai", total: 0, synced: 0, message: "Sheet Pegawai kosong atau tidak ditemukan." };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
+  const idIdx = headers.findIndex(h => h === "pegawaiid" || h === "id");
+  const nameIdx = headers.findIndex(h => h === "nama" || h === "name");
+  const jabIdx = headers.findIndex(h => h === "jabatan");
+  const unitIdx = headers.findIndex(h => h === "unit");
+  const phoneIdx = headers.findIndex(h => h === "phone" || h === "hp" || h === "telepon");
+  const emailIdx = headers.findIndex(h => h === "email");
+  const stIdx = headers.findIndex(h => h === "status");
+
+  const records = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    let id = idIdx !== -1 ? cleanSyncVal_(row[idIdx]) : null;
+    const name = nameIdx !== -1 ? cleanSyncVal_(row[nameIdx]) : null;
+    if (!id && !name) continue;
+    if (!id) id = "PGW_" + Utilities.getUuid().replace(/-/g, "").substring(0, 8);
+
+    records.push({
+      pegawai_id: String(id),
+      nama: String(name || "Pegawai"),
+      jabatan: jabIdx !== -1 && cleanSyncVal_(row[jabIdx]) ? String(row[jabIdx]).trim() : "Asatidz",
+      unit: unitIdx !== -1 && cleanSyncVal_(row[unitIdx]) ? String(row[unitIdx]).trim() : "Pesantren",
+      phone: phoneIdx !== -1 ? cleanSyncVal_(row[phoneIdx]) : null,
+      email: emailIdx !== -1 ? cleanSyncVal_(row[emailIdx]) : null,
+      status: stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "AKTIF"
+    });
+  }
+
+  let totalSynced = 0;
+  const errors = [];
+  const BATCH_SIZE = 50;
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase("/rest/v1/pegawai?on_conflict=pegawai_id", "POST", batch);
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC PEGAWAI BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL PEGAWAI] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "pegawai", total: records.length, synced: totalSynced, errors: errors };
+}
+
+/**
+ * 6. Master Orchestrator: Eksekusi Rekonsiliasi Seluruh Data Historis
+ */
+function syncAllHistoricalSheetsToSupabase() {
+  const startTime = new Date().getTime();
+  Logger.log("🚀 ========================================================");
+  Logger.log("   MEMULAI SINKRONISASI BATCH HISTORIS GOOGLE SHEETS -> SUPABASE");
+  Logger.log("   ========================================================");
+
+  const config = getSupabaseServerConfig();
+  if (!config.isConfigured) {
+    const msg = "❌ SUPABASE_SERVICE_ROLE_KEY belum dikonfigurasi di ScriptProperties. Jalankan setupSupabaseServiceRole(key) terlebih dahulu.";
+    Logger.log(msg);
+    return { success: false, message: msg };
+  }
+
+  const ss = getDatabaseSpreadsheet();
+  const summary = {
+    started_at: new Date().toISOString(),
+    domains: {}
+  };
+
+  try {
+    Logger.log("\n📦 1. Menyinkronkan Master Santri...");
+    summary.domains.students = syncHistoricalStudentsToSupabase(ss);
+
+    Logger.log("\n📦 2. Menyinkronkan Log Setoran Tahfidz...");
+    summary.domains.tahfidz_logs = syncHistoricalTahfidzLogsToSupabase(ss);
+
+    Logger.log("\n📦 3. Menyinkronkan Capaian Tahfidz Santri...");
+    summary.domains.tahfidz_capaian = syncHistoricalTahfidzCapaianToSupabase(ss);
+
+    Logger.log("\n📦 4. Menyinkronkan Izin Perpulangan...");
+    summary.domains.izin_perpulangan = syncHistoricalIzinPerpulanganToSupabase(ss);
+
+    Logger.log("\n📦 5. Menyinkronkan Data Pegawai / Asatidz...");
+    summary.domains.pegawai = syncHistoricalPegawaiToSupabase(ss);
+
+    const durationSec = Math.round((new Date().getTime() - startTime) / 1000);
+    summary.completed_at = new Date().toISOString();
+    summary.duration_seconds = durationSec;
+
+    let grandTotal = 0;
+    let grandSynced = 0;
+    Object.keys(summary.domains).forEach(k => {
+      grandTotal += (summary.domains[k].total || 0);
+      grandSynced += (summary.domains[k].synced || 0);
+    });
+
+    summary.success = true;
+    summary.grand_total_records = grandTotal;
+    summary.grand_total_synced = grandSynced;
+
+    Logger.log("\n🎉 ========================================================");
+    Logger.log(`   REKONSILIASI SELESAI DALAM ${durationSec} DETIK!`);
+    Logger.log(`   Total Record Diproses: ${grandTotal}`);
+    Logger.log(`   Total Record Berhasil Terkirim: ${grandSynced}`);
+    Logger.log("   ========================================================");
+
+    return summary;
+  } catch (err) {
+    Logger.log("❌ Terjadi kegagalan kritis pada orchestrator rekonsiliasi: " + err.message);
+    summary.success = false;
+    summary.error = err.message;
+    return summary;
+  }
+}
+
+/**
+ * 7. Menu UI Interaktif di Google Spreadsheet
+ */
+function onOpen() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    ui.createMenu("PPTQ Asnawiyyah")
+      .addItem("🔄 Sinkronkan Seluruh Riwayat ke Supabase", "syncAllHistoricalSheetsToSupabase")
+      .addSeparator()
+      .addItem("👥 Sinkronkan Master Santri", "syncHistoricalStudentsToSupabase")
+      .addItem("📖 Sinkronkan Capaian Tahfidz", "syncHistoricalTahfidzCapaianToSupabase")
+      .addItem("📜 Sinkronkan Log Tahfidz", "syncHistoricalTahfidzLogsToSupabase")
+      .addItem("🚗 Sinkronkan Izin Perpulangan", "syncHistoricalIzinPerpulanganToSupabase")
+      .addToUi();
+  } catch (e) {
+    // onOpen berjalan non-blokir jika dipanggil dalam konteks headless/API
+  }
+}
+
