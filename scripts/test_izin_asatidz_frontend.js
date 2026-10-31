@@ -63,7 +63,9 @@ console.log('  ✅ 3. Seluruh elemen modal (input, quick-chips, tab panes, badge
 // 4. Verifikasi Banner & Badge Pengasuh
 assert(indexHtml.includes('id="banner-pengasuh-izin-asatidz"'), 'Banner notifikasi Pengasuh harus ada di modul Tahfidz');
 assert(indexHtml.includes('id="pengasuh-tahfidz-izin-badge"'), 'Badge notifikasi izin harus ada di ikon Tahfidz Pusat Kontrol Pengasuh');
-console.log('  ✅ 4. Banner notifikasi Pengasuh di Tahfidz & Badge Pusat Kontrol terpasang');
+assert(indexHtml.includes('id="pengasuh-priority-izin-card"'), 'Kartu Prioritas Izin Asatidz harus ada di Dashboard Pengasuh (di atas Pusat Kontrol)');
+assert(indexHtml.includes('id="admin-hub-pengasuh-priority-card"'), 'Kartu Prioritas Izin Asatidz harus ada di Beranda Utama Admin Hub (di atas Overall Data)');
+console.log('  ✅ 4. Banner Tahfidz, Badge Pusat Kontrol, & Kartu Prioritas Pengasuh di Beranda Utama terpasang');
 
 // 5. Verifikasi Kontroler js/izin-asatidz.js
 const controllerPath = path.resolve(__dirname, '../js/izin-asatidz.js');
@@ -111,5 +113,14 @@ assert(tahfidzJs.includes('Diampu Badal Hari Ini'), 'Kartu halaqah harus menampi
 assert(tahfidzJs.includes('updateTahfidzBadalNotice'), 'updateTahfidzBadalNotice harus diimplementasikan di js/tahfidz.js');
 assert(tahfidzJs.includes('Badal: ${escapeHtml(stDelegation.namaBadal)}'), 'Tabel santri harus merender badge badal');
 console.log('  ✅ 7. Indikator visual badge Badal pada kartu halaqah, filter, dan tabel santri tervalidasi');
+
+// 8. Verifikasi Unified Header Approval Hub di js/admin/01_core.js & js/admin.js
+const adminJsPath = path.resolve(__dirname, '../js/admin.js');
+const adminJs = fs.readFileSync(adminJsPath, 'utf8');
+
+assert(adminJs.includes('openNotificationAsatidzDetail'), 'js/admin.js harus mengekspos openNotificationAsatidzDetail');
+assert(adminJs.includes('ASNIzinAsatidz.pendingApprovalList'), 'updateHeaderApprovalNotifications harus memperhitungkan izin asatidz');
+assert(adminJs.includes('Restu Asatidz'), 'Dropdown notifikasi header harus memiliki label Restu Asatidz');
+console.log('  ✅ 8. Integrasi Lonceng Header Global (Unified Approval Hub) tervalidasi');
 
 console.log('🎉 SEMUA TEST FRONTEND & PERSETUJUAN PENGASUH BERHASIL!\n');

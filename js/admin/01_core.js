@@ -227,7 +227,7 @@
                          localStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
             const roleUpper = String(role).toUpperCase();
 
-            // Filter pending approval berdasarkan peran
+            // Filter pending approval izin santri berdasarkan peran
             let pendingItems = [];
             if (roleUpper === 'PENGASUH') {
                 pendingItems = list.filter(item => {
@@ -252,7 +252,14 @@
                 pendingItems = list.filter(item => String(item.status || '').toUpperCase() === 'MENUNGGU_PENGURUS');
             }
 
-            const count = pendingItems.length;
+            // Ambil pending approval izin asatidz (khusus Pengasuh & Super Admin)
+            const isApproverAsatidz = (typeof canApproveIzinAsatidz === 'function') ? 
+                canApproveIzinAsatidz() : ['PENGASUH', 'SUPER_ADMIN', 'ADMIN'].includes(roleUpper);
+
+            const asatidzPending = (isApproverAsatidz && window.ASNIzinAsatidz && Array.isArray(window.ASNIzinAsatidz.pendingApprovalList)) ? 
+                window.ASNIzinAsatidz.pendingApprovalList : [];
+
+            const count = pendingItems.length + asatidzPending.length;
             const countLabel = count > 99 ? '99+' : String(count);
 
             const isAuthorizedRole = ['PENGASUH', 'SUPER_ADMIN', 'ADMIN', 'ASATIDZ', 'PENGURUS'].includes(roleUpper);
@@ -262,7 +269,7 @@
                 const diff = count - lastPendingApprovalCount;
                 playApprovalNotificationSound(false);
                 if (typeof showAdminToast === 'function') {
-                    showAdminToast(`🔔 Ada ${diff} permohonan izin santri baru butuh persetujuan!`, 'info');
+                    showAdminToast(`🔔 Ada ${diff} permohonan izin/restu baru butuh persetujuan!`, 'info');
                 }
             }
             lastPendingApprovalCount = count;
@@ -303,45 +310,87 @@
                 container.innerHTML = `
                     <div class="py-6 text-center text-slate-400 text-xs">
                         <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 dark:text-slate-600 mb-1.5 block"></i>
-                        <span>Semua pengajuan izin santri telah ditinjau.</span>
+                        <span>Semua permohonan izin santri dan restu asatidz telah ditinjau.</span>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = pendingItems.slice(0, 10).map(item => {
-                const isPengasuhTier = String(item.status || '').toUpperCase() === 'MENUNGGU_PENGASUH';
-                const tierBadge = isPengasuhTier ? 
-                    `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200">Tier 2 (Pengasuh)</span>` :
-                    `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200">Tier 1 (Pengurus)</span>`;
+            // Gabungkan item notifikasi izin asatidz (posisi atas) dan izin santri
+            let htmlItems = '';
 
-                const santriName = item.nama_santri || item.namaSantri || 'Santri';
-                const keperluan = item.keperluan || item.kategori || 'Izin';
-                const waktu = item.tanggal_mulai ? `${item.tanggal_mulai}` : '';
+            // 1. Notifikasi Restu Izin Asatidz
+            if (asatidzPending.length > 0) {
+                htmlItems += asatidzPending.slice(0, 5).map(item => {
+                    const namaAsatidz = item.nama_asatidz || item.namaAsatidz || 'Asatidz';
+                    const namaBadal = item.nama_badal || item.namaBadal || 'Belum ditentukan';
+                    const alasan = item.alasan || item.kategori || 'Izin Mengajar';
+                    const waktu = item.tanggal_mulai ? `${item.tanggal_mulai}` : 'Hari ini';
 
-                return `
-                    <div onclick="openNotificationIzinDetail('${item.id}')" 
-                        class="p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 hover:bg-emerald-50/60 dark:bg-[#1c2836]/60 dark:hover:bg-emerald-950/30 transition cursor-pointer group active:scale-[0.99]">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0">
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                    ${santriName}
-                                </h4>
-                                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${keperluan}</p>
+                    return `
+                        <div onclick="openNotificationAsatidzDetail()" 
+                            class="p-2.5 rounded-2xl border border-amber-200 dark:border-amber-800/80 bg-amber-50/70 hover:bg-amber-100/60 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 transition cursor-pointer group active:scale-[0.99] mb-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-amber-950 dark:text-amber-100 truncate group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors flex items-center gap-1.5">
+                                        <i class="fa-solid fa-stamp text-amber-600 text-[10px]"></i>
+                                        <span>${namaAsatidz}</span>
+                                    </h4>
+                                    <p class="text-[10px] text-amber-800/90 dark:text-amber-300/80 truncate mt-0.5">Badal: ${namaBadal} • ${alasan}</p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-100 border border-amber-300/80">Restu Asatidz</span>
+                                </div>
                             </div>
-                            <div class="shrink-0 text-right">
-                                ${tierBadge}
+                            <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-amber-200/50 dark:border-amber-800/50 text-[10px] text-amber-700/80 dark:text-amber-400/80">
+                                <span><i class="fa-regular fa-clock mr-1"></i>${waktu}</span>
+                                <span class="text-amber-700 dark:text-amber-300 font-bold group-hover:underline flex items-center gap-0.5">
+                                    Beri Restu <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                                </span>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10px] text-slate-400">
-                            <span><i class="fa-regular fa-clock mr-1"></i>${waktu || 'Hari ini'}</span>
-                            <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5">
-                                Tinjau <i class="fa-solid fa-chevron-right text-[8px]"></i>
-                            </span>
+                    `;
+                }).join('');
+            }
+
+            // 2. Notifikasi Izin Santri Perpulangan
+            if (pendingItems.length > 0) {
+                htmlItems += pendingItems.slice(0, 10).map(item => {
+                    const isPengasuhTier = String(item.status || '').toUpperCase() === 'MENUNGGU_PENGASUH';
+                    const tierBadge = isPengasuhTier ? 
+                        `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200">Tier 2 (Pengasuh)</span>` :
+                        `<span class="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200">Tier 1 (Pengurus)</span>`;
+
+                    const santriName = item.nama_santri || item.namaSantri || 'Santri';
+                    const keperluan = item.keperluan || item.kategori || 'Izin';
+                    const waktu = item.tanggal_mulai ? `${item.tanggal_mulai}` : '';
+
+                    return `
+                        <div onclick="openNotificationIzinDetail('${item.id}')" 
+                            class="p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 hover:bg-emerald-50/60 dark:bg-[#1c2836]/60 dark:hover:bg-emerald-950/30 transition cursor-pointer group active:scale-[0.99] mb-1.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                        ${santriName}
+                                    </h4>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${keperluan}</p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    ${tierBadge}
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10px] text-slate-400">
+                                <span><i class="fa-regular fa-clock mr-1"></i>${waktu || 'Hari ini'}</span>
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5">
+                                    Tinjau <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            }
+
+            container.innerHTML = htmlItems;
         }
         window.updateHeaderApprovalNotifications = updateHeaderApprovalNotifications;
 
@@ -361,6 +410,14 @@
         }
         window.openNotificationIzinDetail = openNotificationIzinDetail;
 
+        function openNotificationAsatidzDetail() {
+            closeAdminNotifDropdown();
+            if (typeof openIzinAsatidzModal === 'function') {
+                openIzinAsatidzModal('APPROVAL');
+            }
+        }
+        window.openNotificationAsatidzDetail = openNotificationAsatidzDetail;
+
         // Polling notifikasi berkala di background setiap 40 detik
         if (!window._asnApprovalNotifInterval) {
             window._asnApprovalNotifInterval = setInterval(() => {
@@ -372,6 +429,9 @@
                 if (['PENGASUH', 'SUPER_ADMIN', 'ADMIN', 'ASATIDZ', 'PENGURUS'].includes(roleUpper)) {
                     if (window.ASNPerpulangan && typeof window.ASNPerpulangan.loadData === 'function') {
                         window.ASNPerpulangan.loadData(false);
+                    }
+                    if (typeof loadIzinAsatidzHistory === 'function') {
+                        loadIzinAsatidzHistory();
                     }
                 }
             }, 40000);

@@ -531,15 +531,36 @@
             if (badgeBadal) badgeBadal.textContent = String(ASNIzinAsatidz.delegatedToMeList.length);
             if (badgeApproval) badgeApproval.textContent = String(ASNIzinAsatidz.pendingApprovalList.length);
 
-            // Update status visual banner di Modul Tahfidz & Badge di Pusat Kontrol Pengasuh
+            // Update status visual banner di Modul Tahfidz, Beranda Utama Admin, & Dashboard Pengasuh
             const isApprover = canApproveIzinAsatidz();
             const bannerTahfidz = document.getElementById('banner-pengasuh-izin-asatidz');
             const bannerBadge = document.getElementById('banner-pengasuh-izin-badge');
             const bannerText = document.getElementById('banner-pengasuh-izin-text');
             const pengasuhBadgeGrid = document.getElementById('pengasuh-tahfidz-izin-badge');
 
+            // Kartu Prioritas Pengasuh (Lokasi 1: Dashboard Pengasuh, Lokasi 2: Beranda Utama Admin Hub)
+            const pengasuhPriorityCard = document.getElementById('pengasuh-priority-izin-card');
+            const pengasuhPriorityBadge = document.getElementById('pengasuh-priority-izin-badge');
+            const pengasuhPriorityText = document.getElementById('pengasuh-priority-izin-text');
+
+            const adminHubPriorityCard = document.getElementById('admin-hub-pengasuh-priority-card');
+            const adminHubPriorityBadge = document.getElementById('admin-hub-pengasuh-priority-badge');
+            const adminHubPriorityText = document.getElementById('admin-hub-pengasuh-priority-text');
+
             const pendingCount = ASNIzinAsatidz.pendingApprovalList.length;
 
+            const updatePriorityCard = (cardEl, badgeEl, textEl) => {
+                if (!cardEl) return;
+                if (isApprover && pendingCount > 0) {
+                    cardEl.classList.remove('hidden');
+                    if (badgeEl) badgeEl.textContent = `${pendingCount} Menunggu Restu Pengasuh`;
+                    if (textEl) textEl.textContent = `Ada ${pendingCount} permohonan izin mengajar Asatidz yang memerlukan persetujuan Pengasuh untuk mengaktifkan penugasan Badal (pengganti) halaqah santri.`;
+                } else {
+                    cardEl.classList.add('hidden');
+                }
+            };
+
+            // Update kartu di Modul Tahfidz
             if (bannerTahfidz) {
                 if (isApprover && pendingCount > 0) {
                     bannerTahfidz.classList.remove('hidden');
@@ -550,12 +571,25 @@
                 }
             }
 
+            // Update kartu prioritas di Dashboard Pengasuh & Beranda Utama Admin Hub
+            updatePriorityCard(pengasuhPriorityCard, pengasuhPriorityBadge, pengasuhPriorityText);
+            updatePriorityCard(adminHubPriorityCard, adminHubPriorityBadge, adminHubPriorityText);
+
             if (pengasuhBadgeGrid) {
                 if (isApprover && pendingCount > 0) {
                     pengasuhBadgeGrid.textContent = String(pendingCount);
                     pengasuhBadgeGrid.classList.remove('hidden');
                 } else {
                     pengasuhBadgeGrid.classList.add('hidden');
+                }
+            }
+
+            // Sinkronisasi Lonceng Header Global (Unified Approval Hub)
+            if (typeof updateHeaderApprovalNotifications === 'function') {
+                try {
+                    updateHeaderApprovalNotifications();
+                } catch (notifErr) {
+                    console.warn('[UPDATE HEADER NOTIF WARN]', notifErr);
                 }
             }
 

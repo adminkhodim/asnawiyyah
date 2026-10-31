@@ -1850,6 +1850,35 @@
                         </div>
                     </div>
 
+                    <!-- KARTU PRIORITAS RESTU IZIN ASATIDZ (KHUSUS PENGASUH - DI ATAS PUSAT KONTROL) -->
+                    <div id="pengasuh-priority-izin-card" class="hidden p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/70 to-orange-50 dark:from-amber-950/40 dark:via-amber-900/30 dark:to-[#1c2836] border border-amber-300 dark:border-amber-800/80 text-amber-950 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition animate-fade-in-up">
+                        <div class="flex items-start sm:items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                                <i class="fa-solid fa-stamp"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-bold text-xs sm:text-sm text-amber-950 dark:text-amber-100 flex items-center gap-1.5">
+                                        <span>🌿</span>
+                                        <span>Persetujuan Izin Asatidz Dibutuhkan</span>
+                                    </h4>
+                                    <span id="pengasuh-priority-izin-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100">
+                                        0 Menunggu Restu
+                                    </span>
+                                </div>
+                                <p id="pengasuh-priority-izin-text" class="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                                    Ada permohonan izin mengajar Asatidz yang memerlukan persetujuan Pengasuh untuk mengaktifkan penugasan Badal (pengganti) halaqah santri.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 justify-end">
+                            <button type="button" onclick="openIzinAsatidzModal('APPROVAL')" class="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer">
+                                <i class="fa-solid fa-stamp text-xs"></i>
+                                <span>✍️ Tinjau & Beri Restu</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- PUSAT KONTROL PENGASUH (GRID DINAMIS 4 KOLOM HORIZONTAL SERAGAM DENGAN PUSAT KONTROL ADMIN) -->
                     <div class="bg-white dark:bg-[#15202d] p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 transition-colors">
                         <div class="flex items-center justify-between">
@@ -6998,6 +7027,35 @@
                     <i id="admin-hub-notice-icon"></i>
                     <span id="admin-hub-notice-title"></span>
                     <p id="admin-hub-notice-text"></p>
+                </div>
+
+                <!-- KARTU PRIORITAS RESTU IZIN ASATIDZ (DI BERANDA UTAMA ADMIN HUB - DI ATAS OVERALL DATA) -->
+                <div id="admin-hub-pengasuh-priority-card" class="hidden p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/70 to-orange-50 dark:from-amber-950/40 dark:via-amber-900/30 dark:to-[#1c2836] border border-amber-300 dark:border-amber-800/80 text-amber-950 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition animate-fade-in-up">
+                    <div class="flex items-start sm:items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                            <i class="fa-solid fa-stamp"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="font-bold text-xs sm:text-sm text-amber-950 dark:text-amber-100 flex items-center gap-1.5">
+                                    <span>🌿</span>
+                                    <span>Persetujuan Izin Asatidz Dibutuhkan</span>
+                                </h4>
+                                <span id="admin-hub-pengasuh-priority-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100">
+                                    0 Menunggu Restu
+                                </span>
+                            </div>
+                            <p id="admin-hub-pengasuh-priority-text" class="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                                Ada permohonan izin mengajar Asatidz yang memerlukan persetujuan Pengasuh untuk mengaktifkan penugasan Badal (pengganti) halaqah santri.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 justify-end">
+                        <button type="button" onclick="openIzinAsatidzModal('APPROVAL')" class="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer">
+                            <i class="fa-solid fa-stamp text-xs"></i>
+                            <span>✍️ Tinjau & Beri Restu</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- ================= OVERALL DATA & TIME RANGE CONTROLS (1-TO-1 HADIRIN BENCHMARK) ================= -->
