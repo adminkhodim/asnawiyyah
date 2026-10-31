@@ -112,9 +112,9 @@ const mockIzinSheet = createMockSheet('Izin_Perpulangan',
 );
 
 const mockPegawaiSheet = createMockSheet('Pegawai',
-  ['pegawai_id', 'nama', 'jabatan', 'unit', 'phone', 'email', 'status'],
+  ['employee_id', 'nama', 'nip', 'gender', 'jabatan', 'spesialisasi', 'telepon', 'email', 'status'],
   [
-    ['PGW-001', 'Ust. Zaid', 'Muhafiz Utama', 'Tahfidz', '0811223344', 'zaid@asnawiyyah.id', 'AKTIF']
+    ['PEG-001', 'Ust. Zaid', '19800101', 'Putra', 'Muhafiz Utama', 'Tahfidz', '0811223344', 'zaid@asnawiyyah.id', 'AKTIF']
   ]
 );
 
@@ -177,7 +177,7 @@ assert(targetEndpoints.some(u => u.includes('/rest/v1/students?on_conflict=stude
 assert(targetEndpoints.some(u => u.includes('/rest/v1/tahfidz_logs?on_conflict=log_id')), 'Harus memanggil endpoint tahfidz_logs');
 assert(targetEndpoints.some(u => u.includes('/rest/v1/tahfidz_capaian?on_conflict=student_id')), 'Harus memanggil endpoint tahfidz_capaian');
 assert(targetEndpoints.some(u => u.includes('/rest/v1/izin_perpulangan?on_conflict=id_izin')), 'Harus memanggil endpoint izin_perpulangan');
-assert(targetEndpoints.some(u => u.includes('/rest/v1/pegawai?on_conflict=pegawai_id')), 'Harus memanggil endpoint pegawai');
+assert(targetEndpoints.some(u => u.includes('/rest/v1/pegawai?on_conflict=employee_id')), 'Harus memanggil endpoint pegawai');
 
 for (const req of replicatedRequests) {
   assert.strictEqual(req.options.headers.Authorization, 'Bearer test-service-role-secret-key-12345');
@@ -186,3 +186,4 @@ for (const req of replicatedRequests) {
 
 console.log(`  ✅ [PASS] Eksekusi batch reconciliation berhasil mengirim ${replicatedRequests.length} payload ke Supabase via service_role.`);
 console.log('🎉 Batch Reconciliation & Data Sync Engine PASSED 100%!');
+

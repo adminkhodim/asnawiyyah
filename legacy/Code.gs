@@ -911,6 +911,27 @@ function normalizeSyncGender_(val) {
   return "Putra";
 }
 
+function normalizeSyncIzinKategori_(kat) {
+  if (!kat) return "Pulang ke Rumah / Libur Terjadwal";
+  const k = String(kat).trim().toLowerCase();
+  if (k.indexOf("sakit") !== -1 || k.indexOf("obat") !== -1 || k.indexOf("medis") !== -1) return "Izin Sakit / Berobat Luar";
+  if (k.indexOf("mendesak") !== -1 || k.indexOf("keluarga") !== -1 || k.indexOf("nikah") !== -1 || k.indexOf("duka") !== -1 || k.indexOf("sambang") !== -1) return "Kepentingan Mendesak Keluarga";
+  if (k.indexOf("tugas") !== -1 || k.indexOf("delegasi") !== -1 || k.indexOf("lomba") !== -1 || k.indexOf("kegiatan") !== -1) return "Tugas / Delegasi Pondok";
+  return "Pulang ke Rumah / Libur Terjadwal";
+}
+
+function normalizeSyncIzinStatus_(st) {
+  if (!st) return "MENUNGGU_PENGURUS";
+  const s = String(st).trim().toUpperCase();
+  if (s.indexOf("PENGASUH") !== -1) return "MENUNGGU_PENGASUH";
+  if (s.indexOf("SETUJU") !== -1 || s.indexOf("APPROV") !== -1) return "DISETUJUI";
+  if (s.indexOf("TOLAK") !== -1 || s.indexOf("REJECT") !== -1) return "DITOLAK";
+  if (s === "KELUAR") return "KELUAR";
+  if (s === "KEMBALI") return "KEMBALI";
+  if (s === "TERLAMBAT") return "TERLAMBAT";
+  return "MENUNGGU_PENGURUS";
+}
+
 function cleanSyncVal_(val) {
   if (val === null || val === undefined) return null;
   const s = String(val).trim();
@@ -1169,15 +1190,17 @@ function syncHistoricalIzinPerpulanganToSupabase(ss) {
   const nameIdx = headers.findIndex(h => h === "studentname" || h === "namasantri" || h === "nama");
   const wIdIdx = headers.findIndex(h => h === "waliid");
   const wNameIdx = headers.findIndex(h => h === "waliname" || h === "namawali");
-  const wPhoneIdx = headers.findIndex(h => h === "waliphone" || h === "hpwali");
+  const wPhoneIdx = headers.findIndex(h => h === "waliphone" || h === "nowawali" || h === "hpwali");
   const katIdx = headers.findIndex(h => h === "kategori");
-  const kepIdx = headers.findIndex(h => h === "keperluan");
-  const mulIdx = headers.findIndex(h => h === "tanggalmulai" || h === "tglmulai");
-  const selIdx = headers.findIndex(h => h === "tanggalselesai" || h === "tglselesai");
-  const jamIdx = headers.findIndex(h => h === "jamkembali");
+  const alasanIdx = headers.findIndex(h => h === "alasan" || h === "keperluan");
+  const mulIdx = headers.findIndex(h => h === "tglmulai" || h === "tanggalmulai");
+  const jamMulaiIdx = headers.findIndex(h => h === "jammulai");
+  const selIdx = headers.findIndex(h => h === "tglkembali" || h === "tanggalkembali" || h === "tanggalselesai");
+  const jamKembaliIdx = headers.findIndex(h => h === "jamkembali");
   const stIdx = headers.findIndex(h => h === "status");
-  const pJemputIdx = headers.findIndex(h => h === "penjemputnama");
-  const pStatIdx = headers.findIndex(h => h === "penjemputstatus");
+  const pJemputIdx = headers.findIndex(h => h === "namapenjemput" || h === "penjemputnama");
+  const pHubIdx = headers.findIndex(h => h === "hubunganpenjemput" || h === "penjemputhubungan" || h === "penjemputstatus");
+  const pKontakIdx = headers.findIndex(h => h === "kontakpenjemput" || h === "penjemputkontak");
   const crtIdx = headers.findIndex(h => h === "createdat");
 
   const records = [];
@@ -1192,6 +1215,10 @@ function syncHistoricalIzinPerpulanganToSupabase(ss) {
     if (!idIzin) idIzin = "IZN-" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd") + "-" + Utilities.getUuid().substring(0, 4).toUpperCase();
     if (!sId) sId = sNis ? ("STD_" + sNis) : "STD_UNKNOWN";
 
+    const tglMulaiVal = mulIdx !== -1 ? (formatSyncDateIso_(row[mulIdx]) || "2026-01-01") : "2026-01-01";
+    const tglKembaliVal = selIdx !== -1 ? (formatSyncDateIso_(row[selIdx]) || tglMulaiVal) : tglMulaiVal;
+    const alasanVal = alasanIdx !== -1 && cleanSyncVal_(row[alasanIdx]) ? String(row[alasanIdx]).trim() : "Izin perpulangan santri";
+
     records.push({
       id_izin: String(idIzin),
       student_id: String(sId),
@@ -1200,14 +1227,16 @@ function syncHistoricalIzinPerpulanganToSupabase(ss) {
       wali_id: wIdIdx !== -1 && cleanSyncVal_(row[wIdIdx]) ? String(row[wIdIdx]) : "WALI_SYSTEM",
       wali_name: wNameIdx !== -1 ? cleanSyncVal_(row[wNameIdx]) : null,
       wali_phone: wPhoneIdx !== -1 ? cleanSyncVal_(row[wPhoneIdx]) : null,
-      kategori: katIdx !== -1 && cleanSyncVal_(row[katIdx]) ? String(row[katIdx]).trim() : "Lainnya",
-      keperluan: kepIdx !== -1 && cleanSyncVal_(row[kepIdx]) ? String(row[kepIdx]).trim() : "-",
-      tanggal_mulai: mulIdx !== -1 ? formatSyncDateIso_(row[mulIdx]) : formatSyncDateIso_(new Date()),
-      tanggal_selesai: selIdx !== -1 ? formatSyncDateIso_(row[selIdx]) : formatSyncDateIso_(new Date()),
-      jam_kembali: jamIdx !== -1 && cleanSyncVal_(row[jamIdx]) ? String(row[jamIdx]).trim() : "17:00",
-      status: stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "PENDING",
+      kategori: normalizeSyncIzinKategori_(katIdx !== -1 ? row[katIdx] : null),
+      alasan: alasanVal,
       penjemput_nama: pJemputIdx !== -1 ? cleanSyncVal_(row[pJemputIdx]) : null,
-      penjemput_status: pStatIdx !== -1 ? cleanSyncVal_(row[pStatIdx]) : null,
+      penjemput_hubungan: pHubIdx !== -1 && cleanSyncVal_(row[pHubIdx]) ? String(row[pHubIdx]).trim() : "Orang Tua",
+      penjemput_kontak: pKontakIdx !== -1 ? cleanSyncVal_(row[pKontakIdx]) : null,
+      tgl_mulai: tglMulaiVal,
+      jam_mulai: jamMulaiIdx !== -1 && cleanSyncVal_(row[jamMulaiIdx]) ? String(row[jamMulaiIdx]).trim() : "08:00",
+      tgl_kembali: tglKembaliVal,
+      jam_kembali: jamKembaliIdx !== -1 && cleanSyncVal_(row[jamKembaliIdx]) ? String(row[jamKembaliIdx]).trim() : "17:00",
+      status: normalizeSyncIzinStatus_(stIdx !== -1 ? row[stIdx] : null),
       created_at: crtIdx !== -1 ? formatSyncDateTimeIso_(row[crtIdx]) : formatSyncDateTimeIso_(new Date())
     });
   }
@@ -1243,13 +1272,16 @@ function syncHistoricalPegawaiToSupabase(ss) {
 
   const data = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[\s\-_]+/g, ""));
-  const idIdx = headers.findIndex(h => h === "pegawaiid" || h === "id");
+  const idIdx = headers.findIndex(h => h === "employeeid" || h === "pegawaiid" || h === "id");
   const nameIdx = headers.findIndex(h => h === "nama" || h === "name");
+  const nipIdx = headers.findIndex(h => h === "nip");
+  const genderIdx = headers.findIndex(h => h === "gender" || h === "jeniskelamin");
   const jabIdx = headers.findIndex(h => h === "jabatan");
-  const unitIdx = headers.findIndex(h => h === "unit");
-  const phoneIdx = headers.findIndex(h => h === "phone" || h === "hp" || h === "telepon");
+  const specIdx = headers.findIndex(h => h === "spesialisasi" || h === "unit");
+  const phoneIdx = headers.findIndex(h => h === "telepon" || h === "phone" || h === "hp");
   const emailIdx = headers.findIndex(h => h === "email");
   const stIdx = headers.findIndex(h => h === "status");
+  const crtIdx = headers.findIndex(h => h === "createdat");
 
   const records = [];
   for (let i = 1; i < data.length; i++) {
@@ -1257,16 +1289,19 @@ function syncHistoricalPegawaiToSupabase(ss) {
     let id = idIdx !== -1 ? cleanSyncVal_(row[idIdx]) : null;
     const name = nameIdx !== -1 ? cleanSyncVal_(row[nameIdx]) : null;
     if (!id && !name) continue;
-    if (!id) id = "PGW_" + Utilities.getUuid().replace(/-/g, "").substring(0, 8);
+    if (!id) id = "PEG_" + Utilities.getUuid().replace(/-/g, "").substring(0, 8);
 
     records.push({
-      pegawai_id: String(id),
+      employee_id: String(id),
       nama: String(name || "Pegawai"),
+      nip: nipIdx !== -1 ? cleanSyncVal_(row[nipIdx]) : null,
+      gender: genderIdx !== -1 ? normalizeSyncGender_(row[genderIdx]) : "Putra",
       jabatan: jabIdx !== -1 && cleanSyncVal_(row[jabIdx]) ? String(row[jabIdx]).trim() : "Asatidz",
-      unit: unitIdx !== -1 && cleanSyncVal_(row[unitIdx]) ? String(row[unitIdx]).trim() : "Pesantren",
-      phone: phoneIdx !== -1 ? cleanSyncVal_(row[phoneIdx]) : null,
+      spesialisasi: specIdx !== -1 ? cleanSyncVal_(row[specIdx]) : null,
+      telepon: phoneIdx !== -1 ? cleanSyncVal_(row[phoneIdx]) : null,
       email: emailIdx !== -1 ? cleanSyncVal_(row[emailIdx]) : null,
-      status: stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "AKTIF"
+      status: stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "AKTIF",
+      created_at: crtIdx !== -1 ? formatSyncDateTimeIso_(row[crtIdx]) : formatSyncDateTimeIso_(new Date())
     });
   }
 
@@ -1276,7 +1311,7 @@ function syncHistoricalPegawaiToSupabase(ss) {
 
   for (let b = 0; b < records.length; b += BATCH_SIZE) {
     const batch = records.slice(b, b + BATCH_SIZE);
-    const res = replicateToSupabase("/rest/v1/pegawai?on_conflict=pegawai_id", "POST", batch);
+    const res = replicateToSupabase("/rest/v1/pegawai?on_conflict=employee_id", "POST", batch);
     if (res.success) {
       totalSynced += batch.length;
     } else {
@@ -1288,6 +1323,7 @@ function syncHistoricalPegawaiToSupabase(ss) {
   console.log(`[SYNC HISTORICAL PEGAWAI] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
   return { domain: "pegawai", total: records.length, synced: totalSynced, errors: errors };
 }
+
 
 /**
  * 6. Master Orchestrator: Eksekusi Rekonsiliasi Seluruh Data Historis
