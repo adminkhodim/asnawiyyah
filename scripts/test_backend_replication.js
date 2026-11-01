@@ -21,12 +21,14 @@ const ROOT = path.resolve(__dirname, '..');
 // 1. Verifikasi integrasi kode sumber pada modular backend
 const configGs = fs.readFileSync(path.join(ROOT, 'legacy/00_Config_Security.gs'), 'utf8');
 const tahfidzGs = fs.readFileSync(path.join(ROOT, 'legacy/04_Tahfidz.gs'), 'utf8');
+const cmsGs = fs.readFileSync(path.join(ROOT, 'legacy/05_CMS.gs'), 'utf8');
 const masterGs = fs.readFileSync(path.join(ROOT, 'legacy/06_MasterData.gs'), 'utf8');
 const codeGs = fs.readFileSync(path.join(ROOT, 'legacy/Code.gs'), 'utf8');
 
 assert(configGs.includes('function getSupabaseServerConfig()'), '00_Config_Security.gs harus memiliki getSupabaseServerConfig');
 assert(configGs.includes('function replicateToSupabase('), '00_Config_Security.gs harus memiliki replicateToSupabase');
 assert(tahfidzGs.includes('replicateToSupabase("/rest/v1/tahfidz_logs"'), '04_Tahfidz.gs harus mereplikasi setoran ke Supabase');
+assert(cmsGs.includes('replicateToSupabase("/rest/v1/berita?on_conflict=news_id"'), '05_CMS.gs harus mereplikasi berita ke Supabase');
 assert(masterGs.includes('replicateToSupabase("/rest/v1/students'), '06_MasterData.gs harus mereplikasi santri ke Supabase');
 assert(codeGs.includes('function replicateToSupabase('), 'Code.gs harus tersinkronisasi membawa replicateToSupabase');
 console.log('  ✅ [PASS] Inspeksi statis hook replikasi pada seluruh domain backend terverifikasi.');

@@ -358,6 +358,29 @@ function simpanBerita(formData) {
       0 // Views awal
     ]);
 
+    // Replikasi Server-Side Berita Baru ke Supabase (via service_role)
+    try {
+      if (typeof replicateToSupabase === "function") {
+        replicateToSupabase("/rest/v1/berita?on_conflict=news_id", "POST", {
+          news_id: identities.newsId,
+          slug: identities.slug,
+          tanggal: formatDate(new Date()),
+          judul: formData.judul,
+          kategori: formData.kategori || "Berita",
+          penulis: formData.penulis || "Admin",
+          gambar_url: fileUrl || "",
+          foto_url: fileUrl || "",
+          ringkasan: formData.ringkasan || "",
+          isi: cleanIsi,
+          status: "Publish",
+          views: 0,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (sbErr) {
+      Logger.log("[REPLICATE BERITA ERROR] " + sbErr.message);
+    }
+
     return {
       success: true,
       message: "Berita berhasil dipublikasikan!",
@@ -451,6 +474,23 @@ function updateBerita(formData) {
     // Array to update: D to I (Judul, Kategori, Penulis, Gambar_URL, Ringkasan, Isi)
     sheet.getRange(targetRow, 4, 1, 6).setValues([[judul, kategori, penulis, fileUrl, ringkasan, isi]]);
 
+    // Replikasi Server-Side Update Berita ke Supabase (via service_role)
+    try {
+      if (typeof replicateToSupabase === "function") {
+        replicateToSupabase("/rest/v1/berita?news_id=eq." + encodeURIComponent(news_id), "PATCH", {
+          judul: judul,
+          kategori: kategori,
+          penulis: penulis,
+          gambar_url: fileUrl || "",
+          foto_url: fileUrl || "",
+          ringkasan: ringkasan || "",
+          isi: isi
+        });
+      }
+    } catch (sbErr) {
+      Logger.log("[REPLICATE UPDATE BERITA ERROR] " + sbErr.message);
+    }
+
     return { success: true, message: "Berita berhasil diperbarui!", url: fileUrl, fileUrl: fileUrl };
   } catch (error) {
     return { success: false, message: error.toString() };
@@ -492,6 +532,15 @@ function deleteBeritaData(payload) {
     }
 
     sheet.deleteRow(targetRow);
+
+    // Replikasi Server-Side Hapus Berita ke Supabase (via service_role)
+    try {
+      if (typeof replicateToSupabase === "function") {
+        replicateToSupabase("/rest/v1/berita?news_id=eq." + encodeURIComponent(news_id), "DELETE");
+      }
+    } catch (sbErr) {
+      Logger.log("[REPLICATE DELETE BERITA ERROR] " + sbErr.message);
+    }
 
     return { success: true, message: "Berita berhasil dihapus!" };
   } catch (error) {
@@ -557,6 +606,20 @@ function recordNewsView(payload) {
     var clientViews = Number(payload.views || (payload.data && payload.data.views)) || 0;
     var newViews = Math.max(currentViews + 1, clientViews);
     sheet.getRange(targetRow, 10).setValue(newViews);
+
+    // Replikasi Server-Side Views ke Supabase (via service_role)
+    try {
+      if (typeof replicateToSupabase === "function") {
+        var syncId = reqNewsId || (data[targetRow - 1][0] ? String(data[targetRow - 1][0]).trim() : "");
+        if (syncId) {
+          replicateToSupabase("/rest/v1/berita?news_id=eq." + encodeURIComponent(syncId), "PATCH", {
+            views: newViews
+          });
+        }
+      }
+    } catch (sbErr) {
+      // non-blocking
+    }
 
     return { success: true, views: newViews };
   } catch (err) {

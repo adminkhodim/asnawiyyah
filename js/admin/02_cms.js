@@ -1788,6 +1788,7 @@
                 if (response && response.success) {
                     showToast("✅ Berita berhasil disimpan!");
                     resetAdminNewsForm();
+                    try { localStorage.removeItem('asnawiyyah_news_cache'); } catch (_) {}
                     loadNews();
                 } else {
                     showToast("❌ Gagal: " + (response ? response.message : "Terjadi kesalahan"));
@@ -1879,6 +1880,7 @@
                     const response = await apiPost("deleteBerita", { token, data: { news_id: id } });
                     if (response && response.success) {
                         showToast("Berita berhasil dihapus.");
+                        try { localStorage.removeItem('asnawiyyah_news_cache'); } catch (_) {}
                         loadNews(); // Refresh from backend
                     } else {
                         showToast("❌ Gagal menghapus: " + (response ? response.message : "Error"));

@@ -1337,6 +1337,104 @@ function syncHistoricalPegawaiToSupabase(ss) {
 }
 
 
+
+/**
+ * 5f. Sinkronisasi Historis Berita & Artikel ke Supabase
+ */
+function syncHistoricalBeritaToSupabase(ss) {
+  if (!ss) ss = getDatabaseSpreadsheet();
+  let sheet = ss.getSheetByName("Berita") || ss.getSheetByName("Kabar");
+  if (!sheet) {
+    const sheets = ss.getSheets();
+    for (let s of sheets) {
+      const name = s.getName().trim().toLowerCase();
+      if (name === "berita" || name === "kabar") {
+        sheet = s;
+        break;
+      }
+    }
+  }
+
+  if (!sheet) {
+    console.warn("Sheet Berita tidak ditemukan.");
+    return { domain: "berita", total: 0, synced: 0, errors: ["Sheet Berita tidak ditemukan"] };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) {
+    return { domain: "berita", total: 0, synced: 0, errors: [] };
+  }
+
+  const headers = data[0].map(h => String(h || "").trim().toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  const idIdx = headers.findIndex(h => h === "newsid" || h === "id");
+  const slugIdx = headers.findIndex(h => h === "slug");
+  const dateIdx = headers.findIndex(h => h === "tanggal" || h === "date");
+  const judulIdx = headers.findIndex(h => h === "judul" || h === "title");
+  const katIdx = headers.findIndex(h => h === "kategori" || h === "category");
+  const penulisIdx = headers.findIndex(h => h === "penulis" || h === "author");
+  const imgIdx = headers.findIndex(h => h === "gambarurl" || h === "gambar" || h === "fotourl" || h === "foto");
+  const ringkasanIdx = headers.findIndex(h => h === "ringkasan" || h === "excerpt" || h === "summary");
+  const isiIdx = headers.findIndex(h => h === "isi" || h === "konten" || h === "content");
+  const viewsIdx = headers.findIndex(h => h === "views" || h === "view");
+
+  const records = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    let newsId = idIdx !== -1 ? cleanSyncVal_(row[idIdx]) : null;
+    let slug = slugIdx !== -1 ? cleanSyncVal_(row[slugIdx]) : null;
+    let judul = judulIdx !== -1 ? cleanSyncVal_(row[judulIdx]) : null;
+    let isi = isiIdx !== -1 ? cleanSyncVal_(row[isiIdx]) : null;
+
+    if (!judul && !isi) continue;
+    if (!newsId) {
+      newsId = "NWS_" + new Date().getTime() + "_" + Math.random().toString(36).substring(2, 6);
+    }
+    if (!slug) {
+      slug = String(judul || newsId).toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-") + "-" + newsId.slice(-4);
+    }
+
+    const rawDate = dateIdx !== -1 ? row[dateIdx] : null;
+    const formattedDate = rawDate ? formatDate(rawDate) : formatDate(new Date());
+    const createdAtIso = rawDate ? formatSyncDateTimeIso_(rawDate) : formatSyncDateTimeIso_(new Date());
+    const imgUrl = imgIdx !== -1 ? cleanSyncVal_(row[imgIdx]) : "";
+
+    records.push({
+      news_id: String(newsId),
+      slug: String(slug),
+      tanggal: String(formattedDate),
+      judul: String(judul || "Berita"),
+      kategori: katIdx !== -1 && cleanSyncVal_(row[katIdx]) ? String(row[katIdx]).trim() : "Berita",
+      penulis: penulisIdx !== -1 && cleanSyncVal_(row[penulisIdx]) ? String(row[penulisIdx]).trim() : "Admin",
+      gambar_url: imgUrl || "",
+      foto_url: imgUrl || "",
+      ringkasan: ringkasanIdx !== -1 ? cleanSyncVal_(row[ringkasanIdx]) : "",
+      isi: String(isi || ""),
+      status: "Publish",
+      views: viewsIdx !== -1 ? (Number(row[viewsIdx]) || 0) : 0,
+      created_at: createdAtIso
+    });
+  }
+
+  let totalSynced = 0;
+  const errors = [];
+  const BATCH_SIZE = 25;
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase("/rest/v1/berita?on_conflict=news_id", "POST", batch);
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC BERITA BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL BERITA] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "berita", total: records.length, synced: totalSynced, errors: errors };
+}
+
 /**
  * 6. Master Orchestrator: Eksekusi Rekonsiliasi Seluruh Data Historis
  */
@@ -1374,6 +1472,9 @@ function syncAllHistoricalSheetsToSupabase() {
 
     Logger.log("\n📦 5. Menyinkronkan Data Pegawai / Asatidz...");
     summary.domains.pegawai = syncHistoricalPegawaiToSupabase(ss);
+
+    Logger.log("\n📦 6. Menyinkronkan Berita & Artikel...");
+    summary.domains.berita = syncHistoricalBeritaToSupabase(ss);
 
     const durationSec = Math.round((new Date().getTime() - startTime) / 1000);
     summary.completed_at = new Date().toISOString();
@@ -1418,6 +1519,8 @@ function onOpen() {
       .addItem("📖 Sinkronkan Capaian Tahfidz", "syncHistoricalTahfidzCapaianToSupabase")
       .addItem("📜 Sinkronkan Log Tahfidz", "syncHistoricalTahfidzLogsToSupabase")
       .addItem("🚗 Sinkronkan Izin Perpulangan", "syncHistoricalIzinPerpulanganToSupabase")
+      .addItem("👔 Sinkronkan Data Pegawai / Asatidz", "syncHistoricalPegawaiToSupabase")
+      .addItem("📰 Sinkronkan Berita & Artikel", "syncHistoricalBeritaToSupabase")
       .addToUi();
   } catch (e) {
     // onOpen berjalan non-blokir jika dipanggil dalam konteks headless/API

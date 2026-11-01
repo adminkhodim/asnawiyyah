@@ -28,6 +28,7 @@ const EXPECTED_FUNCTIONS = [
   'syncHistoricalTahfidzCapaianToSupabase',
   'syncHistoricalIzinPerpulanganToSupabase',
   'syncHistoricalPegawaiToSupabase',
+  'syncHistoricalBeritaToSupabase',
   'syncAllHistoricalSheetsToSupabase',
   'onOpen'
 ];
@@ -118,6 +119,13 @@ const mockPegawaiSheet = createMockSheet('Pegawai',
   ]
 );
 
+const mockBeritaSheet = createMockSheet('Berita',
+  ['news_id', 'slug', 'Tanggal', 'Judul', 'Kategori', 'Penulis', 'Gambar_URL', 'Ringkasan', 'Isi', 'Views'],
+  [
+    ['NWS_001', 'kegiatan-santri-abc1', '2026-10-31', 'Kegiatan Santri', 'Kabar', 'Admin', 'https://img.url', 'Ringkasan', 'Isi artikel berita', 10]
+  ]
+);
+
 const mockSpreadsheet = {
   getSheetByName: (n) => {
     if (n === 'Students' || n === 'data_santri') return mockStudentsSheet;
@@ -125,6 +133,7 @@ const mockSpreadsheet = {
     if (n === 'Tahfidz_Capaian') return mockCapaianSheet;
     if (n === 'Izin_Perpulangan') return mockIzinSheet;
     if (n === 'Pegawai') return mockPegawaiSheet;
+    if (n === 'Berita' || n === 'Kabar') return mockBeritaSheet;
     return null;
   }
 };
@@ -185,6 +194,7 @@ assert(targetEndpoints.some(u => u.includes('/rest/v1/tahfidz_logs?on_conflict=l
 assert(targetEndpoints.some(u => u.includes('/rest/v1/tahfidz_capaian?on_conflict=student_id')), 'Harus memanggil endpoint tahfidz_capaian');
 assert(targetEndpoints.some(u => u.includes('/rest/v1/izin_perpulangan?on_conflict=id_izin')), 'Harus memanggil endpoint izin_perpulangan');
 assert(targetEndpoints.some(u => u.includes('/rest/v1/pegawai?on_conflict=employee_id')), 'Harus memanggil endpoint pegawai');
+assert(targetEndpoints.some(u => u.includes('/rest/v1/berita?on_conflict=news_id')), 'Harus memanggil endpoint berita');
 
 for (const req of replicatedRequests) {
   assert.strictEqual(req.options.headers.Authorization, 'Bearer test-service-role-secret-key-12345');
