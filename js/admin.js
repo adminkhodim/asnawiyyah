@@ -1040,7 +1040,8 @@
                     'users': 'Manajemen Pengguna',
                     'roles': 'Manajemen Peran',
                     'notifikasi': 'Notifikasi Broadcast',
-                    'perpulangan': 'Izin & Perpulangan Santri'
+                    'perpulangan': 'Izin & Perpulangan Santri',
+                    'kedisiplinan': 'Kedisiplinan & Tarbiyah'
                 };
                 breadcrumbEl.innerText = viewLabels[viewName] || 'Panel Admin';
             }
@@ -1083,6 +1084,7 @@
             const waliSantriView = document.getElementById('admin-view-wali-santri');
             const rolesView = document.getElementById('admin-view-roles');
             const perpulanganView = document.getElementById('admin-view-perpulangan');
+            const kedisiplinanView = document.getElementById('admin-view-kedisiplinan');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -1106,6 +1108,7 @@
             if (usersView) usersView.classList.add('hidden');
             if (rolesView) rolesView.classList.add('hidden');
             if (perpulanganView) perpulanganView.classList.add('hidden');
+            if (kedisiplinanView) kedisiplinanView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -1241,6 +1244,11 @@
                 if (perpulanganView) perpulanganView.classList.remove('hidden');
                 if (typeof loadPerpulanganData === 'function') {
                     loadPerpulanganData();
+                }
+            } else if (viewName === 'kedisiplinan') {
+                if (kedisiplinanView) kedisiplinanView.classList.remove('hidden');
+                if (window.ASNKedisiplinan && typeof window.ASNKedisiplinan.init === 'function') {
+                    window.ASNKedisiplinan.init();
                 }
             } else {
                 hubView.classList.remove('hidden');

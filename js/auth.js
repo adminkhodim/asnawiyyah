@@ -1544,7 +1544,7 @@ const ASNIdentity = {
                         </div>
                     </div>
 
-                    <!-- Tombol Aksi Mutaba'ah & Izin Santri -->
+                    <!-- Tombol Aksi Mutaba'ah, Izin Santri & Kedisiplinan -->
                     <div class="pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button type="button" data-student-id="${escapeHtml(studentId)}" onclick="openTahfidzStudentDetail(this.getAttribute('data-student-id'), 'parent')" class="w-full py-2.5 px-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl font-extrabold text-xs tracking-wide shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-1.5" title="Buka Buku Mutaba'ah & Capaian Santri">
                             <i class="fa-solid fa-book-quran text-xs text-slate-950"></i>
@@ -1553,6 +1553,16 @@ const ASNIdentity = {
                         <button type="button" onclick="if(window.ASNPerpulangan && typeof window.ASNPerpulangan.openWaliIzinModal === 'function') { window.ASNPerpulangan.openWaliIzinModal('${escapeHtml(studentId)}', '${escapeHtml(studentName)}', '${escapeHtml(studentNis)}'); } else if(typeof window.openWaliIzinModal === 'function') { window.openWaliIzinModal('${escapeHtml(studentId)}', '${escapeHtml(studentName)}', '${escapeHtml(studentNis)}'); }" class="w-full py-2.5 px-3 bg-emerald-600/90 hover:bg-emerald-600 text-white rounded-2xl font-bold text-xs tracking-wide shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 border border-emerald-500/40" title="Ajukan Izin / Perpulangan untuk Santri ini">
                             <i class="fa-solid fa-person-walking-luggage text-xs"></i>
                             <span>Ajukan Izin</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-1">
+                        <button type="button" onclick="if(window.ASNKedisiplinan && typeof window.ASNKedisiplinan.openStudentDisciplineModal === 'function') { window.ASNKedisiplinan.openStudentDisciplineModal('${escapeHtml(studentId)}', '${escapeHtml(studentName)}', '${escapeHtml(studentNis)}'); } else { alert('Modul kedisiplinan sedang dimuat...'); }" class="w-full py-2 px-3 bg-white/10 hover:bg-white/15 text-amber-200 rounded-2xl font-bold text-xs tracking-wide shadow-sm active:scale-[0.99] transition-all flex items-center justify-between border border-amber-400/30">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-scale-balanced text-xs text-amber-400"></i>
+                                <span>Mutaba'ah Kedisiplinan &amp; Adab</span>
+                            </span>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">Detail &rarr;</span>
                         </button>
                     </div>
                 </div>

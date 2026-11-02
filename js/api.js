@@ -1800,6 +1800,121 @@
                         }
                     };
                 }
+
+                // ==================== MODUL 22: KEDISIPLINAN & TARBIYAH SANTRI ====================
+                if (action === "getKedisiplinanMasterList") {
+                    const res = await fetch(`${sbUrl}/rest/v1/kedisiplinan_master?select=*&order=urutan.asc`, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        success: true,
+                        status: "success",
+                        data: rows.map(r => ({
+                            ruleId: r.rule_id,
+                            kodePasal: r.kode_pasal || '',
+                            namaPelanggaran: r.nama_pelanggaran,
+                            kategori: r.kategori || 'RINGAN',
+                            poinDefault: Number(r.poin_default) || 5,
+                            rekomendasiTazir: r.rekomendasi_tazir || '',
+                            status: r.status || 'AKTIF',
+                            urutan: Number(r.urutan) || 1
+                        }))
+                    };
+                }
+
+                if (action === "getKedisiplinanLogs") {
+                    let query = `${sbUrl}/rest/v1/kedisiplinan_logs?select=*&order=tanggal.desc,created_at.desc`;
+                    if (params.studentId || params.student_id) {
+                        query += `&student_id=eq.${encodeURIComponent(params.studentId || params.student_id)}`;
+                    }
+                    if (params.nis) {
+                        query += `&nis=eq.${encodeURIComponent(params.nis)}`;
+                    }
+                    if (params.kategori && params.kategori !== 'SEMUA') {
+                        query += `&kategori=eq.${encodeURIComponent(params.kategori)}`;
+                    }
+                    if (params.statusTazir && params.statusTazir !== 'SEMUA') {
+                        query += `&status_tazir=eq.${encodeURIComponent(params.statusTazir)}`;
+                    }
+                    const res = await fetch(query, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+                    return {
+                        success: true,
+                        status: "success",
+                        data: rows.map(r => ({
+                            recordId: r.record_id,
+                            studentId: r.student_id,
+                            studentName: r.student_name,
+                            nis: r.nis,
+                            gender: r.gender || 'L',
+                            kamarAsrama: r.kamar_asrama || '',
+                            ruleId: r.rule_id || '',
+                            namaPelanggaran: r.nama_pelanggaran,
+                            kategori: r.kategori,
+                            poin: Number(r.poin) || 0,
+                            tanggal: r.tanggal,
+                            waktu: r.waktu || '',
+                            lokasi: r.lokasi || '',
+                            bentukTazir: r.bentuk_tazir || '',
+                            kronologi: r.kronologi || '',
+                            statusTazir: r.status_tazir || 'SEDANG_TAZIR',
+                            tanggalTuntas: r.tanggal_tuntas || '',
+                            pencatatId: r.pencatat_id || '',
+                            namaPencatat: r.nama_pencatat || '',
+                            catatanPengasuh: r.catatan_pengasuh || '',
+                            notifWaliStatus: r.notif_wali_status || 'PENDING',
+                            createdAt: r.created_at
+                        }))
+                    };
+                }
+
+                if (action === "getKedisiplinanStudentSummary") {
+                    const nis = params.nis;
+                    const studentId = params.studentId || params.student_id;
+                    if (!nis && !studentId) return null;
+
+                    let query = `${sbUrl}/rest/v1/kedisiplinan_logs?select=*&order=tanggal.desc`;
+                    if (studentId) query += `&student_id=eq.${encodeURIComponent(studentId)}`;
+                    else if (nis) query += `&nis=eq.${encodeURIComponent(nis)}`;
+
+                    const res = await fetch(query, { headers });
+                    if (!res.ok) return null;
+                    const rows = await res.json();
+
+                    let totalPoin = 0;
+                    let activeTazirCount = 0;
+                    rows.forEach(r => {
+                        totalPoin += Number(r.poin) || 0;
+                        if (r.status_tazir !== 'TUNTAS') activeTazirCount++;
+                    });
+
+                    let statusAdab = "TERPUJI";
+                    if (totalPoin >= 100) statusAdab = "PEMANGGILAN_WALI";
+                    else if (totalPoin >= 75) statusAdab = "PERLU_PERHATIAN";
+                    else if (totalPoin >= 50) statusAdab = "PERINGATAN_SP1";
+                    else if (totalPoin >= 30) statusAdab = "PEMBINAAN";
+
+                    return {
+                        success: true,
+                        status: "success",
+                        data: {
+                            totalPoin,
+                            activeTazirCount,
+                            statusAdab,
+                            logs: rows.map(r => ({
+                                recordId: r.record_id,
+                                namaPelanggaran: r.nama_pelanggaran,
+                                kategori: r.kategori,
+                                poin: Number(r.poin) || 0,
+                                tanggal: r.tanggal,
+                                bentukTazir: r.bentuk_tazir || '',
+                                statusTazir: r.status_tazir,
+                                tanggalTuntas: r.tanggal_tuntas || ''
+                            }))
+                        }
+                    };
+                }
             } catch (err) {
                 console.warn("[SUPABASE FETCH ERROR]", action, err);
                 return null;
@@ -1902,11 +2017,12 @@
 
             const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
             const isSettingsWrite = action === 'savePengaturan';
+            const isKedisiplinanWrite = ['saveKedisiplinanLog', 'updateStatusTazir', 'saveKedisiplinanRule', 'deleteKedisiplinanRule'].includes(action);
 
             // Catatan: Untuk pembuatan berita baru (saveBerita) atau setoran tahfidz tanpa logId,
             // tunggu respons resmi Google Apps Script agar ID di Supabase dijamin 100% identik dengan baris di Google Sheets.
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || (isTahfidzWrite && !isNewTahfidzLog) || isPerpulanganWrite || isNotifikasiWrite || isSettingsWrite) {
+            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || (isTahfidzWrite && !isNewTahfidzLog) || isPerpulanganWrite || isNotifikasiWrite || isSettingsWrite || isKedisiplinanWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 

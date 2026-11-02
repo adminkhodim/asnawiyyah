@@ -168,7 +168,9 @@
                 { key: 'wali.view', label: 'Melihat Data Wali Santri', desc: 'Akses melihat daftar akun wali, kontak WA, dan santri terhubung' },
                 { key: 'wali.manage', label: 'Kelola Relasi & Akun Wali', desc: 'Izin menghubungkan santri baru, reset identitas, dan edit relasi wali' },
                 { key: 'perpulangan.view', label: 'Melihat Data Izin & Perpulangan', desc: 'Akses melihat daftar permohonan izin santri dan status di luar pondok' },
-                { key: 'perpulangan.manage', label: 'Kelola & Validasi Perpulangan', desc: 'Izin pengajuan izin, approval 2-tier (pengurus/pengasuh), dan scan pos gerbang' }
+                { key: 'perpulangan.manage', label: 'Kelola & Validasi Perpulangan', desc: 'Izin pengajuan izin, approval 2-tier (pengurus/pengasuh), dan scan pos gerbang' },
+                { key: 'kedisiplinan.view', label: 'Melihat Mutaba\'ah Kedisiplinan & Pelanggaran', desc: 'Akses melihat catatan tata tertib, akumulasi poin, dan sanksi santri' },
+                { key: 'kedisiplinan.manage', label: 'Kelola Tata Tertib & Pencatatan Pelanggaran', desc: 'Izin input pelanggaran, update status ta\'zir, dan kelola master aturan kustom' }
             ]
         },
         {
@@ -249,7 +251,8 @@
         'profil-lembaga': ['profil.manage'],
         'pengaturan': ['system.config'],
         'keuangan': ['keuangan.view', 'keuangan.spp', 'keuangan.verify'],
-        'perpulangan': ['perpulangan.view', 'perpulangan.manage']
+        'perpulangan': ['perpulangan.view', 'perpulangan.manage'],
+        'kedisiplinan': ['kedisiplinan.view', 'kedisiplinan.manage']
     };
 
     // Default Baseline Permissions per Role (Isolasi Ketat Sesuai Ranah Tanggung Jawab)
@@ -263,14 +266,16 @@
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config',
-            'perpulangan.view', 'perpulangan.manage'
+            'perpulangan.view', 'perpulangan.manage',
+            'kedisiplinan.view', 'kedisiplinan.manage'
         ],
         'ASATIDZ': [
             'santri.view', 'wali.view',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah',
             'presensi.view', 'presensi.entry',
             'pegawai.manage', 'profil.manage',
-            'perpulangan.view'
+            'perpulangan.view',
+            'kedisiplinan.view'
         ],
         'BENDAHARA': [
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'wali.view', 'notifikasi.broadcast'
@@ -279,15 +284,18 @@
             'presensi.view', 'presensi.entry', 'alumni.view', 'unit.manage', 'jadwal.manage', 'ppdb.manage',
             'wali.view',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
-            'perpulangan.view', 'perpulangan.manage'
+            'perpulangan.view', 'perpulangan.manage',
+            'kedisiplinan.view', 'kedisiplinan.manage'
         ],
         'PENGASUH': [
             'santri.view', 'wali.view', 'tahfidz.view', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage',
-            'perpulangan.view', 'perpulangan.manage'
+            'perpulangan.view', 'perpulangan.manage',
+            'kedisiplinan.view'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view',
-            'perpulangan.view', 'perpulangan.manage'
+            'perpulangan.view', 'perpulangan.manage',
+            'kedisiplinan.view'
         ]
     };
 
@@ -490,6 +498,22 @@
                 PENGURUS: 'full',
                 BENDAHARA: 'none',
                 WALI_SANTRI: 'write'
+            }
+        },
+        {
+            key: 'kedisiplinan',
+            category: 'Kesantrian & Pendidikan',
+            module: 'Kedisiplinan & Tarbiyah Santri',
+            icon: 'fa-scale-balanced',
+            desc: 'Pencatatan pelanggaran, akumulasi poin tata tertib, sanksi ta\'zir mendidik, dan master aturan.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'read',
+                PENGURUS: 'full',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'read_own'
             }
         },
 

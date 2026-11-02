@@ -108,3 +108,4 @@ VALUES
     ('RULE-009', 'Pasal 6 Ayat 3', 'Perkelahian Fisik / Intimidasi (Bullying) Terhadap Teman', 'BERAT', 75, 'Mediasi khusus Ndalem Pengasuh, SP 2 & takzir pembinaan akhlak', 'AKTIF', 9),
     ('RULE-010', 'Pasal 6 Ayat 5', 'Meninggalkan Pondok Tanpa Izin Berhari-hari (Kabur/Bolos)', 'BERAT', 100, 'Pemanggilan langsung Wali Santri ke Ndalem Pengasuh & evaluasi status santri', 'AKTIF', 10)
 ON CONFLICT (rule_id) DO NOTHING;
+

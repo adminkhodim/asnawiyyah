@@ -6,7 +6,7 @@ const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-console.log('🧪 Menguji Logika Matriks Izin RBAC (21 Modul x 7 Peran)...');
+console.log('🧪 Menguji Logika Matriks Izin RBAC (22 Modul x 7 Peran)...');
 
 // Mock browser environment for roles.js
 const mockStorage = {
@@ -47,11 +47,11 @@ const context = vm.createContext({
 
 vm.runInContext(rolesCode, context);
 
-// 1. Verifikasi 21 Modul
+// 1. Verifikasi 22 Modul
 const matrix = mockWindow.MODULE_PERMISSIONS_MATRIX;
 assert(Array.isArray(matrix), 'MODULE_PERMISSIONS_MATRIX harus berupa array');
 console.log(`✅ Jumlah modul terdaftar: ${matrix.length}`);
-assert.strictEqual(matrix.length, 21, `Harus ada tepat 21 modul, ditemukan ${matrix.length}`);
+assert.strictEqual(matrix.length, 22, `Harus ada tepat 22 modul, ditemukan ${matrix.length}`);
 
 // Validasi struktur tiap modul
 matrix.forEach((mod, idx) => {
@@ -60,7 +60,7 @@ matrix.forEach((mod, idx) => {
     assert(mod.category, `Modul ${mod.key} harus punya category`);
     assert(mod.permissions, `Modul ${mod.key} harus punya baseline permissions`);
 });
-console.log('✅ Semua 21 modul memiliki struktur dan baseline izin yang valid');
+console.log('✅ Semua 22 modul memiliki struktur dan baseline izin yang valid');
 
 // Validasi Modul Data Wali Santri (Modul Mandiri RBAC)
 const waliMod = matrix.find(m => m.key === 'wali-santri');
@@ -85,6 +85,18 @@ assert.strictEqual(perpulanganMod.permissions.PENGURUS, 'full');
 assert.strictEqual(perpulanganMod.permissions.BENDAHARA, 'none');
 assert.strictEqual(perpulanganMod.permissions.WALI_SANTRI, 'write');
 console.log('✅ Modul Izin & Perpulangan terverifikasi dengan RBAC 2-Tier');
+
+// Validasi Modul Kedisiplinan & Tarbiyah Santri (Modul 22)
+const kedisiplinanMod = matrix.find(m => m.key === 'kedisiplinan');
+assert(kedisiplinanMod, 'Modul kedisiplinan harus terdaftar dalam matriks');
+assert.strictEqual(kedisiplinanMod.permissions.SUPER_ADMIN, 'full');
+assert.strictEqual(kedisiplinanMod.permissions.ADMIN, 'full');
+assert.strictEqual(kedisiplinanMod.permissions.PENGASUH, 'read');
+assert.strictEqual(kedisiplinanMod.permissions.ASATIDZ, 'read');
+assert.strictEqual(kedisiplinanMod.permissions.PENGURUS, 'full');
+assert.strictEqual(kedisiplinanMod.permissions.BENDAHARA, 'none');
+assert.strictEqual(kedisiplinanMod.permissions.WALI_SANTRI, 'read_own');
+console.log('✅ Modul Kedisiplinan & Tarbiyah Santri terverifikasi dengan RBAC 7 Peran');
 
 // 2. Verifikasi 7 Peran
 const roles = Object.keys(mockWindow.ROLE_DEFINITIONS);
@@ -157,13 +169,15 @@ const adminGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card
 const adminGridHtml = indexHtmlContent.substring(adminGridStart, adminGridEnd);
 assert(adminGridHtml.includes('data-admin-module="alumni"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="alumni"');
 assert(adminGridHtml.includes('data-admin-module="wali-santri"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
+assert(adminGridHtml.includes('data-admin-module="kedisiplinan"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="kedisiplinan"');
 
 const pengasuhGridStart = indexHtmlContent.indexOf('id="pengasuh-control-center-grid"');
 const pengasuhGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card', pengasuhGridStart);
 const pengasuhGridHtml = indexHtmlContent.substring(pengasuhGridStart, pengasuhGridEnd);
 assert(pengasuhGridHtml.includes('data-admin-module="alumni"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="alumni"');
 assert(pengasuhGridHtml.includes('data-admin-module="wali-santri"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
-console.log('✅ Verifikasi tombol modul Alumni & Wali Santri di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
+assert(pengasuhGridHtml.includes('data-admin-module="kedisiplinan"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="kedisiplinan"');
+console.log('✅ Verifikasi tombol modul Alumni, Wali Santri & Kedisiplinan di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
 
 // Uji coba toggle dinamis realtime lewat matriks (PPDB & Wali Santri)
 mockWindow.handleMatrixCellChange('ppdb', 'PENGASUH', 'read');

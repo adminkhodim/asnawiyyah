@@ -1879,6 +1879,35 @@
                         </div>
                     </div>
 
+                    <!-- KARTU PRIORITAS PERHATIAN KEDISIPLINAN SANTRI (KHUSUS PENGASUH: SANTRI POIN >= 50) -->
+                    <div id="pengasuh-priority-kedisiplinan-card" class="hidden p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-rose-50 via-rose-100/70 to-amber-50 dark:from-rose-950/40 dark:via-rose-900/30 dark:to-[#1c2836] border border-rose-300 dark:border-rose-800/80 text-rose-950 dark:text-rose-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition animate-fade-in-up">
+                        <div class="flex items-start sm:items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-bold text-xs sm:text-sm text-rose-950 dark:text-rose-100 flex items-center gap-1.5">
+                                        <span>⚖️</span>
+                                        <span>Perhatian Khusus Tarbiyah & Adab Santri</span>
+                                    </h4>
+                                    <span id="pengasuh-priority-kedisiplinan-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-100">
+                                        0 Perlu Perhatian
+                                    </span>
+                                </div>
+                                <p id="pengasuh-priority-kedisiplinan-text" class="text-xs text-rose-800/90 dark:text-rose-300/90 mt-0.5">
+                                    Terdapat santri dengan akumulasi poin pelanggaran mencapai ambang pembinaan khusus atau pemanggilan wali santri.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 justify-end">
+                            <button type="button" onclick="openAdminModuleFromControlCenter('kedisiplinan')" class="w-full sm:w-auto px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer">
+                                <i class="fa-solid fa-eye text-xs"></i>
+                                <span>Pantau Kedisiplinan</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- PUSAT KONTROL PENGASUH (GRID DINAMIS 4 KOLOM HORIZONTAL SERAGAM DENGAN PUSAT KONTROL ADMIN) -->
                     <div class="bg-white dark:bg-[#15202d] p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3 transition-colors">
                         <div class="flex items-center justify-between">
@@ -1937,6 +1966,16 @@
                                     <span id="pengasuh-perpulangan-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
                                 </div>
                                 <span class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Perpulangan</span>
+                            </button>
+
+                            <!-- 4.1b Kedisiplinan & Tarbiyah Santri -->
+                            <button type="button" data-admin-module="kedisiplinan" onclick="openAdminModuleFromControlCenter('kedisiplinan')"
+                                class="flex flex-col items-center group transition active:scale-95 text-center relative">
+                                <div class="relative w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                    <span id="pengasuh-kedisiplinan-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
+                                </div>
+                                <span class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Kedisiplinan</span>
                             </button>
 
                             <!-- 4.2 Data Wali Santri -->
@@ -2314,6 +2353,18 @@
                                 </div>
                                 <span
                                     class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Perpulangan</span>
+                            </button>
+
+                            <!-- 4.1b Kedisiplinan & Tarbiyah Santri -->
+                            <button type="button" data-admin-module="kedisiplinan" onclick="openAdminModuleFromControlCenter('kedisiplinan')"
+                                class="flex flex-col items-center group transition active:scale-95 text-center relative">
+                                <div
+                                    class="relative w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white flex items-center justify-center text-xl shadow-sm transition-all duration-300">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                    <span id="admin-kedisiplinan-badge" class="hidden absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-600 text-white text-[9.5px] font-black rounded-full ring-2 ring-white dark:ring-[#15202d] flex items-center justify-center animate-pulse">0</span>
+                                </div>
+                                <span
+                                    class="text-[11px] mt-1.5 font-semibold text-slate-600 dark:text-slate-300 truncate w-full text-center">Kedisiplinan</span>
                             </button>
 
                             <!-- 4.2 Data Wali Santri -->
@@ -6706,6 +6757,12 @@
                             </button>
                         </li>
                         <li>
+                            <button onclick="showAdminView('kedisiplinan')" data-view="kedisiplinan" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Kedisiplinan & Tarbiyah Santri">
+                                <i class="fa-solid fa-scale-balanced w-5 text-center text-sm"></i>
+                                <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Kedisiplinan & Tarbiyah</span>
+                            </button>
+                        </li>
+                        <li>
                             <button onclick="showAdminView('ppdb')" data-view="ppdb" class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative" title="Data Pendaftar PPDB">
                                 <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
                                 <span class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data Pendaftar PPDB</span>
@@ -9302,6 +9359,113 @@
                         </div>
                         <p class="text-xs font-bold text-slate-600 dark:text-slate-300">Tidak ada permohonan perizinan santri.</p>
                         <p class="text-[11px] text-slate-400">Silakan sesuaikan filter atau ajukan izin perpulangan baru.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW: MODUL 22 - KEDISIPLINAN & TARBIYAH SANTRI ================= -->
+            <div id="admin-view-kedisiplinan" class="hidden space-y-4">
+                <!-- Header Sub-View -->
+                <div class="bg-white dark:bg-[#15202d] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in-up stagger-1">
+                    <div class="flex items-center space-x-2.5">
+                        <button type="button" onclick="backFromAdminModule()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0" title="Kembali">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-widest block">Kesantrian & Tarbiyah</span>
+                            <h2 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100">Kedisiplinan & Tarbiyah Santri</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <button type="button" onclick="window.ASNKedisiplinan.openCatatModal()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Catat Pelanggaran</span>
+                        </button>
+                        <button type="button" onclick="window.ASNKedisiplinan.openEditRuleModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Tambah Aturan Baru">
+                            <i class="fa-solid fa-gavel text-xs"></i>
+                            <span>+ Aturan</span>
+                        </button>
+                        <button type="button" onclick="window.ASNKedisiplinan.loadLogs(true); window.ASNKedisiplinan.loadMasterRules(true);" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95" title="Muat Ulang Data">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                            <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUMMARY KPI METRIC CARDS -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                    <div class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Kasus Bulan Ini</div>
+                        <div id="kpi-kedisiplinan-total-bulan" class="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">0</div>
+                    </div>
+                    <div class="bg-amber-50/70 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 shadow-xs">
+                        <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">Sedang Ta'zir (Aktif)</div>
+                        <div id="kpi-kedisiplinan-tazir-aktif" class="text-xl font-black text-amber-700 dark:text-amber-400 mt-1">0</div>
+                    </div>
+                    <div class="bg-rose-50/70 dark:bg-rose-950/30 p-3 rounded-2xl border border-rose-200/60 dark:border-rose-800/40 shadow-xs">
+                        <div class="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-tight">Perhatian Khusus (&gt;=50 Poin)</div>
+                        <div id="kpi-kedisiplinan-santri-kritis" class="text-xl font-black text-rose-700 dark:text-rose-400 mt-1">0</div>
+                    </div>
+                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-3 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs">
+                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight">Aturan Tata Tertib Aktif</div>
+                        <div id="kpi-kedisiplinan-total-aturan" class="text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1">0</div>
+                    </div>
+                </div>
+
+                <!-- SUB-NAV TABS: RIWAYAT PELANGGARAN & MASTER TATA TERTIB -->
+                <div class="flex items-center border-b border-slate-200 dark:border-slate-800 gap-4 text-xs font-bold">
+                    <button id="tab-btn-kedisiplinan-logs" type="button" onclick="window.switchKedisiplinanTab('logs')" class="pb-2.5 border-b-2 border-amber-500 text-amber-600 dark:text-amber-400 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Riwayat Pelanggaran & Ta'zir</span>
+                    </button>
+                    <button id="tab-btn-kedisiplinan-master" type="button" onclick="window.switchKedisiplinanTab('master')" class="pb-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <span>Master Tata Tertib & Sanksi</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: RIWAYAT PELANGGARAN & LOGS -->
+                <div id="kedisiplinan-tab-logs-section" class="space-y-3">
+                    <!-- FILTER CONTROLS -->
+                    <div class="p-3 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs flex flex-wrap items-center gap-2">
+                        <div class="flex-1 min-w-[180px]">
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="filter-kedisiplinan-search" placeholder="Cari santri, NIS, pelanggaran..." class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+                        <select id="filter-kedisiplinan-kategori" class="bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                            <option value="SEMUA">Semua Kategori</option>
+                            <option value="RINGAN">Ringan (5-10 Poin)</option>
+                            <option value="SEDANG">Sedang (15-25 Poin)</option>
+                            <option value="BERAT">Berat (50-100 Poin)</option>
+                        </select>
+                        <select id="filter-kedisiplinan-status" class="bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                            <option value="SEMUA">Semua Status Ta'zir</option>
+                            <option value="SEDANG_TAZIR">Sedang Ta'zir</option>
+                            <option value="TUNTAS">Tuntas Selesai</option>
+                        </select>
+                    </div>
+
+                    <!-- CONTAINER LIST LOGS -->
+                    <div id="kedisiplinan-logs-container" class="space-y-3">
+                        <!-- Diisi secara dinamis oleh js/kedisiplinan.js -->
+                    </div>
+                </div>
+
+                <!-- TAB 2: MASTER TATA TERTIB -->
+                <div id="kedisiplinan-tab-master-section" class="hidden space-y-3">
+                    <div class="p-3 bg-white dark:bg-[#15202d] rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs flex items-center justify-between text-xs">
+                        <div class="text-slate-500 dark:text-slate-400">
+                            Daftar tata tertib & pasal resmi pondok. Aturan ini dapat disesuaikan sewaktu-waktu oleh Admin.
+                        </div>
+                        <button type="button" onclick="window.ASNKedisiplinan.openEditRuleModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Tambah Aturan Baru</span>
+                        </button>
+                    </div>
+                    <div id="kedisiplinan-master-container" class="space-y-2">
+                        <!-- Diisi secara dinamis oleh js/kedisiplinan.js -->
                     </div>
                 </div>
             </div>
@@ -13473,6 +13637,220 @@
                 </button>
             </div>
             <div id="perpulangan-detail-content" class="p-5 overflow-y-auto custom-scrollbar"></div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL-MODAL MODUL 22: KEDISIPLINAN & TARBIYAH SANTRI                      -->
+    <!-- ========================================================================= -->
+
+    <!-- 1. MODAL CATAT PELANGGARAN KEDISIPLINAN -->
+    <div id="modal-catat-kedisiplinan" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Catat Pelanggaran Santri</h3>
+                        <p class="text-[10px] text-slate-400">Pembinaan Karakter &amp; Notifikasi Otomatis ke Wali Santri</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('modal-catat-kedisiplinan').classList.add('hidden')" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form onsubmit="event.preventDefault(); window.ASNKedisiplinan.submitCatat(event);" class="flex flex-col flex-1 overflow-hidden">
+                <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+                    <input type="hidden" id="catat-kedisiplinan-student-id">
+
+                    <!-- Data Santri -->
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Nama Santri <span class="text-rose-500">*</span></label>
+                        <input type="text" id="catat-kedisiplinan-student-name" list="kedisiplinan-santri-datalist" placeholder="Ketik nama santri atau pilih..." required
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <datalist id="kedisiplinan-santri-datalist"></datalist>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-200">NIS (Nomor Induk)</label>
+                            <input type="text" id="catat-kedisiplinan-nis" placeholder="Contoh: 2024001"
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-200">Waktu Kejadian</label>
+                            <input type="text" id="catat-kedisiplinan-waktu" placeholder="Contoh: 14:30 WIB"
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-200">Tanggal Kejadian <span class="text-rose-500">*</span></label>
+                            <input type="date" id="catat-kedisiplinan-tanggal" required
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-200">Lokasi Kejadian</label>
+                            <input type="text" id="catat-kedisiplinan-lokasi" placeholder="Asrama, Kelas, dll"
+                                class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <!-- Aturan Master Dropdown -->
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Jenis Pelanggaran (Tata Tertib) <span class="text-rose-500">*</span></label>
+                        <select id="catat-kedisiplinan-rule-select" onchange="window.ASNKedisiplinan.handleRuleSelectChange(this.value)" required
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <!-- Diisi dinamis -->
+                        </select>
+                    </div>
+
+                    <!-- Custom Box Pelanggaran -->
+                    <div id="catat-kedisiplinan-custom-box" class="space-y-3 p-3 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 hidden">
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-700 dark:text-slate-200">Nama Pelanggaran Khusus</label>
+                            <input type="text" id="catat-kedisiplinan-nama-pelanggaran" placeholder="Sebutkan jenis pelanggaran..."
+                                class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1.5">
+                                <label class="font-bold text-slate-700 dark:text-slate-200">Tingkat / Kategori</label>
+                                <select id="catat-kedisiplinan-kategori" class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                                    <option value="RINGAN">Ringan (5-10 Poin)</option>
+                                    <option value="SEDANG">Sedang (15-25 Poin)</option>
+                                    <option value="BERAT">Berat (50-100 Poin)</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="font-bold text-slate-700 dark:text-slate-200">Bobot Poin</label>
+                                <input type="number" id="catat-kedisiplinan-poin" value="5" min="1" max="100"
+                                    class="w-full bg-white dark:bg-[#15202d] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tindakan Tarbiyah & Status -->
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Tindakan Tarbiyah (Ta'zir Mendidik) <span class="text-rose-500">*</span></label>
+                        <input type="text" id="catat-kedisiplinan-tazir" placeholder="Contoh: Menghafal Juz Amma 5 Surat / Membersihkan Musholla" required
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Status Pembinaan (Ta'zir)</label>
+                        <select id="catat-kedisiplinan-status-tazir" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                            <option value="SEDANG_TAZIR">Sedang Menjalani Ta'zir</option>
+                            <option value="DIPROSES">Diproses Pembina</option>
+                            <option value="TUNTAS">Tuntas Selesai</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Kronologi / Catatan Khusus</label>
+                        <textarea id="catat-kedisiplinan-kronologi" rows="2" placeholder="Keterangan kejadian atau catatan pembina..."
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#1c2836] border-t border-slate-100 dark:border-[#253447] flex items-center justify-between shrink-0">
+                    <button type="button" onclick="document.getElementById('modal-catat-kedisiplinan').classList.add('hidden')"
+                        class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btn-submit-catat-kedisiplinan"
+                        class="px-5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Simpan &amp; Kirim Notifikasi</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. MODAL TAMBAH / SUNTING ATURAN TATA TERTIB -->
+    <div id="modal-edit-master-rule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 hidden">
+        <div class="bg-white dark:bg-[#15202d] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#253447] flex flex-col max-h-[92vh] transform transition-all">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-slate-50 dark:bg-[#1c2836] border-b border-slate-100 dark:border-[#253447] flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-gavel"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-edit-rule-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">Aturan Tata Tertib</h3>
+                        <p class="text-[10px] text-slate-400">Master Data Peraturan Santri PPTQ Asnawiyyah</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('modal-edit-master-rule').classList.add('hidden')" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253447] rounded-xl flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form onsubmit="event.preventDefault(); window.ASNKedisiplinan.submitSaveRule(event);" class="p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar">
+                <input type="hidden" id="edit-rule-id">
+
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Kode Pasal / Bab</label>
+                    <input type="text" id="edit-rule-pasal" placeholder="Contoh: Pasal 3 Ayat 1"
+                        class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Nama / Bentuk Pelanggaran <span class="text-rose-500">*</span></label>
+                    <input type="text" id="edit-rule-nama" placeholder="Contoh: Terlambat Mengikuti Jama'ah Sholat" required
+                        class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Tingkat Pelanggaran</label>
+                        <select id="edit-rule-kategori" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                            <option value="RINGAN">Ringan (5-10 Poin)</option>
+                            <option value="SEDANG">Sedang (15-25 Poin)</option>
+                            <option value="BERAT">Berat (50-100 Poin)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-200">Poin Default</label>
+                        <input type="number" id="edit-rule-poin" value="5" min="1" max="100" required
+                            class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Rekomendasi Tindakan Tarbiyah (Ta'zir)</label>
+                    <textarea id="edit-rule-tazir" rows="2" placeholder="Contoh: Membaca Al-Qur'an 1 juz / Pembinaan akhlak"
+                        class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-200">Status Aturan</label>
+                    <select id="edit-rule-status" class="w-full bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#253447] rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                        <option value="AKTIF">AKTIF (Dapat Dipilih)</option>
+                        <option value="NONAKTIF">NONAKTIF (Diarsipkan)</option>
+                    </select>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="pt-3 border-t border-slate-100 dark:border-[#253447] flex items-center justify-between">
+                    <button type="button" onclick="document.getElementById('modal-edit-master-rule').classList.add('hidden')"
+                        class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition">
+                        Simpan Aturan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -18604,7 +18982,7 @@
     <script src="data-qasidah-burdah.js"></script>
     <script src="data-tahlil-yasin.js"></script>
     <script src="data-manaqib.js"></script>
-    <script src="js/api.js?v=71"></script>
+    <script src="js/api.js?v=72"></script>
     <script src="js/db-adapter.js?v=60"></script>
     <script src="js/data-programs.js"></script>
 
@@ -18615,10 +18993,10 @@
     <script src="js/manaqib.js?v=1"></script>
     <script src="js/jadwal-sholat.js"></script>
     <script src="js/kiblat.js?v=86"></script>
-    <script src="js/roles.js?v=66"></script>
-    <script src="js/admin.js?v=87"></script>
+    <script src="js/roles.js?v=67"></script>
+    <script src="js/admin.js?v=88"></script>
     <script src="js/alumni.js?v=66"></script>
-    <script src="js/auth.js?v=86"></script>
+    <script src="js/auth.js?v=87"></script>
     <script src="js/pegawai.js"></script>
     <script src="js/tahfidz.js?v=71"></script>
     <!-- SheetJS Library untuk Ekspor File .xlsx Asli -->
@@ -18626,13 +19004,14 @@
     <script src="js/keaktifan-asatidz.js?v=72"></script>
     <script src="js/izin-asatidz.js?v=1"></script>
     <script src="js/perpulangan.js?v=66"></script>
+    <script src="js/kedisiplinan.js?v=1"></script>
 
     <!-- PWA Helper & Panduan Controller -->
     <script src="js/pwa.js"></script>
     <script src="js/panduan.js?v=2"></script>
 
     <!-- Main Controller & Navigation -->
-    <script src="js/main.js?v=87"></script>
+    <script src="js/main.js?v=88"></script>
 </body>
 
 </html>

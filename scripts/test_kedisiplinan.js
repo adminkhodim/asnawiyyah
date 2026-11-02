@@ -54,4 +54,36 @@ assert.strictEqual(calculateStatusAdab(60, 0), "PERLU_PERHATIAN");
 assert.strictEqual(calculateStatusAdab(75, 2), "PERLU_PERHATIAN");
 console.log('   ✅ Logika ambang batas poin & status adab santri valid');
 
+// 5. Verifikasi js/kedisiplinan.js Frontend Controller
+const jsPath = path.join(rootDir, 'js', 'kedisiplinan.js');
+assert(fs.existsSync(jsPath), 'File js/kedisiplinan.js harus ada');
+const jsContent = fs.readFileSync(jsPath, 'utf8');
+assert(jsContent.includes('window.ASNKedisiplinan = ASNKedisiplinan'), 'Harus expose window.ASNKedisiplinan');
+assert(jsContent.includes('loadMasterRules'), 'Harus ada loadMasterRules');
+assert(jsContent.includes('loadLogs'), 'Harus ada loadLogs');
+assert(jsContent.includes('submitCatat'), 'Harus ada submitCatat');
+assert(jsContent.includes('tandaiTuntas'), 'Harus ada tandaiTuntas');
+assert(jsContent.includes('openStudentDisciplineModal'), 'Harus ada openStudentDisciplineModal');
+console.log('   ✅ Frontend Controller js/kedisiplinan.js lengkap & valid');
+
+// 6. Verifikasi js/api.js Integration
+const apiPath = path.join(rootDir, 'js', 'api.js');
+const apiContent = fs.readFileSync(apiPath, 'utf8');
+assert(apiContent.includes('action === "getKedisiplinanMasterList"'), 'api.js harus ada handler getKedisiplinanMasterList');
+assert(apiContent.includes('action === "getKedisiplinanLogs"'), 'api.js harus ada handler getKedisiplinanLogs');
+assert(apiContent.includes('action === "getKedisiplinanStudentSummary"'), 'api.js harus ada handler getKedisiplinanStudentSummary');
+assert(apiContent.includes('isKedisiplinanWrite'), 'api.js harus ada flag isKedisiplinanWrite');
+console.log('   ✅ Integrasi fast-read & write di js/api.js valid');
+
+// 7. Verifikasi index.html UI Integration
+const indexPath = path.join(rootDir, 'index.html');
+const indexContent = fs.readFileSync(indexPath, 'utf8');
+assert(indexContent.includes('id="admin-view-kedisiplinan"'), 'index.html harus memuat section admin-view-kedisiplinan');
+assert(indexContent.includes('id="modal-catat-kedisiplinan"'), 'index.html harus memuat modal-catat-kedisiplinan');
+assert(indexContent.includes('id="modal-edit-master-rule"'), 'index.html harus memuat modal-edit-master-rule');
+assert(indexContent.includes('id="pengasuh-priority-kedisiplinan-card"'), 'index.html harus memuat pengasuh-priority-kedisiplinan-card');
+assert(indexContent.includes('src="js/kedisiplinan.js'), 'index.html harus memuat tag script js/kedisiplinan.js');
+console.log('   ✅ Integrasi DOM & Modals di index.html valid');
+
 console.log('🎉 Modul 22: Kedisiplinan & Tarbiyah Santri TEST PASSED!\n');
+
