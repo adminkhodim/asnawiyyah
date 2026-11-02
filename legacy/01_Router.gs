@@ -905,6 +905,44 @@ function doPost(e) {
     }
 
     // ========================================================
+    // MODUL 22: KEDISIPLINAN & TARBIYAH SANTRI API ROUTER (POST)
+    // ========================================================
+    if (action === "getKedisiplinanMasterList" || action === "kedisiplinan.getMasterList") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getKedisiplinanMasterList(token));
+    }
+    if (action === "saveKedisiplinanRule" || action === "kedisiplinan.saveRule") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveKedisiplinanRule(payload.data || payload, token));
+    }
+    if (action === "deleteKedisiplinanRule" || action === "kedisiplinan.deleteRule") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const ruleId = payload.ruleId || payload.rule_id || (payload.data && (payload.data.ruleId || payload.data.rule_id));
+      return createJsonResponse(deleteKedisiplinanRule(ruleId, token));
+    }
+    if (action === "getKedisiplinanLogs" || action === "kedisiplinan.getLogs") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getKedisiplinanLogs(payload.data || payload, token));
+    }
+    if (action === "saveKedisiplinanLog" || action === "kedisiplinan.saveLog") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(saveKedisiplinanLog(payload.data || payload, token));
+    }
+    if (action === "updateStatusTazir" || action === "kedisiplinan.updateStatusTazir") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(updateStatusTazir(payload.data || payload, token));
+    }
+    if (action === "getKedisiplinanStudentSummary" || action === "kedisiplinan.studentSummary") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      const studentId = payload.studentId || payload.student_id || payload.nis || (payload.data && (payload.data.studentId || payload.data.student_id || payload.data.nis));
+      return createJsonResponse(getKedisiplinanStudentSummary(studentId, token));
+    }
+    if (action === "getKedisiplinanDashboardSummary" || action === "kedisiplinan.dashboardSummary") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(getKedisiplinanDashboardSummary(token));
+    }
+
+    // ========================================================
     // PROGRAM DATA SOURCE v2.0 API ROUTER (POST)
     // ========================================================
     if (action.startsWith("program.") || action === "admin.login") {
@@ -1141,6 +1179,20 @@ function doGet(e) {
         success: true,
         data: getActiveBadalDelegations(e.parameter.tanggal, e.parameter.sesi)
       });
+    }
+
+    // ========================================================
+    // MODUL 22: KEDISIPLINAN & TARBIYAH SANTRI API ROUTER (GET)
+    // ========================================================
+    if (action === "getKedisiplinanMasterList" || action === "kedisiplinan.getMasterList") {
+      return createJsonResponse(getKedisiplinanMasterList(e.parameter.token));
+    }
+    if (action === "getKedisiplinanStudentSummary" || action === "kedisiplinan.studentSummary") {
+      const studentId = e.parameter.studentId || e.parameter.student_id || e.parameter.nis;
+      return createJsonResponse(getKedisiplinanStudentSummary(studentId, e.parameter.token));
+    }
+    if (action === "getKedisiplinanDashboardSummary" || action === "kedisiplinan.dashboardSummary") {
+      return createJsonResponse(getKedisiplinanDashboardSummary(e.parameter.token));
     }
 
     // ========================================================
