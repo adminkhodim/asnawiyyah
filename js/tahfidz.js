@@ -2857,7 +2857,13 @@ async function submitTahfidzCatat(e) {
             ? (catatan ? `[Ujian Tasmi' ${ASNTahfidz.catatState.totalJuz || 1} Juz Sekali Duduk] ${catatan}` : `[Ujian Tasmi' ${ASNTahfidz.catatState.totalJuz || 1} Juz Sekali Duduk]`)
             : catatan;
 
+        const padZero = (n) => String(n).padStart(2, '0');
+        const nowObj = new Date();
+        const autoLogId = `TFZ-${nowObj.getFullYear()}${padZero(nowObj.getMonth() + 1)}${padZero(nowObj.getDate())}-${padZero(nowObj.getHours())}${padZero(nowObj.getMinutes())}${padZero(nowObj.getSeconds())}-${Math.floor(1000 + Math.random() * 9000)}`;
+
         const payload = {
+            logId: autoLogId,
+            log_id: autoLogId,
             token,
             studentId,
             student_id: studentId,

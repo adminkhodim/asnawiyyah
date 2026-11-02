@@ -1884,6 +1884,7 @@
             const isAlumniWrite = action === 'alumni.create' || action === 'saveAlumniData' || action === 'alumni.delete';
             const isPPDBWrite = action === 'submitPendaftaran' || action === 'updateStatusPPDB' || action === 'savePPDB' || action === 'savePPDBStatus';
             const isSesiWrite = action === 'saveTahfidzSesi' || action === 'deleteTahfidzSesi';
+            const isNewTahfidzLog = (action === 'saveTahfidzLog' || action === 'tahfidz.saveLog' || action === 'auth.tahfidz.saveLog') && !payload.logId && !payload.log_id;
             const isTahfidzWrite = [
                 'saveTahfidzLog', 'tahfidz.saveLog', 'auth.tahfidz.saveLog',
                 'deleteTahfidzLog', 'tahfidz.deleteLog',
@@ -1902,10 +1903,10 @@
             const isNotifikasiWrite = action === 'saveNotifikasi' || action === 'admin.saveNotifikasi' || action === 'deleteNotifikasi' || action === 'admin.deleteNotifikasi';
             const isSettingsWrite = action === 'savePengaturan';
 
-            // Catatan: Untuk pembuatan berita baru (saveBerita), tunggu respons resmi Google Apps Script
-            // agar news_id dan slug di Supabase dijamin 100% identik dengan baris di Google Sheets.
+            // Catatan: Untuk pembuatan berita baru (saveBerita) atau setoran tahfidz tanpa logId,
+            // tunggu respons resmi Google Apps Script agar ID di Supabase dijamin 100% identik dengan baris di Google Sheets.
             let supabaseWritePromise = null;
-            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || isTahfidzWrite || isPerpulanganWrite || isNotifikasiWrite || isSettingsWrite) {
+            if (isJadwalWrite || isNewsUpdateOrDelete || isNewsViewWrite || isAlumniWrite || isPPDBWrite || isSesiWrite || (isTahfidzWrite && !isNewTahfidzLog) || isPerpulanganWrite || isNotifikasiWrite || isSettingsWrite) {
                 supabaseWritePromise = syncToSupabaseOnWrite(action, payload).catch(e => console.warn("[SUPABASE DUAL-WRITE WARN]", e));
             }
 
@@ -2205,7 +2206,10 @@
 
                 // ==================== 4. TAHFIDZ (LOG SETORAN & HALAQAH) ====================
                 else if (action === 'saveTahfidzLog') {
-                    const logId = (response && (response.logId || response.log_id)) || payload.logId || payload.log_id || ('TFZ-' + Date.now() + '-' + Math.floor(1000 + Math.random() * 9000));
+                    const padZ = (n) => String(n).padStart(2, '0');
+                    const dNow = new Date();
+                    const fallbackLogId = `TFZ-${dNow.getFullYear()}${padZ(dNow.getMonth() + 1)}${padZ(dNow.getDate())}-${padZ(dNow.getHours())}${padZ(dNow.getMinutes())}${padZ(dNow.getSeconds())}-${Math.floor(1000 + Math.random() * 9000)}`;
+                    const logId = (response && (response.logId || response.log_id)) || payload.logId || payload.log_id || fallbackLogId;
                     const studentId = String(payload.studentId || payload.student_id || '').trim();
                     const studentName = String(payload.studentName || payload.student_name || payload.nama_santri || payload.name || 'Santri').trim();
                     const tipeVal = String(payload.tipe || 'ZIYADAH').trim().toUpperCase();
