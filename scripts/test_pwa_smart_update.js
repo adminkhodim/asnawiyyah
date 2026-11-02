@@ -41,3 +41,4 @@ assert(indexContent.includes('bindServiceWorker'), 'index.html harus menghubungk
 console.log('   ✅ index.html memuat UI Floating Update Banner & SW binding');
 
 console.log('🎉 PWA Smart In-App Update System TEST PASSED!\n');
+
