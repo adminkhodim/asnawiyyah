@@ -30,7 +30,8 @@ assert(pwaContent.includes('isUserActivelyInputting'), 'js/pwa.js harus memiliki
 assert(pwaContent.includes('applyAppUpdateNow'), 'js/pwa.js harus mengekspos applyAppUpdateNow');
 assert(pwaContent.includes('dismissUpdateBannerTemporarily'), 'js/pwa.js harus mengekspos dismissUpdateBannerTemporarily');
 assert(pwaContent.includes('checkVersionJson'), 'js/pwa.js harus mendukung version polling');
-console.log('   ✅ js/pwa.js mengimplementasikan SmartUpdateManager & Interruption Guard');
+assert(pwaContent.includes('window.navigator.standalone') || pwaContent.includes('isRunningStandalone'), 'js/pwa.js harus mendukung reload khusus standalone iOS');
+console.log('   ✅ js/pwa.js mengimplementasikan SmartUpdateManager & Interruption Guard & iOS standalone reload');
 
 // 4. Verifikasi index.html
 const indexPath = path.join(rootDir, 'index.html');
@@ -38,7 +39,10 @@ const indexContent = fs.readFileSync(indexPath, 'utf8');
 assert(indexContent.includes('id="pwa-update-banner"'), 'index.html harus memuat elemen #pwa-update-banner');
 assert(indexContent.includes('applyAppUpdateNow()'), 'index.html harus memiliki tombol applyAppUpdateNow()');
 assert(indexContent.includes('bindServiceWorker'), 'index.html harus menghubungkan SW registration ke SmartUpdateManager');
-console.log('   ✅ index.html memuat UI Floating Update Banner & SW binding');
+assert(indexContent.includes('safe-area-inset-bottom'), 'index.html harus mendukung iOS Safe Area Inset');
+assert(indexContent.includes('min-h-[44px]'), 'index.html harus memenuhi standar ukuran touch target iOS/Android');
+assert(indexContent.includes('touch-manipulation'), 'index.html harus mengoptimalkan touch event tanpa delay 300ms');
+console.log('   ✅ index.html memuat UI Floating Update Banner dengan Safe Area & Touch Target iOS/Android');
 
 console.log('🎉 PWA Smart In-App Update System TEST PASSED!\n');
 

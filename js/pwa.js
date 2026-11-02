@@ -365,9 +365,15 @@
                 }
             }
 
-            // 3. Muat ulang halaman secara halus
+            // 3. Muat ulang halaman secara halus (kompatibel iOS Safari Standalone & Android Chrome)
             setTimeout(() => {
-                window.location.reload();
+                if (window.navigator.standalone || isRunningStandalone()) {
+                    // Di iOS Standalone PWA, location.href dengan query timestamp mencegah WebKit memuat ulang dari bfcache
+                    const baseOrigin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+                    window.location.href = baseOrigin + window.location.pathname + '?_t=' + Date.now() + window.location.hash;
+                } else {
+                    window.location.reload();
+                }
             }, 300);
         },
 

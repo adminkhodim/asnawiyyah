@@ -17439,7 +17439,7 @@
 
     <!-- ==================== SMART FLOATING UPDATE BANNER ==================== -->
     <div id="pwa-update-banner"
-        class="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[9995] bg-white/95 dark:bg-[#15202d]/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-emerald-500/30 dark:border-emerald-500/40 flex flex-col gap-2.5 transform translate-y-full opacity-0 transition-all duration-300 hidden">
+        class="fixed bottom-[max(5.25rem,calc(4.75rem+env(safe-area-inset-bottom,0px)))] md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[9995] bg-white/95 dark:bg-[#15202d]/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-emerald-500/30 dark:border-emerald-500/40 flex flex-col gap-2.5 transform translate-y-full opacity-0 transition-all duration-300 hidden">
         <div class="flex items-start justify-between gap-3">
             <div class="flex items-start space-x-3 min-w-0">
                 <div class="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0 mt-0.5 shadow-xs">
@@ -17458,19 +17458,19 @@
                 </div>
             </div>
             <button onclick="dismissUpdateBannerTemporarily()"
-                class="w-7 h-7 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg flex items-center justify-center transition shrink-0"
+                class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg flex items-center justify-center transition shrink-0 cursor-pointer touch-manipulation"
                 title="Tutup Sementara">
-                <i class="fa-solid fa-xmark text-xs"></i>
+                <i class="fa-solid fa-xmark text-sm"></i>
             </button>
         </div>
         <div class="flex items-center space-x-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
             <button onclick="applyAppUpdateNow()" id="btn-apply-pwa-update"
-                class="flex-1 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1.5">
+                class="touch-manipulation min-h-[44px] flex-1 px-3.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center space-x-2 cursor-pointer">
                 <i class="fa-solid fa-bolt text-xs"></i>
                 <span id="btn-apply-pwa-update-text">Perbarui Sekarang</span>
             </button>
             <button onclick="dismissUpdateBannerTemporarily()"
-                class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl transition">
+                class="touch-manipulation min-h-[44px] px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-600 dark:text-slate-300 font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer">
                 Nanti
             </button>
         </div>
