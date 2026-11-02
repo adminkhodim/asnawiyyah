@@ -1611,12 +1611,19 @@ function saveTahfidzLog(payload, token) {
     const juz = Number(payload.juz || 1);
     const surah = String(payload.surah || `Juz ${juz}`).trim();
     const satuan = String(payload.satuan || (payload.ayatMulai || payload.ayat_mulai ? "AYAT" : "HALAMAN")).trim().toUpperCase();
-    const ayatMulai = payload.ayatMulai !== undefined && payload.ayatMulai !== null && payload.ayatMulai !== "" 
-      ? Number(payload.ayatMulai) 
-      : (payload.ayat_mulai !== undefined && payload.ayat_mulai !== null && payload.ayat_mulai !== "" ? Number(payload.ayat_mulai) : null);
-    const ayatSampai = payload.ayatSampai !== undefined && payload.ayatSampai !== null && payload.ayatSampai !== "" 
-      ? Number(payload.ayatSampai) 
-      : (payload.ayat_sampai !== undefined && payload.ayat_sampai !== null && payload.ayat_sampai !== "" ? Number(payload.ayat_sampai) : null);
+    let ayatMulai = null;
+    if (payload.ayatMulai !== undefined && payload.ayatMulai !== null && payload.ayatMulai !== "") {
+      ayatMulai = Number(payload.ayatMulai);
+    } else if (payload.ayat_mulai !== undefined && payload.ayat_mulai !== null && payload.ayat_mulai !== "") {
+      ayatMulai = Number(payload.ayat_mulai);
+    }
+
+    let ayatSampai = null;
+    if (payload.ayatSampai !== undefined && payload.ayatSampai !== null && payload.ayatSampai !== "") {
+      ayatSampai = Number(payload.ayatSampai);
+    } else if (payload.ayat_sampai !== undefined && payload.ayat_sampai !== null && payload.ayat_sampai !== "") {
+      ayatSampai = Number(payload.ayat_sampai);
+    }
     const halamanList = String(payload.halamanList || payload.halaman_list || payload.halaman || "1").trim();
     const totalHalaman = Number(payload.totalHalaman || payload.total_halaman || 1);
     const nilai = String(payload.nilai || "MUMTAZ").trim().toUpperCase();

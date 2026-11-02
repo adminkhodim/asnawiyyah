@@ -47,3 +47,4 @@ ON CONFLICT (log_id) DO UPDATE SET
 
 -- 3. Cek hasil: total baris setelah pembersihan
 -- SELECT count(*) FROM public.tahfidz_logs;
+
