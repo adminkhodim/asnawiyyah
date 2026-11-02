@@ -36,6 +36,7 @@ const ALL_CANDIDATE_SUITES = [
   { name: 'Server-Side Supabase Replicator Suite', file: 'scripts/test_backend_replication.js', required: true },
   { name: 'Modular Frontend Admin Architecture Suite', file: 'scripts/test_modular_admin.js', required: true },
   { name: 'Batch Reconciliation & Historical Sync Suite', file: 'scripts/test_batch_reconciliation.js', required: true },
+  { name: 'PWA Smart In-App Update System Suite', file: 'scripts/test_pwa_smart_update.js', required: true },
   { name: 'Modular Apps Script Backend Verification', file: 'scratch/test_modular_backend.js', required: false },
   { name: 'Tahfidz Al-Quran Advanced Integration Suite', file: 'scratch/comprehensive_test_tahfidz.js', required: false },
   { name: 'RBAC Matrix & Authority Pipeline Suite', file: 'scratch/final_verify_rbac.js', required: false }

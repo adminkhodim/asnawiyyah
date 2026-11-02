@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v86';
+const CACHE_NAME = 'asnawiyyah-cache-v87';
 
 const PRECACHE_URLS = [
   '/',
@@ -35,6 +35,12 @@ const PRECACHE_URLS = [
   '/js/main.js'
 ];
 
+
+self.addEventListener('message', event => {
+  if (event.data && (event.data.action === 'skipWaiting' || event.data.type === 'SKIP_WAITING')) {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', event => {
   self.skipWaiting();

@@ -17437,6 +17437,45 @@
         </div>
     </div>
 
+    <!-- ==================== SMART FLOATING UPDATE BANNER ==================== -->
+    <div id="pwa-update-banner"
+        class="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[9995] bg-white/95 dark:bg-[#15202d]/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-emerald-500/30 dark:border-emerald-500/40 flex flex-col gap-2.5 transform translate-y-full opacity-0 transition-all duration-300 hidden">
+        <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start space-x-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0 mt-0.5 shadow-xs">
+                    <i class="fa-solid fa-arrows-rotate animate-spin-slow"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100 leading-snug">
+                            Versi Terbaru Tersedia
+                        </h4>
+                        <span id="pwa-update-version-tag" class="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded-md font-mono">v2.4.2</span>
+                    </div>
+                    <p id="pwa-update-desc" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+                        Pembaruan sistem telah siap. Tekan tombol di bawah untuk menyegarkan aplikasi secara instan.
+                    </p>
+                </div>
+            </div>
+            <button onclick="dismissUpdateBannerTemporarily()"
+                class="w-7 h-7 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg flex items-center justify-center transition shrink-0"
+                title="Tutup Sementara">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+        <div class="flex items-center space-x-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            <button onclick="applyAppUpdateNow()" id="btn-apply-pwa-update"
+                class="flex-1 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-bolt text-xs"></i>
+                <span id="btn-apply-pwa-update-text">Perbarui Sekarang</span>
+            </button>
+            <button onclick="dismissUpdateBannerTemporarily()"
+                class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl transition">
+                Nanti
+            </button>
+        </div>
+    </div>
+
     <!-- ==================== MODAL PANDUAN INSTALASI IPHONE (IOS SAFARI) ==================== -->
     <div id="modal-ios-install-guide"
         class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 hidden transition-opacity duration-300">
@@ -18488,6 +18527,9 @@
     </div>
 
     <!-- ==================== APPLICATION SCRIPTS & MODULES ==================== -->
+    <!-- PWA Smart Install & In-App Update Controller -->
+    <script src="js/pwa.js"></script>
+
     <!-- Service Worker PWA -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -18496,28 +18538,17 @@
                     console.log('ServiceWorker PWA berhasil didaftarkan dengan scope:', registration.scope);
                     // Cek pembaruan segera
                     registration.update();
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        if (newWorker) {
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('Versi baru aplikasi terdeteksi, membersihkan cache...');
-                                    if ('caches' in window) {
-                                        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-                                    }
-                                }
-                            });
-                        }
-                    });
+
+                    // Hubungkan ke Smart Update Manager
+                    if (window.SmartUpdateManager) {
+                        window.SmartUpdateManager.bindServiceWorker(registration);
+                    }
                 }).catch(err => {
                     console.log('ServiceWorker pendaftaran gagal:', err);
                 });
             });
         }
     </script>
-
-    <!-- PWA Smart Install Controller -->
-    <script src="js/pwa.js"></script>
 
     <!-- Panduan Penggunaan Controller -->
     <!-- ================= POPOVER PEMBERITAHUAN & APPROVAL IZIN GLOBAL (RESPONSIF MOBILE & DESKTOP) ================= -->

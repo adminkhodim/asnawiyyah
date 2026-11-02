@@ -217,8 +217,278 @@
         console.log('Aplikasi PPTQ Asnawiyyah berhasil dipasang sebagai PWA.');
     });
 
+    // ==========================================
+    // Smart In-App Update Controller (Tahap 1 & 2)
+    // ==========================================
+    const CURRENT_CLIENT_VERSION = '2.4.2';
+    const UPDATE_SNOOZE_KEY = 'asnawiyyah_update_snooze';
+
+    const SmartUpdateManager = {
+        swWaitingWorker: null,
+        swRegistration: null,
+        latestVersionData: null,
+        isPromptVisible: false,
+        checkIntervalTimer: null,
+        guardCheckTimer: null,
+
+        /**
+         * Smart Interruption Guard: Jangan ganggu user jika sedang mengetik atau membuka form modal
+         */
+        isUserActivelyInputting() {
+            try {
+                const active = document.activeElement;
+                if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
+                    return true;
+                }
+                const catatModal = document.getElementById('modal-catat-setoran');
+                if (catatModal && !catatModal.classList.contains('hidden')) return true;
+
+                const formIzin = document.getElementById('modal-form-izin');
+                if (formIzin && !formIzin.classList.contains('hidden')) return true;
+
+                const badalModal = document.getElementById('modal-izin-asatidz');
+                if (badalModal && !badalModal.classList.contains('hidden')) return true;
+            } catch (e) {}
+            return false;
+        },
+
+        /**
+         * Cek apakah user baru saja menekan tombol 'Nanti' dalam 15 menit terakhir
+         */
+        isSnoozed() {
+            try {
+                const snoozeUntil = sessionStorage.getItem(UPDATE_SNOOZE_KEY);
+                if (snoozeUntil && Date.now() < parseInt(snoozeUntil, 10)) {
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        },
+
+        /**
+         * Tampilkan Floating Update Banner
+         */
+        showUpdateBanner(versionInfo) {
+            if (this.isPromptVisible) return;
+            if (this.isSnoozed()) return;
+
+            // Jika user sedang aktif mengetik, tunda 15 detik dan cek ulang
+            if (this.isUserActivelyInputting()) {
+                if (!this.guardCheckTimer) {
+                    this.guardCheckTimer = setTimeout(() => {
+                        this.guardCheckTimer = null;
+                        this.showUpdateBanner(versionInfo);
+                    }, 15000);
+                }
+                return;
+            }
+
+            const banner = document.getElementById('pwa-update-banner');
+            if (!banner) return;
+
+            this.latestVersionData = versionInfo || { version: CURRENT_CLIENT_VERSION };
+
+            const tagEl = document.getElementById('pwa-update-version-tag');
+            if (tagEl && this.latestVersionData.version) {
+                tagEl.textContent = 'v' + this.latestVersionData.version;
+            }
+
+            const descEl = document.getElementById('pwa-update-desc');
+            if (descEl && this.latestVersionData.highlights && this.latestVersionData.highlights.length > 0) {
+                descEl.textContent = this.latestVersionData.highlights[0] || 'Fitur dan perbaikan sistem terbaru telah siap.';
+            }
+
+            // Sembunyikan banner install jika terbuka agar tidak tumpang tindih
+            const installBanner = document.getElementById('pwa-smart-install-banner');
+            if (installBanner) installBanner.classList.add('hidden');
+
+            banner.classList.remove('hidden');
+            setTimeout(() => {
+                banner.classList.remove('translate-y-full', 'opacity-0');
+                banner.classList.add('translate-y-0', 'opacity-100');
+                this.isPromptVisible = true;
+            }, 100);
+        },
+
+        /**
+         * Sembunyikan sementara banner update jika ditekan tombol Nanti / Silang
+         */
+        dismissBanner(temporary = true) {
+            const banner = document.getElementById('pwa-update-banner');
+            if (banner) {
+                banner.classList.remove('translate-y-0', 'opacity-100');
+                banner.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => {
+                    banner.classList.add('hidden');
+                    this.isPromptVisible = false;
+                }, 300);
+            }
+            if (temporary) {
+                // Snooze 15 menit selama sesi browser berlangsung
+                sessionStorage.setItem(UPDATE_SNOOZE_KEY, String(Date.now() + 15 * 60 * 1000));
+            }
+        },
+
+        /**
+         * Eksekusi pembaruan instan (1-Klik):
+         * 1. Beri tahu Service Worker untuk skipWaiting
+         * 2. Bersihkan cache lama
+         * 3. Soft reload halaman tanpa memutus sesi login
+         */
+        async applyUpdateNow() {
+            const btnText = document.getElementById('btn-apply-pwa-update-text');
+            const btn = document.getElementById('btn-apply-pwa-update');
+            if (btnText) btnText.textContent = 'Memperbarui...';
+            if (btn) btn.disabled = true;
+
+            try {
+                if (this.latestVersionData && this.latestVersionData.version) {
+                    localStorage.setItem('asnawiyyah_installed_version', this.latestVersionData.version);
+                    localStorage.setItem('asnawiyyah_just_updated', '1');
+                }
+            } catch (e) {}
+
+            // 1. PostMessage ke Service Worker jika ada worker yang menunggu
+            if (this.swWaitingWorker) {
+                try {
+                    this.swWaitingWorker.postMessage({ action: 'skipWaiting', type: 'SKIP_WAITING' });
+                } catch (e) {}
+            }
+
+            // 2. Bersihkan Cache API
+            if ('caches' in window) {
+                try {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                } catch (e) {
+                    console.warn('[PWA] Cache purge warn:', e);
+                }
+            }
+
+            // 3. Muat ulang halaman secara halus
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        },
+
+        /**
+         * Hubungkan Service Worker Registration dari index.html
+         */
+        bindServiceWorker(registration) {
+            this.swRegistration = registration;
+
+            // Jika sudah ada worker yang menunggu aktivasi (waiting)
+            if (registration.waiting) {
+                this.swWaitingWorker = registration.waiting;
+                this.showUpdateBanner({ version: CURRENT_CLIENT_VERSION });
+                return;
+            }
+
+            // Jika ada worker yang sedang di-install
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (!newWorker) return;
+
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        this.swWaitingWorker = newWorker;
+                        this.showUpdateBanner({ version: CURRENT_CLIENT_VERSION });
+                    }
+                });
+            });
+
+            // Pantau pergantian controller (setelah skipWaiting)
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
+        },
+
+        /**
+         * Cek file version.json di server (Active Version Polling)
+         */
+        async checkVersionJson() {
+            if (this.isPromptVisible) return;
+            try {
+                const res = await fetch('/version.json?_t=' + Date.now(), {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data || !data.version) return;
+
+                const installedVer = localStorage.getItem('asnawiyyah_installed_version') || CURRENT_CLIENT_VERSION;
+                if (data.version !== installedVer) {
+                    console.log(`[PWA UPDATE] Versi baru terdeteksi: ${data.version} (versi saat ini: ${installedVer})`);
+                    this.showUpdateBanner(data);
+                }
+            } catch (err) {
+                // Silent fail jika offline
+            }
+        },
+
+        /**
+         * Periksa apakah aplikasi baru saja berhasil diperbarui, jika ya munculkan pesan syukur
+         */
+        checkPostUpdateWelcome() {
+            try {
+                const justUpdated = localStorage.getItem('asnawiyyah_just_updated');
+                if (justUpdated === '1') {
+                    localStorage.removeItem('asnawiyyah_just_updated');
+                    const curVer = localStorage.getItem('asnawiyyah_installed_version') || CURRENT_CLIENT_VERSION;
+                    setTimeout(() => {
+                        if (typeof showCustomToast === 'function') {
+                            showCustomToast(`Alhamdulillah! Aplikasi telah diperbarui ke versi v${curVer} dengan performa prima.`, 'success');
+                        } else if (typeof showToast === 'function') {
+                            showToast(`Alhamdulillah! Aplikasi telah diperbarui ke versi v${curVer}.`);
+                        }
+                    }, 1200);
+                }
+            } catch (e) {}
+        },
+
+        /**
+         * Inisialisasi Lifecycle Tracker
+         */
+        init() {
+            this.checkPostUpdateWelcome();
+
+            // Cek saat pertama kali load
+            setTimeout(() => this.checkVersionJson(), 3000);
+
+            // Cek saat pengguna kembali membuka browser/aplikasi dari background
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    this.checkVersionJson();
+                    if (this.swRegistration) {
+                        try { this.swRegistration.update(); } catch (e) {}
+                    }
+                }
+            });
+
+            // Polling santai setiap 20 menit
+            this.checkIntervalTimer = setInterval(() => {
+                this.checkVersionJson();
+                if (this.swRegistration) {
+                    try { this.swRegistration.update(); } catch (e) {}
+                }
+            }, 20 * 60 * 1000);
+        }
+    };
+
+    // Global Expose
+    window.SmartUpdateManager = SmartUpdateManager;
+    window.applyAppUpdateNow = function () { SmartUpdateManager.applyUpdateNow(); };
+    window.dismissUpdateBannerTemporarily = function () { SmartUpdateManager.dismissBanner(true); };
+
     // Inisialisasi saat DOM siap atau jika sudah siap
     function initPwa() {
+        // Inisialisasi Update Tracker
+        SmartUpdateManager.init();
+
         // Jika sudah standalone, pastikan semua promo install disembunyikan
         if (isRunningStandalone()) {
             updateNavInstallButtons(false);
