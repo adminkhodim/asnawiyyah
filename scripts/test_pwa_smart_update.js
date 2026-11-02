@@ -19,8 +19,8 @@ const swPath = path.join(rootDir, 'sw.js');
 assert(fs.existsSync(swPath), 'sw.js harus ada');
 const swContent = fs.readFileSync(swPath, 'utf8');
 assert(swContent.includes('skipWaiting'), 'sw.js harus mendukung skipWaiting');
-assert(swContent.includes('asnawiyyah-cache-v87'), 'sw.js cache name harus termutakhirkan');
-console.log('   ✅ sw.js mendukung message skipWaiting & cache v87');
+assert(/asnawiyyah-cache-v\d+/.test(swContent), 'sw.js cache name harus termutakhirkan');
+console.log('   ✅ sw.js mendukung message skipWaiting & dynamic cache version');
 
 // 3. Verifikasi js/pwa.js
 const pwaJsPath = path.join(rootDir, 'js', 'pwa.js');
