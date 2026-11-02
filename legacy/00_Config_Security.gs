@@ -1046,6 +1046,10 @@ function syncHistoricalTahfidzLogsToSupabase(ss) {
   const muhIdx = headers.findIndex(h => h === "muhafiz" || h === "pembina");
   const stIdx = headers.findIndex(h => h === "statussetoran" || h === "status");
   const catIdx = headers.findIndex(h => h === "catatan" || h === "keterangan");
+  const surahIdx = headers.findIndex(h => h === "surah");
+  const satuanIdx = headers.findIndex(h => h === "satuan");
+  const ayatMulaiIdx = headers.findIndex(h => h === "ayatmulai");
+  const ayatSampaiIdx = headers.findIndex(h => h === "ayatsampai");
   const crtIdx = headers.findIndex(h => h === "createdat");
 
   const records = [];
@@ -1062,6 +1066,8 @@ function syncHistoricalTahfidzLogsToSupabase(ss) {
 
     const tipeVal = tipeIdx !== -1 && cleanSyncVal_(row[tipeIdx]) ? String(row[tipeIdx]).trim().toUpperCase() : "ZIYADAH";
     const statusVal = stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "LANJUT";
+    const aMulai = ayatMulaiIdx !== -1 && cleanSyncVal_(row[ayatMulaiIdx]) ? (Number(row[ayatMulaiIdx]) || null) : null;
+    const aSampai = ayatSampaiIdx !== -1 && cleanSyncVal_(row[ayatSampaiIdx]) ? (Number(row[ayatSampaiIdx]) || null) : null;
 
     records.push({
       log_id: String(logId),
@@ -1073,6 +1079,10 @@ function syncHistoricalTahfidzLogsToSupabase(ss) {
       sesi: sesiIdx !== -1 && cleanSyncVal_(row[sesiIdx]) ? String(row[sesiIdx]).trim() : "Pagi",
       tipe: tipeVal,
       juz: juzIdx !== -1 ? (Number(row[juzIdx]) || 1) : 1,
+      surah: surahIdx !== -1 && cleanSyncVal_(row[surahIdx]) ? String(row[surahIdx]).trim() : null,
+      satuan: satuanIdx !== -1 && cleanSyncVal_(row[satuanIdx]) ? String(row[satuanIdx]).trim().toUpperCase() : "HALAMAN",
+      ayat_mulai: aMulai,
+      ayat_sampai: aSampai,
       halaman_list: halIdx !== -1 && cleanSyncVal_(row[halIdx]) ? String(row[halIdx]).trim() : "1",
       total_halaman: totIdx !== -1 ? (Number(row[totIdx]) || 1) : 1,
       nilai: nilaiIdx !== -1 && cleanSyncVal_(row[nilaiIdx]) ? String(row[nilaiIdx]).trim().toUpperCase() : "JAYYID",

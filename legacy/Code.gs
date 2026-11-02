@@ -1054,6 +1054,10 @@ function syncHistoricalTahfidzLogsToSupabase(ss) {
   const muhIdx = headers.findIndex(h => h === "muhafiz" || h === "pembina");
   const stIdx = headers.findIndex(h => h === "statussetoran" || h === "status");
   const catIdx = headers.findIndex(h => h === "catatan" || h === "keterangan");
+  const surahIdx = headers.findIndex(h => h === "surah");
+  const satuanIdx = headers.findIndex(h => h === "satuan");
+  const ayatMulaiIdx = headers.findIndex(h => h === "ayatmulai");
+  const ayatSampaiIdx = headers.findIndex(h => h === "ayatsampai");
   const crtIdx = headers.findIndex(h => h === "createdat");
 
   const records = [];
@@ -1070,6 +1074,8 @@ function syncHistoricalTahfidzLogsToSupabase(ss) {
 
     const tipeVal = tipeIdx !== -1 && cleanSyncVal_(row[tipeIdx]) ? String(row[tipeIdx]).trim().toUpperCase() : "ZIYADAH";
     const statusVal = stIdx !== -1 && cleanSyncVal_(row[stIdx]) ? String(row[stIdx]).trim().toUpperCase() : "LANJUT";
+    const aMulai = ayatMulaiIdx !== -1 && cleanSyncVal_(row[ayatMulaiIdx]) ? (Number(row[ayatMulaiIdx]) || null) : null;
+    const aSampai = ayatSampaiIdx !== -1 && cleanSyncVal_(row[ayatSampaiIdx]) ? (Number(row[ayatSampaiIdx]) || null) : null;
 
     records.push({
       log_id: String(logId),
@@ -1081,6 +1087,10 @@ function syncHistoricalTahfidzLogsToSupabase(ss) {
       sesi: sesiIdx !== -1 && cleanSyncVal_(row[sesiIdx]) ? String(row[sesiIdx]).trim() : "Pagi",
       tipe: tipeVal,
       juz: juzIdx !== -1 ? (Number(row[juzIdx]) || 1) : 1,
+      surah: surahIdx !== -1 && cleanSyncVal_(row[surahIdx]) ? String(row[surahIdx]).trim() : null,
+      satuan: satuanIdx !== -1 && cleanSyncVal_(row[satuanIdx]) ? String(row[satuanIdx]).trim().toUpperCase() : "HALAMAN",
+      ayat_mulai: aMulai,
+      ayat_sampai: aSampai,
       halaman_list: halIdx !== -1 && cleanSyncVal_(row[halIdx]) ? String(row[halIdx]).trim() : "1",
       total_halaman: totIdx !== -1 ? (Number(row[totIdx]) || 1) : 1,
       nilai: nilaiIdx !== -1 && cleanSyncVal_(row[nilaiIdx]) ? String(row[nilaiIdx]).trim().toUpperCase() : "JAYYID",
@@ -8570,10 +8580,10 @@ function saveTahfidzLog(payload, token) {
     const satuan = String(payload.satuan || (payload.ayatMulai || payload.ayat_mulai ? "AYAT" : "HALAMAN")).trim().toUpperCase();
     const ayatMulai = payload.ayatMulai !== undefined && payload.ayatMulai !== null && payload.ayatMulai !== "" 
       ? Number(payload.ayatMulai) 
-      : (payload.ayat_mulai !== undefined && payload.ayat_mulai !== null && payload.ayat_mulai !== "" ? Number(payload.ayat_mulai) : "");
+      : (payload.ayat_mulai !== undefined && payload.ayat_mulai !== null && payload.ayat_mulai !== "" ? Number(payload.ayat_mulai) : null);
     const ayatSampai = payload.ayatSampai !== undefined && payload.ayatSampai !== null && payload.ayatSampai !== "" 
       ? Number(payload.ayatSampai) 
-      : (payload.ayat_sampai !== undefined && payload.ayat_sampai !== null && payload.ayat_sampai !== "" ? Number(payload.ayat_sampai) : "");
+      : (payload.ayat_sampai !== undefined && payload.ayat_sampai !== null && payload.ayat_sampai !== "" ? Number(payload.ayat_sampai) : null);
     const halamanList = String(payload.halamanList || payload.halaman_list || payload.halaman || "1").trim();
     const totalHalaman = Number(payload.totalHalaman || payload.total_halaman || 1);
     const nilai = String(payload.nilai || "MUMTAZ").trim().toUpperCase();
@@ -8635,7 +8645,7 @@ function saveTahfidzLog(payload, token) {
       "created_at": createdAt
     };
 
-    const rowValues = headers.map(h => rowMap[h] !== undefined ? rowMap[h] : "");
+    const rowValues = headers.map(h => (rowMap[h] !== undefined && rowMap[h] !== null) ? rowMap[h] : "");
 
     if (foundRow > 0) {
       sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
@@ -8652,7 +8662,30 @@ function saveTahfidzLog(payload, token) {
 
     // Replikasi Server-Side ke Supabase (via service_role key)
     try {
-      replicateToSupabase("/rest/v1/tahfidz_logs", "POST", rowMap);
+      if (typeof replicateToSupabase === "function") {
+        replicateToSupabase("/rest/v1/tahfidz_logs?on_conflict=log_id", "POST", {
+          log_id: logId,
+          student_id: studentId,
+          nis: nis || null,
+          student_name: studentName,
+          gender: (gender === "L" || gender === "PUTRA") ? "Putra" : "Putri",
+          tanggal: tanggal,
+          sesi: sesi,
+          tipe: tipe,
+          juz: juz,
+          surah: surah || null,
+          satuan: satuan || "HALAMAN",
+          ayat_mulai: ayatMulai !== null ? Number(ayatMulai) : null,
+          ayat_sampai: ayatSampai !== null ? Number(ayatSampai) : null,
+          halaman_list: halamanList || "1",
+          total_halaman: totalHalaman,
+          nilai: nilai,
+          muhafiz: muhafiz || "Ustadz Pembina",
+          catatan: catatan || null,
+          status_setoran: statusSetoran,
+          created_at: createdAt
+        });
+      }
     } catch (sbErr) {
       console.warn("[SUPABASE REPLICATION TAHFIDZ WARN]", sbErr);
     }

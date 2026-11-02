@@ -27,7 +27,7 @@ const codeGs = fs.readFileSync(path.join(ROOT, 'legacy/Code.gs'), 'utf8');
 
 assert(configGs.includes('function getSupabaseServerConfig()'), '00_Config_Security.gs harus memiliki getSupabaseServerConfig');
 assert(configGs.includes('function replicateToSupabase('), '00_Config_Security.gs harus memiliki replicateToSupabase');
-assert(tahfidzGs.includes('replicateToSupabase("/rest/v1/tahfidz_logs"'), '04_Tahfidz.gs harus mereplikasi setoran ke Supabase');
+assert(tahfidzGs.includes('replicateToSupabase("/rest/v1/tahfidz_logs'), '04_Tahfidz.gs harus mereplikasi setoran ke Supabase');
 assert(cmsGs.includes('replicateToSupabase("/rest/v1/berita?on_conflict=news_id"'), '05_CMS.gs harus mereplikasi berita ke Supabase');
 assert(masterGs.includes('replicateToSupabase("/rest/v1/students'), '06_MasterData.gs harus mereplikasi santri ke Supabase');
 assert(codeGs.includes('function replicateToSupabase('), 'Code.gs harus tersinkronisasi membawa replicateToSupabase');
