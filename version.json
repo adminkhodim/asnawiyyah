@@ -1,10 +1,10 @@
 {
-  "version": "2.4.3",
-  "buildTime": "2026-11-02T22:06:00+07:00",
-  "title": "Pembaruan Riwayat Tahfidz & Fitur Izin Asatidz",
+  "version": "2.5.0",
+  "buildTime": "2026-11-03T08:25:00+07:00",
+  "title": "Pembaruan Modul Kedisiplinan & Tarbiyah Santri",
   "highlights": [
-    "Sinkronisasi data setoran tahfidz 100% presisi dan stabil",
-    "Persetujuan Izin Asatidz langsung dari Beranda Utama Pengasuh",
-    "Optimalisasi performa & in-app update otomatis"
+    "Modul baru: Kedisiplinan & Tarbiyah Santri di Pusat Kontrol",
+    "Pencatatan pelanggaran lapangan cerdas & rekomendasi ta'zir otomatis",
+    "Mutaba'ah kedisiplinan dan transparansi penuh untuk Wali Santri"
   ]
 }

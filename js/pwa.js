@@ -220,7 +220,7 @@
     // ==========================================
     // Smart In-App Update Controller (Tahap 1 & 2)
     // ==========================================
-    const CURRENT_CLIENT_VERSION = '2.4.2';
+    const CURRENT_CLIENT_VERSION = '2.5.0';
     const UPDATE_SNOOZE_KEY = 'asnawiyyah_update_snooze';
 
     const SmartUpdateManager = {
