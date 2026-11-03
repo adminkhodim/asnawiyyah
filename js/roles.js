@@ -300,7 +300,7 @@
     };
 
     // State Permissions Aktif (Diambil dari Local Storage / Backend dengan sanitasi otomatis)
-    let ROLE_PERMISSIONS_STATE = (function() {
+    let ROLE_PERMISSIONS_STATE = (function () {
         const validKeys = new Set(['*']);
         PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => validKeys.add(i.key)));
 
@@ -328,7 +328,7 @@
                 }
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(state));
             }
-        } catch (e) {}
+        } catch (e) { }
         return state;
     })();
 
@@ -710,7 +710,7 @@
             const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
             const raw = ls ? ls.getItem('ASNAWIYYAH_ROLE_MATRIX_STATE') : null;
             if (raw) return JSON.parse(raw);
-        } catch (e) {}
+        } catch (e) { }
         return {};
     })();
 
@@ -773,13 +773,13 @@
         try {
             const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
             if (ls) ls.setItem('ASNAWIYYAH_ROLE_MATRIX_STATE', JSON.stringify(SAVED_MATRIX_STATE));
-        } catch (e) {}
+        } catch (e) { }
     }
 
     // Jalankan rekonstruksi inisial agar SAVED_MATRIX_STATE langsung sinkron dengan ROLE_PERMISSIONS_STATE
     try {
         reconstructSavedMatrixFromRolePerms();
-    } catch (e) {}
+    } catch (e) { }
 
     /**
      * Dapatkan level izin saat ini untuk kombinasi modul & peran
@@ -825,8 +825,8 @@
         renderRolesMatrixTable();
 
         // Segarkan visibilitas menu bila peran yang diubah sedang aktif dipratinjau
-        const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                          (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ASN_ADMIN_ROLE') : null) || 'SUPER_ADMIN';
+        const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+            (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ASN_ADMIN_ROLE') : null) || 'SUPER_ADMIN';
         if (activeRole === roleKey) {
             applyAdminRoleVisibility(activeRole);
         }
@@ -895,7 +895,7 @@
         try {
             const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
             if (ls) ls.setItem('ASNAWIYYAH_ROLE_MATRIX_STATE', JSON.stringify(SAVED_MATRIX_STATE));
-        } catch (e) {}
+        } catch (e) { }
         document.querySelectorAll('[id^="batch-menu-"]').forEach(m => m.classList.add('hidden'));
         updateMatrixFloatingBar();
         renderRolesMatrixTable();
@@ -949,7 +949,7 @@
             try {
                 const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
                 if (ls) ls.setItem('ASNAWIYYAH_ROLE_MATRIX_STATE', JSON.stringify(SAVED_MATRIX_STATE));
-            } catch (e) {}
+            } catch (e) { }
 
             // 2. Sinkronkan ke granular permissions per role yang terpengaruh
             const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
@@ -1012,7 +1012,7 @@
             // 3. Cache role permissions
             try {
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
-            } catch (e) {}
+            } catch (e) { }
 
             MATRIX_PENDING_CHANGES = {};
             updateMatrixFloatingBar();
@@ -1020,8 +1020,8 @@
             renderRoleCardsGrid();
 
             // Terapkan visibilitas peran aktif & grid mobile pusat kontrol
-            const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                              sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
+            const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
             applyAdminRoleVisibility(activeRole);
 
             if (typeof showToast === 'function') {
@@ -1118,14 +1118,14 @@
         const currentAdminRoleEl = document.getElementById('role-kpi-current-role');
 
         const totalUsers = typeof adminUsersList !== 'undefined' && Array.isArray(adminUsersList) ? adminUsersList.length : 0;
-        
+
         if (totalRolesEl) totalRolesEl.innerText = Object.keys(ROLE_DEFINITIONS).length;
         if (totalUsersEl) totalUsersEl.innerText = totalUsers;
         if (totalModulesEl) totalModulesEl.innerText = MODULE_PERMISSIONS_MATRIX.length;
 
         if (currentAdminRoleEl) {
-            const role = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                         sessionStorage.getItem('ASN_ADMIN_ROLE') || 'ADMIN';
+            const role = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                sessionStorage.getItem('ASN_ADMIN_ROLE') || 'ADMIN';
             const meta = ROLE_DEFINITIONS[role] || ROLE_DEFINITIONS['ADMIN'];
             currentAdminRoleEl.innerText = meta.shortName;
         }
@@ -1257,7 +1257,7 @@
         if (!container) return;
 
         const roleKeys = Object.keys(ROLE_DEFINITIONS);
-        
+
         let filteredKeys = roleKeys;
         if (currentRoleFilter === 'EKSEKUTIF') {
             filteredKeys = ['SUPER_ADMIN', 'ADMIN'];
@@ -1415,7 +1415,7 @@
         document.getElementById('role-detail-tier').innerText = role.tier;
         document.getElementById('role-detail-desc').innerText = role.summary;
         document.getElementById('role-detail-scope-note').innerText = role.scopeNote;
-        
+
         const iconEl = document.getElementById('role-detail-icon');
         if (iconEl) iconEl.className = `w-12 h-12 rounded-2xl bg-slate-50 dark:bg-[#1c2836] ${role.iconColor} flex items-center justify-center text-xl shadow-xs`;
 
@@ -1573,8 +1573,8 @@
             const filteredItems = cat.items.filter(item => {
                 if (!filter) return true;
                 return item.label.toLowerCase().includes(filter) ||
-                       item.desc.toLowerCase().includes(filter) ||
-                       item.key.toLowerCase().includes(filter);
+                    item.desc.toLowerCase().includes(filter) ||
+                    item.key.toLowerCase().includes(filter);
             });
 
             if (filteredItems.length === 0) return '';
@@ -1605,16 +1605,16 @@
                     <!-- 2-Columns Checklist Cards Grid (Screenshot 3 KHODIM) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         ${filteredItems.map(item => {
-                            const isChecked = currentModalPermissions.includes(item.key) || currentModalPermissions.includes('*');
-                            const cardBorder = isChecked
-                                ? 'border-emerald-500/80 bg-emerald-50/50 dark:bg-emerald-950/20'
-                                : 'border-slate-200 dark:border-[#253447] bg-white dark:bg-[#15202d] hover:border-slate-300';
-                            
-                            const checkClass = isChecked
-                                ? 'bg-emerald-600 text-white shadow-xs'
-                                : 'border-2 border-slate-300 dark:border-slate-600 text-transparent';
+                const isChecked = currentModalPermissions.includes(item.key) || currentModalPermissions.includes('*');
+                const cardBorder = isChecked
+                    ? 'border-emerald-500/80 bg-emerald-50/50 dark:bg-emerald-950/20'
+                    : 'border-slate-200 dark:border-[#253447] bg-white dark:bg-[#15202d] hover:border-slate-300';
 
-                            return `
+                const checkClass = isChecked
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'border-2 border-slate-300 dark:border-slate-600 text-transparent';
+
+                return `
                                 <div onclick="toggleRolePermissionItem('${item.key}')"
                                     class="p-3.5 rounded-2xl border ${cardBorder} transition select-none cursor-pointer flex items-start space-x-3 group">
                                     <div class="w-5 h-5 rounded-lg ${checkClass} flex items-center justify-center text-xs shrink-0 mt-0.5 transition">
@@ -1626,7 +1626,7 @@
                                     </div>
                                 </div>
                             `;
-                        }).join('')}
+            }).join('')}
                     </div>
                 </div>
             `;
@@ -1711,7 +1711,7 @@
         const roleKey = currentConfiguringRole;
         const role = ROLE_DEFINITIONS[roleKey];
         const saveBtn = document.getElementById('btn-save-role-permissions');
-        
+
         let originalContent = '';
         if (saveBtn) {
             originalContent = saveBtn.innerHTML;
@@ -1723,7 +1723,7 @@
             // Hitung total izin yang tersedia
             const allKeys = [];
             PERMISSION_CATEGORIES.forEach(c => c.items.forEach(i => allKeys.push(i.key)));
-            
+
             let permsToSave = [...currentModalPermissions];
             // Jika seluruh checkbox aktif, tambahkan wildcard '*' untuk kompatibilitas penuh
             if (permsToSave.length === allKeys.length && !permsToSave.includes('*')) {
@@ -1734,7 +1734,7 @@
             ROLE_PERMISSIONS_STATE[roleKey] = permsToSave;
             try {
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
-            } catch (e) {}
+            } catch (e) { }
 
             // Kirim ke Supabase Cloud DB & Google Apps Script secara paralel
             const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
@@ -1791,9 +1791,9 @@
             renderRoleCardsGrid();
 
             // Terapkan efek visibilitas menu real-time
-            const currentActiveRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                                     sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                                     sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
+            const currentActiveRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
             applyAdminRoleVisibility(currentActiveRole);
 
             // Tutup modal
@@ -1870,7 +1870,7 @@
                 ROLE_PERMISSIONS_STATE = permissionsMap;
                 try {
                     localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
-                } catch (e) {}
+                } catch (e) { }
 
                 // Rekonstruksi state matriks
                 if (typeof reconstructSavedMatrixFromRolePerms === 'function') {
@@ -1882,8 +1882,8 @@
                     renderRolesMatrixTable();
                 }
 
-                const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                                  sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
+                const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                    sessionStorage.getItem('ASN_ADMIN_ROLE') || 'SUPER_ADMIN';
                 applyAdminRoleVisibility(activeRole);
             }
         } catch (e) {
@@ -2096,9 +2096,9 @@
     function hasPermission(permissionKey, roleKey = null) {
         if (!permissionKey) return true;
         if (!roleKey) {
-            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
@@ -2185,14 +2185,14 @@
         if (valueKey === 'santri' || valueKey === 'santri_count') {
             const list = (window.adminStudentsData && Array.isArray(window.adminStudentsData) && window.adminStudentsData.length > 0)
                 ? window.adminStudentsData
-                : ((typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList) && adminStudentsList.length > 0) 
-                    ? adminStudentsList 
+                : ((typeof adminStudentsList !== 'undefined' && Array.isArray(adminStudentsList) && adminStudentsList.length > 0)
+                    ? adminStudentsList
                     : ((window.adminStudentsList && Array.isArray(window.adminStudentsList)) ? window.adminStudentsList : []));
             if (list.length > 0) return `${list.length} <span class="text-xs font-semibold text-white/90">Santri</span>`;
             try {
                 const cached = JSON.parse(localStorage.getItem('ASNAWIYYAH_STUDENTS_CACHE') || '[]');
                 if (cached.length > 0) return `${cached.length} <span class="text-xs font-semibold text-white/90">Santri</span>`;
-            } catch(e) {}
+            } catch (e) { }
             return `<span class="opacity-60 animate-pulse">—</span> <span class="text-xs font-semibold text-white/90">Santri</span>`;
         }
         if (valueKey === 'tahfidz' || valueKey === 'tahfidz_count') {
@@ -2214,7 +2214,7 @@
             try {
                 const cachedPegawai = JSON.parse(localStorage.getItem('ASNAWIYYAH_PEGAWAI_CACHE') || '0');
                 if (cachedPegawai > 0) return `${cachedPegawai} <span class="text-xs font-semibold text-white/90">Asatidz</span>`;
-            } catch(e) {}
+            } catch (e) { }
             return `<span class="opacity-60 animate-pulse">—</span> <span class="text-xs font-semibold text-white/90">Asatidz</span>`;
         }
         if (valueKey === 'presensi' || valueKey === 'presensi_rate') {
@@ -2255,9 +2255,9 @@
      */
     function applyAdminRoleVisibility(roleKey) {
         if (!roleKey) {
-            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                      sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
@@ -2283,7 +2283,7 @@
                 } else if (sessionStorage.getItem('asnawiyyah_admin_name')) {
                     userName = sessionStorage.getItem('asnawiyyah_admin_name');
                 }
-            } catch(e) {}
+            } catch (e) { }
 
             if (roleKey === 'PENGASUH') {
                 greetingTitle.innerText = userName ? `Ahlan wa Sahlan, ${userName}` : 'Ahlan wa Sahlan, Pengasuh / Romo Kyai';
@@ -2314,7 +2314,7 @@
             } else {
                 noticeBar.classList.remove('hidden');
                 noticeBar.className = `p-3.5 rounded-2xl border text-xs flex items-start space-x-3 transition-all duration-300 ${profile.noticeBoxClass}`;
-                
+
                 const noticeIcon = document.getElementById('admin-hub-notice-icon');
                 if (noticeIcon) noticeIcon.className = `fa-solid ${profile.noticeIconClass} mt-0.5 shrink-0 text-sm`;
 
@@ -2443,7 +2443,7 @@
         hubCards.forEach(card => {
             const modKey = card.dataset.adminModule || card.dataset.roleModule;
             const isAllowed = isModuleAllowedForRole(modKey, roleKey);
-            
+
             if (isAllowed) {
                 card.classList.remove('hidden');
             } else {
@@ -2456,7 +2456,7 @@
         hubCategories.forEach(cat => {
             const visibleCards = cat.querySelectorAll('[data-admin-module]:not(.hidden), [data-role-module]:not(.hidden)');
             const countBadge = cat.querySelector('.admin-hub-category-count');
-            
+
             if (visibleCards.length === 0) {
                 cat.classList.add('hidden');
             } else {
@@ -2606,9 +2606,9 @@
      */
     function applyAllRolePermissionsUI(roleKey = null) {
         if (!roleKey) {
-            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                      sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                      sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
+            roleKey = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+                sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                sessionStorage.getItem('asnawiyyah_admin_role') || 'ADMIN';
         }
         roleKey = String(roleKey).toUpperCase();
         if (roleKey === 'PEGAWAI' || roleKey === 'EDITOR') roleKey = 'ASATIDZ';
@@ -2653,7 +2653,7 @@
      */
     function switchActiveRolePreview(roleKey) {
         if (!ROLE_DEFINITIONS[roleKey]) return;
-        
+
         sessionStorage.setItem('ASN_ADMIN_ROLE', roleKey);
         sessionStorage.setItem('asnawiyyah_admin_role', roleKey);
         localStorage.setItem('asnawiyyah_admin_role', roleKey);
@@ -2677,11 +2677,11 @@
         const topbarClockEl = document.getElementById('admin-topbar-clock');
         function updateClock() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
+            const timeStr = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
                 second: '2-digit',
-                hour12: false 
+                hour12: false
             });
             if (clockEl) clockEl.textContent = `${timeStr} WIB`;
             if (topbarClockEl) topbarClockEl.textContent = `${timeStr} WIB`;
@@ -2714,14 +2714,14 @@
         const topbarLatencyEl = document.getElementById('admin-topbar-latency');
         const kpiDbEl = document.getElementById('kpi-val-sa_cloud_db');
         const statusEl = document.getElementById('super-admin-db-status');
-        
+
         const startTime = performance.now();
         try {
             const config = (typeof window !== 'undefined' && window.ASNAWIYYAH_CONFIG) || {};
             const sbUrl = config.supabaseUrl || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : 'https://tkjhfhyabacbyknwrysh.supabase.co');
             const apiKey = config.supabaseKey || (typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '');
             const testUrl = `${sbUrl}/rest/v1/roles_permissions?select=role_key&limit=1`;
-            
+
             const response = await fetch(testUrl, {
                 method: 'GET',
                 headers: {
@@ -2731,10 +2731,10 @@
             });
             const duration = Math.round(performance.now() - startTime);
             const latencyText = `(${duration}ms)`;
-            
+
             if (latencyEl) {
                 latencyEl.textContent = latencyText;
-                latencyEl.className = duration < 120 
+                latencyEl.className = duration < 120
                     ? 'text-[10px] text-emerald-400 font-mono bg-emerald-900/50 px-1.5 py-0.2 rounded border border-emerald-500/30'
                     : 'text-[10px] text-amber-400 font-mono bg-amber-900/50 px-1.5 py-0.2 rounded border border-amber-500/30';
             }
@@ -2756,10 +2756,10 @@
     function checkPwaHealthStatus() {
         const kpiPwaEl = document.getElementById('kpi-val-sa_pwa');
         if (!kpiPwaEl) return;
-        
+
         const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
         const hasSw = 'serviceWorker' in navigator && !!navigator.serviceWorker.controller;
-        
+
         if (isStandalone) {
             kpiPwaEl.textContent = 'Standalone (v19)';
         } else if (hasSw) {
@@ -2788,7 +2788,7 @@
                     return;
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
         kpiSessionsEl.innerText = '1 Pengguna Online';
     }
 
@@ -2819,9 +2819,9 @@
      * Segarkan nilai metrik pada 4 kartu KPI dashboard secara realtime
      */
     function updateAdminDashboardKpis() {
-        const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) || 
-                           sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                           sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
+        const activeRole = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
+            sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+            sessionStorage.getItem('asnawiyyah_admin_role') || 'SUPER_ADMIN';
         const profile = ROLE_DASHBOARD_PROFILES[activeRole] || ROLE_DASHBOARD_PROFILES['ADMIN'];
         if (!profile || !Array.isArray(profile.kpis)) return;
 
@@ -2896,6 +2896,6 @@
         } else {
             setTimeout(fetchRolePermissionsFromBackend, 30);
         }
-    } catch (e) {}
+    } catch (e) { }
 
 })(window, document);

@@ -941,6 +941,9 @@ function doPost(e) {
       const token = payload.token || (payload.data && payload.data.token) || null;
       return createJsonResponse(getKedisiplinanDashboardSummary(token));
     }
+    if (action === "initKedisiplinanSheets" || action === "kedisiplinan.initSheets") {
+      return createJsonResponse(initKedisiplinanSheets());
+    }
 
     // ========================================================
     // PROGRAM DATA SOURCE v2.0 API ROUTER (POST)
@@ -1193,6 +1196,9 @@ function doGet(e) {
     }
     if (action === "getKedisiplinanDashboardSummary" || action === "kedisiplinan.dashboardSummary") {
       return createJsonResponse(getKedisiplinanDashboardSummary(e.parameter.token));
+    }
+    if (action === "initKedisiplinanSheets" || action === "kedisiplinan.initSheets") {
+      return createJsonResponse(initKedisiplinanSheets());
     }
 
     // ========================================================

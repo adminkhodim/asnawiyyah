@@ -32,9 +32,37 @@ const HEADERS_KEDISIPLINAN_LOGS = [
 ];
 
 /**
+ * Inisialisasi Tab Kedisiplinan_Master dan Kedisiplinan_Logs di Google Spreadsheet
+ * Dapat dijalankan langsung dengan menekan tombol 'Jalankan' di editor Google Apps Script.
+ */
+function initKedisiplinanSheets() {
+  try {
+    const ss = getDatabaseSpreadsheet();
+    Logger.log("[INIT KEDISIPLINAN] Memeriksa & membuat sheet Kedisiplinan di Spreadsheet...");
+    ensureKedisiplinanSchema(ss);
+    Logger.log("🎉 [SUCCESS] Tab 'Kedisiplinan_Master' dan 'Kedisiplinan_Logs' telah siap di Google Spreadsheet!");
+    return {
+      status: "success",
+      success: true,
+      message: "Tab 'Kedisiplinan_Master' dan 'Kedisiplinan_Logs' berhasil disiapkan di Google Spreadsheet!"
+    };
+  } catch (err) {
+    Logger.log("[INIT ERROR] " + err.message);
+    console.error("[INIT KEDISIPLINAN ERROR]", err);
+    return { status: "error", success: false, message: err.message };
+  }
+}
+
+/**
  * Helper mendapatkan atau membuat sheet dengan header standar
  */
 function getOrCreateKedisiplinanSheet(ss, sheetName, defaultHeaders, headerBgColor) {
+  // Jika dipanggil manual tanpa argumen dari toolbar editor Apps Script
+  if (!sheetName || !defaultHeaders) {
+    Logger.log("[INFO] getOrCreateKedisiplinanSheet dipanggil tanpa parameter. Menjalankan initKedisiplinanSheets()...");
+    return initKedisiplinanSheets();
+  }
+
   if (!ss) ss = getDatabaseSpreadsheet();
   let sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
@@ -78,7 +106,7 @@ function ensureKedisiplinanSchema(ss) {
   getOrCreateKedisiplinanSheet(ss, SHEET_KEDISIPLINAN_LOGS, HEADERS_KEDISIPLINAN_LOGS, "#065f46");
 
   // Jika master masih kosong, lakukan seeding 10 aturan standar pesantren
-  if (masterSheet.getLastRow() <= 1) {
+  if (masterSheet && masterSheet.getLastRow() <= 1) {
     const seedData = [
       ["RULE-001", "Pasal 3 Ayat 1", "Terlambat Mengikuti Sholat Berjamaah Maktubah", "RINGAN", 5, "Membaca Dzikir / Wirid Ba'da Sholat di Serambi Masjid", "AKTIF", 1, new Date().toISOString(), new Date().toISOString()],
       ["RULE-002", "Pasal 3 Ayat 2", "Tidak Hadir / Terlambat Masuk Halaqah Tahfidz", "RINGAN", 5, "Menambah Setoran Ziyadah 1 Halaman di Luar Jam Wajib", "AKTIF", 2, new Date().toISOString(), new Date().toISOString()],
@@ -92,6 +120,7 @@ function ensureKedisiplinanSchema(ss) {
       ["RULE-010", "Pasal 6 Ayat 5", "Meninggalkan Pondok Tanpa Izin Berhari-hari (Kabur/Bolos)", "BERAT", 100, "Pemanggilan langsung Wali Santri ke Ndalem Pengasuh & evaluasi status santri", "AKTIF", 10, new Date().toISOString(), new Date().toISOString()]
     ];
     masterSheet.getRange(2, 1, seedData.length, seedData[0].length).setValues(seedData);
+    Logger.log("[SCHEMA AUTO-INIT] Berhasil memasukkan 10 aturan default ke " + SHEET_KEDISIPLINAN_MASTER);
   }
 }
 
