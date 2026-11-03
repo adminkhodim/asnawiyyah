@@ -324,6 +324,13 @@
                         if (['ASATIDZ', 'BENDAHARA', 'PENGURUS', 'PENGASUH'].includes(r) && !state[r].includes('wali.view')) {
                             state[r].push('wali.view');
                         }
+                        if (['ADMIN', 'PENGURUS'].includes(r)) {
+                            if (!state[r].includes('kedisiplinan.view')) state[r].push('kedisiplinan.view');
+                            if (!state[r].includes('kedisiplinan.manage')) state[r].push('kedisiplinan.manage');
+                        }
+                        if (['PENGASUH', 'ASATIDZ', 'WALI_SANTRI'].includes(r) && !state[r].includes('kedisiplinan.view')) {
+                            state[r].push('kedisiplinan.view');
+                        }
                     }
                 }
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(state));
