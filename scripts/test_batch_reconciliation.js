@@ -155,13 +155,13 @@ const sandbox = {
     getActiveSpreadsheet: () => mockSpreadsheet,
     getUi: () => ({
       createMenu: (title) => ({
-        addItem: function() { return this; },
-        addSeparator: function() { return this; },
-        addToUi: () => {}
+        addItem: function () { return this; },
+        addSeparator: function () { return this; },
+        addToUi: () => { }
       })
     })
   },
-  Logger: { log: () => {} },
+  Logger: { log: () => { } },
   console: console,
   setTimeout: setTimeout
 };
