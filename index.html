@@ -12065,6 +12065,10 @@
                         <div class="flex items-center space-x-2">
                             <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Daftar Notifikasi</h3>
                             <span id="admin-notif-list-count" class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2.5 py-0.5 rounded-lg">0 Warta</span>
+                            <button type="button" id="admin-notif-sync-btn" onclick="syncAdminNotifikasiToCloud()" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center space-x-1.5 transition active:scale-95" title="Sinkronkan seluruh warta dari Spreadsheet ke Cloud Supabase">
+                                <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+                                <span>Sinkron Cloud</span>
+                            </button>
                         </div>
                         <div class="w-full sm:w-64">
                             <input type="text" id="admin-notif-search" oninput="filterAdminNotifikasiList()" placeholder="Cari judul notifikasi..." class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#253447] bg-slate-50 dark:bg-[#1c2836] focus:bg-white focus:ring-2 focus:ring-rose-600 focus:outline-none transition">

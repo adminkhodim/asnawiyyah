@@ -19,7 +19,8 @@ const MODULAR_FILES = [
   '03_PPDB.gs',
   '04_Tahfidz.gs',
   '05_CMS.gs',
-  '06_MasterData.gs'
+  '06_MasterData.gs',
+  '07_Kedisiplinan.gs'
 ];
 
 console.log('🔄 Bundling modular backend files in alphabetical order...');

@@ -1,10 +1,10 @@
 {
-  "version": "2.5.1",
-  "buildTime": "2026-11-03T12:00:00+07:00",
-  "title": "Pembaruan Modul Kedisiplinan & Tarbiyah Santri",
+  "version": "2.5.2",
+  "buildTime": "2026-11-05T17:30:00+07:00",
+  "title": "Pembaruan Sinkronisasi Cloud Notifikasi & Warta",
   "highlights": [
-    "Modul baru: Kedisiplinan & Tarbiyah Santri di Pusat Kontrol",
-    "Pencatatan pelanggaran lapangan cerdas & rekomendasi ta'zir otomatis",
-    "Mutaba'ah kedisiplinan dan transparansi penuh untuk Wali Santri"
+    "Sinkronisasi real-time warta notifikasi ke Cloud Database Supabase",
+    "Tombol Sinkron Cloud instan di panel Manajemen Notifikasi Admin",
+    "Pembaruan modul integrasi Google Spreadsheet & Supabase"
   ]
 }

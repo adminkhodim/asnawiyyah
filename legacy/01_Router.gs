@@ -651,6 +651,19 @@ function doPost(e) {
       );
     }
 
+    if (action === "syncNotifikasiToSupabase" || action === "notifikasi.syncToSupabase") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "EDITOR"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        syncNotifikasiSheetToSupabase()
+      );
+    }
+
     if (action === "toggleBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {

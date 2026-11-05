@@ -126,6 +126,13 @@ const mockBeritaSheet = createMockSheet('Berita',
   ]
 );
 
+const mockNotifikasiSheet = createMockSheet('Notifikasi',
+  ['id', 'Judul', 'Kategori', 'Tanggal', 'Ringkasan', 'Isi', 'Gambar_URL', 'Is_Popup', 'Status', 'CreatedAt'],
+  [
+    ['NOTIF_001', 'Pengumuman Penting', 'Pengumuman', '2026-11-01', 'Ringkasan warta', 'Isi pengumuman resmi', 'https://img.url', 1, 'Aktif', '2026-11-01T10:00:00.000Z']
+  ]
+);
+
 const mockSpreadsheet = {
   getSheetByName: (n) => {
     if (n === 'Students' || n === 'data_santri') return mockStudentsSheet;
@@ -134,8 +141,10 @@ const mockSpreadsheet = {
     if (n === 'Izin_Perpulangan') return mockIzinSheet;
     if (n === 'Pegawai') return mockPegawaiSheet;
     if (n === 'Berita' || n === 'Kabar') return mockBeritaSheet;
+    if (n === 'Notifikasi') return mockNotifikasiSheet;
     return null;
-  }
+  },
+  getSheets: () => [mockStudentsSheet, mockTahfidzSheet, mockCapaianSheet, mockIzinSheet, mockPegawaiSheet, mockBeritaSheet, mockNotifikasiSheet]
 };
 
 const sandbox = {
@@ -195,6 +204,7 @@ assert(targetEndpoints.some(u => u.includes('/rest/v1/tahfidz_capaian?on_conflic
 assert(targetEndpoints.some(u => u.includes('/rest/v1/izin_perpulangan?on_conflict=id_izin')), 'Harus memanggil endpoint izin_perpulangan');
 assert(targetEndpoints.some(u => u.includes('/rest/v1/pegawai?on_conflict=employee_id')), 'Harus memanggil endpoint pegawai');
 assert(targetEndpoints.some(u => u.includes('/rest/v1/berita?on_conflict=news_id')), 'Harus memanggil endpoint berita');
+assert(targetEndpoints.some(u => u.includes('/rest/v1/notifikasi?on_conflict=id')), 'Harus memanggil endpoint notifikasi');
 
 for (const req of replicatedRequests) {
   assert.strictEqual(req.options.headers.Authorization, 'Bearer test-service-role-secret-key-12345');

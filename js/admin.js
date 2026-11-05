@@ -6590,6 +6590,48 @@
             }
         }
 
+        async function syncAdminNotifikasiToCloud() {
+            const btn = document.getElementById('admin-notif-sync-btn');
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+            if (btn) btn.disabled = true;
+
+            try {
+                if (typeof showToast === 'function') showToast('🔄 Menyinkronkan warta dari Spreadsheet ke Supabase...', 'info');
+                const token = getAdminSessionToken();
+                let res = null;
+                if (typeof apiPost === 'function') {
+                    res = await apiPost('syncNotifikasiToSupabase', { token });
+                } else {
+                    const resp = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'syncNotifikasiToSupabase', token })
+                    });
+                    res = await resp.json();
+                }
+
+                if (res && (res.status === 'success' || res.synced !== undefined || res.success)) {
+                    const total = res.synced !== undefined ? res.synced : (res.data && res.data.synced !== undefined ? res.data.synced : 'seluruh');
+                    if (typeof showToast === 'function') showToast(`✅ Sukses menyinkronkan ${total} warta notifikasi ke Supabase!`, 'success');
+                    try {
+                        localStorage.removeItem('asn_cached_notifikasi');
+                    } catch (e) {}
+                    await loadAdminNotifikasi();
+                    if (typeof loadNotifikasi === 'function') await loadNotifikasi();
+                } else {
+                    const errMsg = (res && res.message) || (res && res.errors && res.errors.join(', ')) || 'Gagal sinkronisasi';
+                    if (typeof showToast === 'function') showToast('❌ ' + errMsg, 'error');
+                }
+            } catch (err) {
+                console.error('Error syncNotifikasiToSupabase:', err);
+                if (typeof showToast === 'function') showToast('❌ Gagal sinkronisasi: ' + err.message, 'error');
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+                if (btn) btn.disabled = false;
+            }
+        }
+        window.syncAdminNotifikasiToCloud = syncAdminNotifikasiToCloud;
+
         // ==================== DASHBOARD ADMIN: MANAJEMEN DATA SANTRI ====================
         let adminStudentsData = [];
         let filteredAdminStudentsData = [];

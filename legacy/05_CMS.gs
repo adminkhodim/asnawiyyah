@@ -1607,6 +1607,9 @@ function simpanNotifikasi(formData) {
     let isEdit = false;
     const isPopupVal = (formData.is_popup === true || formData.is_popup === 1 || String(formData.is_popup) === "1" || String(formData.is_popup).toLowerCase() === "true") ? 1 : 0;
     const tanggalVal = formData.tanggal || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
+    const statusVal = (formData.status === "Nonaktif") ? "Nonaktif" : "Aktif";
+    let targetId = formData.id;
+    let createdAtVal = new Date().toISOString();
 
     if (formData.id) {
       for (let i = 1; i < data.length; i++) {
@@ -1618,7 +1621,11 @@ function simpanNotifikasi(formData) {
           sheet.getRange(i + 1, 6).setValue(formData.isi || "");
           if (fileUrl !== undefined) sheet.getRange(i + 1, 7).setValue(fileUrl);
           sheet.getRange(i + 1, 8).setValue(isPopupVal);
-          sheet.getRange(i + 1, 9).setValue(formData.status || "Aktif");
+          sheet.getRange(i + 1, 9).setValue(statusVal);
+          if (data[i][9]) {
+            const rawDt = data[i][9];
+            createdAtVal = (rawDt instanceof Date) ? rawDt.toISOString() : String(rawDt);
+          }
           isEdit = true;
           break;
         }
@@ -1626,9 +1633,9 @@ function simpanNotifikasi(formData) {
     }
 
     if (!isEdit) {
-      const newId = "NOTIF_" + new Date().getTime();
+      targetId = "NOTIF_" + new Date().getTime();
       sheet.appendRow([
-        newId,
+        targetId,
         formData.judul || "",
         formData.kategori || "Pengumuman",
         tanggalVal,
@@ -1636,12 +1643,42 @@ function simpanNotifikasi(formData) {
         formData.isi || "",
         fileUrl,
         isPopupVal,
-        formData.status || "Aktif",
-        new Date().toISOString()
+        statusVal,
+        createdAtVal
       ]);
     }
 
-    return { status: "success", message: isEdit ? "Notifikasi berhasil diperbarui!" : "Notifikasi berhasil ditambahkan!" };
+    // Replikasi Server-Side Notifikasi ke Supabase (via service_role key)
+    try {
+      if (typeof replicateToSupabase === "function") {
+        const notifPayload = {
+          id: String(targetId),
+          judul: String(formData.judul || "Pengumuman"),
+          kategori: String(formData.kategori || "Pengumuman"),
+          tanggal: String(tanggalVal),
+          ringkasan: formData.ringkasan ? String(formData.ringkasan) : null,
+          isi: String(formData.isi || ""),
+          gambar_url: fileUrl || null,
+          is_popup: (isPopupVal === 1),
+          status: statusVal,
+          created_at: createdAtVal
+        };
+
+        if (isEdit) {
+          replicateToSupabase("/rest/v1/notifikasi?id=eq." + encodeURIComponent(targetId), "PATCH", notifPayload);
+        } else {
+          replicateToSupabase("/rest/v1/notifikasi?on_conflict=id", "POST", notifPayload);
+        }
+      }
+    } catch (sbErr) {
+      Logger.log("[REPLICATE NOTIFIKASI ERROR] " + sbErr.message);
+    }
+
+    return { 
+      status: "success", 
+      id: targetId,
+      message: isEdit ? "Notifikasi berhasil diperbarui!" : "Notifikasi berhasil ditambahkan!" 
+    };
   } catch (err) {
     return { status: "error", message: err.toString() };
   }
@@ -1659,6 +1696,16 @@ function deleteNotifikasiData(formData) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(notifId)) {
         sheet.deleteRow(i + 1);
+
+        // Replikasi Server-Side Hapus Notifikasi ke Supabase (via service_role key)
+        try {
+          if (typeof replicateToSupabase === "function") {
+            replicateToSupabase("/rest/v1/notifikasi?id=eq." + encodeURIComponent(notifId), "DELETE");
+          }
+        } catch (sbErr) {
+          Logger.log("[REPLICATE DELETE NOTIFIKASI ERROR] " + sbErr.message);
+        }
+
         return { status: "success", message: "Notifikasi berhasil dihapus!" };
       }
     }
