@@ -5410,28 +5410,47 @@ const SHEET_ROLES_PERMISSIONS = "Roles_Permissions";
 const DEFAULT_ROLE_PERMISSIONS_MAP = {
   "SUPER_ADMIN": ["*"],
   "ADMIN": [
-    "santri.view", "santri.create", "santri.edit", "santri.export", "unit.manage",
+    "santri.view", "santri.create", "santri.edit", "santri.delete", "santri.export",
+    "wali.view", "wali.manage",
+    "alumni.view", "alumni.manage", "unit.manage", "jadwal.manage",
     "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tahfidz.halaqah", "presensi.view", "presensi.entry",
     "keuangan.view", "keuangan.spp", "keuangan.verify", "ppdb.manage",
-    "berita.manage", "banner.manage", "galeri.manage", "notifikasi.broadcast",
-    "profil.manage", "pegawai.manage", "users.manage", "roles.manage", "system.config"
+    "berita.manage", "banner.manage", "program.manage", "galeri.manage", "notifikasi.broadcast",
+    "profil.manage", "pegawai.manage", "users.manage", "roles.manage", "system.config",
+    "perpulangan.view", "perpulangan.manage",
+    "kedisiplinan.view", "kedisiplinan.manage",
+    "izin-asatidz.view", "izin-asatidz.manage"
   ],
   "ASATIDZ": [
-    "santri.view",
-    "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tahfidz.halaqah", "presensi.view", "presensi.entry",
-    "pegawai.manage", "profil.manage"
+    "santri.view", "wali.view",
+    "tahfidz.view", "tahfidz.entry", "tahfidz.target", "tahfidz.halaqah",
+    "presensi.view", "presensi.entry",
+    "pegawai.manage", "profil.manage",
+    "perpulangan.view",
+    "kedisiplinan.view",
+    "izin-asatidz.view", "izin-asatidz.manage"
   ],
   "BENDAHARA": [
-    "santri.view", "ppdb.manage", "keuangan.view", "keuangan.spp", "keuangan.verify", "notifikasi.broadcast", "pegawai.manage", "profil.manage"
+    "keuangan.view", "keuangan.spp", "keuangan.verify", "santri.view", "wali.view", "notifikasi.broadcast"
   ],
   "PENGURUS": [
-    "santri.view", "presensi.view", "presensi.entry", "unit.manage", "ppdb.manage", "berita.manage", "banner.manage", "galeri.manage", "notifikasi.broadcast", "profil.manage"
+    "presensi.view", "presensi.entry", "alumni.view", "unit.manage", "jadwal.manage", "ppdb.manage",
+    "wali.view",
+    "berita.manage", "banner.manage", "program.manage", "galeri.manage", "notifikasi.broadcast",
+    "perpulangan.view", "perpulangan.manage",
+    "kedisiplinan.view", "kedisiplinan.manage",
+    "izin-asatidz.view"
   ],
   "PENGASUH": [
-    "santri.view", "tahfidz.view", "presensi.view", "unit.manage", "ppdb.manage", "keuangan.view", "berita.manage", "galeri.manage", "profil.manage", "pegawai.manage"
+    "santri.view", "wali.view", "tahfidz.view", "jadwal.manage", "alumni.view", "pegawai.manage", "keaktifan.view", "berita.manage", "users.manage",
+    "perpulangan.view", "perpulangan.manage",
+    "kedisiplinan.view",
+    "izin-asatidz.view", "izin-asatidz.manage"
   ],
   "WALI_SANTRI": [
-    "santri.view", "tahfidz.view", "presensi.view", "keuangan.view", "berita.manage", "galeri.manage", "profil.manage"
+    "santri.view", "tahfidz.view", "presensi.view", "keuangan.view",
+    "perpulangan.view", "perpulangan.manage",
+    "kedisiplinan.view"
   ]
 };
 

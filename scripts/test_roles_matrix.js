@@ -6,7 +6,7 @@ const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-console.log('🧪 Menguji Logika Matriks Izin RBAC (22 Modul x 7 Peran)...');
+console.log('🧪 Menguji Logika Matriks Izin RBAC (23 Modul x 7 Peran)...');
 
 // Mock browser environment for roles.js
 const mockStorage = {
@@ -104,7 +104,7 @@ assert(izinAsatidzMod, 'Modul izin-asatidz harus terdaftar dalam matriks');
 assert.strictEqual(izinAsatidzMod.permissions.SUPER_ADMIN, 'full');
 assert.strictEqual(izinAsatidzMod.permissions.ADMIN, 'full');
 assert.strictEqual(izinAsatidzMod.permissions.PENGASUH, 'full');
-assert.strictEqual(izinAsatidzMod.permissions.ASATIDZ, 'entry');
+assert.strictEqual(izinAsatidzMod.permissions.ASATIDZ, 'write');
 assert.strictEqual(izinAsatidzMod.permissions.PENGURUS, 'read');
 assert.strictEqual(izinAsatidzMod.permissions.BENDAHARA, 'none');
 assert.strictEqual(izinAsatidzMod.permissions.WALI_SANTRI, 'none');
@@ -182,6 +182,7 @@ const adminGridHtml = indexHtmlContent.substring(adminGridStart, adminGridEnd);
 assert(adminGridHtml.includes('data-admin-module="alumni"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="alumni"');
 assert(adminGridHtml.includes('data-admin-module="wali-santri"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
 assert(adminGridHtml.includes('data-admin-module="kedisiplinan"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="kedisiplinan"');
+assert(adminGridHtml.includes('data-admin-module="izin-asatidz"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="izin-asatidz"');
 
 const pengasuhGridStart = indexHtmlContent.indexOf('id="pengasuh-control-center-grid"');
 const pengasuhGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card', pengasuhGridStart);
@@ -189,7 +190,8 @@ const pengasuhGridHtml = indexHtmlContent.substring(pengasuhGridStart, pengasuhG
 assert(pengasuhGridHtml.includes('data-admin-module="alumni"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="alumni"');
 assert(pengasuhGridHtml.includes('data-admin-module="wali-santri"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
 assert(pengasuhGridHtml.includes('data-admin-module="kedisiplinan"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="kedisiplinan"');
-console.log('✅ Verifikasi tombol modul Alumni, Wali Santri & Kedisiplinan di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
+assert(pengasuhGridHtml.includes('data-admin-module="izin-asatidz"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="izin-asatidz"');
+console.log('✅ Verifikasi tombol modul Alumni, Wali Santri, Kedisiplinan & Izin Asatidz di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
 
 // Uji coba toggle dinamis realtime lewat matriks (PPDB & Wali Santri)
 mockWindow.handleMatrixCellChange('ppdb', 'PENGASUH', 'read');

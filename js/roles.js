@@ -338,6 +338,13 @@
                         if (['PENGASUH', 'ASATIDZ', 'WALI_SANTRI'].includes(r) && !state[r].includes('kedisiplinan.view')) {
                             state[r].push('kedisiplinan.view');
                         }
+                        if (['ADMIN', 'PENGASUH', 'ASATIDZ'].includes(r)) {
+                            if (!state[r].includes('izin-asatidz.view')) state[r].push('izin-asatidz.view');
+                            if (!state[r].includes('izin-asatidz.manage')) state[r].push('izin-asatidz.manage');
+                        }
+                        if (r === 'PENGURUS' && !state[r].includes('izin-asatidz.view')) {
+                            state[r].push('izin-asatidz.view');
+                        }
                     }
                 }
                 localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(state));
@@ -350,7 +357,7 @@
     let currentModalPermissions = [];
 
     // Matriks Hak Akses per Modul Sistem (CRUD & Permissions)
-    // 21 Modul Lengkap Aplikasi PPTQ Asnawiyyah
+    // 23 Modul Lengkap Aplikasi PPTQ Asnawiyyah
     // Nilai akses: 'full' (CRUD Lengkap), 'read' (Lihat Saja), 'write' (Entri/Input), 'read_own' (Milik Sendiri), 'none' (Tutup)
     const MODULE_PERMISSIONS_MATRIX = [
         // 1. Kesantrian & Kesiswaan (10 Modul)
@@ -574,7 +581,7 @@
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
                 PENGASUH: 'full',
-                ASATIDZ: 'entry',
+                ASATIDZ: 'write',
                 PENGURUS: 'read',
                 BENDAHARA: 'none',
                 WALI_SANTRI: 'none'
@@ -739,7 +746,20 @@
         try {
             const ls = window.localStorage || (typeof localStorage !== 'undefined' ? localStorage : null);
             const raw = ls ? ls.getItem('ASNAWIYYAH_ROLE_MATRIX_STATE') : null;
-            if (raw) return JSON.parse(raw);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                // Bersihkan cache invalid/stale untuk izin-asatidz agar mengikuti default baseline yang valid
+                if (parsed['izin-asatidz___ASATIDZ'] === 'entry' || parsed['izin-asatidz___ASATIDZ'] === 'none') {
+                    delete parsed['izin-asatidz___ASATIDZ'];
+                }
+                if (parsed['izin-asatidz___ADMIN'] === 'none') {
+                    delete parsed['izin-asatidz___ADMIN'];
+                }
+                if (parsed['izin-asatidz___PENGASUH'] === 'none') {
+                    delete parsed['izin-asatidz___PENGASUH'];
+                }
+                return parsed;
+            }
         } catch (e) { }
         return {};
     })();
@@ -788,11 +808,21 @@
                 } else {
                     const reqPerms = MODULE_TO_PERMISSIONS[m.key] || [];
                     const hasPerm = reqPerms.some(pk => perms.includes(pk));
+                    const baseline = (m.permissions && m.permissions[rKey]) || 'none';
                     if (!hasPerm) {
-                        SAVED_MATRIX_STATE[cellKey] = 'none';
+                        // Jika role perms berasal dari cache lama atau sheet lama yang belum memuat modul baru,
+                        // jangan menutup izin jika default baseline-nya aktif, melainkan backfill otomatis.
+                        if (baseline !== 'none') {
+                            const backfilled = convertMatrixLevelToPermissions(m.key, baseline);
+                            backfilled.forEach(pk => {
+                                if (!perms.includes(pk)) perms.push(pk);
+                            });
+                            SAVED_MATRIX_STATE[cellKey] = baseline;
+                        } else {
+                            SAVED_MATRIX_STATE[cellKey] = 'none';
+                        }
                     } else {
                         if (!SAVED_MATRIX_STATE[cellKey] || SAVED_MATRIX_STATE[cellKey] === 'none') {
-                            const baseline = (m.permissions && m.permissions[rKey]) || 'read';
                             SAVED_MATRIX_STATE[cellKey] = baseline !== 'none' ? baseline : 'read';
                         }
                     }
@@ -1900,6 +1930,18 @@
             }
 
             if (permissionsMap && Object.keys(permissionsMap).length > 0) {
+                // Self-healing backfill jika spreadsheet / cache belum menyimpan modul baru
+                for (const r in permissionsMap) {
+                    if (Array.isArray(permissionsMap[r])) {
+                        if (['ADMIN', 'PENGASUH', 'ASATIDZ'].includes(r)) {
+                            if (!permissionsMap[r].includes('izin-asatidz.view')) permissionsMap[r].push('izin-asatidz.view');
+                            if (!permissionsMap[r].includes('izin-asatidz.manage')) permissionsMap[r].push('izin-asatidz.manage');
+                        }
+                        if (r === 'PENGURUS' && !permissionsMap[r].includes('izin-asatidz.view')) {
+                            permissionsMap[r].push('izin-asatidz.view');
+                        }
+                    }
+                }
                 ROLE_PERMISSIONS_STATE = permissionsMap;
                 try {
                     localStorage.setItem('ASNAWIYYAH_ROLE_PERMS_CACHE', JSON.stringify(ROLE_PERMISSIONS_STATE));
