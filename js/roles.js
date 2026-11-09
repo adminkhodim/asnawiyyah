@@ -237,6 +237,7 @@
         'wali-santri': ['wali.view', 'wali.manage'],
         'alumni': ['alumni.view', 'alumni.manage'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
+        'tahfidz-evaluasi': ['tahfidz.view', 'tahfidz.entry'],
         'keaktifan-asatidz': ['keaktifan.view'],
         'izin-asatidz': ['izin-asatidz.view', 'izin-asatidz.manage'],
         'presensi': ['presensi.view', 'presensi.entry'],
@@ -399,6 +400,22 @@
             module: 'Tahfidz Al-Qur\'an',
             icon: 'fa-book-quran',
             desc: 'Hafalan 30 juz, rekapitulasi, target capaian & halaqah plotting.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'read',
+                ASATIDZ: 'full',
+                PENGURUS: 'read',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'read_own'
+            }
+        },
+        {
+            key: 'tahfidz-evaluasi',
+            category: 'Kesantrian & Pendidikan',
+            module: 'Evaluasi & Riwayat Tahfidz',
+            icon: 'fa-chart-line',
+            desc: 'Analitik setoran hafalan, mutabaah berkala, filter periode data & cetak rekapitulasi.',
             permissions: {
                 SUPER_ADMIN: 'full',
                 ADMIN: 'full',
@@ -1969,21 +1986,21 @@
     // Mapping Modul yang Boleh Diakses per Peran
     const ROLE_ALLOWED_MODULES = {
         'SUPER_ADMIN': [
-            'santri', 'wali-santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
+            'santri', 'wali-santri', 'tahfidz', 'tahfidz-evaluasi', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
             'keuangan', 'kedisiplinan', 'keaktifan-asatidz', 'izin-asatidz',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ADMIN': [
-            'santri', 'wali-santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
+            'santri', 'wali-santri', 'tahfidz', 'tahfidz-evaluasi', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
             'keuangan', 'kedisiplinan', 'izin-asatidz',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ASATIDZ': [
-            'tahfidz', 'presensi', 'santri', 'wali-santri', 'pegawai', 'profil-lembaga', 'perpulangan', 'kedisiplinan', 'izin-asatidz'
+            'tahfidz', 'tahfidz-evaluasi', 'presensi', 'santri', 'wali-santri', 'pegawai', 'profil-lembaga', 'perpulangan', 'kedisiplinan', 'izin-asatidz'
         ],
         'BENDAHARA': [
             'keuangan', 'santri', 'wali-santri', 'ppdb', 'notifikasi', 'pegawai', 'profil-lembaga', 'alumni'
@@ -1992,10 +2009,10 @@
             'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'ppdb', 'santri', 'wali-santri', 'perpulangan', 'kedisiplinan', 'izin-asatidz', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
         ],
         'PENGASUH': [
-            'santri', 'wali-santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'izin-asatidz', 'ppdb', 'pegawai', 'perpulangan', 'kedisiplinan', 'berita', 'galeri', 'profil-lembaga', 'users'
+            'santri', 'wali-santri', 'tahfidz', 'tahfidz-evaluasi', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'izin-asatidz', 'ppdb', 'pegawai', 'perpulangan', 'kedisiplinan', 'berita', 'galeri', 'profil-lembaga', 'users'
         ],
         'WALI_SANTRI': [
-            'santri', 'tahfidz', 'presensi', 'perpulangan', 'kedisiplinan', 'berita', 'galeri', 'profil-lembaga'
+            'santri', 'tahfidz', 'tahfidz-evaluasi', 'presensi', 'perpulangan', 'kedisiplinan', 'berita', 'galeri', 'profil-lembaga'
         ]
     };
 

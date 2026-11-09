@@ -1,10 +1,11 @@
 {
-    "version": "2.6.1",
-    "buildTime": "2026-11-10T02:56:00+07:00",
-    "title": "Restrukturisasi Kategori Sidebar Portal Administrasi Opsi A",
+    "version": "2.6.2",
+    "buildTime": "2026-11-10T06:55:00+07:00",
+    "title": "Peluncuran Menu Evaluasi Tahfidz & Perbaikan Sistem Cetak Resmi via Isolated iFrame",
     "highlights": [
-        "Penataan ulang 7 Kategori Sidebar: Ringkasan, Kesantrian & Ketertiban, Akademik & Tahfidz, Kepegawaian, Pendaftaran & Alumni, Publikasi, Sistem",
-        "Penempatan Akademik & Tahfidz tepat setelah Kesantrian & Ketertiban sesuai hierarki operasional pesantren",
-        "Menjaga 100% integritas fungsi tombol navigasi, wewenang RBAC, dan filter grup accordion dinamis"
+        "Penambahan modul baru 'Evaluasi Tahfidz' pada grup Akademik & Tahfidz untuk jurnal riwayat setoran & analitik",
+        "Penyediaan Pemilih Periode Data 2 Kolom responsif (Real-time, Kemarin, 7 Hari, 30 Hari, Hari Khusus, Pekan, Bulan, Tahun)",
+        "Solusi cetak dokumen bebas blank page menggunakan Isolated Hidden iFrame Engine ber-Kop Surat Resmi PPTQ Asnawiyyah",
+        "Dukungan cetak resmi Rekapitulasi Tahfidz (Landscape), Kartu Mutaba'ah Santri (Portrait), dan Laporan Evaluasi Berkala (Landscape)"
     ]
 }

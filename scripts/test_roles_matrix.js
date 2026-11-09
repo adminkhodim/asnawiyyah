@@ -6,7 +6,7 @@ const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-console.log('🧪 Menguji Logika Matriks Izin RBAC (23 Modul x 7 Peran)...');
+console.log('🧪 Menguji Logika Matriks Izin RBAC (24 Modul x 7 Peran)...');
 
 // Mock browser environment for roles.js
 const mockStorage = {
@@ -47,11 +47,11 @@ const context = vm.createContext({
 
 vm.runInContext(rolesCode, context);
 
-// 1. Verifikasi 23 Modul
+// 1. Verifikasi 24 Modul
 const matrix = mockWindow.MODULE_PERMISSIONS_MATRIX;
 assert(Array.isArray(matrix), 'MODULE_PERMISSIONS_MATRIX harus berupa array');
 console.log(`✅ Jumlah modul terdaftar: ${matrix.length}`);
-assert.strictEqual(matrix.length, 23, `Harus ada tepat 23 modul, ditemukan ${matrix.length}`);
+assert.strictEqual(matrix.length, 24, `Harus ada tepat 24 modul, ditemukan ${matrix.length}`);
 
 // Validasi struktur tiap modul
 matrix.forEach((mod, idx) => {
@@ -60,7 +60,7 @@ matrix.forEach((mod, idx) => {
     assert(mod.category, `Modul ${mod.key} harus punya category`);
     assert(mod.permissions, `Modul ${mod.key} harus punya baseline permissions`);
 });
-console.log('✅ Semua 23 modul memiliki struktur dan baseline izin yang valid');
+console.log('✅ Semua 24 modul memiliki struktur dan baseline izin yang valid');
 
 // Validasi Modul Data Wali Santri (Modul Mandiri RBAC)
 const waliMod = matrix.find(m => m.key === 'wali-santri');
@@ -109,6 +109,18 @@ assert.strictEqual(izinAsatidzMod.permissions.PENGURUS, 'read');
 assert.strictEqual(izinAsatidzMod.permissions.BENDAHARA, 'none');
 assert.strictEqual(izinAsatidzMod.permissions.WALI_SANTRI, 'none');
 console.log('✅ Modul Izin & Badal Asatidz terverifikasi dengan RBAC 7 Peran');
+
+// Validasi Modul Evaluasi Tahfidz (Modul 24)
+const tahfidzEvalMod = matrix.find(m => m.key === 'tahfidz-evaluasi');
+assert(tahfidzEvalMod, 'Modul tahfidz-evaluasi harus terdaftar dalam matriks');
+assert.strictEqual(tahfidzEvalMod.permissions.SUPER_ADMIN, 'full');
+assert.strictEqual(tahfidzEvalMod.permissions.ADMIN, 'full');
+assert.strictEqual(tahfidzEvalMod.permissions.PENGASUH, 'read');
+assert.strictEqual(tahfidzEvalMod.permissions.ASATIDZ, 'full');
+assert.strictEqual(tahfidzEvalMod.permissions.PENGURUS, 'read');
+assert.strictEqual(tahfidzEvalMod.permissions.BENDAHARA, 'none');
+assert.strictEqual(tahfidzEvalMod.permissions.WALI_SANTRI, 'read_own');
+console.log('✅ Modul Evaluasi & Riwayat Tahfidz terverifikasi dengan RBAC 7 Peran');
 
 // 2. Verifikasi 7 Peran
 const roles = Object.keys(mockWindow.ROLE_DEFINITIONS);

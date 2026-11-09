@@ -5738,24 +5738,709 @@ async function submitNewHalaqah(e) {
 }
 
 // ====================================================================
-// 6. EXPORT & PRINT
+// 6. EXPORT & PRINT (ISOLATED PRINT ENGINE VIA HIDDEN IFRAME)
 // ====================================================================
 
 /**
- * Cetak Rapor Mutaba'ah Santri Perorangan
+ * Runner Cetak Dokumen via Isolated Hidden iFrame
+ * Bebas 100% dari konflik CSS @media print halaman utama
  */
-function printTahfidzStudentCard(studentId) {
-    openTahfidzStudentDetail(studentId);
+function executeTahfidzIsolatedPrint(htmlContent) {
+    let printFrame = document.getElementById('tahfidz-print-iframe');
+    if (!printFrame) {
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'tahfidz-print-iframe';
+        printFrame.style.position = 'fixed';
+        printFrame.style.right = '0';
+        printFrame.style.bottom = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = '0';
+        printFrame.style.opacity = '0';
+        printFrame.style.pointerEvents = 'none';
+        document.body.appendChild(printFrame);
+    }
+
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    if (typeof showToast === 'function') {
+        showToast("Membuka dialog Cetak / Print ke PDF...");
+    }
+
     setTimeout(() => {
-        window.print();
-    }, 500);
+        try {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+        } catch (e) {
+            console.error("Gagal memanggil print iframe:", e);
+            window.print();
+        }
+    }, 400);
 }
 
 /**
- * Cetak Rekapitulasi Tahfidz Pesantren
+ * Cetak Rekapitulasi Tahfidz Pesantren (A4 Landscape)
  */
 function printTahfidzRekap() {
-    window.print();
+    const students = ASNTahfidz.filteredStudents || (ASNTahfidz.data && ASNTahfidz.data.students) || [];
+    if (!students || students.length === 0) {
+        if (typeof showToast === 'function') showToast("⚠️ Tidak ada data santri untuk dicetak.");
+        return;
+    }
+
+    const now = new Date();
+    const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const INDO_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const curDateIndo = `${INDO_DAYS[now.getDay()]}, ${now.getDate()} ${INDO_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+    const curTimeIndo = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+    // Filter aktif
+    const curCat = ASNTahfidz.activeFilterCategory || 'Semua Program';
+    const curHal = ASNTahfidz.activeFilterHalaqah || 'Semua Halaqah';
+    const curGen = ASNTahfidz.activeFilterGender === 'L' ? 'Santri Putra' : (ASNTahfidz.activeFilterGender === 'P' ? 'Santri Putri' : 'Semua Gender');
+    const filterStr = `${curCat} &bull; ${curHal} &bull; ${curGen}`;
+
+    // KPI Metrics
+    const totalSantri = students.length;
+    let khatamCount = 0;
+    let totalJuzSum = 0;
+    let tuntasMurojaahCount = 0;
+
+    students.forEach(st => {
+        const juz = Number(st.progress?.currentJuz || 1);
+        totalJuzSum += juz;
+        if (juz >= 30) khatamCount++;
+        if (st.indikator?.pekanan?.isMurojaahTuntas) tuntasMurojaahCount++;
+    });
+
+    const avgJuz = totalSantri > 0 ? (totalJuzSum / totalSantri).toFixed(1) : "0.0";
+    const pctTuntas = totalSantri > 0 ? Math.round((tuntasMurojaahCount / totalSantri) * 100) : 0;
+
+    const rowsHtml = students.map((st, idx) => {
+        const curJuz = st.progress?.currentJuz || 1;
+        const curHalNo = st.progress?.currentHalaman || 1;
+        const pct = st.progress?.percent || Math.round((curJuz / 30) * 100);
+        const halaqahName = st.halaqah?.namaHalaqah || st.halaqah || '-';
+        const muhafizName = st.halaqah?.muhafiz || st.muhafiz || 'Ustadz Pembina';
+        const setoranInfo = st.setoranTerakhir ? `${st.setoranTerakhir.surah || ''} (${st.setoranTerakhir.nilai || '-'})` : 'Belum Setor';
+        const statusBadge = curJuz >= 30 ? '<span class="badge badge-green">Khatam 30 Juz</span>' : (st.setoranTerakhir ? '<span class="badge badge-blue">Aktif Setor</span>' : '<span class="badge badge-gray">Belum Setor</span>');
+
+        return `
+            <tr>
+                <td class="text-center font-bold">${idx + 1}</td>
+                <td class="text-center font-mono">${escapeHtml(st.nis || '-')}</td>
+                <td>
+                    <div class="font-bold">${escapeHtml(st.name || '-')}</div>
+                    <div class="text-sub">${st.gender === 'P' ? 'Santri Putri' : 'Santri Putra'} &bull; ${escapeHtml(st.program || 'Tahfidz')}</div>
+                </td>
+                <td>
+                    <div class="font-bold">${escapeHtml(halaqahName)}</div>
+                    <div class="text-sub">${escapeHtml(muhafizName)}</div>
+                </td>
+                <td class="text-center font-bold">
+                    Juz ${curJuz} <span class="text-sub">(Hlm ${curHalNo})</span>
+                </td>
+                <td class="text-center">
+                    <span class="font-bold">${pct}%</span>
+                </td>
+                <td class="text-small">${escapeHtml(setoranInfo)}</td>
+                <td class="text-center">${statusBadge}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Rekapitulasi Tahfidz Al-Qur'an - PPTQ Asnawiyyah</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 12mm 15mm;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            color: #111827;
+            background: #fff;
+            padding: 0;
+            line-height: 1.35;
+        }
+        .kop-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2.5px solid #065f46;
+        }
+        .kop-logo {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .kop-text {
+            text-align: center;
+        }
+        .kop-text h1 {
+            font-size: 15px;
+            font-weight: 900;
+            color: #065f46;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .kop-text h2 {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 1px;
+        }
+        .kop-text p {
+            font-size: 9px;
+            color: #4b5563;
+            margin-top: 2px;
+        }
+        .sub-border {
+            height: 1px;
+            background: #065f46;
+            margin-top: 2px;
+            margin-bottom: 12px;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+        .report-title h3 {
+            font-size: 13px;
+            font-weight: 800;
+            color: #065f46;
+            text-transform: uppercase;
+        }
+        .report-title p {
+            font-size: 9.5px;
+            color: #4b5563;
+            margin-top: 1px;
+        }
+        .meta-box {
+            text-align: right;
+            font-size: 9px;
+            color: #4b5563;
+            line-height: 1.4;
+        }
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .kpi-card {
+            border: 1px solid #d1fae5;
+            background: #f0fdf4;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+        .kpi-card .k-title {
+            font-size: 8px;
+            font-weight: 700;
+            color: #065f46;
+            text-transform: uppercase;
+        }
+        .kpi-card .k-val {
+            font-size: 14px;
+            font-weight: 900;
+            color: #065f46;
+            margin-top: 2px;
+        }
+        .kpi-card .k-sub {
+            font-size: 7.5px;
+            color: #4b5563;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5px;
+            margin-bottom: 12px;
+        }
+        th {
+            background-color: #065f46 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: left;
+            padding: 5px 6px;
+            border: 1px solid #065f46;
+            font-size: 9px;
+        }
+        td {
+            padding: 4.5px 6px;
+            border: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        tr:nth-child(even) td { background-color: #f9fafb; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-sub { font-size: 8px; color: #6b7280; }
+        .text-small { font-size: 8.5px; color: #374151; }
+        .font-bold { font-weight: 700; }
+        .font-mono { font-family: monospace; }
+        .badge {
+            display: inline-block;
+            padding: 1.5px 5px;
+            border-radius: 3px;
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-green { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .badge-blue { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-gray { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+        .footer-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 14px;
+            page-break-inside: avoid;
+            font-size: 9.5px;
+        }
+        .sig-box {
+            text-align: center;
+            width: 220px;
+        }
+        .sig-space {
+            height: 42px;
+        }
+        .sig-name {
+            font-weight: 800;
+            border-bottom: 1px solid #111827;
+            padding-bottom: 2px;
+            display: inline-block;
+            min-width: 170px;
+        }
+        .sig-role {
+            font-size: 8.5px;
+            color: #4b5563;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="kop-container">
+        <img src="/assets/img/logo-asnawiyyah.jpg" alt="Logo PPTQ Asnawiyyah" class="kop-logo" onerror="this.style.display='none'">
+        <div class="kop-text">
+            <h1>Pondok Pesantren Tahfidzul Qur'an Asnawiyyah</h1>
+            <h2>Biro Pendidikan & Pengasuhan Tahfidz Al-Qur'an</h2>
+            <p>Pilangwetan RT 03 / RW 01, Kebonagung, Kabupaten Demak, Jawa Tengah 59583 &bull; Website: asnawiyyah.or.id</p>
+        </div>
+    </div>
+    <div class="sub-border"></div>
+
+    <div class="report-header">
+        <div class="report-title">
+            <h3>Laporan Rekapitulasi Progres Tahfidz Al-Qur'an</h3>
+            <p>Filter: ${filterStr}</p>
+        </div>
+        <div class="meta-box">
+            <div><strong>Waktu Cetak:</strong> ${escapeHtml(curDateIndo)}, Pk ${escapeHtml(curTimeIndo)} WIB</div>
+            <div><strong>Total Santri:</strong> ${totalSantri} Santri</div>
+        </div>
+    </div>
+
+    <div class="kpi-strip">
+        <div class="kpi-card">
+            <div class="k-title">Total Santri Terdata</div>
+            <div class="k-val">${totalSantri}</div>
+            <div class="k-sub">Santri Binaan Tahfidz</div>
+        </div>
+        <div class="kpi-card">
+            <div class="k-title">Rata-Rata Capaian</div>
+            <div class="k-val">${avgJuz} Juz</div>
+            <div class="k-sub">Per santri binaan</div>
+        </div>
+        <div class="kpi-card">
+            <div class="k-title">Khatam 30 Juz</div>
+            <div class="k-val">${khatamCount}</div>
+            <div class="k-sub">Tuntas Hafalan 30 Juz</div>
+        </div>
+        <div class="kpi-card">
+            <div class="k-title">Kepatuhan Muroja'ah</div>
+            <div class="k-val">${pctTuntas}%</div>
+            <div class="k-sub">Tuntas target pekanan</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center" style="width: 30px;">No</th>
+                <th class="text-center" style="width: 75px;">NIS</th>
+                <th>Nama Santri</th>
+                <th>Halaqah & Pembina</th>
+                <th class="text-center" style="width: 90px;">Capaian Terkini</th>
+                <th class="text-center" style="width: 60px;">Progres</th>
+                <th>Setoran Terakhir</th>
+                <th class="text-center" style="width: 80px;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rowsHtml}
+        </tbody>
+    </table>
+
+    <div class="footer-signatures">
+        <div class="sig-box">
+            <div>Mengetahui,</div>
+            <div class="sig-role">Koordinator Tahfidz Al-Qur'an</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">Ustadz Halim / Koordinator</div>
+            <div class="sig-role">Biro Pendidikan Tahfidz</div>
+        </div>
+        <div class="sig-box">
+            <div>Demak, ${escapeHtml(curDateIndo)}</div>
+            <div class="sig-role">Pengasuh PPTQ Asnawiyyah</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">Admin Utama / Pengasuh</div>
+            <div class="sig-role">Pimpinan Pondok Pesantren</div>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
+    executeTahfidzIsolatedPrint(html);
+}
+
+/**
+ * Cetak Rapor Mutaba'ah Santri Perorangan (A4 Portrait)
+ */
+async function printTahfidzStudentCard(studentId) {
+    if (!studentId && ASNTahfidz.activeStudentDetail) {
+        studentId = ASNTahfidz.activeStudentDetail.student?.studentId || ASNTahfidz.activeStudentDetail.student?.nis;
+    }
+
+    let detail = ASNTahfidz.activeStudentDetail;
+    const currentId = detail?.student?.studentId || detail?.student?.nis;
+
+    if (!detail || String(currentId) !== String(studentId)) {
+        if (typeof showToast === 'function') showToast("Menyiapkan kartu mutaba'ah santri...");
+        try {
+            const token = (typeof getAdminSessionToken === 'function' ? getAdminSessionToken() : sessionStorage.getItem(TAHFIDZ_STORAGE_KEYS.adminToken)) || "";
+            const res = await apiPost("getTahfidzStudentDetail", { token, studentId });
+            if (res && (res.success || res.status === "success")) {
+                detail = res;
+            }
+        } catch (e) {
+            console.warn("Gagal fetch detail santri saat print:", e);
+        }
+    }
+
+    const st = detail?.student || (ASNTahfidz.data?.students || []).find(s => String(s.studentId) === String(studentId) || String(s.nis) === String(studentId));
+    if (!st) {
+        if (typeof showToast === 'function') showToast("⚠️ Data santri tidak ditemukan untuk dicetak.");
+        return;
+    }
+
+    const stats = detail?.stats || st.stats || {};
+    const riwayat = detail?.riwayat || [];
+    const now = new Date();
+    const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const INDO_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const curDateIndo = `${INDO_DAYS[now.getDay()]}, ${now.getDate()} ${INDO_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+
+    const curJuz = stats.progressJuz || st.progress?.currentJuz || 1;
+    const curHal = stats.progressHalaman || st.progress?.currentHalaman || 1;
+    const halaqahName = st.halaqah?.namaHalaqah || st.halaqah || 'Halaqah Utama';
+    const muhafizName = st.halaqah?.muhafiz || st.muhafiz || 'Ustadz Pembina';
+    const percent = st.progress?.percent || Math.round((curJuz / 30) * 100);
+
+    const riwayatRowsHtml = (riwayat.slice(0, 15)).map((r, idx) => {
+        const tipeLabel = r.tipe === 'MURAJAAH_SABQI' ? "Muroja'ah Sabqi" : (r.tipe === 'MURAJAAH_MANZIL' ? "Muroja'ah Manzil" : (r.tipe === 'ZIYADAH' ? "Ziyadah" : (r.tipe === 'TASMI' ? "Tasmi'" : (r.tipe || 'Setoran'))));
+        const badgeClass = r.tipe === 'ZIYADAH' ? 'badge-green' : (r.tipe === 'TASMI' ? 'badge-purple' : 'badge-yellow');
+        const statusBadge = r.statusSetoran === 'ULANG' ? '<span class="badge badge-red">Ulang</span>' : '<span class="badge badge-green">Lanjut</span>';
+
+        return `
+            <tr>
+                <td class="text-center font-bold">${idx + 1}</td>
+                <td>
+                    <div class="font-bold">${escapeHtml(r.tanggal || '-')}</div>
+                    <div class="text-sub">${escapeHtml(r.sesi || '-')}</div>
+                </td>
+                <td class="text-center"><span class="badge ${badgeClass}">${escapeHtml(tipeLabel)}</span></td>
+                <td>
+                    <div class="font-bold">Juz ${r.juz || 1} &bull; ${escapeHtml(r.surah || '')}</div>
+                    <div class="text-sub">${r.halamanList ? `Halaman: ${escapeHtml(r.halamanList)}` : ''}</div>
+                </td>
+                <td class="text-center font-bold">${escapeHtml(r.nilai || 'MUMTAZ')}</td>
+                <td class="text-center">${statusBadge}</td>
+                <td class="text-small">${escapeHtml(r.catatan || '-')}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kartu Mutaba'ah Tahfidz - ${escapeHtml(st.name || 'Santri')}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 12mm 15mm;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            color: #111827;
+            background: #fff;
+            padding: 0;
+            line-height: 1.35;
+        }
+        .kop-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2.5px solid #065f46;
+        }
+        .kop-logo {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+        }
+        .kop-text { text-align: center; }
+        .kop-text h1 {
+            font-size: 14px;
+            font-weight: 900;
+            color: #065f46;
+            text-transform: uppercase;
+        }
+        .kop-text h2 {
+            font-size: 11px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 1px;
+        }
+        .kop-text p {
+            font-size: 8.5px;
+            color: #4b5563;
+            margin-top: 2px;
+        }
+        .sub-border {
+            height: 1px;
+            background: #065f46;
+            margin-top: 2px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .card-title h3 {
+            font-size: 13px;
+            font-weight: 800;
+            color: #065f46;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-title p {
+            font-size: 9px;
+            color: #6b7280;
+        }
+        .student-profile {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 9.5px;
+        }
+        .profile-item { display: flex; gap: 6px; }
+        .profile-label { font-weight: 700; color: #475569; width: 95px; }
+        .profile-val { font-weight: 600; color: #0f172a; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .kpi-card {
+            border: 1px solid #d1fae5;
+            background: #f0fdf4;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .kpi-card .k-title {
+            font-size: 8px;
+            font-weight: 700;
+            color: #065f46;
+            text-transform: uppercase;
+        }
+        .kpi-card .k-val {
+            font-size: 13px;
+            font-weight: 900;
+            color: #065f46;
+            margin-top: 2px;
+        }
+        .progress-bar-wrap {
+            height: 7px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 4px 0 2px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: #059669;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-bottom: 14px;
+        }
+        th {
+            background-color: #065f46 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: left;
+            padding: 5px 6px;
+            border: 1px solid #065f46;
+            font-size: 8.5px;
+        }
+        td {
+            padding: 4px 6px;
+            border: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        tr:nth-child(even) td { background-color: #f9fafb; }
+        .text-center { text-align: center; }
+        .text-sub { font-size: 7.5px; color: #6b7280; }
+        .text-small { font-size: 8px; color: #374151; }
+        .font-bold { font-weight: 700; }
+        .badge {
+            display: inline-block;
+            padding: 1.5px 5px;
+            border-radius: 3px;
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-green { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .badge-yellow { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-purple { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+        .badge-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .footer-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 14px;
+            page-break-inside: avoid;
+            font-size: 9px;
+        }
+        .sig-box { text-align: center; width: 190px; }
+        .sig-space { height: 42px; }
+        .sig-name {
+            font-weight: 800;
+            border-bottom: 1px solid #111827;
+            padding-bottom: 2px;
+            display: inline-block;
+            min-width: 150px;
+        }
+        .sig-role { font-size: 8px; color: #4b5563; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="kop-container">
+        <img src="/assets/img/logo-asnawiyyah.jpg" alt="Logo PPTQ Asnawiyyah" class="kop-logo" onerror="this.style.display='none'">
+        <div class="kop-text">
+            <h1>Pondok Pesantren Tahfidzul Qur'an Asnawiyyah</h1>
+            <h2>Biro Pendidikan & Pengasuhan Tahfidz Al-Qur'an</h2>
+            <p>Pilangwetan RT 03 / RW 01, Kebonagung, Kabupaten Demak, Jawa Tengah 59583</p>
+        </div>
+    </div>
+    <div class="sub-border"></div>
+
+    <div class="card-title">
+        <h3>Kartu Mutaba'ah & Progres Setoran Tahfidz</h3>
+        <p>Tahun Ajaran / Siklus Pembinaan Tahfidz 30 Juz</p>
+    </div>
+
+    <div class="student-profile">
+        <div class="profile-item"><span class="profile-label">Nama Santri:</span><span class="profile-val">${escapeHtml(st.name || '-')}</span></div>
+        <div class="profile-item"><span class="profile-label">Nomor Induk (NIS):</span><span class="profile-val">${escapeHtml(st.nis || '-')}</span></div>
+        <div class="profile-item"><span class="profile-label">Kelompok Halaqah:</span><span class="profile-val">${escapeHtml(halaqahName)}</span></div>
+        <div class="profile-item"><span class="profile-label">Muhafiz Pembimbing:</span><span class="profile-val">${escapeHtml(muhafizName)}</span></div>
+        <div class="profile-item"><span class="profile-label">Program Kurikulum:</span><span class="profile-val">${escapeHtml(st.program || 'Tahfidz Al-Qur\'an 30 Juz')}</span></div>
+        <div class="profile-item"><span class="profile-label">Jenis Kelamin:</span><span class="profile-val">${st.gender === 'P' ? 'Perempuan (Santri Putri)' : 'Laki-laki (Santri Putra)'}</span></div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="k-title">Capaian Ziyadah Terkini</div>
+            <div class="k-val">Juz ${curJuz} (Halaman ${curHal})</div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width: ${percent}%;"></div></div>
+            <div style="font-size:7.5px; color:#065f46; font-weight:700;">${percent}% dari 30 Juz</div>
+        </div>
+        <div class="kpi-card">
+            <div class="k-title">Rata-Rata Nilai</div>
+            <div class="k-val">${stats.rataRataNilai || 'MUMTAZ'}</div>
+            <div style="font-size:7.5px; color:#4b5563; margin-top:4px;">Kelancaran & Makhraj</div>
+        </div>
+        <div class="kpi-card">
+            <div class="k-title">Total Riwayat Setoran</div>
+            <div class="k-val">${riwayat.length} Kali</div>
+            <div style="font-size:7.5px; color:#4b5563; margin-top:4px;">Ziyadah & Muroja'ah</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center" style="width: 25px;">No</th>
+                <th style="width: 80px;">Waktu & Sesi</th>
+                <th class="text-center" style="width: 80px;">Tipe Setoran</th>
+                <th>Materi Setoran</th>
+                <th class="text-center" style="width: 60px;">Nilai</th>
+                <th class="text-center" style="width: 50px;">Status</th>
+                <th>Catatan Muhafiz</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${riwayatRowsHtml || '<tr><td colspan="7" class="text-center" style="padding:15px; color:#9ca3af;">Belum ada riwayat setoran hafalan tercatat.</td></tr>'}
+        </tbody>
+    </table>
+
+    <div class="footer-signatures">
+        <div class="sig-box">
+            <div>Mengetahui,</div>
+            <div class="sig-role">Muhafiz / Pembimbing Halaqah</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">${escapeHtml(muhafizName)}</div>
+            <div class="sig-role">Pembina Tahfidz</div>
+        </div>
+        <div class="sig-box">
+            <div>Demak, ${escapeHtml(curDateIndo)}</div>
+            <div class="sig-role">Pengasuh PPTQ Asnawiyyah</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">Admin Utama / Pengasuh</div>
+            <div class="sig-role">Pondok Pesantren Tahfidzul Qur'an</div>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
+    executeTahfidzIsolatedPrint(html);
 }
 
 /**
@@ -6441,6 +7126,7 @@ window.shiftIndikatorWeek = shiftIndikatorWeek;
 window.shiftIndikatorMonth = shiftIndikatorMonth;
 window.setIndikatorPreset = setIndikatorPreset;
 window.submitNewHalaqah = submitNewHalaqah;
+window.executeTahfidzIsolatedPrint = executeTahfidzIsolatedPrint;
 window.printTahfidzStudentCard = printTahfidzStudentCard;
 window.printTahfidzRekap = printTahfidzRekap;
 window.exportTahfidzDataCSV = exportTahfidzDataCSV;

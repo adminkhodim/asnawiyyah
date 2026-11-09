@@ -495,7 +495,8 @@
         // ==================== ADMIN QUICK SEARCH FINDER & SHORTCUT ====================
         const ADMIN_SEARCH_MODULES = [
             { view: 'hub', name: 'Dashboard Utama', category: 'Ringkasan', icon: 'fa-gauge-high' },
-            { view: 'tahfidz', name: 'Tahfidz Qur\'an', category: 'Kesantrian', icon: 'fa-book-quran' },
+            { view: 'tahfidz', name: 'Tahfidz Qur\'an', category: 'Akademik & Tahfidz', icon: 'fa-book-quran' },
+            { view: 'tahfidz-evaluasi', name: 'Evaluasi & Riwayat Tahfidz', category: 'Akademik & Tahfidz', icon: 'fa-chart-line' },
             { view: 'santri', name: 'Data Santri', category: 'Kesantrian', icon: 'fa-id-card-clip' },
             { view: 'wali-santri', name: 'Data Wali Santri', category: 'Kesantrian', icon: 'fa-user-group' },
             { view: 'perpulangan', name: 'Izin & Perpulangan', category: 'Kesantrian', icon: 'fa-person-walking-luggage' },
@@ -1038,6 +1039,7 @@
                 const viewLabels = {
                     'hub': 'Dashboard Utama',
                     'tahfidz': 'Tahfidz Qur\'an',
+                    'tahfidz-evaluasi': 'Evaluasi & Riwayat Tahfidz',
                     'santri': 'Data Santri',
                     'wali-santri': 'Data Wali Santri',
                     'ppdb': 'Pendaftar PPDB',
@@ -1085,6 +1087,7 @@
             const bannerView = document.getElementById('admin-view-banner');
             const santriView = document.getElementById('admin-view-santri');
             const tahfidzView = document.getElementById('admin-view-tahfidz');
+            const tahfidzEvaluasiView = document.getElementById('admin-view-tahfidz-evaluasi');
             const keaktifanView = document.getElementById('admin-view-keaktifan-asatidz');
             const ppdbView = document.getElementById('admin-view-ppdb');
             const programView = document.getElementById('admin-view-program');
@@ -1111,6 +1114,7 @@
             if (santriView) santriView.classList.add('hidden');
             if (waliSantriView) waliSantriView.classList.add('hidden');
             if (tahfidzView) tahfidzView.classList.add('hidden');
+            if (tahfidzEvaluasiView) tahfidzEvaluasiView.classList.add('hidden');
             if (keaktifanView) keaktifanView.classList.add('hidden');
             if (izinAsatidzView) izinAsatidzView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
@@ -1201,6 +1205,13 @@
                     document.querySelectorAll('.tahfidz-admin-action').forEach(el => {
                         el.style.display = (isPengasuh || isAsatidz) ? 'none' : '';
                     });
+                }
+            } else if (viewName === 'tahfidz-evaluasi') {
+                if (tahfidzEvaluasiView) tahfidzEvaluasiView.classList.remove('hidden');
+                if (window.ASNTahfidzEvaluasi && typeof window.ASNTahfidzEvaluasi.init === 'function') {
+                    window.ASNTahfidzEvaluasi.init();
+                } else if (typeof window.initTahfidzEvaluasiView === 'function') {
+                    window.initTahfidzEvaluasiView();
                 }
             } else if (viewName === 'keaktifan-asatidz') {
                 if (keaktifanView) keaktifanView.classList.remove('hidden');
