@@ -1,10 +1,10 @@
 {
-    "version": "2.6.0",
-    "buildTime": "2026-11-10T02:05:00+07:00",
-    "title": "Sinkronisasi Paripurna RBAC Matriks Izin & Badal Asatidz",
+    "version": "2.6.1",
+    "buildTime": "2026-11-10T02:56:00+07:00",
+    "title": "Restrukturisasi Kategori Sidebar Portal Administrasi Opsi A",
     "highlights": [
-        "Sinkronisasi level matriks ASATIDZ ke 'write' (Entri & Input) dan pembersihan fallback 'none'",
-        "Self-healing migrasi cache lokal & Cloud DB (Spreadsheet & Supabase) untuk 23 Modul Terproteksi",
-        "Penambahan tombol akses cepat Izin & Badal Asatidz di Pusat Kontrol Admin & Pengasuh"
+        "Penataan ulang 7 Kategori Sidebar: Ringkasan, Kesantrian & Ketertiban, Akademik & Tahfidz, Kepegawaian, Pendaftaran & Alumni, Publikasi, Sistem",
+        "Penempatan Akademik & Tahfidz tepat setelah Kesantrian & Ketertiban sesuai hierarki operasional pesantren",
+        "Menjaga 100% integritas fungsi tombol navigasi, wewenang RBAC, dan filter grup accordion dinamis"
     ]
 }

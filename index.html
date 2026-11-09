@@ -7739,29 +7739,19 @@
                             </ul>
                         </div>
 
-                        <!-- Grup 2: Kesantrian & Tahfidz -->
+                        <!-- Grup 2: Kesantrian & Ketertiban -->
                         <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
                             <button type="button" onclick="toggleAdminMenuGroup(this)"
                                 class="w-full px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 sidebar-text flex items-center justify-between transition-colors group/header focus:outline-none select-none"
-                                title="Sembunyikan / Tampilkan Kesantrian & Tahfidz">
+                                title="Sembunyikan / Tampilkan Kesantrian & Ketertiban">
                                 <div class="flex items-center gap-1.5 truncate">
-                                    <i class="fa-solid fa-users text-[9px] text-emerald-300/80"></i>
-                                    <span>Kesantrian & Tahfidz</span>
+                                    <i class="fa-solid fa-shield-halved text-[9px] text-emerald-300/80"></i>
+                                    <span>Kesantrian & Ketertiban</span>
                                 </div>
                                 <i
                                     class="fa-solid fa-chevron-down text-[8px] text-emerald-200/60 group-hover/header:text-white transition-transform duration-200 menu-group-arrow"></i>
                             </button>
                             <ul class="space-y-1">
-                                <li>
-                                    <button onclick="showAdminView('tahfidz')" data-view="tahfidz"
-                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
-                                        title="Tahfidz Al-Qur'an">
-                                        <i class="fa-solid fa-book-quran w-5 text-center text-sm"></i>
-                                        <span
-                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Tahfidz
-                                            Qur'an</span>
-                                    </button>
-                                </li>
                                 <li>
                                     <button onclick="showAdminView('santri')" data-view="santri"
                                         class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
@@ -7803,16 +7793,6 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button onclick="showAdminView('ppdb')" data-view="ppdb"
-                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
-                                        title="Data Pendaftar PPDB">
-                                        <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
-                                        <span
-                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data
-                                            Pendaftar PPDB</span>
-                                    </button>
-                                </li>
-                                <li>
                                     <button onclick="showAdminView('unit-kegiatan')" data-view="unit-kegiatan"
                                         class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
                                         title="Unit Kegiatan Santri">
@@ -7820,6 +7800,32 @@
                                         <span
                                             class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Unit
                                             Kegiatan (UKS)</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Grup 3: Akademik & Tahfidz -->
+                        <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
+                            <button type="button" onclick="toggleAdminMenuGroup(this)"
+                                class="w-full px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 sidebar-text flex items-center justify-between transition-colors group/header focus:outline-none select-none"
+                                title="Sembunyikan / Tampilkan Akademik & Tahfidz">
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <i class="fa-solid fa-book-quran text-[9px] text-emerald-300/80"></i>
+                                    <span>Akademik & Tahfidz</span>
+                                </div>
+                                <i
+                                    class="fa-solid fa-chevron-down text-[8px] text-emerald-200/60 group-hover/header:text-white transition-transform duration-200 menu-group-arrow"></i>
+                            </button>
+                            <ul class="space-y-1">
+                                <li>
+                                    <button onclick="showAdminView('tahfidz')" data-view="tahfidz"
+                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
+                                        title="Tahfidz Al-Qur'an">
+                                        <i class="fa-solid fa-book-quran w-5 text-center text-sm"></i>
+                                        <span
+                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Tahfidz
+                                            Qur'an</span>
                                     </button>
                                 </li>
                                 <li>
@@ -7830,16 +7836,6 @@
                                         <span
                                             class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Jadwal
                                             Kegiatan</span>
-                                    </button>
-                                </li>
-                                <li>
-                                    <button onclick="showAdminView('alumni')" data-view="alumni"
-                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
-                                        title="Rekap Data Alumni">
-                                        <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
-                                        <span
-                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Rekap
-                                            Alumni</span>
                                     </button>
                                 </li>
                                 <li>
@@ -7855,7 +7851,7 @@
                             </ul>
                         </div>
 
-                        <!-- Grup 3: Kepegawaian & SDM -->
+                        <!-- Grup 4: Kepegawaian & SDM -->
                         <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
                             <button type="button" onclick="toggleAdminMenuGroup(this)"
                                 class="w-full px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 sidebar-text flex items-center justify-between transition-colors group/header focus:outline-none select-none"
@@ -7905,7 +7901,43 @@
                             </ul>
                         </div>
 
-                        <!-- Grup 4: Portal & Media Lembaga -->
+                        <!-- Grup 5: Pendaftaran & Alumni -->
+                        <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
+                            <button type="button" onclick="toggleAdminMenuGroup(this)"
+                                class="w-full px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 sidebar-text flex items-center justify-between transition-colors group/header focus:outline-none select-none"
+                                title="Sembunyikan / Tampilkan Pendaftaran & Alumni">
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <i class="fa-solid fa-user-graduate text-[9px] text-emerald-300/80"></i>
+                                    <span>Pendaftaran & Alumni</span>
+                                </div>
+                                <i
+                                    class="fa-solid fa-chevron-down text-[8px] text-emerald-200/60 group-hover/header:text-white transition-transform duration-200 menu-group-arrow"></i>
+                            </button>
+                            <ul class="space-y-1">
+                                <li>
+                                    <button onclick="showAdminView('ppdb')" data-view="ppdb"
+                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
+                                        title="Data Pendaftar PPDB">
+                                        <i class="fa-solid fa-user-graduate w-5 text-center text-sm"></i>
+                                        <span
+                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Data
+                                            Pendaftar PPDB</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onclick="showAdminView('alumni')" data-view="alumni"
+                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
+                                        title="Rekap Data Alumni">
+                                        <i class="fa-solid fa-graduation-cap w-5 text-center text-sm"></i>
+                                        <span
+                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Rekap
+                                            Alumni</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Grup 6: Portal & Publikasi -->
                         <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
                             <button type="button" onclick="toggleAdminMenuGroup(this)"
                                 class="w-full px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 sidebar-text flex items-center justify-between transition-colors group/header focus:outline-none select-none"
@@ -7971,7 +8003,7 @@
                             </ul>
                         </div>
 
-                        <!-- Grup 5: Sistem, Akses & Keamanan -->
+                        <!-- Grup 7: Sistem & Hak Akses -->
                         <div class="admin-menu-group pt-2 border-t border-white/10 dark:border-white/5">
                             <button type="button" onclick="toggleAdminMenuGroup(this)"
                                 class="w-full px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100/75 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 sidebar-text flex items-center justify-between transition-colors group/header focus:outline-none select-none"
