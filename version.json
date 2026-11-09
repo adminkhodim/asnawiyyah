@@ -1,10 +1,9 @@
 {
-    "version": "2.5.7",
-    "buildTime": "2026-11-10T00:18:00+07:00",
-    "title": "Perbaikan Navigasi Menu Kedisiplinan & Tarbiyah Santri",
+    "version": "2.5.8",
+    "buildTime": "2026-11-10T00:29:00+07:00",
+    "title": "Standardisasi Desain KPI Card Kedisiplinan & Tarbiyah Santri",
     "highlights": [
-        "Perbaikan perutean showAdminView untuk membuka kontainer sub-view Kedisiplinan & Tarbiyah secara tepat",
-        "Pembaruan breadcrumb dan pengikatan inisialisasi data ASNKedisiplinan otomatis",
-        "Penambahan Modul Kedisiplinan pada pencarian cepat navigasi admin (ADMIN_SEARCH_MODULES)"
+        "Penyelarasan 4 kartu KPI Makro Kedisiplinan & Tarbiyah dengan palet gradient vibrant resmi (Indigo, Amber, Rose, Emerald)",
+        "Pemberian icon badge, drop-shadow, label status bawah, dan pill tag seragam seperti pada Master Data Santri & Tahfidz Al-Qur'an"
     ]
 }

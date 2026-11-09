@@ -11333,38 +11333,119 @@
                                     </div>
                                 </div>
 
-                                <!-- SUMMARY KPI METRIC CARDS -->
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                                <!-- CARDS RINGKASAN MAKRO KEDISIPLINAN (BERWARNA VIBRANT SEPERTI DATA SANTRI & TAHFIDZ) -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                                    <!-- 1. Kasus Bulan Ini (Indigo Gradient) -->
                                     <div
-                                        class="bg-white dark:bg-[#15202d] p-3 rounded-2xl border border-slate-100 dark:border-[#253447] shadow-xs">
-                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Kasus
-                                            Bulan Ini</div>
-                                        <div id="kpi-kedisiplinan-total-bulan"
-                                            class="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">0</div>
-                                    </div>
-                                    <div
-                                        class="bg-amber-50/70 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 shadow-xs">
+                                        class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span
+                                                class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">KASUS
+                                                BULAN INI</span>
+                                            <div
+                                                class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                                <i class="fa-solid fa-clipboard-list"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4
+                                                class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                                <span id="kpi-kedisiplinan-total-bulan">0</span>
+                                                <span class="text-xs font-bold text-white/80">Kasus</span>
+                                            </h4>
+                                        </div>
                                         <div
-                                            class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">
-                                            Sedang Ta'zir (Aktif)</div>
-                                        <div id="kpi-kedisiplinan-tazir-aktif"
-                                            class="text-xl font-black text-amber-700 dark:text-amber-400 mt-1">0</div>
+                                            class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span class="truncate font-normal text-[10px] opacity-90">Bulan
+                                                berjalan</span>
+                                            <span
+                                                class="px-2 py-0.5 rounded-full bg-white text-indigo-700 font-black shadow-xs shrink-0 text-[9px]">Catatan
+                                                Baru</span>
+                                        </div>
                                     </div>
+
+                                    <!-- 2. Sedang Ta'zir (Amber Gradient) -->
                                     <div
-                                        class="bg-rose-50/70 dark:bg-rose-950/30 p-3 rounded-2xl border border-rose-200/60 dark:border-rose-800/40 shadow-xs">
+                                        class="bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span
+                                                class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">SEDANG
+                                                TA'ZIR (AKTIF)</span>
+                                            <div
+                                                class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4
+                                                class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                                <span id="kpi-kedisiplinan-tazir-aktif">0</span>
+                                                <span class="text-xs font-bold text-white/80">Santri</span>
+                                            </h4>
+                                        </div>
                                         <div
-                                            class="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-tight">
-                                            Perhatian Khusus (&gt;=50 Poin)</div>
-                                        <div id="kpi-kedisiplinan-santri-kritis"
-                                            class="text-xl font-black text-rose-700 dark:text-rose-400 mt-1">0</div>
+                                            class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span class="truncate font-normal text-[10px] opacity-90">Proses
+                                                pembinaan</span>
+                                            <span
+                                                class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Tarbiyah</span>
+                                        </div>
                                     </div>
+
+                                    <!-- 3. Perhatian Khusus (Rose Gradient) -->
                                     <div
-                                        class="bg-emerald-50/70 dark:bg-emerald-950/30 p-3 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs">
+                                        class="bg-gradient-to-br from-[#f43f5e] via-[#e11d48] to-[#be123c] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-rose-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span
+                                                class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">PERHATIAN
+                                                KHUSUS (&gt;=50)</span>
+                                            <div
+                                                class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4
+                                                class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                                <span id="kpi-kedisiplinan-santri-kritis">0</span>
+                                                <span class="text-xs font-bold text-white/80">Santri ↑</span>
+                                            </h4>
+                                        </div>
                                         <div
-                                            class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight">
-                                            Aturan Tata Tertib Aktif</div>
-                                        <div id="kpi-kedisiplinan-total-aturan"
-                                            class="text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1">0
+                                            class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span class="truncate font-normal text-[10px] opacity-90">Evaluasi
+                                                wali</span>
+                                            <span
+                                                class="px-2 py-0.5 rounded-full bg-white text-rose-700 font-black shadow-xs shrink-0 text-[9px]">Prioritas</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4. Aturan Tata Tertib Aktif (Emerald Gradient) -->
+                                    <div
+                                        class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span
+                                                class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">ATURAN
+                                                TATA TERTIB</span>
+                                            <div
+                                                class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
+                                                <i class="fa-solid fa-scale-balanced"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4
+                                                class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs flex items-center gap-1">
+                                                <span id="kpi-kedisiplinan-total-aturan">0</span>
+                                                <span class="text-xs font-bold text-white/80">Pasal</span>
+                                            </h4>
+                                        </div>
+                                        <div
+                                            class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span class="truncate font-normal text-[10px] opacity-90">Pedoman
+                                                resmi</span>
+                                            <span
+                                                class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Master
+                                                Data</span>
                                         </div>
                                     </div>
                                 </div>
