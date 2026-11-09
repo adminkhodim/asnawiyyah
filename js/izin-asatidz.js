@@ -560,8 +560,55 @@
             if (badgeBadal) badgeBadal.textContent = String(ASNIzinAsatidz.delegatedToMeList.length);
             if (badgeApproval) badgeApproval.textContent = String(ASNIzinAsatidz.pendingApprovalList.length);
 
-            // Update status visual banner di Modul Tahfidz, Beranda Utama Admin, & Dashboard Pengasuh
+            // Update 4 Macro KPI Cards pada Modul Standalone Izin Asatidz
+            const totalCount = data.length;
+            const pendingCount = ASNIzinAsatidz.pendingApprovalList.length;
+            const approvedCount = data.filter(x => {
+                const s = String(x.status || '').toUpperCase();
+                return s === 'APPROVED' || s === 'DISETUJUI';
+            }).length;
+            const badalCount = data.filter(x => {
+                const s = String(x.status || '').toUpperCase();
+                const b = String(x.namaBadal || x.nama_badal || '').trim();
+                return b && (s === 'APPROVED' || s === 'DISETUJUI');
+            }).length;
+
+            const kpiTotal = document.getElementById('kpi-izin-asatidz-total');
+            const kpiPending = document.getElementById('kpi-izin-asatidz-pending');
+            const kpiBadal = document.getElementById('kpi-izin-asatidz-badal');
+            const kpiApproved = document.getElementById('kpi-izin-asatidz-approved');
+            const headerCount = document.getElementById('izin-asatidz-count-header');
+            const hubCardCount = document.getElementById('admin-hub-izin-asatidz-count');
+            const sidebarBadge = document.getElementById('sidebar-badge-izin-asatidz');
+
+            if (kpiTotal) kpiTotal.textContent = String(totalCount);
+            if (kpiPending) kpiPending.textContent = String(pendingCount);
+            if (kpiBadal) kpiBadal.textContent = String(badalCount);
+            if (kpiApproved) kpiApproved.textContent = String(approvedCount);
+            if (headerCount) headerCount.textContent = `(${totalCount} Total Pengajuan)`;
+            if (hubCardCount) hubCardCount.textContent = `${totalCount} Izin`;
+
             const isApprover = canApproveIzinAsatidz();
+            if (sidebarBadge) {
+                if (isApprover && pendingCount > 0) {
+                    sidebarBadge.textContent = String(pendingCount);
+                    sidebarBadge.classList.remove('hidden');
+                } else {
+                    sidebarBadge.classList.add('hidden');
+                }
+            }
+
+            // Update page tab badges
+            const pageBadgeAll = document.getElementById('badge-count-izin-page-all');
+            const pageBadgeApproval = document.getElementById('badge-count-izin-page-approval');
+            const pageBadgeBadal = document.getElementById('badge-count-izin-page-badal');
+            const pageBadgeMy = document.getElementById('badge-count-izin-page-my');
+            if (pageBadgeAll) pageBadgeAll.textContent = String(totalCount);
+            if (pageBadgeApproval) pageBadgeApproval.textContent = String(pendingCount);
+            if (pageBadgeBadal) pageBadgeBadal.textContent = String(ASNIzinAsatidz.delegatedToMeList.length);
+            if (pageBadgeMy) pageBadgeMy.textContent = String(ASNIzinAsatidz.myList.length);
+
+            // Update status visual banner di Modul Tahfidz, Beranda Utama Admin, & Dashboard Pengasuh
             const bannerTahfidz = document.getElementById('banner-pengasuh-izin-asatidz');
             const bannerBadge = document.getElementById('banner-pengasuh-izin-badge');
             const bannerText = document.getElementById('banner-pengasuh-izin-text');
@@ -575,8 +622,6 @@
             const adminHubPriorityCard = document.getElementById('admin-hub-pengasuh-priority-card');
             const adminHubPriorityBadge = document.getElementById('admin-hub-pengasuh-priority-badge');
             const adminHubPriorityText = document.getElementById('admin-hub-pengasuh-priority-text');
-
-            const pendingCount = ASNIzinAsatidz.pendingApprovalList.length;
 
             const updatePriorityCard = (cardEl, badgeEl, textEl) => {
                 if (!cardEl) return;
@@ -628,6 +673,9 @@
                 tabBtnApproval.classList.toggle('hidden', !isApprover);
             }
 
+            // Render Semua Permohonan (Halaman Standalone)
+            renderAllIzinList();
+
             // Render Tab "Izin Saya"
             renderMyHistoryList();
 
@@ -660,11 +708,14 @@
      * Render Daftar Riwayat Izin Pemohon
      */
     function renderMyHistoryList() {
-        const container = document.getElementById('izin-asatidz-my-list');
-        if (!container) return;
+        const containers = [
+            document.getElementById('izin-asatidz-my-list'),
+            document.getElementById('izin-page-my-list')
+        ].filter(Boolean);
+        if (containers.length === 0) return;
 
         if (ASNIzinAsatidz.myList.length === 0) {
-            container.innerHTML = renderEmptyState('Belum ada riwayat perizinan yang Anda ajukan.');
+            containers.forEach(c => c.innerHTML = renderEmptyState('Belum ada riwayat perizinan yang Anda ajukan.'));
             return;
         }
 
@@ -713,18 +764,21 @@
             `;
         });
 
-        container.innerHTML = html;
+        containers.forEach(c => c.innerHTML = html);
     }
 
     /**
      * Render Daftar Amanah Badal yang Ditugaskan ke Ustadz ini
      */
     function renderDelegatedList() {
-        const container = document.getElementById('izin-asatidz-badal-list');
-        if (!container) return;
+        const containers = [
+            document.getElementById('izin-asatidz-badal-list'),
+            document.getElementById('izin-page-badal-list')
+        ].filter(Boolean);
+        if (containers.length === 0) return;
 
         if (ASNIzinAsatidz.delegatedToMeList.length === 0) {
-            container.innerHTML = renderEmptyState('Belum ada pendelegasian halaqah badal dari ustadz lain.');
+            containers.forEach(c => c.innerHTML = renderEmptyState('Belum ada pendelegasian halaqah badal dari ustadz lain.'));
             return;
         }
 
@@ -771,15 +825,18 @@
             `;
         });
 
-        container.innerHTML = html;
+        containers.forEach(c => c.innerHTML = html);
     }
 
     /**
      * Render Daftar Permohonan Izin Menunggu Persetujuan Pengasuh & Masyayikh
      */
     function renderApprovalList() {
-        const container = document.getElementById('izin-asatidz-approval-list');
-        if (!container) return;
+        const containers = [
+            document.getElementById('izin-asatidz-approval-list'),
+            document.getElementById('izin-page-approval-list')
+        ].filter(Boolean);
+        if (containers.length === 0) return;
 
         const allPending = ASNIzinAsatidz.pendingApprovalList || [];
         const allProcessed = (ASNIzinAsatidz.list || []).filter(item => {
@@ -788,7 +845,7 @@
         });
 
         if (allPending.length === 0 && allProcessed.length === 0) {
-            container.innerHTML = renderEmptyState('Belum ada data permohonan izin asatidz.');
+            containers.forEach(c => c.innerHTML = renderEmptyState('Belum ada data permohonan izin asatidz.'));
             return;
         }
 
@@ -935,7 +992,178 @@
             });
         }
 
+        containers.forEach(c => c.innerHTML = html);
+    }
+
+    /**
+     * Render Semua Permohonan Izin Asatidz (Halaman Standalone Portal Admin & Mobile)
+     */
+    function renderAllIzinList(customList) {
+        const container = document.getElementById('izin-page-all-list');
+        if (!container) return;
+
+        const listToRender = Array.isArray(customList) ? customList : (ASNIzinAsatidz.list || []);
+        if (listToRender.length === 0) {
+            container.innerHTML = renderEmptyState('Belum ada data permohonan izin asatidz.');
+            return;
+        }
+
+        const isApprover = canApproveIzinAsatidz();
+        let html = '';
+
+        listToRender.forEach(item => {
+            const statusBadge = getStatusBadge(item.status);
+            const sesiLabel = getSesiLabel(item.sesi);
+            const tglRange = (item.tanggalMulai === item.tanggalSelesai || !item.tanggalSelesai)
+                ? formatDateIndo(item.tanggalMulai)
+                : `${formatDateIndo(item.tanggalMulai)} s/d ${formatDateIndo(item.tanggalSelesai)}`;
+            const isPending = String(item.status || 'PENDING').toUpperCase() === 'PENDING';
+            const idIzin = String(item.idIzin || item.id_izin || item.id || '').trim();
+
+            html += `
+                <div class="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-[#253447] bg-white dark:bg-[#16222f] shadow-xs space-y-3 transition hover:shadow-md">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-[#253447]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold border border-amber-200/60 dark:border-amber-800/60 shrink-0 shadow-2xs">
+                                <i class="fa-solid fa-user-clock"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100">${escapeHtml(item.namaAsatidz || item.nama_asatidz || 'Asatidz')}</h4>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800">${escapeHtml(item.kategori || 'Izin')}</span>
+                                </div>
+                                <span class="text-[11px] font-mono text-slate-400 mt-0.5 block">${tglRange} • ${sesiLabel}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 self-start sm:self-center">
+                            ${statusBadge}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-[#1c2836] space-y-1">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-handshake text-indigo-500"></i> Delegasi Ustadz Badal
+                            </div>
+                            <div class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(item.namaBadal || item.nama_badal || '-')}</div>
+                            ${item.catatanBadal ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 italic">"${escapeHtml(item.catatanBadal)}"</div>` : ''}
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-[#1c2836] space-y-1">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-info text-emerald-500"></i> Alasan Izin
+                            </div>
+                            <div class="text-slate-700 dark:text-slate-300 font-medium">${escapeHtml(item.alasan || '-')}</div>
+                            ${item.lampiranUrl ? `
+                                <div class="pt-0.5">
+                                    <a href="${escapeHtml(item.lampiranUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:underline">
+                                        <i class="fa-solid fa-paperclip"></i> Lihat Lampiran
+                                    </a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    ${item.pengasuhApprovedBy ? `
+                        <div class="pt-2 text-[11px] text-emerald-700 dark:text-emerald-300 flex items-center justify-between border-t border-slate-100 dark:border-[#253447]">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-stamp text-xs text-emerald-600"></i> Restu Pengasuh: <strong>${escapeHtml(item.pengasuhApprovedBy)}</strong></span>
+                            ${item.catatanPengasuh ? `<span class="italic text-slate-400 truncate max-w-[280px]" title="${escapeHtml(item.catatanPengasuh)}">"${escapeHtml(item.catatanPengasuh)}"</span>` : ''}
+                        </div>
+                    ` : (item.status === 'REJECTED' ? `
+                        <div class="pt-2 text-[11px] text-rose-600 dark:text-rose-400 border-t border-slate-100 dark:border-[#253447] flex items-center gap-1.5">
+                            <i class="fa-solid fa-ban"></i> Permohonan ditolak oleh Pengasuh: ${escapeHtml(item.catatanPengasuh || 'Tidak memenuhi kriteria')}
+                        </div>
+                    ` : (isApprover && isPending ? `
+                        <div class="pt-2 border-t border-slate-100 dark:border-[#253447] flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-semibold">
+                                <i class="fa-solid fa-hourglass-half"></i> Menunggu Restu Anda
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="processApprovalAction('${escapeHtml(idIzin)}', 'APPROVED', this)"
+                                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95 shadow-xs">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                    <span>Beri Restu (Qobul)</span>
+                                </button>
+                                <button type="button" onclick="processApprovalAction('${escapeHtml(idIzin)}', 'REJECTED', this)"
+                                    class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-rose-200 dark:border-rose-800 active:scale-95">
+                                    <i class="fa-solid fa-xmark text-xs"></i>
+                                    <span>Tolak</span>
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="pt-2 text-[11px] text-amber-600 dark:text-amber-400 border-t border-slate-100 dark:border-[#253447] flex items-center gap-1">
+                            <i class="fa-solid fa-hourglass-half"></i> Menunggu persetujuan Dewan Pengasuh & Masyayikh
+                        </div>
+                    `))}
+                </div>
+            `;
+        });
+
         container.innerHTML = html;
+    }
+
+    /**
+     * Beralih Tab Halaman Modul Standalone Izin Asatidz
+     */
+    function switchIzinAsatidzPageTab(tabName) {
+        const tabs = ['ALL', 'APPROVAL', 'DELEGATIONS', 'MY_HISTORY'];
+        const mapPane = {
+            'ALL': 'izin-page-pane-all',
+            'APPROVAL': 'izin-page-pane-approval',
+            'DELEGATIONS': 'izin-page-pane-badal',
+            'MY_HISTORY': 'izin-page-pane-my'
+        };
+        const mapBtn = {
+            'ALL': 'tab-btn-izin-page-all',
+            'APPROVAL': 'tab-btn-izin-page-approval',
+            'DELEGATIONS': 'tab-btn-izin-page-badal',
+            'MY_HISTORY': 'tab-btn-izin-page-my'
+        };
+
+        tabs.forEach(t => {
+            const pane = document.getElementById(mapPane[t]);
+            const btn = document.getElementById(mapBtn[t]);
+            if (pane) {
+                if (t === tabName) {
+                    pane.classList.remove('hidden');
+                } else {
+                    pane.classList.add('hidden');
+                }
+            }
+            if (btn) {
+                if (t === tabName) {
+                    btn.classList.add('active', 'bg-emerald-50', 'dark:bg-emerald-950/50', 'text-emerald-700', 'dark:text-emerald-300', 'border-emerald-200', 'dark:border-emerald-800');
+                    btn.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-[#1c2836]', 'border-transparent');
+                } else {
+                    btn.classList.remove('active', 'bg-emerald-50', 'dark:bg-emerald-950/50', 'text-emerald-700', 'dark:text-emerald-300', 'border-emerald-200', 'dark:border-emerald-800');
+                    btn.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-[#1c2836]', 'border-transparent');
+                }
+            }
+        });
+    }
+
+    /**
+     * Pencarian & Filter pada Halaman Standalone Izin Asatidz
+     */
+    function filterIzinAsatidzPageList() {
+        const q = String(document.getElementById('izin-page-search-input')?.value || '').toLowerCase().trim();
+        const st = String(document.getElementById('izin-page-filter-status')?.value || '').toUpperCase().trim();
+        const kat = String(document.getElementById('izin-page-filter-kategori')?.value || '').toUpperCase().trim();
+
+        const filtered = (ASNIzinAsatidz.list || []).filter(item => {
+            if (st && String(item.status || 'PENDING').toUpperCase() !== st) return false;
+            if (kat && String(item.kategori || '').toUpperCase() !== kat) return false;
+            if (q) {
+                const nama = String(item.namaAsatidz || item.nama_asatidz || '').toLowerCase();
+                const badal = String(item.namaBadal || item.nama_badal || '').toLowerCase();
+                const alasan = String(item.alasan || '').toLowerCase();
+                const catatan = String(item.catatanBadal || item.catatan_badal || '').toLowerCase();
+                if (!nama.includes(q) && !badal.includes(q) && !alasan.includes(q) && !catatan.includes(q)) return false;
+            }
+            return true;
+        });
+
+        renderAllIzinList(filtered);
     }
 
     /**
@@ -1062,7 +1290,8 @@
                 alertToast('Permohonan izin Asatidz telah ditolak.', 'info');
             }
 
-            // Langsung perbarui tampilan modal
+            // Langsung perbarui tampilan modal & halaman standalone
+            renderAllIzinList();
             renderApprovalList();
             renderMyHistoryList();
             renderDelegatedList();
@@ -1219,6 +1448,9 @@
     window.setIzinAsatidzSesi = setIzinAsatidzSesi;
     window.setIzinAsatidzKategori = setIzinAsatidzKategori;
     window.switchIzinAsatidzTab = switchIzinAsatidzTab;
+    window.switchIzinAsatidzPageTab = switchIzinAsatidzPageTab;
+    window.filterIzinAsatidzPageList = filterIzinAsatidzPageList;
+    window.renderAllIzinList = renderAllIzinList;
     window.loadIzinAsatidzHistory = loadIzinAsatidzHistory;
     window.canApproveIzinAsatidz = canApproveIzinAsatidz;
     window.renderApprovalList = renderApprovalList;

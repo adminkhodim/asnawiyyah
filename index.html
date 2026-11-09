@@ -7859,6 +7859,19 @@
                                             Asatidz</span>
                                     </button>
                                 </li>
+                                <li>
+                                    <button onclick="showAdminView('izin-asatidz')" data-view="izin-asatidz"
+                                        data-role-module="izin-asatidz"
+                                        class="admin-nav-item flex items-center px-3.5 py-2.5 font-semibold transition group relative"
+                                        title="Izin & Badal Asatidz">
+                                        <i class="fa-solid fa-handshake w-5 text-center text-sm"></i>
+                                        <span
+                                            class="ml-3 text-xs sidebar-text whitespace-nowrap transition-opacity duration-300">Izin
+                                            Asatidz</span>
+                                        <span id="sidebar-badge-izin-asatidz"
+                                            class="hidden ml-auto px-1.5 py-0.5 text-[9px] font-black rounded-full bg-amber-500 text-white animate-pulse">0</span>
+                                    </button>
+                                </li>
                             </ul>
                         </div>
 
@@ -8848,7 +8861,7 @@
                                             </div>
                                             <span
                                                 class="admin-hub-category-count text-[10px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/50 dark:border-indigo-800/50 px-2.5 py-0.5 rounded-full">
-                                                1 Menu Layanan
+                                                2 Menu Layanan
                                             </span>
                                         </div>
 
@@ -8872,6 +8885,28 @@
                                                     <p
                                                         class="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">
                                                         Kelola asatidz, muhafiz, guru, NIP, kontak & hak pembina.</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- 9. Izin & Badal Asatidz -->
+                                            <div data-role-module="izin-asatidz" onclick="showAdminView('izin-asatidz')"
+                                                class="bg-slate-50/70 hover:bg-amber-50/70 dark:bg-[#1c2836]/60 dark:hover:bg-[#223347]/80 p-3.5 md:p-4 rounded-xl md:rounded-2xl border border-slate-200/60 hover:border-amber-300 dark:border-[#2b3b4f] dark:hover:border-amber-500/50 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-3 group active:scale-[0.98]">
+                                                <div class="flex justify-between items-start">
+                                                    <div
+                                                        class="w-10 h-10 md:w-11 md:h-11 bg-amber-100/70 text-amber-700 group-hover:bg-amber-600 group-hover:text-white rounded-xl md:rounded-2xl flex items-center justify-center text-base md:text-lg shadow-2xs transition-all duration-300">
+                                                        <i class="fa-solid fa-user-clock"></i>
+                                                    </div>
+                                                    <span id="admin-hub-izin-asatidz-count"
+                                                        class="text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 px-2 py-0.5 rounded-md uppercase">0
+                                                        Izin</span>
+                                                </div>
+                                                <div>
+                                                    <h4
+                                                        class="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition">
+                                                        Izin & Badal Asatidz</h4>
+                                                    <p
+                                                        class="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">
+                                                        Izin mengajar, delegasi badal halaqah & restu Pengasuh.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -12291,9 +12326,9 @@
                                                 <h3
                                                     class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">
                                                     Matriks Hak Akses per Modul Sistem (RBAC Table)</h3>
-                                                <span
+                                                <span id="role-matrix-modules-count"
                                                     class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                                                    21 Modul Terproteksi
+                                                    23 Modul Terproteksi
                                                 </span>
                                             </div>
                                             <p class="text-[10px] text-slate-400 mt-0.5">Konfigurasi dinamis 5 tingkat
@@ -13217,49 +13252,10 @@
                                             <i class="fa-solid fa-print text-xs"></i>
                                             <span class="hidden sm:inline">Cetak</span>
                                         </button>
-                                        <button type="button" onclick="openIzinAsatidzModal()"
-                                            class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95 shrink-0"
-                                            title="Ajukan Izin Mengajar / Pendelegasian Badal">
-                                            <i class="fa-solid fa-user-clock text-xs"></i>
-                                            <span>Izin Asatidz</span>
-                                        </button>
                                         <button type="button" onclick="openTahfidzCatatModal()"
                                             class="tahfidz-admin-action px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95 shrink-0">
                                             <i class="fa-solid fa-plus text-xs"></i>
                                             <span>Catat Setoran</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- BANNER NOTIFIKASI PERSETUJUAN IZIN ASATIDZ (PENGASUH & ADMIN) -->
-                                <div id="banner-pengasuh-izin-asatidz"
-                                    class="hidden p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-orange-50 dark:from-amber-950/40 dark:via-amber-900/30 dark:to-[#1c2836] border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition animate-fade-in-up">
-                                    <div class="flex items-start sm:items-center gap-3">
-                                        <div
-                                            class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
-                                            <i class="fa-solid fa-stamp"></i>
-                                        </div>
-                                        <div>
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                <h4
-                                                    class="font-bold text-xs sm:text-sm text-amber-950 dark:text-amber-100">
-                                                    Persetujuan Izin Asatidz Dibutuhkan</h4>
-                                                <span id="banner-pengasuh-izin-badge"
-                                                    class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100">0
-                                                    Menunggu</span>
-                                            </div>
-                                            <p id="banner-pengasuh-izin-text"
-                                                class="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
-                                                Ada pengajuan izin mengajar yang memerlukan restu Pengasuh untuk
-                                                mengaktifkan Badal Halaqah santri.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-2 shrink-0 justify-end">
-                                        <button type="button" onclick="openIzinAsatidzModal('APPROVAL')"
-                                            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
-                                            <i class="fa-solid fa-stamp text-xs"></i>
-                                            <span>Tinjau & Beri Restu</span>
                                         </button>
                                     </div>
                                 </div>
@@ -14029,6 +14025,260 @@
                                             class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#253447] dark:hover:bg-[#2e4057] text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition">
                                             Tutup
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ================= VIEW: MODUL IZIN & BADAL ASATIDZ (KEPEGAWAIAN & SDM) ================= -->
+                            <div id="admin-view-izin-asatidz" class="hidden space-y-4">
+                                <!-- Header Sub-View -->
+                                <div
+                                    class="bg-white dark:bg-[#16222f] p-3.5 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-in-up stagger-1">
+                                    <div class="flex items-center space-x-3">
+                                        <button type="button" onclick="backFromAdminModule()"
+                                            class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-lg flex items-center justify-center transition active:scale-95 shrink-0"
+                                            title="Kembali ke Dashboard">
+                                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                                        </button>
+                                        <div>
+                                            <div class="flex items-center space-x-2">
+                                                <span
+                                                    class="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">Kepegawaian & SDM</span>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                    <i class="fa-solid fa-handshake text-[8px] mr-1"></i> Izin & Delegasi Badal
+                                                </span>
+                                            </div>
+                                            <h2
+                                                class="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                                <span>Izin & Badal Asatidz</span>
+                                                <span id="izin-asatidz-count-header"
+                                                    class="hidden md:inline-block text-xs font-normal text-slate-500 dark:text-slate-400">...</span>
+                                            </h2>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Toolbar -->
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button type="button" onclick="loadIzinAsatidzHistory()"
+                                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#1c2836] dark:hover:bg-[#253447] dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 border border-slate-200 dark:border-[#283a4e] active:scale-95"
+                                            title="Muat ulang data perizinan">
+                                            <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                                            <span>Refresh</span>
+                                        </button>
+                                        <button type="button" onclick="openIzinAsatidzModal()"
+                                            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95 shrink-0"
+                                            title="Ajukan Izin Mengajar Baru">
+                                            <i class="fa-solid fa-plus text-xs"></i>
+                                            <span>+ Ajukan Izin Asatidz</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- BANNER NOTIFIKASI PERSETUJUAN IZIN ASATIDZ (PENGASUH & ADMIN) -->
+                                <div id="banner-pengasuh-izin-asatidz"
+                                    class="hidden p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-orange-50 dark:from-amber-950/40 dark:via-amber-900/30 dark:to-[#1c2836] border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition animate-fade-in-up">
+                                    <div class="flex items-start sm:items-center gap-3">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                                            <i class="fa-solid fa-stamp"></i>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <h4
+                                                    class="font-bold text-xs sm:text-sm text-amber-950 dark:text-amber-100">
+                                                    Persetujuan Izin Asatidz Dibutuhkan</h4>
+                                                <span id="banner-pengasuh-izin-badge"
+                                                    class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100">0
+                                                    Menunggu</span>
+                                            </div>
+                                            <p id="banner-pengasuh-izin-text"
+                                                class="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                                                Ada permohonan izin mengajar Asatidz yang memerlukan restu Pengasuh untuk mengaktifkan penugasan Badal (pengganti) halaqah santri.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0 justify-end">
+                                        <button type="button" onclick="switchIzinAsatidzPageTab('APPROVAL')"
+                                            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                                            <i class="fa-solid fa-stamp text-xs"></i>
+                                            <span>Tinjau & Beri Restu</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 4 KARTU RINGKASAN MAKRO (VIBRANT GRADIENT PERSIS MODUL KEDISIPLINAN & TAHFIDZ) -->
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+                                    <!-- 1. Total Izin Bulan Ini (Indigo Gradient) -->
+                                    <div
+                                        class="relative overflow-hidden rounded-2xl p-3 md:p-4 text-white shadow-sm flex flex-col justify-between bg-gradient-to-br from-indigo-500 to-indigo-700 animate-fade-in-up stagger-1 min-h-[92px]">
+                                        <div class="flex justify-between items-start">
+                                            <div class="space-y-0.5">
+                                                <span class="text-[10px] md:text-xs font-bold tracking-wide uppercase opacity-90 block">TOTAL IZIN BULAN INI</span>
+                                                <div class="flex items-baseline space-x-1.5">
+                                                    <span id="kpi-izin-asatidz-total" class="text-xl md:text-2xl font-black">0</span>
+                                                    <span class="text-[10px] md:text-xs font-semibold opacity-85">Izin</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-calendar-check text-xs md:text-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[9px] md:text-[10px] font-medium pt-1 border-t border-white/20 mt-1 opacity-90">
+                                            <span>Total database</span>
+                                            <span class="bg-white/20 px-1.5 py-0.5 rounded-full font-bold">Data Induk</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 2. Menunggu Restu (Amber Gradient) -->
+                                    <div
+                                        class="relative overflow-hidden rounded-2xl p-3 md:p-4 text-white shadow-sm flex flex-col justify-between bg-gradient-to-br from-amber-500 to-amber-700 animate-fade-in-up stagger-2 min-h-[92px]">
+                                        <div class="flex justify-between items-start">
+                                            <div class="space-y-0.5">
+                                                <span class="text-[10px] md:text-xs font-bold tracking-wide uppercase opacity-90 block">MENUNGGU RESTU</span>
+                                                <div class="flex items-baseline space-x-1.5">
+                                                    <span id="kpi-izin-asatidz-pending" class="text-xl md:text-2xl font-black">0</span>
+                                                    <span class="text-[10px] md:text-xs font-semibold opacity-85">Menunggu</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-hourglass-half text-xs md:text-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[9px] md:text-[10px] font-medium pt-1 border-t border-white/20 mt-1 opacity-90">
+                                            <span>Persetujuan Pengasuh</span>
+                                            <span class="bg-white/20 px-1.5 py-0.5 rounded-full font-bold">Pending</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. Amanah Badal Aktif (Cyan / Blue Gradient) -->
+                                    <div
+                                        class="relative overflow-hidden rounded-2xl p-3 md:p-4 text-white shadow-sm flex flex-col justify-between bg-gradient-to-br from-cyan-500 to-blue-600 animate-fade-in-up stagger-3 min-h-[92px]">
+                                        <div class="flex justify-between items-start">
+                                            <div class="space-y-0.5">
+                                                <span class="text-[10px] md:text-xs font-bold tracking-wide uppercase opacity-90 block">AMANAH BADAL AKTIF</span>
+                                                <div class="flex items-baseline space-x-1.5">
+                                                    <span id="kpi-izin-asatidz-badal" class="text-xl md:text-2xl font-black">0</span>
+                                                    <span class="text-[10px] md:text-xs font-semibold opacity-85">Tugas</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-handshake text-xs md:text-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[9px] md:text-[10px] font-medium pt-1 border-t border-white/20 mt-1 opacity-90">
+                                            <span>Delegasi pengampu halaqah</span>
+                                            <span class="bg-white/20 px-1.5 py-0.5 rounded-full font-bold">Halaqah</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4. Disetujui / Qobul (Emerald Gradient) -->
+                                    <div
+                                        class="relative overflow-hidden rounded-2xl p-3 md:p-4 text-white shadow-sm flex flex-col justify-between bg-gradient-to-br from-emerald-500 to-emerald-700 animate-fade-in-up stagger-4 min-h-[92px]">
+                                        <div class="flex justify-between items-start">
+                                            <div class="space-y-0.5">
+                                                <span class="text-[10px] md:text-xs font-bold tracking-wide uppercase opacity-90 block">DISETUJUI (QOBUL)</span>
+                                                <div class="flex items-baseline space-x-1.5">
+                                                    <span id="kpi-izin-asatidz-approved" class="text-xl md:text-2xl font-black">0</span>
+                                                    <span class="text-[10px] md:text-xs font-semibold opacity-85">Disetujui</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-circle-check text-xs md:text-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[9px] md:text-[10px] font-medium pt-1 border-t border-white/20 mt-1 opacity-90">
+                                            <span>Izin resmi terverifikasi</span>
+                                            <span class="bg-white/20 px-1.5 py-0.5 rounded-full font-bold">Resmi</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SUB-NAV TABS & FILTER BAR -->
+                                <div class="bg-white dark:bg-[#16222f] p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-[#253447] space-y-3">
+                                    <!-- TAB NAVIGATION -->
+                                    <div class="flex items-center gap-1.5 border-b border-slate-100 dark:border-[#253447] pb-2 overflow-x-auto no-scrollbar">
+                                        <button type="button" id="tab-btn-izin-page-all" onclick="switchIzinAsatidzPageTab('ALL')"
+                                            class="izin-page-tab-btn active px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                                            <i class="fa-solid fa-list-check text-xs"></i>
+                                            <span>Semua Permohonan</span>
+                                            <span id="badge-count-izin-page-all" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 font-extrabold ml-1">0</span>
+                                        </button>
+                                        <button type="button" id="tab-btn-izin-page-approval" onclick="switchIzinAsatidzPageTab('APPROVAL')"
+                                            class="izin-page-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1c2836] border border-transparent shrink-0">
+                                            <i class="fa-solid fa-stamp text-xs text-amber-500"></i>
+                                            <span>Menunggu Restu</span>
+                                            <span id="badge-count-izin-page-approval" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold ml-1">0</span>
+                                        </button>
+                                        <button type="button" id="tab-btn-izin-page-badal" onclick="switchIzinAsatidzPageTab('DELEGATIONS')"
+                                            class="izin-page-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1c2836] border border-transparent shrink-0">
+                                            <i class="fa-solid fa-handshake text-xs text-sky-500"></i>
+                                            <span>Amanah Badal Halaqah</span>
+                                            <span id="badge-count-izin-page-badal" class="px-1.5 py-0.2 rounded-full text-[10px] bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 font-extrabold ml-1">0</span>
+                                        </button>
+                                        <button type="button" id="tab-btn-izin-page-my" onclick="switchIzinAsatidzPageTab('MY_HISTORY')"
+                                            class="izin-page-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1c2836] border border-transparent shrink-0">
+                                            <i class="fa-solid fa-clock-rotate-left text-xs text-indigo-500"></i>
+                                            <span>Riwayat Izin Saya</span>
+                                            <span id="badge-count-izin-page-my" class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 font-extrabold ml-1">0</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- FILTER & SEARCH BAR -->
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
+                                        <div class="relative flex-1">
+                                            <input type="text" id="izin-page-search-input" oninput="filterIzinAsatidzPageList()"
+                                                placeholder="Cari nama asatidz, ustadz badal, atau alasan izin..."
+                                                class="w-full pl-9 pr-3.5 py-2 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <select id="izin-page-filter-status" onchange="filterIzinAsatidzPageList()"
+                                                class="px-2.5 py-2 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                                <option value="">Semua Status</option>
+                                                <option value="PENDING">Menunggu Restu</option>
+                                                <option value="APPROVED">Disetujui (Qobul)</option>
+                                                <option value="REJECTED">Ditolak</option>
+                                            </select>
+                                            <select id="izin-page-filter-kategori" onchange="filterIzinAsatidzPageList()"
+                                                class="px-2.5 py-2 bg-slate-50 dark:bg-[#1c2836] border border-slate-200 dark:border-[#283a4e] rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                                <option value="">Semua Kategori</option>
+                                                <option value="SAKIT">Sakit</option>
+                                                <option value="DINAS">Tugas / Dinas Lembaga</option>
+                                                <option value="KELUARGA">Urusan Keluarga</option>
+                                                <option value="HAJATAN">Acara / Hajatan</option>
+                                                <option value="LAINNYA">Lain-lain</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TAB PANES CONTENT -->
+                                <!-- Pane 1: SEMUA PERMOHONAN -->
+                                <div id="izin-page-pane-all" class="space-y-3">
+                                    <div id="izin-page-all-list" class="space-y-2.5">
+                                        <!-- Injected by JS -->
+                                    </div>
+                                </div>
+
+                                <!-- Pane 2: MENUNGGU RESTU PENGASUH -->
+                                <div id="izin-page-pane-approval" class="hidden space-y-3">
+                                    <div id="izin-page-approval-list" class="space-y-2.5">
+                                        <!-- Injected by JS -->
+                                    </div>
+                                </div>
+
+                                <!-- Pane 3: AMANAH BADAL SAYA -->
+                                <div id="izin-page-pane-badal" class="hidden space-y-3">
+                                    <div id="izin-page-badal-list" class="space-y-2.5">
+                                        <!-- Injected by JS -->
+                                    </div>
+                                </div>
+
+                                <!-- Pane 4: RIWAYAT IZIN SAYA -->
+                                <div id="izin-page-pane-my" class="hidden space-y-3">
+                                    <div id="izin-page-my-list" class="space-y-2.5">
+                                        <!-- Injected by JS -->
                                     </div>
                                 </div>
                             </div>

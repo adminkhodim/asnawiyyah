@@ -222,6 +222,8 @@
             items: [
                 { key: 'profil.manage', label: 'Profil Lembaga & Pengurus', desc: 'Izin mengubah struktur kepengurusan & sejarah pondok' },
                 { key: 'pegawai.manage', label: 'Data Pegawai & Asatidz', desc: 'Akses mengelola data staf & dewan asatidz' },
+                { key: 'izin-asatidz.view', label: 'Melihat Data Izin & Badal Asatidz', desc: 'Akses melihat permohonan izin mengajar dan amanah badal halaqah' },
+                { key: 'izin-asatidz.manage', label: 'Kelola Pengajuan & Restu Izin Asatidz', desc: 'Izin mengajukan izin mengajar, delegasi badal, serta hak restu/approval Pengasuh' },
                 { key: 'users.manage', label: 'Manajemen Akun Pengguna', desc: 'Izin membuat, reset sandi, dan status akun' },
                 { key: 'roles.manage', label: 'Manajemen Peran (RBAC)', desc: 'Hak khusus mengatur checklist izin peran pengguna' },
                 { key: 'system.config', label: 'Konfigurasi Sistem & API', desc: 'Akses kunci integrasi Google Sheets & token sistem' }
@@ -236,6 +238,7 @@
         'alumni': ['alumni.view', 'alumni.manage'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
         'keaktifan-asatidz': ['keaktifan.view'],
+        'izin-asatidz': ['izin-asatidz.view', 'izin-asatidz.manage'],
         'presensi': ['presensi.view', 'presensi.entry'],
         'ppdb': ['ppdb.manage'],
         'program': ['program.manage'],
@@ -267,7 +270,8 @@
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config',
             'perpulangan.view', 'perpulangan.manage',
-            'kedisiplinan.view', 'kedisiplinan.manage'
+            'kedisiplinan.view', 'kedisiplinan.manage',
+            'izin-asatidz.view', 'izin-asatidz.manage'
         ],
         'ASATIDZ': [
             'santri.view', 'wali.view',
@@ -275,7 +279,8 @@
             'presensi.view', 'presensi.entry',
             'pegawai.manage', 'profil.manage',
             'perpulangan.view',
-            'kedisiplinan.view'
+            'kedisiplinan.view',
+            'izin-asatidz.view', 'izin-asatidz.manage'
         ],
         'BENDAHARA': [
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'santri.view', 'wali.view', 'notifikasi.broadcast'
@@ -285,12 +290,14 @@
             'wali.view',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
             'perpulangan.view', 'perpulangan.manage',
-            'kedisiplinan.view', 'kedisiplinan.manage'
+            'kedisiplinan.view', 'kedisiplinan.manage',
+            'izin-asatidz.view'
         ],
         'PENGASUH': [
             'santri.view', 'wali.view', 'tahfidz.view', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage',
             'perpulangan.view', 'perpulangan.manage',
-            'kedisiplinan.view'
+            'kedisiplinan.view',
+            'izin-asatidz.view', 'izin-asatidz.manage'
         ],
         'WALI_SANTRI': [
             'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view',
@@ -553,6 +560,22 @@
                 PENGASUH: 'read',
                 ASATIDZ: 'none',
                 PENGURUS: 'none',
+                BENDAHARA: 'none',
+                WALI_SANTRI: 'none'
+            }
+        },
+        {
+            key: 'izin-asatidz',
+            category: 'Kepegawaian & SDM',
+            module: 'Izin & Badal Asatidz',
+            icon: 'fa-handshake',
+            desc: 'Pengajuan izin mengajar, pendelegasian amanah badal halaqah, dan restu Pengasuh.',
+            permissions: {
+                SUPER_ADMIN: 'full',
+                ADMIN: 'full',
+                PENGASUH: 'full',
+                ASATIDZ: 'entry',
+                PENGURUS: 'read',
                 BENDAHARA: 'none',
                 WALI_SANTRI: 'none'
             }
@@ -1129,6 +1152,9 @@
         if (totalRolesEl) totalRolesEl.innerText = Object.keys(ROLE_DEFINITIONS).length;
         if (totalUsersEl) totalUsersEl.innerText = totalUsers;
         if (totalModulesEl) totalModulesEl.innerText = MODULE_PERMISSIONS_MATRIX.length;
+
+        const matrixCountBadge = document.getElementById('role-matrix-modules-count');
+        if (matrixCountBadge) matrixCountBadge.innerText = `${MODULE_PERMISSIONS_MATRIX.length} Modul Terproteksi`;
 
         if (currentAdminRoleEl) {
             const role = (typeof ASNIdentity !== 'undefined' && ASNIdentity.currentRole) ||
@@ -1902,32 +1928,32 @@
     const ROLE_ALLOWED_MODULES = {
         'SUPER_ADMIN': [
             'santri', 'wali-santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
-            'keuangan',
+            'keuangan', 'kedisiplinan', 'keaktifan-asatidz', 'izin-asatidz',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ADMIN': [
             'santri', 'wali-santri', 'tahfidz', 'presensi', 'ppdb', 'program', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'perpulangan',
-            'keuangan',
+            'keuangan', 'kedisiplinan', 'izin-asatidz',
             'users', 'roles', 'pegawai',
             'berita', 'banner', 'galeri', 'notifikasi',
             'profil-lembaga', 'pengaturan'
         ],
         'ASATIDZ': [
-            'tahfidz', 'presensi', 'santri', 'wali-santri', 'pegawai', 'profil-lembaga', 'perpulangan'
+            'tahfidz', 'presensi', 'santri', 'wali-santri', 'pegawai', 'profil-lembaga', 'perpulangan', 'kedisiplinan', 'izin-asatidz'
         ],
         'BENDAHARA': [
             'keuangan', 'santri', 'wali-santri', 'ppdb', 'notifikasi', 'pegawai', 'profil-lembaga', 'alumni'
         ],
         'PENGURUS': [
-            'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'ppdb', 'santri', 'wali-santri', 'perpulangan', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
+            'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'ppdb', 'santri', 'wali-santri', 'perpulangan', 'kedisiplinan', 'izin-asatidz', 'berita', 'banner', 'galeri', 'notifikasi', 'profil-lembaga'
         ],
         'PENGASUH': [
-            'santri', 'wali-santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'ppdb', 'pegawai', 'perpulangan', 'berita', 'galeri', 'profil-lembaga', 'users'
+            'santri', 'wali-santri', 'tahfidz', 'presensi', 'unit-kegiatan', 'jadwal-kegiatan', 'alumni', 'keaktifan-asatidz', 'izin-asatidz', 'ppdb', 'pegawai', 'perpulangan', 'kedisiplinan', 'berita', 'galeri', 'profil-lembaga', 'users'
         ],
         'WALI_SANTRI': [
-            'santri', 'tahfidz', 'presensi', 'perpulangan', 'berita', 'galeri', 'profil-lembaga'
+            'santri', 'tahfidz', 'presensi', 'perpulangan', 'kedisiplinan', 'berita', 'galeri', 'profil-lembaga'
         ]
     };
 

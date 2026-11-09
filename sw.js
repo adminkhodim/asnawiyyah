@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v97';
+const CACHE_NAME = 'asnawiyyah-cache-v98';
 
 const PRECACHE_URLS = [
   '/',
@@ -80,18 +80,18 @@ self.addEventListener('fetch', event => {
     fetch(event.request)
       .then(response => {
         // Jangan cache respon yang tidak valid
-        if(!response || response.status !== 200 || response.type !== 'basic') {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-        
+
         // Kloning respons karena stream hanya bisa dibaca sekali
         var responseToCache = response.clone();
-        
+
         caches.open(CACHE_NAME)
           .then(cache => {
             cache.put(event.request, responseToCache);
           });
-          
+
         return response;
       })
       .catch(() => {

@@ -47,11 +47,11 @@ const context = vm.createContext({
 
 vm.runInContext(rolesCode, context);
 
-// 1. Verifikasi 22 Modul
+// 1. Verifikasi 23 Modul
 const matrix = mockWindow.MODULE_PERMISSIONS_MATRIX;
 assert(Array.isArray(matrix), 'MODULE_PERMISSIONS_MATRIX harus berupa array');
 console.log(`✅ Jumlah modul terdaftar: ${matrix.length}`);
-assert.strictEqual(matrix.length, 22, `Harus ada tepat 22 modul, ditemukan ${matrix.length}`);
+assert.strictEqual(matrix.length, 23, `Harus ada tepat 23 modul, ditemukan ${matrix.length}`);
 
 // Validasi struktur tiap modul
 matrix.forEach((mod, idx) => {
@@ -60,7 +60,7 @@ matrix.forEach((mod, idx) => {
     assert(mod.category, `Modul ${mod.key} harus punya category`);
     assert(mod.permissions, `Modul ${mod.key} harus punya baseline permissions`);
 });
-console.log('✅ Semua 22 modul memiliki struktur dan baseline izin yang valid');
+console.log('✅ Semua 23 modul memiliki struktur dan baseline izin yang valid');
 
 // Validasi Modul Data Wali Santri (Modul Mandiri RBAC)
 const waliMod = matrix.find(m => m.key === 'wali-santri');
@@ -97,6 +97,18 @@ assert.strictEqual(kedisiplinanMod.permissions.PENGURUS, 'full');
 assert.strictEqual(kedisiplinanMod.permissions.BENDAHARA, 'none');
 assert.strictEqual(kedisiplinanMod.permissions.WALI_SANTRI, 'read_own');
 console.log('✅ Modul Kedisiplinan & Tarbiyah Santri terverifikasi dengan RBAC 7 Peran');
+
+// Validasi Modul Izin & Badal Asatidz (Modul 23)
+const izinAsatidzMod = matrix.find(m => m.key === 'izin-asatidz');
+assert(izinAsatidzMod, 'Modul izin-asatidz harus terdaftar dalam matriks');
+assert.strictEqual(izinAsatidzMod.permissions.SUPER_ADMIN, 'full');
+assert.strictEqual(izinAsatidzMod.permissions.ADMIN, 'full');
+assert.strictEqual(izinAsatidzMod.permissions.PENGASUH, 'full');
+assert.strictEqual(izinAsatidzMod.permissions.ASATIDZ, 'entry');
+assert.strictEqual(izinAsatidzMod.permissions.PENGURUS, 'read');
+assert.strictEqual(izinAsatidzMod.permissions.BENDAHARA, 'none');
+assert.strictEqual(izinAsatidzMod.permissions.WALI_SANTRI, 'none');
+console.log('✅ Modul Izin & Badal Asatidz terverifikasi dengan RBAC 7 Peran');
 
 // 2. Verifikasi 7 Peran
 const roles = Object.keys(mockWindow.ROLE_DEFINITIONS);

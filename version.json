@@ -1,9 +1,10 @@
 {
-    "version": "2.5.8",
-    "buildTime": "2026-11-10T00:29:00+07:00",
-    "title": "Standardisasi Desain KPI Card Kedisiplinan & Tarbiyah Santri",
+    "version": "2.5.9",
+    "buildTime": "2026-11-10T01:25:00+07:00",
+    "title": "Pemisahan Modul Mandiri Izin & Badal Asatidz (Kepegawaian & SDM)",
     "highlights": [
-        "Penyelarasan 4 kartu KPI Makro Kedisiplinan & Tarbiyah dengan palet gradient vibrant resmi (Indigo, Amber, Rose, Emerald)",
-        "Pemberian icon badge, drop-shadow, label status bawah, dan pill tag seragam seperti pada Master Data Santri & Tahfidz Al-Qur'an"
+        "Pemisahan fitur Izin Asatidz dari menu Tahfidz Al-Qur'an menjadi Modul Mandiri di Grup Kepegawaian & SDM",
+        "Penyediaan tampilan mandiri dengan 4 kartu KPI makro vibrant, 4 sub-nav tab permohonan, dan filter terpadu",
+        "Integrasi RBAC 23 Modul dengan hak akses pengajuan Asatidz, monitoring Pengurus, dan hak restu/qobul Pengasuh"
     ]
 }

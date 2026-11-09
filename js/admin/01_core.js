@@ -520,6 +520,8 @@
             { view: 'alumni', name: 'Rekap Alumni', category: 'Kesantrian', icon: 'fa-user-graduate' },
             { view: 'program', name: 'Manajemen Program', category: 'Kesantrian', icon: 'fa-graduation-cap' },
             { view: 'pegawai', name: 'Data Pegawai & Asatidz', category: 'Kepegawaian', icon: 'fa-user-tie' },
+            { view: 'keaktifan-asatidz', name: 'Keaktifan Asatidz', category: 'Kepegawaian', icon: 'fa-user-clock' },
+            { view: 'izin-asatidz', name: 'Izin & Badal Asatidz', category: 'Kepegawaian', icon: 'fa-handshake' },
             { view: 'berita', name: 'Manajemen Berita', category: 'Portal & Media', icon: 'fa-newspaper' },
             { view: 'banner', name: 'Banner Slider', category: 'Portal & Media', icon: 'fa-images' },
             { view: 'galeri', name: 'Manajemen Galeri', category: 'Portal & Media', icon: 'fa-camera-retro' },
@@ -842,6 +844,18 @@
         }
         window.triggerKeaktifanStaggerAnimation = triggerKeaktifanStaggerAnimation;
 
+        function triggerIzinAsatidzStaggerAnimation() {
+            const izinView = document.getElementById('admin-view-izin-asatidz');
+            if (!izinView) return;
+            const animatedElements = izinView.querySelectorAll('.animate-fade-in-up');
+            animatedElements.forEach(el => {
+                el.classList.remove('animate-fade-in-up');
+                void el.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+                el.classList.add('animate-fade-in-up');
+            });
+        }
+        window.triggerIzinAsatidzStaggerAnimation = triggerIzinAsatidzStaggerAnimation;
+
         function triggerUsersStaggerAnimation() {
             const usersView = document.getElementById('admin-view-users');
             if (!usersView) return;
@@ -1047,6 +1061,7 @@
                     'program': 'Manajemen Program',
                     'pegawai': 'Data Pegawai & Asatidz',
                     'keaktifan-asatidz': 'Keaktifan Asatidz',
+                    'izin-asatidz': 'Izin & Badal Asatidz',
                     'berita': 'Manajemen Berita',
                     'banner': 'Banner Slider',
                     'galeri': 'Manajemen Galeri',
@@ -1100,6 +1115,7 @@
             const rolesView = document.getElementById('admin-view-roles');
             const perpulanganView = document.getElementById('admin-view-perpulangan');
             const kedisiplinanView = document.getElementById('admin-view-kedisiplinan');
+            const izinAsatidzView = document.getElementById('admin-view-izin-asatidz');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -1110,6 +1126,7 @@
             if (waliSantriView) waliSantriView.classList.add('hidden');
             if (tahfidzView) tahfidzView.classList.add('hidden');
             if (keaktifanView) keaktifanView.classList.add('hidden');
+            if (izinAsatidzView) izinAsatidzView.classList.add('hidden');
             if (ppdbView) ppdbView.classList.add('hidden');
             if (programView) programView.classList.add('hidden');
             if (galeriView) galeriView.classList.add('hidden');
@@ -1206,6 +1223,14 @@
                 }
                 if (typeof loadAdminKeaktifanAsatidz === 'function') {
                     loadAdminKeaktifanAsatidz();
+                }
+            } else if (viewName === 'izin-asatidz') {
+                if (izinAsatidzView) izinAsatidzView.classList.remove('hidden');
+                if (typeof triggerIzinAsatidzStaggerAnimation === 'function') {
+                    triggerIzinAsatidzStaggerAnimation();
+                }
+                if (typeof loadIzinAsatidzHistory === 'function') {
+                    loadIzinAsatidzHistory();
                 }
             } else if (viewName === 'notifikasi') {
                 if (notifikasiView) notifikasiView.classList.remove('hidden');
