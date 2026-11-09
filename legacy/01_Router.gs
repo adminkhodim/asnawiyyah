@@ -328,6 +328,11 @@ function doPost(e) {
       return createJsonResponse(autoFixMissingWaliNames());
     }
 
+    if (action === "autoCancelExpiredIzin" || action === "perpulangan.autoCancelExpired") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      return createJsonResponse(autoCancelExpiredIzinPerpulangan(payload.data || payload, token));
+    }
+
     // ========================================================
     // ========================================================
     // TAHFIDZ AL-QUR'AN ACTIONS (doPost)
@@ -1194,6 +1199,11 @@ function doGet(e) {
     if (action === "getIzinPerpulangan" || action === "perpulangan.list") {
       const token = e.parameter.token || null;
       return createJsonResponse(getIzinPerpulanganData(e.parameter, token));
+    }
+
+    if (action === "autoCancelExpiredIzin" || action === "perpulangan.autoCancelExpired") {
+      const token = e.parameter.token || null;
+      return createJsonResponse(autoCancelExpiredIzinPerpulangan(e.parameter, token));
     }
 
     // ========================================================

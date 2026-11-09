@@ -1738,6 +1738,7 @@ function onOpen() {
       .addItem("📖 Sinkronkan Capaian Tahfidz", "syncHistoricalTahfidzCapaianToSupabase")
       .addItem("📜 Sinkronkan Log Tahfidz", "syncHistoricalTahfidzLogsToSupabase")
       .addItem("🚗 Sinkronkan Izin Perpulangan", "syncHistoricalIzinPerpulanganToSupabase")
+      .addItem("⏰ Batalkan Otomatis Izin Kadaluwarsa", "autoCancelExpiredIzinPerpulangan")
       .addItem("👔 Sinkronkan Data Pegawai / Asatidz", "syncHistoricalPegawaiToSupabase")
       .addItem("📰 Sinkronkan Berita & Artikel", "syncHistoricalBeritaToSupabase")
       .addItem("🔔 Sinkronkan Notifikasi & Pengumuman", "syncNotifikasiSheetToSupabase")

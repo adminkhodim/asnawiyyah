@@ -3092,7 +3092,14 @@ function getIzinPerpulanganData(params = {}, token = null) {
       // Filter parameter jika ada
       if (params.waliId && item.waliId !== String(params.waliId).trim()) continue;
       if (params.studentId && item.studentId !== String(params.studentId).trim()) continue;
-      if (params.status && item.status !== String(params.status).trim()) continue;
+      if (params.status) {
+        const pStat = String(params.status).trim();
+        if (pStat === "DITOLAK") {
+          if (item.status !== "DITOLAK" && item.status !== "DIBATALKAN_SISTEM") continue;
+        } else if (item.status !== pStat) {
+          continue;
+        }
+      }
       if (params.kategori && item.kategori !== String(params.kategori).trim()) continue;
 
       rows.push(item);
@@ -3109,7 +3116,8 @@ function getIzinPerpulanganData(params = {}, token = null) {
       keluar: rows.filter(r => r.status === "KELUAR").length,
       kembali: rows.filter(r => r.status === "KEMBALI").length,
       terlambat: rows.filter(r => r.status === "TERLAMBAT").length,
-      ditolak: rows.filter(r => r.status === "DITOLAK").length
+      ditolak: rows.filter(r => r.status === "DITOLAK" || r.status === "DIBATALKAN_SISTEM").length,
+      dibatalkanSistem: rows.filter(r => r.status === "DIBATALKAN_SISTEM").length
     };
 
     return {
@@ -3779,6 +3787,152 @@ function deleteIzinPerpulangan(payload = {}, token = null) {
   } catch (err) {
     console.error("[DELETE IZIN ERROR]", err);
     return { status: "error", success: false, message: "Gagal menghapus izin dari Spreadsheet: " + err.message };
+  }
+}
+
+/**
+ * Pembatalan Otomatis Izin Kadaluwarsa (Auto-Cancel Expired Izin Perpulangan)
+ * Mengubah status permohonan yang masih MENUNGGU_PENGURUS / MENUNGGU_PENGASUH
+ * dan telah melewati batas toleransi rencana keluar menjadi DIBATALKAN_SISTEM.
+ * Batas toleransi: Akhir hari H tanggal rencana keluar (23:59:59 WIB)
+ * atau Jam Keluar + 2 Jam (mana yang lebih akhir).
+ */
+function autoCancelExpiredIzinPerpulangan(payload = {}, token = null) {
+  try {
+    const sheet = getIzinSheet();
+    if (!sheet) return { status: "error", success: false, message: "Gagal mengakses sheet Izin_Perpulangan" };
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) {
+      return { status: "success", success: true, totalChecked: 0, totalCancelled: 0, cancelledIds: [] };
+    }
+
+    const headers = data[0].map(h => String(h || "").trim());
+    const idIdx = headers.indexOf("ID_Izin");
+    const statusIdx = headers.indexOf("Status");
+    const tglMulaiIdx = headers.indexOf("Tgl_Mulai");
+    const jamMulaiIdx = headers.indexOf("Jam_Mulai");
+    const rejectIdx = headers.indexOf("Alasan_Penolakan");
+    const updatedIdx = headers.indexOf("Updated_At");
+
+    if (idIdx === -1 || statusIdx === -1 || tglMulaiIdx === -1) {
+      return { status: "error", success: false, message: "Struktur kolom Izin_Perpulangan tidak lengkap." };
+    }
+
+    const now = new Date();
+    const nowTime = now.getTime();
+    const nowIso = now.toISOString();
+    const cancelledIds = [];
+    const reasonText = "Otomatis ditolak/dibatalkan oleh sistem: Jadwal rencana perpulangan santri telah terlampaui sebelum mendapatkan persetujuan Tier 1/Tier 2.";
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const idIzin = String(row[idIdx] || "").trim();
+      const currentStatus = String(row[statusIdx] || "").trim().toUpperCase();
+
+      if (!idIzin) continue;
+      // Hanya proses izin yang masih menggantung di Tier 1 atau Tier 2
+      if (currentStatus !== "MENUNGGU_PENGURUS" && currentStatus !== "MENUNGGU_PENGASUH") {
+        continue;
+      }
+
+      const rawTglMulai = row[tglMulaiIdx];
+      let tglIso = "";
+      if (rawTglMulai instanceof Date) {
+        if (!isNaN(rawTglMulai.getTime())) {
+          tglIso = Utilities.formatDate(rawTglMulai, "GMT+7", "yyyy-MM-dd");
+        }
+      } else {
+        const s = String(rawTglMulai || "").trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+          tglIso = s.substring(0, 10);
+        } else {
+          const d = new Date(s);
+          if (!isNaN(d.getTime())) {
+            tglIso = Utilities.formatDate(d, "GMT+7", "yyyy-MM-dd");
+          }
+        }
+      }
+
+      if (!tglIso) continue;
+
+      let rawJamMulai = jamMulaiIdx !== -1 ? String(row[jamMulaiIdx] || "").trim() : "23:59";
+      if (!/^\d{2}:\d{2}/.test(rawJamMulai)) rawJamMulai = "23:59";
+      const jamMulai = rawJamMulai.substring(0, 5);
+
+      // Hitung cutoff: Akhir hari H (23:59:59 WIB) atau Rencana Keluar + 2 Jam (mana yang lebih akhir)
+      let planDate = new Date(`${tglIso}T${jamMulai}:00+07:00`);
+      if (isNaN(planDate.getTime())) {
+        planDate = new Date(`${tglIso}T23:59:59+07:00`);
+      }
+
+      const planPlus2Hours = new Date(planDate.getTime() + (2 * 60 * 60 * 1000));
+      const endOfDay = new Date(`${tglIso}T23:59:59+07:00`);
+      const cutoffTime = planPlus2Hours.getTime() > endOfDay.getTime() ? planPlus2Hours.getTime() : endOfDay.getTime();
+
+      if (nowTime > cutoffTime) {
+        const rowNum = i + 1;
+        sheet.getRange(rowNum, statusIdx + 1).setValue("DIBATALKAN_SISTEM");
+        if (rejectIdx !== -1) {
+          sheet.getRange(rowNum, rejectIdx + 1).setValue(reasonText);
+        }
+        if (updatedIdx !== -1) {
+          sheet.getRange(rowNum, updatedIdx + 1).setValue(nowIso);
+        }
+
+        // Replikasi ke Supabase Cloud DB (via service_role key)
+        try {
+          if (typeof replicateToSupabase === "function") {
+            replicateToSupabase(`/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, "PATCH", {
+              status: "DIBATALKAN_SISTEM",
+              alasan_penolakan: reasonText,
+              updated_at: nowIso
+            });
+          }
+        } catch (sbErr) {
+          console.warn("[AUTO CANCEL SUPABASE WARN]", idIzin, sbErr);
+        }
+
+        cancelledIds.push(idIzin);
+      }
+    }
+
+    Logger.log(`[AUTO CANCEL EXPIRED IZIN] Total dibatalkan: ${cancelledIds.length}`);
+    return {
+      status: "success",
+      success: true,
+      totalCancelled: cancelledIds.length,
+      cancelledIds: cancelledIds,
+      message: `Berhasil membatalkan ${cancelledIds.length} permohonan izin kadaluwarsa secara otomatis.`
+    };
+  } catch (err) {
+    console.error("[AUTO CANCEL EXPIRED IZIN ERROR]", err);
+    return { status: "error", success: false, message: "Gagal memproses pembatalan izin otomatis: " + err.message };
+  }
+}
+
+/**
+ * Setup Time-Driven Trigger untuk Pembatalan Otomatis Izin Kadaluwarsa
+ * Menjalankan autoCancelExpiredIzinPerpulangan secara berkala (tiap jam).
+ */
+function setupAutoCancelIzinTrigger() {
+  try {
+    const fnName = "autoCancelExpiredIzinPerpulangan";
+    const triggers = ScriptApp.getProjectTriggers();
+    for (const t of triggers) {
+      if (t.getHandlerFunction() === fnName) {
+        ScriptApp.deleteTrigger(t);
+      }
+    }
+    ScriptApp.newTrigger(fnName)
+      .timeBased()
+      .everyHours(1)
+      .create();
+    Logger.log("✅ Trigger time-driven autoCancelExpiredIzinPerpulangan berhasil disiapkan (setiap 1 jam).");
+    return { success: true, message: "Trigger pembatalan otomatis izin santri berhasil dibuat (berjalan tiap 1 jam)." };
+  } catch (err) {
+    Logger.log("❌ Gagal membuat trigger: " + err.message);
+    return { success: false, error: err.message };
   }
 }
 

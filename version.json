@@ -1,10 +1,10 @@
 {
-    "version": "2.5.4",
-    "buildTime": "2026-11-09T19:50:00+07:00",
-    "title": "Sinkronisasi Persetujuan Izin Asatidz & Auto-Load Banner Tahfidz",
+    "version": "2.5.5",
+    "buildTime": "2026-11-09T23:15:00+07:00",
+    "title": "Fitur Pembatalan Otomatis Izin Santri Kadaluwarsa (Auto-Expired)",
     "highlights": [
-        "Banner permohonan restu izin Asatidz kini otomatis tampil saat membuka Admin Hub & Modul Tahfidz",
-        "Tombol Beri Restu (Qobul) berfungsi responsif dengan feedback visual instan",
-        "Pembersihan data invalid dan rekonsiliasi sinkronisasi penuh antara Google Sheets & Supabase"
+        "Permohonan izin santri yang belum disetujui hingga melewati batas waktu rencana keluar otomatis dibatalkan sistem",
+        "Penambahan status DIBATALKAN_SISTEM dan penyaringan bersih antrean Tier 1 & Tier 2",
+        "Dual-sync real-time ke Supabase & Google Spreadsheet dengan scheduled background engine"
     ]
 }

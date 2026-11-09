@@ -167,6 +167,13 @@
                     dot: 'bg-red-500',
                     icon: 'fa-circle-xmark'
                 };
+            case 'DIBATALKAN_SISTEM':
+                return {
+                    label: 'Dibatalkan Sistem',
+                    bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border-rose-200/80 dark:border-rose-900/60',
+                    dot: 'bg-rose-400',
+                    icon: 'fa-calendar-xmark'
+                };
             default:
                 return {
                     label: s || 'Draft',
@@ -175,6 +182,49 @@
                     icon: 'fa-clock'
                 };
         }
+    }
+
+    /**
+     * Helper: Menentukan apakah permohonan izin telah melewati batas waktu toleransi rencana keluar
+     * Batas kadaluwarsa: Akhir hari H tanggal rencana keluar (pukul 23:59:59 WIB)
+     * atau jam rencana keluar + toleransi 2 jam (diambil mana yang lebih akhir).
+     */
+    function isIzinExpired(item, now = new Date()) {
+        if (!item) return false;
+        const st = String(item.status || '').toUpperCase();
+        // Hanya permohonan yang masih menggantung di Tier 1 atau Tier 2 yang dapat kadaluwarsa
+        if (st !== 'MENUNGGU_PENGURUS' && st !== 'MENUNGGU_PENGASUH') {
+            return false;
+        }
+
+        const rawTgl = String(item.tgl_mulai || item.tglMulai || '').trim();
+        if (!rawTgl) return false;
+
+        let tglIso = rawTgl;
+        if (rawTgl.length > 10 && !/^\d{4}-\d{2}-\d{2}$/.test(rawTgl)) {
+            const d = new Date(rawTgl);
+            if (!isNaN(d.getTime())) {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                tglIso = `${y}-${m}-${day}`;
+            }
+        }
+
+        let rawJam = String(item.jam_mulai || item.jamMulai || '23:59').trim();
+        if (!/^\d{2}:\d{2}/.test(rawJam)) rawJam = '23:59';
+        const jamMulai = rawJam.substring(0, 5);
+
+        let planDate = new Date(`${tglIso}T${jamMulai}:00+07:00`);
+        if (isNaN(planDate.getTime())) {
+            planDate = new Date(`${tglIso}T23:59:59+07:00`);
+        }
+
+        const planPlus2Hours = new Date(planDate.getTime() + (2 * 60 * 60 * 1000));
+        const endOfDay = new Date(`${tglIso}T23:59:59+07:00`);
+        const cutoffTime = planPlus2Hours.getTime() > endOfDay.getTime() ? planPlus2Hours.getTime() : endOfDay.getTime();
+
+        return now.getTime() > cutoffTime;
     }
 
     /**
@@ -264,8 +314,29 @@
                     }
                 }
 
+                // Auto-healing & Pembatalan Otomatis (DIBATALKAN_SISTEM) jika jadwal keluar terlampaui sebelum disetujui
+                if (currStatus === 'MENUNGGU_PENGURUS' || currStatus === 'MENUNGGU_PENGASUH') {
+                    if (isIzinExpired(item)) {
+                        item.status = 'DIBATALKAN_SISTEM';
+                        const autoRejectReason = 'Otomatis ditolak/dibatalkan oleh sistem: Jadwal rencana perpulangan santri telah terlampaui sebelum mendapatkan persetujuan Tier 1/Tier 2.';
+                        item.alasan_penolakan = autoRejectReason;
+                        item.alasanPenolakan = autoRejectReason;
+                        const idIzin = item.id_izin || item.idIzin || item.id;
+                        if (idIzin) {
+                            syncResolvedStatusToSupabase(idIzin, 'DIBATALKAN_SISTEM', autoRejectReason);
+                        }
+                    }
+                }
+
                 return item;
             });
+
+            // Sinkronisasi background ke backend jika ada izin yang terdeteksi kadaluwarsa
+            if (rawList.some(r => String(r.status || '').toUpperCase() === 'DIBATALKAN_SISTEM')) {
+                if (typeof window.apiPost === 'function') {
+                    window.apiPost('perpulangan.autoCancelExpired').catch(() => {});
+                }
+            }
 
             ASNPerpulangan.list = rawList;
             calculatePerpulanganMetrics(rawList);
@@ -319,7 +390,7 @@
             else if (st === 'KELUAR') stats.keluar++;
             else if (st === 'KEMBALI') stats.kembali++;
             else if (st === 'TERLAMBAT') stats.terlambat++;
-            else if (st === 'DITOLAK') stats.ditolak++;
+            else if (st === 'DITOLAK' || st === 'DIBATALKAN_SISTEM') stats.ditolak++;
         });
 
         ASNPerpulangan.stats = stats;
@@ -386,7 +457,14 @@
         // 1. Filter Status
         const filter = ASNPerpulangan.activeFilter;
         if (filter !== 'ALL') {
-            result = result.filter(item => String(item.status || '').toUpperCase() === filter);
+            if (filter === 'DITOLAK') {
+                result = result.filter(item => {
+                    const st = String(item.status || '').toUpperCase();
+                    return st === 'DITOLAK' || st === 'DIBATALKAN_SISTEM';
+                });
+            } else {
+                result = result.filter(item => String(item.status || '').toUpperCase() === filter);
+            }
         }
 
         // 2. Pencarian
@@ -849,15 +927,26 @@
     }
 
     /**
-     * Sinkronisasi auto-heal status keterlambatan ke Supabase di background
+     * Sinkronisasi auto-heal status keterlambatan & pembatalan sistem ke Supabase di background
      */
-    async function syncResolvedStatusToSupabase(idIzin, newStatus, lateNote) {
+    async function syncResolvedStatusToSupabase(idIzin, newStatus, note) {
         if (!idIzin || !newStatus) return;
         try {
             const config = window.ASNAWIYYAH_CONFIG || {};
             const sbUrl = config.supabaseUrl;
             const sbKey = config.supabaseKey;
             if (!sbUrl || !sbKey) return;
+
+            const updateBody = {
+                status: newStatus,
+                updated_at: new Date().toISOString()
+            };
+
+            if (newStatus === 'TERLAMBAT') {
+                updateBody.catatan_keterlambatan = note || null;
+            } else if (newStatus === 'DIBATALKAN_SISTEM') {
+                updateBody.alasan_penolakan = note || 'Otomatis ditolak/dibatalkan oleh sistem';
+            }
 
             await fetch(`${sbUrl}/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, {
                 method: 'PATCH',
@@ -867,11 +956,7 @@
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal'
                 },
-                body: JSON.stringify({
-                    status: newStatus,
-                    catatan_keterlambatan: lateNote || null,
-                    updated_at: new Date().toISOString()
-                })
+                body: JSON.stringify(updateBody)
             });
         } catch (e) {
             // background sync silently ignores error
