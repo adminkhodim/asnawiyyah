@@ -1,10 +1,10 @@
 {
-    "version": "2.5.6",
-    "buildTime": "2026-11-09T23:52:00+07:00",
-    "title": "Dual-Sync Pos Gerbang Keamanan (Check-Out & Check-In)",
+    "version": "2.5.7",
+    "buildTime": "2026-11-10T00:18:00+07:00",
+    "title": "Perbaikan Navigasi Menu Kedisiplinan & Tarbiyah Santri",
     "highlights": [
-        "Aksi Pos Gerbang (Keluar & Kembali) kini langsung tersinkronisasi dual-write ke Cloud Supabase dan Google Sheets",
-        "Penyempurnaan modal konfirmasi Pos Gerbang Keamanan dengan deteksi keterlambatan santri otomatis",
-        "Penetapan hak akses Pos Gerbang untuk Super Admin, Admin Lembaga, Pengurus Keamanan, dan Asatidz Piket"
+        "Perbaikan perutean showAdminView untuk membuka kontainer sub-view Kedisiplinan & Tarbiyah secara tepat",
+        "Pembaruan breadcrumb dan pengikatan inisialisasi data ASNKedisiplinan otomatis",
+        "Penambahan Modul Kedisiplinan pada pencarian cepat navigasi admin (ADMIN_SEARCH_MODULES)"
     ]
 }
