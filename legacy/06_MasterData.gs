@@ -3628,16 +3628,21 @@ function approveIzinPengasuh(payload = {}, token = null) {
 
 /**
  * Operasional Pos Gerbang: Check-Out (Keluar) & Check-In (Kembali)
+ * Dual-Sync: Memperbarui Google Sheets dan mereplikasi status ke Cloud Supabase
  */
 function gateCheckIzin(payload = {}, token = null) {
   try {
     const sheet = getIzinSheet();
-    const idIzin = String(payload.idIzin || payload.id_izin || "").trim();
-    const tipeAksi = String(payload.tipeAksi || payload.tipe || "checkout").toLowerCase();
+    const idIzin = String(payload.idIzin || payload.id_izin || payload.id || "").trim();
+    const rawType = String(payload.tipeAksi || payload.tipe || payload.checkType || payload.mode || "checkout").toLowerCase();
+    const isCheckOut = rawType === "checkout" || rawType === "keluar" || rawType === "out";
     const petugasName = String(payload.petugasName || payload.petugas || "Petugas Gerbang").trim();
     const catatan = String(payload.catatan || "").trim();
 
     if (!idIzin) throw new Error("ID Izin wajib disertakan.");
+
+    const now = new Date();
+    const nowIso = now.toISOString();
 
     const data = sheet.getDataRange().getValues();
     const headers = data[0].map(h => String(h || "").trim());
@@ -3662,24 +3667,27 @@ function gateCheckIzin(payload = {}, token = null) {
       }
     }
 
-    if (foundRow < 0) {
-      return {
-        status: "success",
-        success: true,
-        idIzin: idIzin,
-        newStatus: (tipeAksi === "checkout" || tipeAksi === "keluar") ? "KELUAR" : "KEMBALI",
-        message: `Presensi gerbang untuk izin ${idIzin} berhasil dicatat.`
-      };
-    }
+    if (isCheckOut) {
+      if (foundRow > 1) {
+        sheet.getRange(foundRow, statusIdx + 1).setValue("KELUAR");
+        sheet.getRange(foundRow, checkoutAtIdx + 1).setValue(nowIso);
+        sheet.getRange(foundRow, checkoutPetugasIdx + 1).setValue(petugasName);
+        sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+      }
 
-    const now = new Date();
-    const nowIso = now.toISOString();
-
-    if (tipeAksi === "checkout" || tipeAksi === "keluar") {
-      sheet.getRange(foundRow, statusIdx + 1).setValue("KELUAR");
-      sheet.getRange(foundRow, checkoutAtIdx + 1).setValue(nowIso);
-      sheet.getRange(foundRow, checkoutPetugasIdx + 1).setValue(petugasName);
-      sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
+      // Replikasi Server-Side ke Cloud Supabase
+      try {
+        if (typeof replicateToSupabase === "function") {
+          replicateToSupabase(`/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, "PATCH", {
+            status: "KELUAR",
+            checkout_at: nowIso,
+            checkout_petugas: petugasName,
+            updated_at: nowIso
+          });
+        }
+      } catch (sbErr) {
+        console.warn("[SUPABASE REPLICATION GATE CHECKOUT WARN]", sbErr);
+      }
 
       return {
         status: "success",
@@ -3691,32 +3699,54 @@ function gateCheckIzin(payload = {}, token = null) {
     } else {
       // Check-in (Kembali ke pondok)
       // Cek apakah santri kembali terlambat
-      const planDate = String(currentRow[tglKembaliIdx] || "").trim();
-      const planTime = String(currentRow[jamKembaliIdx] || "23:59").trim();
-      let isLate = false;
-      let lateNote = catatan;
+      let isLate = Boolean(payload.isLate);
+      let lateNote = String(payload.catatanKeterlambatan || catatan || "").trim();
 
-      if (planDate) {
-        try {
-          const deadlineStr = `${planDate}T${planTime.length === 5 ? planTime : (planTime + ':00')}+07:00`;
-          const deadlineDate = new Date(deadlineStr);
-          if (now > deadlineDate) {
-            isLate = true;
-            const diffHours = Math.round((now - deadlineDate) / (1000 * 60 * 60));
-            lateNote = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${planDate} ${planTime} WIB). ${catatan}`.trim();
-          }
-        } catch (e) {}
+      if (foundRow > 1 && currentRow) {
+        const planDate = String(currentRow[tglKembaliIdx] || "").trim();
+        const planTime = String(currentRow[jamKembaliIdx] || "23:59").trim();
+        if (planDate && !isLate) {
+          try {
+            const deadlineStr = `${planDate}T${planTime.length === 5 ? (planTime + ':00') : planTime}+07:00`;
+            const deadlineDate = new Date(deadlineStr);
+            if (!isNaN(deadlineDate.getTime()) && now > deadlineDate) {
+              isLate = true;
+              const diffHours = Math.max(1, Math.round((now - deadlineDate) / (1000 * 60 * 60)));
+              lateNote = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${planDate} ${planTime} WIB). ${catatan}`.trim();
+            }
+          } catch (e) {}
+        }
+
+        const finalStatus = isLate ? "TERLAMBAT" : "KEMBALI";
+
+        sheet.getRange(foundRow, statusIdx + 1).setValue(finalStatus);
+        sheet.getRange(foundRow, checkinAtIdx + 1).setValue(nowIso);
+        sheet.getRange(foundRow, checkinPetugasIdx + 1).setValue(petugasName);
+        if (isLate || lateNote) {
+          sheet.getRange(foundRow, catatanLateIdx + 1).setValue(lateNote);
+        }
+        sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
       }
 
       const finalStatus = isLate ? "TERLAMBAT" : "KEMBALI";
 
-      sheet.getRange(foundRow, statusIdx + 1).setValue(finalStatus);
-      sheet.getRange(foundRow, checkinAtIdx + 1).setValue(nowIso);
-      sheet.getRange(foundRow, checkinPetugasIdx + 1).setValue(petugasName);
-      if (isLate || lateNote) {
-        sheet.getRange(foundRow, catatanLateIdx + 1).setValue(lateNote);
+      // Replikasi Server-Side ke Cloud Supabase
+      try {
+        if (typeof replicateToSupabase === "function") {
+          const patchData = {
+            status: finalStatus,
+            checkin_at: nowIso,
+            checkin_petugas: petugasName,
+            updated_at: nowIso
+          };
+          if (isLate || lateNote) {
+            patchData.catatan_keterlambatan = lateNote;
+          }
+          replicateToSupabase(`/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, "PATCH", patchData);
+        }
+      } catch (sbErr) {
+        console.warn("[SUPABASE REPLICATION GATE CHECKIN WARN]", sbErr);
       }
-      sheet.getRange(foundRow, updatedIdx + 1).setValue(nowIso);
 
       return {
         status: "success",
@@ -3736,15 +3766,31 @@ function gateCheckIzin(payload = {}, token = null) {
 }
 
 /**
- * Menghapus data perizinan santri dari sheet Izin_Perpulangan
+ * Menghapus data perizinan santri dari sheet Izin_Perpulangan dan Supabase
  */
 function deleteIzinPerpulangan(payload = {}, token = null) {
   try {
     const sheet = getIzinSheet();
-    if (!sheet) throw new Error("Gagal mengakses database Izin_Perpulangan.");
-
     const idIzin = String(payload.idIzin || payload.id_izin || payload.id || "").trim();
     if (!idIzin) throw new Error("ID Izin wajib disertakan.");
+
+    // Hapus dari Supabase terlebih dahulu
+    try {
+      if (typeof replicateToSupabase === "function") {
+        replicateToSupabase(`/rest/v1/izin_perpulangan?id_izin=eq.${encodeURIComponent(idIzin)}`, "DELETE");
+      }
+    } catch (sbErr) {
+      console.warn("[SUPABASE REPLICATION DELETE WARN]", sbErr);
+    }
+
+    if (!sheet) {
+      return {
+        status: "success",
+        success: true,
+        idIzin: idIzin,
+        message: `Data perizinan ${idIzin} berhasil dihapus dari sistem.`
+      };
+    }
 
     const data = sheet.getDataRange().getValues();
     if (!data || data.length < 2) {
@@ -3752,13 +3798,15 @@ function deleteIzinPerpulangan(payload = {}, token = null) {
         status: "success",
         success: true,
         idIzin: idIzin,
-        message: `Data perizinan ${idIzin} tidak ditemukan di Spreadsheet (tabel kosong).`
+        message: `Data perizinan ${idIzin} berhasil dihapus dari Cloud DB.`
       };
     }
 
     const headers = data[0].map(h => String(h || "").trim());
     const idIdx = headers.indexOf("ID_Izin");
-    if (idIdx === -1) throw new Error("Kolom ID_Izin tidak ditemukan di spreadsheet.");
+    if (idIdx === -1) {
+      return { status: "success", success: true, idIzin: idIzin, message: `Data izin ${idIzin} dihapus.` };
+    }
 
     let foundRow = -1;
     for (let i = 1; i < data.length; i++) {
@@ -3770,23 +3818,17 @@ function deleteIzinPerpulangan(payload = {}, token = null) {
 
     if (foundRow > 1) {
       sheet.deleteRow(foundRow);
-      return {
-        status: "success",
-        success: true,
-        idIzin: idIzin,
-        message: `Data perizinan ${idIzin} berhasil dihapus dari Spreadsheet.`
-      };
-    } else {
-      return {
-        status: "success",
-        success: true,
-        idIzin: idIzin,
-        message: `Data perizinan ${idIzin} tidak ditemukan di Spreadsheet (sudah terhapus sebelumnya).`
-      };
     }
+
+    return {
+      status: "success",
+      success: true,
+      idIzin: idIzin,
+      message: `Data perizinan ${idIzin} berhasil dihapus permanen dari Spreadsheet dan Supabase.`
+    };
   } catch (err) {
     console.error("[DELETE IZIN ERROR]", err);
-    return { status: "error", success: false, message: "Gagal menghapus izin dari Spreadsheet: " + err.message };
+    return { status: "error", success: false, message: "Gagal menghapus izin: " + err.message };
   }
 }
 

@@ -4310,7 +4310,16 @@
 
         async function gateCheckIzin(idIzin, checkType = 'OUT', catatan = '', isLate = false, catatanKeterlambatan = '') {
             const petugas = (window.ASNIdentity && window.ASNIdentity.currentUser && window.ASNIdentity.currentUser.name) || 'Petugas Gerbang';
-            return await apiPost('perpulangan.gateCheck', { idIzin, checkType, catatan, petugas, isLate, catatanKeterlambatan });
+            return await apiPost('perpulangan.gateCheck', { 
+                idIzin, 
+                checkType, 
+                tipeAksi: checkType, 
+                mode: checkType, 
+                catatan, 
+                petugas, 
+                isLate, 
+                catatanKeterlambatan 
+            });
         }
 
         async function deleteIzinPerpulangan(idIzin) {

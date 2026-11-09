@@ -1820,74 +1820,108 @@
      * Modal Pos Gerbang Keamanan (Check-Out / Check-In)
      */
     function openModalGateCheck(idIzin, mode = 'OUT') {
-        const item = ASNPerpulangan.list.find(x => (x.id_izin || x.id || x.idIzin) === idIzin);
-        if (!item) return;
+        try {
+            const cleanId = String(idIzin || '').trim().toLowerCase();
+            let item = (ASNPerpulangan.list || []).find(x => {
+                const rowId = String(x.id_izin || x.id || x.idIzin || '').trim().toLowerCase();
+                return rowId === cleanId;
+            });
+            if (!item) {
+                item = (ASNPerpulangan.filteredList || []).find(x => {
+                    const rowId = String(x.id_izin || x.id || x.idIzin || '').trim().toLowerCase();
+                    return rowId === cleanId;
+                });
+            }
 
-        ASNPerpulangan.selectedIzin = item;
+            if (!item) {
+                console.error('[ASNPerpulangan] openModalGateCheck: item tidak ditemukan untuk id:', idIzin);
+                if (typeof showToast === 'function') showToast(`Data perizinan ${idIzin} tidak ditemukan. Silakan klik tombol Refresh.`, 'warning');
+                return;
+            }
 
-        const modal = document.getElementById('modal-perpulangan-gate');
-        if (!modal) return;
+            ASNPerpulangan.selectedIzin = item;
 
-        const titleEl = document.getElementById('perpulangan-gate-title');
-        const detailsEl = document.getElementById('perpulangan-gate-details');
-        const catatanInput = document.getElementById('perpulangan-gate-catatan');
-        const confirmBtn = document.getElementById('perpulangan-gate-btn-confirm');
+            const modal = document.getElementById('modal-perpulangan-gate');
+            if (!modal) {
+                console.error('[ASNPerpulangan] openModalGateCheck: element #modal-perpulangan-gate tidak ditemukan di halaman');
+                return;
+            }
 
-        if (catatanInput) catatanInput.value = '';
+            const titleEl = document.getElementById('perpulangan-gate-title');
+            const detailsEl = document.getElementById('perpulangan-gate-details');
+            const catatanInput = document.getElementById('perpulangan-gate-catatan');
+            const confirmBtn = document.getElementById('perpulangan-gate-btn-confirm');
 
-        const isOut = mode === 'OUT';
-        if (titleEl) {
-            titleEl.innerText = isOut ? 'Pos Gerbang: Check-Out (Santri Keluar)' : 'Pos Gerbang: Check-In (Santri Kembali)';
-        }
+            if (catatanInput) catatanInput.value = '';
 
-        if (confirmBtn) {
-            confirmBtn.innerText = isOut ? 'Konfirmasi Santri Keluar' : 'Konfirmasi Santri Kembali';
-            confirmBtn.className = isOut
-                ? 'px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition active:scale-95'
-                : 'px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition active:scale-95';
-            confirmBtn.onclick = () => submitGateCheckDecision(idIzin, mode);
-        }
+            const isOut = String(mode || 'OUT').toUpperCase() === 'OUT';
+            if (titleEl) {
+                titleEl.innerText = isOut ? 'Pos Gerbang: Check-Out (Santri Keluar)' : 'Pos Gerbang: Check-In (Santri Kembali)';
+            }
 
-        const tglKmb = item.tgl_kembali || item.tglKembali;
-        const jamKmb = item.jam_kembali || item.jamKembali || '17:00';
+            if (confirmBtn) {
+                confirmBtn.innerText = isOut ? 'Konfirmasi Santri Keluar' : 'Konfirmasi Santri Kembali';
+                confirmBtn.className = isOut
+                    ? 'px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition active:scale-95'
+                    : 'px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition active:scale-95';
+                confirmBtn.onclick = () => submitGateCheckDecision(idIzin, isOut ? 'OUT' : 'IN');
+            }
 
-        // Cek keterlambatan potensial jika check-in
-        let lateNotice = '';
-        if (!isOut && tglKmb) {
-            const deadlineStr = `${tglKmb}T${jamKmb.length === 5 ? (jamKmb + ':00') : jamKmb}+07:00`;
-            const returnTarget = new Date(deadlineStr);
-            const now = new Date();
-            if (!isNaN(returnTarget.getTime()) && now > returnTarget) {
-                const diffHours = Math.max(1, Math.round((now - returnTarget) / (1000 * 60 * 60)));
-                lateNotice = `
-                    <div class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i>
-                        <span><strong>Peringatan Terlambat:</strong> Santri melewati batas waktu kembali (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}) selisih +/- ${diffHours} jam. Sistem otomatis menandai sebagai status TERLAMBAT.</span>
+            const tglKmb = item.tgl_kembali || item.tglKembali;
+            const jamKmb = item.jam_kembali || item.jamKembali || '17:00';
+
+            // Cek keterlambatan potensial jika check-in
+            let lateNotice = '';
+            if (!isOut && tglKmb) {
+                try {
+                    const sTgl = String(tglKmb).trim();
+                    const sJam = String(jamKmb).trim();
+                    const cleanTime = sJam.length === 5 ? (sJam + ':00') : sJam;
+                    let returnTarget = null;
+                    if (/^\d{4}-\d{2}-\d{2}/.test(sTgl)) {
+                        returnTarget = new Date(`${sTgl}T${cleanTime}+07:00`);
+                    } else {
+                        returnTarget = new Date(`${sTgl} ${cleanTime}`);
+                    }
+                    const now = new Date();
+                    if (returnTarget && !isNaN(returnTarget.getTime()) && now > returnTarget) {
+                        const diffHours = Math.max(1, Math.round((now - returnTarget) / (1000 * 60 * 60)));
+                        lateNotice = `
+                            <div class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i>
+                                <span><strong>Peringatan Terlambat:</strong> Santri melewati batas waktu kembali (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}) selisih +/- ${diffHours} jam. Sistem otomatis menandai sebagai status TERLAMBAT.</span>
+                            </div>
+                        `;
+                    }
+                } catch (parseErr) {
+                    console.warn('[ASNPerpulangan] Parse return date error:', parseErr);
+                }
+            }
+
+            if (detailsEl) {
+                const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
+                const sNis = item.student_nis || item.studentNis || item.nis || '-';
+                const sPenjemput = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || 'Wali Santri';
+                const sHub = item.penjemput_hubungan || item.penjemputHubungan || 'Wali';
+
+                detailsEl.innerHTML = `
+                    <div class="space-y-2 text-xs">
+                        <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1">
+                            <div class="font-bold text-sm text-slate-800 dark:text-slate-100">${escapeHtml(sName)}</div>
+                            <div class="text-slate-500 dark:text-slate-300">NIS: ${escapeHtml(sNis)} | ID Izin: ${escapeHtml(idIzin)}</div>
+                            <div class="text-slate-600 dark:text-slate-300 pt-1">Penjemput: <strong>${escapeHtml(sPenjemput)}</strong> (${escapeHtml(sHub)})</div>
+                            <div class="text-amber-700 dark:text-amber-400 font-semibold">Batas Kembali: ${formatDateIndo(tglKmb)} pukul ${formatTimeIndo(jamKmb)}</div>
+                        </div>
+                        ${lateNotice}
                     </div>
                 `;
             }
+
+            modal.classList.remove('hidden');
+        } catch (err) {
+            console.error('[ASNPerpulangan] openModalGateCheck error:', err);
+            if (typeof showToast === 'function') showToast(`Terjadi kesalahan membuka modal pos gerbang: ${err.message}`, 'error');
         }
-
-        if (detailsEl) {
-            const sName = item.student_name || item.studentName || item.nama_santri || item.nama || 'Santri';
-            const sNis = item.student_nis || item.studentNis || item.nis || '-';
-            const sPenjemput = item.penjemput_nama || item.penjemputNama || item.wali_name || item.waliName || 'Wali Santri';
-            const sHub = item.penjemput_hubungan || item.penjemputHubungan || 'Wali';
-
-            detailsEl.innerHTML = `
-                <div class="space-y-2 text-xs">
-                    <div class="p-3 bg-slate-50 dark:bg-[#1a2634] rounded-xl border border-slate-200/80 dark:border-[#25374a] space-y-1">
-                        <div class="font-bold text-sm text-slate-800 dark:text-slate-100">${escapeHtml(sName)}</div>
-                        <div class="text-slate-500 dark:text-slate-300">NIS: ${escapeHtml(sNis)} | ID Izin: ${escapeHtml(idIzin)}</div>
-                        <div class="text-slate-600 dark:text-slate-300 pt-1">Penjemput: <strong>${escapeHtml(sPenjemput)}</strong> (${escapeHtml(sHub)})</div>
-                        <div class="text-amber-700 dark:text-amber-400 font-semibold">Batas Kembali: ${formatDateIndo(tglKmb)} pukul ${formatTimeIndo(jamKmb)}</div>
-                    </div>
-                    ${lateNotice}
-                </div>
-            `;
-        }
-
-        modal.classList.remove('hidden');
     }
 
     function closeModalGateCheck() {
@@ -1908,29 +1942,40 @@
             confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyimpan Log...';
         }
 
-        const item = ASNPerpulangan.list.find(x => String(x.id_izin || x.id || x.idIzin || '').trim() === String(idIzin || '').trim());
+        const cleanId = String(idIzin || '').trim().toLowerCase();
+        const item = (ASNPerpulangan.list || []).find(x => String(x.id_izin || x.id || x.idIzin || '').trim().toLowerCase() === cleanId);
+        const checkMode = String(mode || 'OUT').toUpperCase();
         let isLate = false;
         let calculatedLateNote = '';
 
-        if (mode === 'IN' && item) {
+        if (checkMode === 'IN' && item) {
             const tglKmb = item.tgl_kembali || item.tglKembali;
             const jamKmb = item.jam_kembali || item.jamKembali || '17:00';
             if (tglKmb) {
-                const deadlineStr = `${tglKmb}T${jamKmb.length === 5 ? (jamKmb + ':00') : jamKmb}+07:00`;
-                const returnTarget = new Date(deadlineStr);
-                const now = new Date();
-                if (!isNaN(returnTarget.getTime()) && now > returnTarget) {
-                    isLate = true;
-                    const diffHours = Math.max(1, Math.round((now - returnTarget) / (1000 * 60 * 60)));
-                    calculatedLateNote = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}). ${catatan}`.trim();
-                }
+                try {
+                    const sTgl = String(tglKmb).trim();
+                    const sJam = String(jamKmb).trim();
+                    const cleanTime = sJam.length === 5 ? (sJam + ':00') : sJam;
+                    let returnTarget = null;
+                    if (/^\d{4}-\d{2}-\d{2}/.test(sTgl)) {
+                        returnTarget = new Date(`${sTgl}T${cleanTime}+07:00`);
+                    } else {
+                        returnTarget = new Date(`${sTgl} ${cleanTime}`);
+                    }
+                    const now = new Date();
+                    if (returnTarget && !isNaN(returnTarget.getTime()) && now > returnTarget) {
+                        isLate = true;
+                        const diffHours = Math.max(1, Math.round((now - returnTarget) / (1000 * 60 * 60)));
+                        calculatedLateNote = `Terlambat kembali ~${diffHours} jam dari jadwal rencana (${formatDateIndo(tglKmb)} ${formatTimeIndo(jamKmb)}). ${catatan}`.trim();
+                    }
+                } catch (e) {}
             }
         }
 
         try {
-            const res = await window.gateCheckIzin(idIzin, mode, catatan, isLate, calculatedLateNote);
+            const res = await window.gateCheckIzin(idIzin, checkMode, catatan, isLate, calculatedLateNote);
             if (res && (res.success || res.status === 'success')) {
-                const msg = mode === 'OUT'
+                const msg = checkMode === 'OUT'
                     ? 'Check-Out berhasil dicatat. Status santri kini: KELUAR PONDOK.'
                     : (isLate ? `Check-In dicatat: Santri KEMBALI TERLAMBAT (${calculatedLateNote}).` : 'Check-In berhasil dicatat. Santri telah kembali tepat waktu ke pondok.');
                 if (typeof showToast === 'function') showToast(msg, isLate ? 'warning' : 'success');
@@ -2826,5 +2871,15 @@
     window.openWaliIzinModal = openWaliIzinModal;
     window.loadWaliPerpulanganData = loadWaliPerpulanganData;
     window.confirmDeleteIzin = confirmDeleteIzin;
+    window.openModalGateCheck = openModalGateCheck;
+    window.closeModalGateCheck = closeModalGateCheck;
+    window.openModalApproval = openModalApproval;
+    window.closeModalApproval = closeModalApproval;
+    window.openModalReject = openModalReject;
+    window.closeModalReject = closeModalReject;
+    window.openModalDetail = openModalDetail;
+    window.closeModalDetail = closeModalDetail;
+    window.openModalPrintSuratIzin = openModalPrintSuratIzin;
+    window.closeModalPrintSuratIzin = closeModalPrintSuratIzin;
 
 })(window, document);
