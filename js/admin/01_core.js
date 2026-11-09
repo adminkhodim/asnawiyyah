@@ -1180,6 +1180,9 @@
                 if (typeof loadAdminTahfidzData === 'function') {
                     loadAdminTahfidzData();
                 }
+                if (typeof loadIzinAsatidzHistory === 'function') {
+                    loadIzinAsatidzHistory();
+                }
                 if (typeof applyTahfidzRolePermissions === 'function') {
                     applyTahfidzRolePermissions();
                 } else {
@@ -1272,6 +1275,7 @@
                 if (typeof loadAdminStudentsData === 'function') loadAdminStudentsData();
                 if (typeof loadAdminEmployeesData === 'function') loadAdminEmployeesData();
                 if (typeof loadAdminTahfidzData === 'function') loadAdminTahfidzData();
+                if (typeof loadIzinAsatidzHistory === 'function') loadIzinAsatidzHistory();
             }
 
             // Sembunyikan double header di layar mobile saat sub-view aktif

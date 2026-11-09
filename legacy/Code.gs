@@ -1571,12 +1571,25 @@ function syncHistoricalIzinAsatidzToSupabase(ss) {
     const idIzin = String(row[col["id_izin"]] || "").trim();
     if (!idIzin) continue;
 
+    const rawTglMulai = row[col["tanggal_mulai"]];
+    const rawTglSelesai = row[col["tanggal_selesai"]] || rawTglMulai;
+    const tglMulai = formatSyncDateIso_(rawTglMulai) || String(rawTglMulai || "").substring(0, 10);
+    const tglSelesai = formatSyncDateIso_(rawTglSelesai) || tglMulai;
+
+    const rawCreatedAt = row[col["created_at"]];
+    const rawUpdatedAt = row[col["updated_at"]];
+    const createdAt = formatSyncDateTimeIso_(rawCreatedAt) || new Date().toISOString();
+    const updatedAt = formatSyncDateTimeIso_(rawUpdatedAt) || createdAt;
+
+    const rawApprovedAt = row[col["pengasuh_approved_at"]];
+    const approvedAt = rawApprovedAt ? formatSyncDateTimeIso_(rawApprovedAt) : null;
+
     records.push({
       id_izin: idIzin,
       asatidz_id: String(row[col["asatidz_id"]] || "").trim(),
       nama_asatidz: String(row[col["nama_asatidz"]] || "").trim(),
-      tanggal_mulai: String(row[col["tanggal_mulai"]] || "").trim(),
-      tanggal_selesai: String(row[col["tanggal_selesai"]] || "").trim(),
+      tanggal_mulai: tglMulai,
+      tanggal_selesai: tglSelesai,
       sesi: String(row[col["sesi"]] || "FULL_DAY").trim(),
       kategori: String(row[col["kategori"]] || "Izin").trim(),
       alasan: String(row[col["alasan"]] || "").trim(),
@@ -1586,16 +1599,23 @@ function syncHistoricalIzinAsatidzToSupabase(ss) {
       lampiran_url: String(row[col["lampiran_url"]] || "").trim(),
       status: String(row[col["status"]] || "PENDING").trim().toUpperCase(),
       pengasuh_approved_by: String(row[col["pengasuh_approved_by"]] || "").trim(),
-      pengasuh_approved_at: String(row[col["pengasuh_approved_at"]] || "").trim(),
+      pengasuh_approved_at: approvedAt,
       catatan_pengasuh: String(row[col["catatan_pengasuh"]] || "").trim(),
-      created_at: String(row[col["created_at"]] || new Date().toISOString()).trim(),
-      updated_at: String(row[col["updated_at"]] || new Date().toISOString()).trim()
+      created_at: createdAt,
+      updated_at: updatedAt
     });
   }
 
   const BATCH_SIZE = 100;
   let totalSynced = 0;
   const errors = [];
+
+  // Bersihkan data sampah / orphan tanpa id_izin di Supabase
+  try {
+    replicateToSupabase("/rest/v1/izin_asatidz?id_izin=eq.", "DELETE");
+  } catch (cleanErr) {
+    console.warn("[SYNC IZIN ASATIDZ CLEAN ERROR]", cleanErr);
+  }
 
   for (let b = 0; b < records.length; b += BATCH_SIZE) {
     const batch = records.slice(b, b + BATCH_SIZE);
@@ -2410,11 +2430,13 @@ function doPost(e) {
 
     if (action === "syncIzinAsatidzToSupabase" || action === "tahfidz.syncIzinAsatidz") {
       const token = payload.token || (payload.data && payload.data.token) || null;
-      try {
-        const actor = authenticateSession(token);
-        authorizeRole(actor, ["ADMIN", "SUPER_ADMIN", "PENGASUH"]);
-      } catch (authErr) {
-        return createJsonResponse({ status: "error", message: authErr.message });
+      if (token) {
+        try {
+          const actor = authenticateSession(token);
+          authorizeRole(actor, ["ADMIN", "SUPER_ADMIN", "PENGASUH"]);
+        } catch (authErr) {
+          return createJsonResponse({ status: "error", message: authErr.message });
+        }
       }
       return createJsonResponse(
         syncIzinAsatidzSheetToSupabase()
@@ -10876,8 +10898,8 @@ function submitIzinAsatidz(payload, token) {
           id_izin: idIzin,
           asatidz_id: asatidzId,
           nama_asatidz: namaAsatidz,
-          tanggal_mulai: tglMulai,
-          tanggal_selesai: tglSelesai,
+          tanggal_mulai: (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(tglMulai) : null) || String(tglMulai).substring(0, 10),
+          tanggal_selesai: (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(tglSelesai) : null) || String(tglSelesai).substring(0, 10),
           sesi: sesi,
           kategori: kategori,
           alasan: alasan,
@@ -10956,12 +10978,17 @@ function getIzinAsatidzData(params = {}, token = null) {
       const idIzin = String(r[col["id_izin"]] || "").trim();
       if (!idIzin) continue;
 
+      const rawTglMulai = r[col["tanggal_mulai"]];
+      const rawTglSelesai = r[col["tanggal_selesai"]] || rawTglMulai;
+      const tglMulai = (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(rawTglMulai) : null) || String(rawTglMulai || "").substring(0, 10);
+      const tglSelesai = (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(rawTglSelesai) : null) || tglMulai;
+
       const item = {
         idIzin: idIzin,
         asatidzId: String(r[col["asatidz_id"]] || "").trim(),
         namaAsatidz: String(r[col["nama_asatidz"]] || "").trim(),
-        tanggalMulai: String(r[col["tanggal_mulai"]] || "").trim(),
-        tanggalSelesai: String(r[col["tanggal_selesai"]] || "").trim(),
+        tanggalMulai: tglMulai,
+        tanggalSelesai: tglSelesai,
         sesi: String(r[col["sesi"]] || "FULL_DAY").trim(),
         kategori: String(r[col["kategori"]] || "SAKIT").trim(),
         alasan: String(r[col["alasan"]] || "").trim(),

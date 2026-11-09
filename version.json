@@ -1,10 +1,10 @@
 {
-    "version": "2.5.3",
-    "buildTime": "2026-11-09T17:45:00+07:00",
-    "title": "Pembaruan Persetujuan Izin Asatidz & Optimasi Routing SPA",
+    "version": "2.5.4",
+    "buildTime": "2026-11-09T19:50:00+07:00",
+    "title": "Sinkronisasi Persetujuan Izin Asatidz & Auto-Load Banner Tahfidz",
     "highlights": [
-        "Persetujuan izin asatidz (Beri Restu/Qobul) langsung tersinkronkan ke Supabase & Google Spreadsheet",
-        "Pembaruan status izin real-time tanpa refresh dan delegasi halaqah badal instan",
-        "Eliminasi kendala blank screen pada akses rute /administrator dan optimasi SPA router"
+        "Banner permohonan restu izin Asatidz kini otomatis tampil saat membuka Admin Hub & Modul Tahfidz",
+        "Tombol Beri Restu (Qobul) berfungsi responsif dengan feedback visual instan",
+        "Pembersihan data invalid dan rekonsiliasi sinkronisasi penuh antara Google Sheets & Supabase"
     ]
 }

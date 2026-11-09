@@ -1040,8 +1040,7 @@
                     'users': 'Manajemen Pengguna',
                     'roles': 'Manajemen Peran',
                     'notifikasi': 'Notifikasi Broadcast',
-                    'perpulangan': 'Izin & Perpulangan Santri',
-                    'kedisiplinan': 'Kedisiplinan & Tarbiyah'
+                    'perpulangan': 'Izin & Perpulangan Santri'
                 };
                 breadcrumbEl.innerText = viewLabels[viewName] || 'Panel Admin';
             }
@@ -1084,7 +1083,6 @@
             const waliSantriView = document.getElementById('admin-view-wali-santri');
             const rolesView = document.getElementById('admin-view-roles');
             const perpulanganView = document.getElementById('admin-view-perpulangan');
-            const kedisiplinanView = document.getElementById('admin-view-kedisiplinan');
 
             if (!hubView || !beritaView || !bannerView) return;
 
@@ -1108,7 +1106,6 @@
             if (usersView) usersView.classList.add('hidden');
             if (rolesView) rolesView.classList.add('hidden');
             if (perpulanganView) perpulanganView.classList.add('hidden');
-            if (kedisiplinanView) kedisiplinanView.classList.add('hidden');
 
             if (viewName === 'berita') {
                 beritaView.classList.remove('hidden');
@@ -1168,6 +1165,9 @@
                 }
                 if (typeof loadAdminTahfidzData === 'function') {
                     loadAdminTahfidzData();
+                }
+                if (typeof loadIzinAsatidzHistory === 'function') {
+                    loadIzinAsatidzHistory();
                 }
                 if (typeof applyTahfidzRolePermissions === 'function') {
                     applyTahfidzRolePermissions();
@@ -1245,11 +1245,6 @@
                 if (typeof loadPerpulanganData === 'function') {
                     loadPerpulanganData();
                 }
-            } else if (viewName === 'kedisiplinan') {
-                if (kedisiplinanView) kedisiplinanView.classList.remove('hidden');
-                if (window.ASNKedisiplinan && typeof window.ASNKedisiplinan.init === 'function') {
-                    window.ASNKedisiplinan.init();
-                }
             } else {
                 hubView.classList.remove('hidden');
                 if (typeof applyAdminRoleVisibility === 'function') {
@@ -1266,6 +1261,7 @@
                 if (typeof loadAdminStudentsData === 'function') loadAdminStudentsData();
                 if (typeof loadAdminEmployeesData === 'function') loadAdminEmployeesData();
                 if (typeof loadAdminTahfidzData === 'function') loadAdminTahfidzData();
+                if (typeof loadIzinAsatidzHistory === 'function') loadIzinAsatidzHistory();
             }
 
             // Sembunyikan double header di layar mobile saat sub-view aktif
@@ -6589,48 +6585,6 @@
                 if (typeof showToast === 'function') showToast("❌ " + err.message);
             }
         }
-
-        async function syncAdminNotifikasiToCloud() {
-            const btn = document.getElementById('admin-notif-sync-btn');
-            const icon = btn ? btn.querySelector('i') : null;
-            if (icon) icon.classList.add('fa-spin');
-            if (btn) btn.disabled = true;
-
-            try {
-                if (typeof showToast === 'function') showToast('🔄 Menyinkronkan warta dari Spreadsheet ke Supabase...', 'info');
-                const token = getAdminSessionToken();
-                let res = null;
-                if (typeof apiPost === 'function') {
-                    res = await apiPost('syncNotifikasiToSupabase', { token });
-                } else {
-                    const resp = await fetch(API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'syncNotifikasiToSupabase', token })
-                    });
-                    res = await resp.json();
-                }
-
-                if (res && (res.status === 'success' || res.synced !== undefined || res.success)) {
-                    const total = res.synced !== undefined ? res.synced : (res.data && res.data.synced !== undefined ? res.data.synced : 'seluruh');
-                    if (typeof showToast === 'function') showToast(`✅ Sukses menyinkronkan ${total} warta notifikasi ke Supabase!`, 'success');
-                    try {
-                        localStorage.removeItem('asn_cached_notifikasi');
-                    } catch (e) {}
-                    await loadAdminNotifikasi();
-                    if (typeof loadNotifikasi === 'function') await loadNotifikasi();
-                } else {
-                    const errMsg = (res && res.message) || (res && res.errors && res.errors.join(', ')) || 'Gagal sinkronisasi';
-                    if (typeof showToast === 'function') showToast('❌ ' + errMsg, 'error');
-                }
-            } catch (err) {
-                console.error('Error syncNotifikasiToSupabase:', err);
-                if (typeof showToast === 'function') showToast('❌ Gagal sinkronisasi: ' + err.message, 'error');
-            } finally {
-                if (icon) icon.classList.remove('fa-spin');
-                if (btn) btn.disabled = false;
-            }
-        }
-        window.syncAdminNotifikasiToCloud = syncAdminNotifikasiToCloud;
 
         // ==================== DASHBOARD ADMIN: MANAJEMEN DATA SANTRI ====================
         let adminStudentsData = [];

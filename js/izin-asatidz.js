@@ -430,7 +430,7 @@
             // 2. Direct Sync ke Supabase Cloud DB
             try {
                 const config = window.ASNAWIYYAH_CONFIG || {};
-                const sbUrl = config.supabaseUrl || "https://uomgbyjffadsknvrwrmk.supabase.co";
+                const sbUrl = config.supabaseUrl || "https://tkjhfhyabacbyknwrysh.supabase.co";
                 const sbKey = config.supabaseKey;
                 const idIzin = (res && res.data && res.data.idIzin) ? res.data.idIzin : `IZA-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
                 payload.idIzin = idIzin;
@@ -807,6 +807,9 @@
             `;
 
             allPending.forEach(item => {
+                const idIzin = String(item.idIzin || item.id_izin || item.id || '').trim();
+                if (!idIzin) return; // Lewati baris data invalid tanpa ID
+
                 const sesiLabel = getSesiLabel(item.sesi);
                 const tglRange = (item.tanggalMulai === item.tanggalSelesai || !item.tanggalSelesai)
                     ? formatDateIndo(item.tanggalMulai)
@@ -866,15 +869,15 @@
                                 <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                                     <i class="fa-solid fa-pen-fancy text-amber-500 mr-1"></i>Dawuh / Catatan Restu Pengasuh <span class="text-slate-400 font-normal">(Opsional)</span>:
                                 </label>
-                                <input type="text" id="catatan-pengasuh-${escapeHtml(item.idIzin)}" placeholder="Contoh: Syafahullah, semoga lekas sehat. Halaqah diamanahkan ke Ustadz Badal." class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs bg-slate-50 dark:bg-[#15202d] text-slate-800 dark:text-slate-100 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition" />
+                                <input type="text" id="catatan-pengasuh-${escapeHtml(idIzin)}" placeholder="Contoh: Syafahullah, semoga lekas sehat. Halaqah diamanahkan ke Ustadz Badal." class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#253447] text-xs bg-slate-50 dark:bg-[#15202d] text-slate-800 dark:text-slate-100 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition" />
                             </div>
 
                             <div class="flex items-center justify-end gap-2 pt-1">
-                                <button type="button" id="btn-tolak-${escapeHtml(item.idIzin)}" onclick="processApprovalAction('${escapeHtml(item.idIzin)}', 'REJECTED')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 font-bold rounded-xl text-xs transition border border-rose-200 dark:border-rose-900/60 active:scale-95 flex items-center gap-1.5">
+                                <button type="button" id="btn-tolak-${escapeHtml(idIzin)}" onclick="processApprovalAction('${escapeHtml(idIzin)}', 'REJECTED')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 font-bold rounded-xl text-xs transition border border-rose-200 dark:border-rose-900/60 active:scale-95 flex items-center gap-1.5 cursor-pointer">
                                     <i class="fa-solid fa-ban text-[11px]"></i>
                                     <span>Tolak</span>
                                 </button>
-                                <button type="button" id="btn-setujui-${escapeHtml(item.idIzin)}" onclick="processApprovalAction('${escapeHtml(item.idIzin)}', 'APPROVED')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center gap-1.5">
+                                <button type="button" id="btn-setujui-${escapeHtml(idIzin)}" onclick="processApprovalAction('${escapeHtml(idIzin)}', 'APPROVED')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
                                     <i class="fa-solid fa-check-double text-[11px]"></i>
                                     <span>Beri Restu (Qobul)</span>
                                 </button>
@@ -939,7 +942,11 @@
      * Eksekusi Keputusan Persetujuan Pengasuh (Qobul / Tolak)
      */
     async function processApprovalAction(idIzin, decision) {
-        if (!idIzin) return;
+        idIzin = String(idIzin || '').trim();
+        if (!idIzin) {
+            alertToast('⚠️ ID Izin tidak valid atau data tidak ditemukan.', 'error');
+            return;
+        }
 
         const catatanInput = document.getElementById(`catatan-pengasuh-${idIzin}`);
         const catatan = catatanInput ? catatanInput.value.trim() : '';
@@ -955,8 +962,16 @@
         const btnSetujui = document.getElementById(`btn-setujui-${idIzin}`);
         const btnTolak = document.getElementById(`btn-tolak-${idIzin}`);
 
-        if (btnSetujui) btnSetujui.disabled = true;
-        if (btnTolak) btnTolak.disabled = true;
+        if (btnSetujui) {
+            btnSetujui.disabled = true;
+            btnSetujui.dataset.origHtml = btnSetujui.innerHTML;
+            btnSetujui.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[11px]"></i> <span>Menyimpan...</span>`;
+        }
+        if (btnTolak) {
+            btnTolak.disabled = true;
+            btnTolak.dataset.origHtml = btnTolak.innerHTML;
+            btnTolak.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[11px]"></i> <span>Menyimpan...</span>`;
+        }
 
         const current = getCurrentAsatidzIdentity();
         const approverName = current.name || 'Dewan Pengasuh';
@@ -974,15 +989,37 @@
 
         try {
             let res = null;
-            let sbSuccess = false;
 
-            // 1. Direct PATCH ke Supabase Cloud DB (<50ms fast-write via anon key)
+            // 1. Kirim ke Google Apps Script Backend (sinkronisasi spreadsheet & Supabase via service_role)
+            if (typeof apiPost === 'function') {
+                try {
+                    res = await apiPost('approveIzinAsatidz', payload);
+                } catch (apiErr) {
+                    console.warn('[API APPROVE IZIN ASATIDZ FALLBACK]', apiErr);
+                }
+            }
+
+            // Fallback via direct fetch ke Apps Script Web App jika apiPost belum siap
+            if (!res || !res.success) {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const apiUrl = config.apiUrl || (window.APP_CONFIG && window.APP_CONFIG.API_URL) || (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '');
+                if (apiUrl) {
+                    const fetchRes = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'approveIzinAsatidz', data: payload, token: token })
+                    });
+                    res = await fetchRes.json();
+                }
+            }
+
+            // 2. Direct PATCH ke Supabase Cloud DB (opsional fast-path)
             try {
                 const config = window.ASNAWIYYAH_CONFIG || {};
-                const sbUrl = config.supabaseUrl || "https://uomgbyjffadsknvrwrmk.supabase.co";
+                const sbUrl = config.supabaseUrl;
                 const sbKey = config.supabaseKey;
                 if (sbUrl && sbKey) {
-                    const sbRes = await fetch(`${sbUrl}/rest/v1/izin_asatidz?id_izin=eq.${encodeURIComponent(idIzin)}`, {
+                    await fetch(`${sbUrl}/rest/v1/izin_asatidz?id_izin=eq.${encodeURIComponent(idIzin)}`, {
                         method: 'PATCH',
                         headers: {
                             'apikey': sbKey,
@@ -998,35 +1035,9 @@
                             updated_at: new Date().toISOString()
                         })
                     });
-                    if (sbRes.ok) {
-                        sbSuccess = true;
-                        console.log('[SUPABASE DIRECT PATCH SUCCESS]', idIzin, decision);
-                    }
                 }
             } catch (sbDirectErr) {
-                console.warn('[SUPABASE DIRECT PATCH WARN]', sbDirectErr);
-            }
-
-            // 2. Kirim ke Google Apps Script Backend (sinkronisasi spreadsheet & audit)
-            if (typeof apiPost === 'function') {
-                try {
-                    res = await apiPost('approveIzinAsatidz', payload);
-                } catch (apiErr) {
-                    console.warn('[API APPROVE IZIN ASATIDZ FALLBACK]', apiErr);
-                }
-            }
-
-            // Fallback via direct fetch
-            if (!res || !res.success) {
-                const apiUrl = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '');
-                if (apiUrl) {
-                    const fetchRes = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'approveIzinAsatidz', data: payload, token: token })
-                    });
-                    res = await fetchRes.json();
-                }
+                // Non-blocking, backend Apps Script sudah melakukan replikasi resmi via service_role
             }
 
             // 3. Optimistic local in-memory update
@@ -1041,6 +1052,9 @@
                 }
             }
 
+            // Perbarui daftar permohonan pending
+            ASNIzinAsatidz.pendingApprovalList = (ASNIzinAsatidz.pendingApprovalList || []).filter(x => String(x.idIzin || x.id_izin) !== String(idIzin));
+
             // Tampilkan notifikasi keberhasilan
             if (decision === 'APPROVED') {
                 alertToast('🤲 Alhamdulillah, permohonan izin disetujui (Qobul). Pendelegasian halaqah ke Ustadz Badal telah aktif!', 'success');
@@ -1048,9 +1062,16 @@
                 alertToast('Permohonan izin Asatidz telah ditolak.', 'info');
             }
 
-            // Langsung perbarui tampilan antarmuka
-            renderApprovalTab();
-            renderAsatidzIzinList();
+            // Langsung perbarui tampilan modal
+            renderApprovalList();
+            renderMyHistoryList();
+            renderDelegatedList();
+
+            // Perbarui badge counter pada tab modal
+            const badgeApproval = document.getElementById('badge-count-izin-approval');
+            if (badgeApproval) badgeApproval.textContent = String(ASNIzinAsatidz.pendingApprovalList.length);
+
+            // Perbarui badge & banner notifikasi di Modul Tahfidz & Admin Hub
             if (typeof updateHeaderApprovalNotifications === 'function') {
                 updateHeaderApprovalNotifications();
             }
@@ -1067,8 +1088,14 @@
             console.error('[PROCESS APPROVAL ACTION ERROR]', err);
             alertToast('Gagal memproses persetujuan: ' + (err.message || 'Terjadi kesalahan sistem'), 'error');
         } finally {
-            if (btnSetujui) btnSetujui.disabled = false;
-            if (btnTolak) btnTolak.disabled = false;
+            if (btnSetujui) {
+                btnSetujui.disabled = false;
+                if (btnSetujui.dataset.origHtml) btnSetujui.innerHTML = btnSetujui.dataset.origHtml;
+            }
+            if (btnTolak) {
+                btnTolak.disabled = false;
+                if (btnTolak.dataset.origHtml) btnTolak.innerHTML = btnTolak.dataset.origHtml;
+            }
         }
     }
 

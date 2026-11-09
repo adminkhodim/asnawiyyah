@@ -1563,12 +1563,25 @@ function syncHistoricalIzinAsatidzToSupabase(ss) {
     const idIzin = String(row[col["id_izin"]] || "").trim();
     if (!idIzin) continue;
 
+    const rawTglMulai = row[col["tanggal_mulai"]];
+    const rawTglSelesai = row[col["tanggal_selesai"]] || rawTglMulai;
+    const tglMulai = formatSyncDateIso_(rawTglMulai) || String(rawTglMulai || "").substring(0, 10);
+    const tglSelesai = formatSyncDateIso_(rawTglSelesai) || tglMulai;
+
+    const rawCreatedAt = row[col["created_at"]];
+    const rawUpdatedAt = row[col["updated_at"]];
+    const createdAt = formatSyncDateTimeIso_(rawCreatedAt) || new Date().toISOString();
+    const updatedAt = formatSyncDateTimeIso_(rawUpdatedAt) || createdAt;
+
+    const rawApprovedAt = row[col["pengasuh_approved_at"]];
+    const approvedAt = rawApprovedAt ? formatSyncDateTimeIso_(rawApprovedAt) : null;
+
     records.push({
       id_izin: idIzin,
       asatidz_id: String(row[col["asatidz_id"]] || "").trim(),
       nama_asatidz: String(row[col["nama_asatidz"]] || "").trim(),
-      tanggal_mulai: String(row[col["tanggal_mulai"]] || "").trim(),
-      tanggal_selesai: String(row[col["tanggal_selesai"]] || "").trim(),
+      tanggal_mulai: tglMulai,
+      tanggal_selesai: tglSelesai,
       sesi: String(row[col["sesi"]] || "FULL_DAY").trim(),
       kategori: String(row[col["kategori"]] || "Izin").trim(),
       alasan: String(row[col["alasan"]] || "").trim(),
@@ -1578,16 +1591,23 @@ function syncHistoricalIzinAsatidzToSupabase(ss) {
       lampiran_url: String(row[col["lampiran_url"]] || "").trim(),
       status: String(row[col["status"]] || "PENDING").trim().toUpperCase(),
       pengasuh_approved_by: String(row[col["pengasuh_approved_by"]] || "").trim(),
-      pengasuh_approved_at: String(row[col["pengasuh_approved_at"]] || "").trim(),
+      pengasuh_approved_at: approvedAt,
       catatan_pengasuh: String(row[col["catatan_pengasuh"]] || "").trim(),
-      created_at: String(row[col["created_at"]] || new Date().toISOString()).trim(),
-      updated_at: String(row[col["updated_at"]] || new Date().toISOString()).trim()
+      created_at: createdAt,
+      updated_at: updatedAt
     });
   }
 
   const BATCH_SIZE = 100;
   let totalSynced = 0;
   const errors = [];
+
+  // Bersihkan data sampah / orphan tanpa id_izin di Supabase
+  try {
+    replicateToSupabase("/rest/v1/izin_asatidz?id_izin=eq.", "DELETE");
+  } catch (cleanErr) {
+    console.warn("[SYNC IZIN ASATIDZ CLEAN ERROR]", cleanErr);
+  }
 
   for (let b = 0; b < records.length; b += BATCH_SIZE) {
     const batch = records.slice(b, b + BATCH_SIZE);

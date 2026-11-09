@@ -3634,8 +3634,8 @@ function submitIzinAsatidz(payload, token) {
           id_izin: idIzin,
           asatidz_id: asatidzId,
           nama_asatidz: namaAsatidz,
-          tanggal_mulai: tglMulai,
-          tanggal_selesai: tglSelesai,
+          tanggal_mulai: (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(tglMulai) : null) || String(tglMulai).substring(0, 10),
+          tanggal_selesai: (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(tglSelesai) : null) || String(tglSelesai).substring(0, 10),
           sesi: sesi,
           kategori: kategori,
           alasan: alasan,
@@ -3714,12 +3714,17 @@ function getIzinAsatidzData(params = {}, token = null) {
       const idIzin = String(r[col["id_izin"]] || "").trim();
       if (!idIzin) continue;
 
+      const rawTglMulai = r[col["tanggal_mulai"]];
+      const rawTglSelesai = r[col["tanggal_selesai"]] || rawTglMulai;
+      const tglMulai = (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(rawTglMulai) : null) || String(rawTglMulai || "").substring(0, 10);
+      const tglSelesai = (typeof formatSyncDateIso_ === "function" ? formatSyncDateIso_(rawTglSelesai) : null) || tglMulai;
+
       const item = {
         idIzin: idIzin,
         asatidzId: String(r[col["asatidz_id"]] || "").trim(),
         namaAsatidz: String(r[col["nama_asatidz"]] || "").trim(),
-        tanggalMulai: String(r[col["tanggal_mulai"]] || "").trim(),
-        tanggalSelesai: String(r[col["tanggal_selesai"]] || "").trim(),
+        tanggalMulai: tglMulai,
+        tanggalSelesai: tglSelesai,
         sesi: String(r[col["sesi"]] || "FULL_DAY").trim(),
         kategori: String(r[col["kategori"]] || "SAKIT").trim(),
         alasan: String(r[col["alasan"]] || "").trim(),
