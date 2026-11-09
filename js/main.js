@@ -1,3 +1,9 @@
+        // ==================== GLOBAL APP STATE & CACHE KEYS ====================
+        const BANNER_CACHE_KEY = 'asnawiyyah_banner_cache';
+        let _isBannerFetching = false;
+        let notifikasiList = [];
+        let _isNotifFetching = false;
+
         // ==================== MOBILE SPLASH LOGIC ====================
         let isMobileSplashDone = false;
 
@@ -81,9 +87,11 @@
                 if (typeof loadJadwalKegiatan === 'function') loadJadwalKegiatan();
             });
         } else {
-            loadBanners();
-            loadNotifikasi();
-            if (typeof loadJadwalKegiatan === 'function') loadJadwalKegiatan();
+            setTimeout(() => {
+                loadBanners();
+                loadNotifikasi();
+                if (typeof loadJadwalKegiatan === 'function') loadJadwalKegiatan();
+            }, 0);
         }
 
         function navigateToNews() {
@@ -1441,8 +1449,6 @@
         }
 
         // ==================== SLIDER BANNER BERANDA (OPTIMIZED SWR) ====================
-        const BANNER_CACHE_KEY = 'asnawiyyah_banner_cache';
-
         function optimizeImageUrl(url, width = 1000) {
             if (!url || typeof url !== 'string') return '';
             // Google Drive direct user content
@@ -1466,7 +1472,6 @@
             return url;
         }
 
-        let _isBannerFetching = false;
         async function loadBanners() {
             // 1. STALE: Coba render secepat kilat dari cache lokal jika ada
             try {
@@ -2004,7 +2009,6 @@
                 .replace(/'/g, '&#039;');
         }
 
-        let notifikasiList = [];
         let activeNotifFilter = 'all';
         let currentDetailNotifId = null;
 
@@ -2090,8 +2094,6 @@
                 console.warn('updateNotifBadge error:', e);
             }
         }
-        
-        let _isNotifFetching = false;
 
         async function loadNotifikasi() {
             // 1. Render immediate cached data (Stale-While-Revalidate)

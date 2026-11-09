@@ -1547,6 +1547,86 @@ function syncHistoricalNotifikasiToSupabase(ss) {
 }
 
 /**
+ * 5h. Rekonsiliasi Izin Asatidz & Badal Mengajar (Sheets: 'Izin_Asatidz' -> Supabase: 'izin_asatidz')
+ */
+function syncHistoricalIzinAsatidzToSupabase(ss) {
+  const sheet = ss.getSheetByName("Izin_Asatidz");
+  if (!sheet) {
+    console.warn("[SYNC IZIN ASATIDZ] Sheet 'Izin_Asatidz' tidak ditemukan.");
+    return { domain: "izin_asatidz", total: 0, synced: 0, skipped: 0, errors: ["Sheet 'Izin_Asatidz' tidak ditemukan"] };
+  }
+
+  const values = sheet.getDataRange().getValues();
+  if (values.length <= 1) {
+    return { domain: "izin_asatidz", total: 0, synced: 0, skipped: 0, errors: [] };
+  }
+
+  const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+  const col = {};
+  headers.forEach((h, idx) => { col[h] = idx; });
+
+  const records = [];
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    const idIzin = String(row[col["id_izin"]] || "").trim();
+    if (!idIzin) continue;
+
+    records.push({
+      id_izin: idIzin,
+      asatidz_id: String(row[col["asatidz_id"]] || "").trim(),
+      nama_asatidz: String(row[col["nama_asatidz"]] || "").trim(),
+      tanggal_mulai: String(row[col["tanggal_mulai"]] || "").trim(),
+      tanggal_selesai: String(row[col["tanggal_selesai"]] || "").trim(),
+      sesi: String(row[col["sesi"]] || "FULL_DAY").trim(),
+      kategori: String(row[col["kategori"]] || "Izin").trim(),
+      alasan: String(row[col["alasan"]] || "").trim(),
+      badal_id: String(row[col["badal_id"]] || "").trim(),
+      nama_badal: String(row[col["nama_badal"]] || "").trim(),
+      catatan_badal: String(row[col["catatan_badal"]] || "").trim(),
+      lampiran_url: String(row[col["lampiran_url"]] || "").trim(),
+      status: String(row[col["status"]] || "PENDING").trim().toUpperCase(),
+      pengasuh_approved_by: String(row[col["pengasuh_approved_by"]] || "").trim(),
+      pengasuh_approved_at: String(row[col["pengasuh_approved_at"]] || "").trim(),
+      catatan_pengasuh: String(row[col["catatan_pengasuh"]] || "").trim(),
+      created_at: String(row[col["created_at"]] || new Date().toISOString()).trim(),
+      updated_at: String(row[col["updated_at"]] || new Date().toISOString()).trim()
+    });
+  }
+
+  const BATCH_SIZE = 100;
+  let totalSynced = 0;
+  const errors = [];
+
+  for (let b = 0; b < records.length; b += BATCH_SIZE) {
+    const batch = records.slice(b, b + BATCH_SIZE);
+    const res = replicateToSupabase(
+      "/rest/v1/izin_asatidz?on_conflict=id_izin",
+      "POST",
+      batch
+    );
+    if (res.success) {
+      totalSynced += batch.length;
+    } else {
+      errors.push(`Batch ${b / BATCH_SIZE + 1} gagal: ${res.error || res.status}`);
+      console.warn(`[SYNC IZIN ASATIDZ BATCH ERROR]`, res);
+    }
+  }
+
+  console.log(`[SYNC HISTORICAL IZIN ASATIDZ] Total: ${records.length}, Terkirim: ${totalSynced}, Gagal: ${errors.length}`);
+  return { domain: "izin_asatidz", total: records.length, synced: totalSynced, errors: errors };
+}
+
+/**
+ * Helper Mandiri: Jalankan sinkronisasi Izin Asatidz langsung dari Apps Script Editor tanpa parameter
+ */
+function syncIzinAsatidzSheetToSupabase() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const res = syncHistoricalIzinAsatidzToSupabase(ss);
+  Logger.log("✅ [SYNC IZIN ASATIDZ] Hasil: " + JSON.stringify(res));
+  return res;
+}
+
+/**
  * Helper Mandiri: Jalankan sinkronisasi Notifikasi langsung dari Apps Script Editor tanpa parameter
  */
 function syncNotifikasiSheetToSupabase() {
@@ -1600,6 +1680,9 @@ function syncAllHistoricalSheetsToSupabase() {
     Logger.log("\n📦 7. Menyinkronkan Notifikasi & Pengumuman...");
     summary.domains.notifikasi = syncHistoricalNotifikasiToSupabase(ss);
 
+    Logger.log("\n📦 8. Menyinkronkan Izin Asatidz & Badal...");
+    summary.domains.izin_asatidz = syncHistoricalIzinAsatidzToSupabase(ss);
+
     const durationSec = Math.round((new Date().getTime() - startTime) / 1000);
     summary.completed_at = new Date().toISOString();
     summary.duration_seconds = durationSec;
@@ -1646,6 +1729,7 @@ function onOpen() {
       .addItem("👔 Sinkronkan Data Pegawai / Asatidz", "syncHistoricalPegawaiToSupabase")
       .addItem("📰 Sinkronkan Berita & Artikel", "syncHistoricalBeritaToSupabase")
       .addItem("🔔 Sinkronkan Notifikasi & Pengumuman", "syncNotifikasiSheetToSupabase")
+      .addItem("👨‍🏫 Sinkronkan Izin Asatidz & Badal", "syncIzinAsatidzSheetToSupabase")
       .addToUi();
   } catch (e) {
     // onOpen berjalan non-blokir jika dipanggil dalam konteks headless/API
@@ -2321,6 +2405,19 @@ function doPost(e) {
       }
       return createJsonResponse(
         syncNotifikasiSheetToSupabase()
+      );
+    }
+
+    if (action === "syncIzinAsatidzToSupabase" || action === "tahfidz.syncIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "SUPER_ADMIN", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        syncIzinAsatidzSheetToSupabase()
       );
     }
 
@@ -10770,6 +10867,33 @@ function submitIzinAsatidz(payload, token) {
 
     sheet.appendRow(newRow);
 
+    // Replikasi otomatis ke Supabase Cloud DB
+    try {
+      replicateToSupabase(
+        "/rest/v1/izin_asatidz?on_conflict=id_izin",
+        "POST",
+        {
+          id_izin: idIzin,
+          asatidz_id: asatidzId,
+          nama_asatidz: namaAsatidz,
+          tanggal_mulai: tglMulai,
+          tanggal_selesai: tglSelesai,
+          sesi: sesi,
+          kategori: kategori,
+          alasan: alasan,
+          badal_id: badalId,
+          nama_badal: namaBadal,
+          catatan_badal: catatanBadal,
+          lampiran_url: lampiranUrl,
+          status: "PENDING",
+          created_at: timestamp,
+          updated_at: timestamp
+        }
+      );
+    } catch (sbErr) {
+      console.warn("[REPLICATE SUBMIT IZIN ASATIDZ ERROR]", sbErr);
+    }
+
     return {
       status: "success",
       success: true,
@@ -10896,10 +11020,17 @@ function approveIzinAsatidz(payload, token) {
   try {
     let approverName = "Dewan Pengasuh";
     if (token) {
-      const actor = authenticateSession(token);
-      authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "PENGASUH"]);
-      if (actor.identity && (actor.identity.nama || actor.identity.name)) {
-        approverName = actor.identity.nama || actor.identity.name;
+      let actor = null;
+      try {
+        actor = authenticateSession(token);
+      } catch (authErr) {
+        actor = verifySessionToken(token, false);
+      }
+      if (actor) {
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "PENGASUH"]);
+        if (actor.identity && (actor.identity.nama || actor.identity.name)) {
+          approverName = actor.identity.nama || actor.identity.name;
+        }
       }
     }
 
@@ -10940,6 +11071,23 @@ function approveIzinAsatidz(payload, token) {
     sheet.getRange(rowIndex, col["pengasuh_approved_at"] + 1).setValue(nowISO);
     sheet.getRange(rowIndex, col["catatan_pengasuh"] + 1).setValue(catatan);
     sheet.getRange(rowIndex, col["updated_at"] + 1).setValue(nowISO);
+
+    // Replikasi keputusan Pengasuh ke Supabase Cloud DB
+    try {
+      replicateToSupabase(
+        "/rest/v1/izin_asatidz?id_izin=eq." + encodeURIComponent(idIzin),
+        "PATCH",
+        {
+          status: finalStatus,
+          pengasuh_approved_by: approverName,
+          pengasuh_approved_at: nowISO,
+          catatan_pengasuh: catatan,
+          updated_at: nowISO
+        }
+      );
+    } catch (sbErr) {
+      console.warn("[REPLICATE APPROVE IZIN ASATIDZ ERROR]", sbErr);
+    }
 
     return {
       status: "success",

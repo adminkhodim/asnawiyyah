@@ -664,6 +664,19 @@ function doPost(e) {
       );
     }
 
+    if (action === "syncIzinAsatidzToSupabase" || action === "tahfidz.syncIzinAsatidz") {
+      const token = payload.token || (payload.data && payload.data.token) || null;
+      try {
+        const actor = authenticateSession(token);
+        authorizeRole(actor, ["ADMIN", "SUPER_ADMIN", "PENGASUH"]);
+      } catch (authErr) {
+        return createJsonResponse({ status: "error", message: authErr.message });
+      }
+      return createJsonResponse(
+        syncIzinAsatidzSheetToSupabase()
+      );
+    }
+
     if (action === "toggleBanner") {
       const token = payload.token || (payload.data && payload.data.token) || null;
       try {

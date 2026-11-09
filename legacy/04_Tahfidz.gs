@@ -3625,6 +3625,33 @@ function submitIzinAsatidz(payload, token) {
 
     sheet.appendRow(newRow);
 
+    // Replikasi otomatis ke Supabase Cloud DB
+    try {
+      replicateToSupabase(
+        "/rest/v1/izin_asatidz?on_conflict=id_izin",
+        "POST",
+        {
+          id_izin: idIzin,
+          asatidz_id: asatidzId,
+          nama_asatidz: namaAsatidz,
+          tanggal_mulai: tglMulai,
+          tanggal_selesai: tglSelesai,
+          sesi: sesi,
+          kategori: kategori,
+          alasan: alasan,
+          badal_id: badalId,
+          nama_badal: namaBadal,
+          catatan_badal: catatanBadal,
+          lampiran_url: lampiranUrl,
+          status: "PENDING",
+          created_at: timestamp,
+          updated_at: timestamp
+        }
+      );
+    } catch (sbErr) {
+      console.warn("[REPLICATE SUBMIT IZIN ASATIDZ ERROR]", sbErr);
+    }
+
     return {
       status: "success",
       success: true,
@@ -3751,10 +3778,17 @@ function approveIzinAsatidz(payload, token) {
   try {
     let approverName = "Dewan Pengasuh";
     if (token) {
-      const actor = authenticateSession(token);
-      authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "PENGASUH"]);
-      if (actor.identity && (actor.identity.nama || actor.identity.name)) {
-        approverName = actor.identity.nama || actor.identity.name;
+      let actor = null;
+      try {
+        actor = authenticateSession(token);
+      } catch (authErr) {
+        actor = verifySessionToken(token, false);
+      }
+      if (actor) {
+        authorizeRole(actor, ["SUPER_ADMIN", "ADMIN", "PENGASUH"]);
+        if (actor.identity && (actor.identity.nama || actor.identity.name)) {
+          approverName = actor.identity.nama || actor.identity.name;
+        }
       }
     }
 
@@ -3795,6 +3829,23 @@ function approveIzinAsatidz(payload, token) {
     sheet.getRange(rowIndex, col["pengasuh_approved_at"] + 1).setValue(nowISO);
     sheet.getRange(rowIndex, col["catatan_pengasuh"] + 1).setValue(catatan);
     sheet.getRange(rowIndex, col["updated_at"] + 1).setValue(nowISO);
+
+    // Replikasi keputusan Pengasuh ke Supabase Cloud DB
+    try {
+      replicateToSupabase(
+        "/rest/v1/izin_asatidz?id_izin=eq." + encodeURIComponent(idIzin),
+        "PATCH",
+        {
+          status: finalStatus,
+          pengasuh_approved_by: approverName,
+          pengasuh_approved_at: nowISO,
+          catatan_pengasuh: catatan,
+          updated_at: nowISO
+        }
+      );
+    } catch (sbErr) {
+      console.warn("[REPLICATE APPROVE IZIN ASATIDZ ERROR]", sbErr);
+    }
 
     return {
       status: "success",

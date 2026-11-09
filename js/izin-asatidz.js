@@ -427,15 +427,44 @@
                 }
             }
 
-            // 2. Dual-Write Sync ke Supabase Cloud DB
-            if (typeof syncToSupabaseOnWrite === 'function') {
-                try {
-                    const idIzin = (res && res.data && res.data.idIzin) ? res.data.idIzin : `IZA-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
-                    payload.idIzin = idIzin;
-                    await syncToSupabaseOnWrite('submitIzinAsatidz', payload);
-                } catch (sbErr) {
-                    console.warn('[SUPABASE DUAL-WRITE IZIN ASATIDZ WARN]', sbErr);
+            // 2. Direct Sync ke Supabase Cloud DB
+            try {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const sbUrl = config.supabaseUrl || "https://uomgbyjffadsknvrwrmk.supabase.co";
+                const sbKey = config.supabaseKey;
+                const idIzin = (res && res.data && res.data.idIzin) ? res.data.idIzin : `IZA-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100 + Math.random() * 900)}`;
+                payload.idIzin = idIzin;
+
+                if (sbUrl && sbKey) {
+                    await fetch(`${sbUrl}/rest/v1/izin_asatidz`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({
+                            id_izin: idIzin,
+                            asatidz_id: payload.asatidzId || '',
+                            nama_asatidz: payload.namaAsatidz || '',
+                            tanggal_mulai: payload.tglMulai || '',
+                            tanggal_selesai: payload.tglSelesai || payload.tglMulai || '',
+                            sesi: payload.sesi || 'FULL_DAY',
+                            kategori: payload.kategori || 'Izin',
+                            alasan: payload.alasan || '',
+                            badal_id: payload.badalId || '',
+                            nama_badal: payload.namaBadal || '',
+                            catatan_badal: payload.catatanBadal || '',
+                            lampiran_url: payload.lampiranUrl || '',
+                            status: 'PENDING',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        })
+                    });
                 }
+            } catch (sbErr) {
+                console.warn('[SUPABASE DIRECT INSERT IZIN ASATIDZ WARN]', sbErr);
             }
 
             alertToast('✅ Permohonan izin mengajar berhasil diajukan! Menunggu persetujuan Dewan Pengasuh.', 'success');
@@ -945,8 +974,40 @@
 
         try {
             let res = null;
+            let sbSuccess = false;
 
-            // 1. Kirim ke Google Apps Script Backend
+            // 1. Direct PATCH ke Supabase Cloud DB (<50ms fast-write via anon key)
+            try {
+                const config = window.ASNAWIYYAH_CONFIG || {};
+                const sbUrl = config.supabaseUrl || "https://uomgbyjffadsknvrwrmk.supabase.co";
+                const sbKey = config.supabaseKey;
+                if (sbUrl && sbKey) {
+                    const sbRes = await fetch(`${sbUrl}/rest/v1/izin_asatidz?id_izin=eq.${encodeURIComponent(idIzin)}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({
+                            status: decision,
+                            pengasuh_approved_by: approverName,
+                            pengasuh_approved_at: new Date().toISOString(),
+                            catatan_pengasuh: catatan || '',
+                            updated_at: new Date().toISOString()
+                        })
+                    });
+                    if (sbRes.ok) {
+                        sbSuccess = true;
+                        console.log('[SUPABASE DIRECT PATCH SUCCESS]', idIzin, decision);
+                    }
+                }
+            } catch (sbDirectErr) {
+                console.warn('[SUPABASE DIRECT PATCH WARN]', sbDirectErr);
+            }
+
+            // 2. Kirim ke Google Apps Script Backend (sinkronisasi spreadsheet & audit)
             if (typeof apiPost === 'function') {
                 try {
                     res = await apiPost('approveIzinAsatidz', payload);
@@ -968,22 +1029,33 @@
                 }
             }
 
-            // 2. Dual-Write Sync ke Supabase Cloud DB
-            if (typeof syncToSupabaseOnWrite === 'function') {
-                try {
-                    await syncToSupabaseOnWrite('approveIzinAsatidz', payload);
-                } catch (sbErr) {
-                    console.warn('[SUPABASE DUAL-WRITE APPROVE WARN]', sbErr);
+            // 3. Optimistic local in-memory update
+            if (Array.isArray(ASNIzinAsatidz.list)) {
+                const target = ASNIzinAsatidz.list.find(x => String(x.idIzin || x.id_izin) === String(idIzin));
+                if (target) {
+                    target.status = decision;
+                    target.pengasuhApprovedBy = approverName;
+                    target.pengasuhApprovedAt = new Date().toISOString();
+                    target.catatanPengasuh = catatan || '';
+                    target.updatedAt = new Date().toISOString();
                 }
             }
 
+            // Tampilkan notifikasi keberhasilan
             if (decision === 'APPROVED') {
                 alertToast('🤲 Alhamdulillah, permohonan izin disetujui (Qobul). Pendelegasian halaqah ke Ustadz Badal telah aktif!', 'success');
             } else {
                 alertToast('Permohonan izin Asatidz telah ditolak.', 'info');
             }
 
-            // Segarkan data izin dan antarmuka
+            // Langsung perbarui tampilan antarmuka
+            renderApprovalTab();
+            renderAsatidzIzinList();
+            if (typeof updateHeaderApprovalNotifications === 'function') {
+                updateHeaderApprovalNotifications();
+            }
+
+            // Segarkan data izin dan antarmuka dari cloud
             await loadIzinAsatidzHistory();
 
             // Segarkan data halaqah tahfidz jika sedang terbuka agar delegasi langsung aktif

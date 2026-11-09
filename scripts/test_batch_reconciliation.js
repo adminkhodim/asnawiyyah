@@ -29,6 +29,7 @@ const EXPECTED_FUNCTIONS = [
   'syncHistoricalIzinPerpulanganToSupabase',
   'syncHistoricalPegawaiToSupabase',
   'syncHistoricalBeritaToSupabase',
+  'syncHistoricalIzinAsatidzToSupabase',
   'syncAllHistoricalSheetsToSupabase',
   'onOpen'
 ];

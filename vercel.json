@@ -7,7 +7,7 @@
     },
     {
       "source": "/administrator",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/sd-islam-unggulan",
@@ -27,7 +27,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ]
 }
