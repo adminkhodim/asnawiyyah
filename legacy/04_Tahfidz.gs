@@ -60,7 +60,7 @@ function migrateTahfidzHalaqahSheet_(ss) {
 
     const targetHeaders = ["halaqah_id", "muhafiz", "target_kurikulum", "student_ids", "created_at"];
     const currentHeaders = data[0].map(h => String(h || "").trim().toLowerCase());
-    
+
     // Cek apakah sheet masih memiliki kolom 'nama_halaqah' atau 'kategori'
     const hasNama = currentHeaders.some(h => h.includes("nama_halaqah") || h === "nama" || h.includes("namahalaqah"));
     const hasKategori = currentHeaders.some(h => h === "kategori" || h === "category");
@@ -77,7 +77,7 @@ function migrateTahfidzHalaqahSheet_(ss) {
       const row = data[i];
       const hId = colMap.id !== -1 ? String(row[colMap.id] || "").trim() : "";
       let hMuh = colMap.muhafiz !== -1 ? String(row[colMap.muhafiz] || "").trim() : "";
-      
+
       // Jika muhafiz kosong tapi nama_halaqah ada, kita fallback gunakan
       if (!hMuh && colMap.nama !== -1) {
         hMuh = String(row[colMap.nama] || "").trim();
@@ -198,7 +198,7 @@ function ensureTahfidzLogsAndCapaianSchema_(ss) {
       let lastCol = logsSheet.getLastColumn();
       if (lastCol > 0) {
         let headers = logsSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
-        
+
         // 1a. Kolom status_setoran
         const statusIdx = headers.indexOf("status_setoran");
         if (statusIdx === -1) {
@@ -350,7 +350,7 @@ function syncTahfidzCapaianSheet_(ss) {
     }
 
     // Helper penyelarasan ke ID Resmi santri
-    const resolveCanonId = function(rawKey, rawName) {
+    const resolveCanonId = function (rawKey, rawName) {
       if (!rawKey && !rawName) return "";
       const k = String(rawKey || "").trim();
       if (k) {
@@ -1342,7 +1342,7 @@ function getTahfidzDashboard(token) {
 
       if (!halaqah && st.halaqah && typeof st.halaqah === 'string' && st.halaqah.trim() !== '' && st.halaqah.trim().toLowerCase() !== 'belum masuk halaqah') {
         const hClean = st.halaqah.trim();
-        const matched = halaqahList.find(h => 
+        const matched = halaqahList.find(h =>
           (h.namaHalaqah && h.namaHalaqah.toLowerCase() === hClean.toLowerCase()) ||
           (h.halaqahId && h.halaqahId.toLowerCase() === hClean.toLowerCase())
         );
@@ -1392,7 +1392,7 @@ function getTahfidzDashboard(token) {
           murajaahPekan: target.targetMurajaahPekan,
           murajaahBulan: target.targetMurajaahPekan * 4
         },
-        rekapPekan: (function() {
+        rekapPekan: (function () {
           const tZ = Number(target.targetZiyadahPekan) || 10;
           const tM = Number(target.targetMurajaahPekan) || 10;
           const rZ = weeklyZiyadahPagesMap[sId] || weeklyZiyadahPagesMap[sNis] || 0;
@@ -1480,14 +1480,14 @@ function getTahfidzDashboard(token) {
           weeklyMurajaahPages: weeklyMurajaahPages,
           santriTuntasMurojaahCount: santriTuntasMurojaahCount,
           totalSantriAktif: halaqahMembers.length || enrichedStudents.length,
-          persenTuntasMurojaah: (halaqahMembers.length || enrichedStudents.length) > 0 
-            ? Math.round((santriTuntasMurojaahCount / (halaqahMembers.length || enrichedStudents.length)) * 100) 
+          persenTuntasMurojaah: (halaqahMembers.length || enrichedStudents.length) > 0
+            ? Math.round((santriTuntasMurojaahCount / (halaqahMembers.length || enrichedStudents.length)) * 100)
             : 0
         }
       },
       students: enrichedStudents,
       totalStudents: enrichedStudents.length,
-      categories: (function() {
+      categories: (function () {
         const programSet = new Set();
         allStudents.forEach(st => {
           const p = String(st.program || "").trim();
@@ -1496,7 +1496,7 @@ function getTahfidzDashboard(token) {
         const uniquePrograms = Array.from(programSet).sort();
         return ["Semua Kategori", ...(uniquePrograms.length > 0 ? uniquePrograms : ["Tahfidz Intensif", "Tahfidz Dewasa", "Tahfidz Anak", "Kitab Kuning", "Reguler"])];
       })(),
-      rawCategories: (function() {
+      rawCategories: (function () {
         const programSet = new Set();
         allStudents.forEach(st => {
           const p = String(st.program || "").trim();
@@ -1506,11 +1506,11 @@ function getTahfidzDashboard(token) {
       })(),
       halaqahs: halaqahList,
       activeDelegations: activeDelegations,
-      muhafizMatrix: (function() {
+      muhafizMatrix: (function () {
         return halaqahList.map((hlq, idx) => {
           const memberStudents = enrichedStudents.filter(st => {
             return (st.halaqah && st.halaqah.halaqahId === hlq.halaqahId) ||
-                   (Array.isArray(hlq.studentIds) && (hlq.studentIds.includes(st.studentId) || hlq.studentIds.includes(st.nis)));
+              (Array.isArray(hlq.studentIds) && (hlq.studentIds.includes(st.studentId) || hlq.studentIds.includes(st.nis)));
           });
           let totalJuz = 0;
           memberStudents.forEach(st => {
@@ -1531,14 +1531,14 @@ function getTahfidzDashboard(token) {
           };
         });
       })(),
-      sesiList: (function() {
+      sesiList: (function () {
         try {
           return getTahfidzSesiList(token).data || [];
-        } catch(e) {
+        } catch (e) {
           return [];
         }
       })(),
-      muhafizList: (function() {
+      muhafizList: (function () {
         const muhafizSet = new Set();
         try {
           const empRes = getAllEmployeesData(token);
@@ -2097,10 +2097,10 @@ function getTahfidzStudentDetail(studentId, token) {
 
         const isMatch = members.some(m => {
           if (!m) return false;
-          return m === cleanIdLower || 
-                 m === cleanNisLower || 
-                 (cleanNameLower && m === cleanNameLower) ||
-                 m.replace(/[^a-z0-9]/g, "") === cleanIdLower.replace(/[^a-z0-9]/g, "");
+          return m === cleanIdLower ||
+            m === cleanNisLower ||
+            (cleanNameLower && m === cleanNameLower) ||
+            m.replace(/[^a-z0-9]/g, "") === cleanIdLower.replace(/[^a-z0-9]/g, "");
         });
 
         if (isMatch) {
@@ -2276,7 +2276,7 @@ function saveBulkTahfidzTarget(payload, token) {
       }
     }
 
-    const studentIds = Array.isArray(payload.studentIds) 
+    const studentIds = Array.isArray(payload.studentIds)
       ? payload.studentIds.map(id => String(id || "").trim()).filter(Boolean)
       : (payload.studentId ? [String(payload.studentId).trim()] : []);
 
@@ -3083,7 +3083,7 @@ function getKeaktifanAsatidz(payload, token) {
     const now = new Date();
     const todayStr = Utilities.formatDate(now, "GMT+7", "yyyy-MM-dd");
     const currentTimeStr = Utilities.formatDate(now, "GMT+7", "HH:mm");
-    
+
     // Map hari dalam bahasa Indonesia / singkatan sesi (Sen, Sel, Rab, Kam, Jum, Sab, Min)
     const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
     const currentDayCode = dayNames[now.getDay()];
@@ -3098,7 +3098,7 @@ function getKeaktifanAsatidz(payload, token) {
       const isDayActive = !sesi.hariList || sesi.hariList.length === 0 || sesi.hariList.includes(currentDayCode);
       const jamMulai = sesi.jamMulai || "00:00";
       const jamSelesai = sesi.jamSelesai || "23:59";
-      
+
       let timelineStatus = "UPCOMING"; // UPCOMING, IN_PROGRESS, PASSED_DEADLINE
       if (currentTimeStr < jamMulai) {
         timelineStatus = "UPCOMING";
@@ -3176,7 +3176,7 @@ function getKeaktifanAsatidz(payload, token) {
           };
         }
       });
-    } catch (eEmp) {}
+    } catch (eEmp) { }
 
     // 4. Hitung Tanggal Batas: 30 hari yang lalu & 7 hari yang lalu
     const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
@@ -3254,14 +3254,14 @@ function getKeaktifanAsatidz(payload, token) {
     const asatidzList = halaqahRows.map((hlq, idx) => {
       const muhName = hlq.muhafiz;
       const cleanMuh = cleanTeacherName(muhName);
-      
+
       const empContact = employeeMap[cleanMuh] || employeeMap[muhName.toLowerCase()] || {};
 
       // Filter presensi ustadz ini
       const uPresensi = presensiRecords.filter(p => {
         const pClean = cleanTeacherName(p.muhafiz);
         return (pClean && cleanMuh && (pClean === cleanMuh || pClean.includes(cleanMuh) || cleanMuh.includes(pClean))) ||
-               (p.halaqahId && p.halaqahId === hlq.halaqahId);
+          (p.halaqahId && p.halaqahId === hlq.halaqahId);
       });
 
       // Filter setoran ustadz ini
@@ -3315,7 +3315,7 @@ function getKeaktifanAsatidz(payload, token) {
           try {
             const dt = new Date(inputTimestamp);
             inputTimeOnly = Utilities.formatDate(dt, "GMT+7", "HH:mm");
-          } catch(e) {}
+          } catch (e) { }
         }
 
         if (hasPresensi && hasSetoran) {
@@ -3850,7 +3850,7 @@ function approveIzinAsatidz(payload, token) {
     return {
       status: "success",
       success: true,
-      message: finalStatus === "APPROVED" 
+      message: finalStatus === "APPROVED"
         ? "Izin Asatidz berhasil disetujui (Qobul). Pendelegasian halaqah ke Ustadz Badal telah aktif."
         : "Izin Asatidz telah ditolak.",
       data: {
