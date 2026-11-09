@@ -76,15 +76,15 @@
         }
 
         if (!name) {
-            name = sessionStorage.getItem('ASN_ADMIN_NAME') || 
-                   sessionStorage.getItem('asnawiyyah_admin_name') || 
-                   localStorage.getItem('asnawiyyah_admin_name') || '';
+            name = sessionStorage.getItem('ASN_ADMIN_NAME') ||
+                sessionStorage.getItem('asnawiyyah_admin_name') ||
+                localStorage.getItem('asnawiyyah_admin_name') || '';
         }
 
         if (!id) {
-            id = sessionStorage.getItem('ASN_ADMIN_ID') || 
-                   sessionStorage.getItem('asnawiyyah_admin_id') || 
-                   localStorage.getItem('asnawiyyah_admin_id') || '';
+            id = sessionStorage.getItem('ASN_ADMIN_ID') ||
+                sessionStorage.getItem('asnawiyyah_admin_id') ||
+                localStorage.getItem('asnawiyyah_admin_id') || '';
         }
 
         return { name, id };
@@ -99,9 +99,9 @@
             role = window.ASNIdentity.currentUser.role || '';
         }
         if (!role) {
-            role = sessionStorage.getItem('ASN_ADMIN_ROLE') || 
-                   sessionStorage.getItem('asnawiyyah_admin_role') || 
-                   localStorage.getItem('asnawiyyah_admin_role') || '';
+            role = sessionStorage.getItem('ASN_ADMIN_ROLE') ||
+                sessionStorage.getItem('asnawiyyah_admin_role') ||
+                localStorage.getItem('asnawiyyah_admin_role') || '';
         }
         const r = String(role).toUpperCase();
         return r === 'PENGASUH' || r === 'SUPER_ADMIN' || r === 'ADMIN';
@@ -118,10 +118,10 @@
                 const pName = String(p.nama || p.name || '').trim();
                 const pId = String(p.employee_id || p.id || '').trim();
                 const pJabatan = String(p.jabatan || p.spesialisasi || '').toLowerCase();
-                const isGuru = pJabatan.includes('tahfidz') || pJabatan.includes('muhafiz') || 
-                               pJabatan.includes('ustadz') || pJabatan.includes('pengajar') ||
-                               pJabatan.includes('asatidz') || pJabatan.includes('guru') ||
-                               !pJabatan; // default include
+                const isGuru = pJabatan.includes('tahfidz') || pJabatan.includes('muhafiz') ||
+                    pJabatan.includes('ustadz') || pJabatan.includes('pengajar') ||
+                    pJabatan.includes('asatidz') || pJabatan.includes('guru') ||
+                    !pJabatan; // default include
 
                 if (pName && isGuru && pName.toLowerCase() !== cleanExclude) {
                     asatidzSet.set(pName.toLowerCase(), { id: pId, name: pName });
@@ -639,13 +639,13 @@
 
             // Sinkronkan badge visual badal pada daftar halaqah & tabel santri jika modul Tahfidz aktif
             if (typeof renderTahfidzHalaqahCards === 'function') {
-                try { renderTahfidzHalaqahCards(); } catch (eR) {}
+                try { renderTahfidzHalaqahCards(); } catch (eR) { }
             }
             if (typeof populateTahfidzFilters === 'function') {
-                try { populateTahfidzFilters(); } catch (eR) {}
+                try { populateTahfidzFilters(); } catch (eR) { }
             }
             if (typeof filterTahfidzList === 'function') {
-                try { filterTahfidzList(); } catch (eR) {}
+                try { filterTahfidzList(); } catch (eR) { }
             }
 
         } catch (err) {
