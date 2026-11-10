@@ -183,6 +183,8 @@
                 { key: 'tahfidz.entry', label: 'Entri Setoran Tahfidz', desc: 'Izin menginput setoran ziyadah & muraja\'ah santri' },
                 { key: 'tahfidz.target', label: 'Mengatur Target Tahfidz', desc: 'Izin menentukan target capaian juz santri' },
                 { key: 'tahfidz.halaqah', label: 'Kelola Halaqah & Plotting', desc: 'Izin mengelola kelompok halaqah & plotting santri binaan' },
+                { key: 'tahfidz.evaluasi.view', label: 'Melihat Evaluasi & Jurnal Tahfidz', desc: 'Akses melihat riwayat setoran, analitik berkala, dan filter periode data' },
+                { key: 'tahfidz.evaluasi.manage', label: 'Kelola & Ekspor Evaluasi Tahfidz', desc: 'Izin mencetak laporan resmi via isolated iframe dan ekspor Excel (.xlsx)' },
                 { key: 'presensi.view', label: 'Melihat Rekap Presensi', desc: 'Akses memantau grafik kehadiran kegiatan santri' },
                 { key: 'presensi.entry', label: 'Checklist & Scan QR Presensi', desc: 'Izin melakukan absensi live kegiatan & sholat' },
                 { key: 'keaktifan.view', label: 'Monitoring Keaktifan Asatidz', desc: 'Hak eksklusif Super Admin & Pengasuh untuk memantau kepatuhan sesi, presensi & setoran asatidz' }
@@ -237,7 +239,7 @@
         'wali-santri': ['wali.view', 'wali.manage'],
         'alumni': ['alumni.view', 'alumni.manage'],
         'tahfidz': ['tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah'],
-        'tahfidz-evaluasi': ['tahfidz.view', 'tahfidz.entry'],
+        'tahfidz-evaluasi': ['tahfidz.evaluasi.view', 'tahfidz.evaluasi.manage'],
         'keaktifan-asatidz': ['keaktifan.view'],
         'izin-asatidz': ['izin-asatidz.view', 'izin-asatidz.manage'],
         'presensi': ['presensi.view', 'presensi.entry'],
@@ -266,7 +268,9 @@
             'santri.view', 'santri.create', 'santri.edit', 'santri.delete', 'santri.export',
             'wali.view', 'wali.manage',
             'alumni.view', 'alumni.manage', 'unit.manage', 'jadwal.manage',
-            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah', 'presensi.view', 'presensi.entry',
+            'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah',
+            'tahfidz.evaluasi.view', 'tahfidz.evaluasi.manage',
+            'presensi.view', 'presensi.entry',
             'keuangan.view', 'keuangan.spp', 'keuangan.verify', 'ppdb.manage',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'jadwal.manage', 'notifikasi.broadcast',
             'profil.manage', 'pegawai.manage', 'users.manage', 'roles.manage', 'system.config',
@@ -277,6 +281,7 @@
         'ASATIDZ': [
             'santri.view', 'wali.view',
             'tahfidz.view', 'tahfidz.entry', 'tahfidz.target', 'tahfidz.halaqah',
+            'tahfidz.evaluasi.view', 'tahfidz.evaluasi.manage',
             'presensi.view', 'presensi.entry',
             'pegawai.manage', 'profil.manage',
             'perpulangan.view',
@@ -288,20 +293,20 @@
         ],
         'PENGURUS': [
             'presensi.view', 'presensi.entry', 'alumni.view', 'unit.manage', 'jadwal.manage', 'ppdb.manage',
-            'wali.view',
+            'wali.view', 'tahfidz.evaluasi.view',
             'berita.manage', 'banner.manage', 'program.manage', 'galeri.manage', 'notifikasi.broadcast',
             'perpulangan.view', 'perpulangan.manage',
             'kedisiplinan.view', 'kedisiplinan.manage',
             'izin-asatidz.view'
         ],
         'PENGASUH': [
-            'santri.view', 'wali.view', 'tahfidz.view', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage',
+            'santri.view', 'wali.view', 'tahfidz.view', 'tahfidz.evaluasi.view', 'tahfidz.evaluasi.manage', 'jadwal.manage', 'alumni.view', 'pegawai.manage', 'keaktifan.view', 'berita.manage', 'users.manage',
             'perpulangan.view', 'perpulangan.manage',
             'kedisiplinan.view',
             'izin-asatidz.view', 'izin-asatidz.manage'
         ],
         'WALI_SANTRI': [
-            'santri.view', 'tahfidz.view', 'presensi.view', 'keuangan.view',
+            'santri.view', 'tahfidz.view', 'tahfidz.evaluasi.view', 'presensi.view', 'keuangan.view',
             'perpulangan.view', 'perpulangan.manage',
             'kedisiplinan.view'
         ]

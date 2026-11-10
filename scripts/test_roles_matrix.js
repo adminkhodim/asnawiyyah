@@ -195,6 +195,7 @@ assert(adminGridHtml.includes('data-admin-module="alumni"'), 'admin-control-cent
 assert(adminGridHtml.includes('data-admin-module="wali-santri"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
 assert(adminGridHtml.includes('data-admin-module="kedisiplinan"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="kedisiplinan"');
 assert(adminGridHtml.includes('data-admin-module="izin-asatidz"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="izin-asatidz"');
+assert(adminGridHtml.includes('data-admin-module="tahfidz-evaluasi"'), 'admin-control-center-grid harus memiliki tombol data-admin-module="tahfidz-evaluasi"');
 
 const pengasuhGridStart = indexHtmlContent.indexOf('id="pengasuh-control-center-grid"');
 const pengasuhGridEnd = indexHtmlContent.indexOf('<!-- Security & Session Info Card', pengasuhGridStart);
@@ -203,6 +204,7 @@ assert(pengasuhGridHtml.includes('data-admin-module="alumni"'), 'pengasuh-contro
 assert(pengasuhGridHtml.includes('data-admin-module="wali-santri"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="wali-santri"');
 assert(pengasuhGridHtml.includes('data-admin-module="kedisiplinan"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="kedisiplinan"');
 assert(pengasuhGridHtml.includes('data-admin-module="izin-asatidz"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="izin-asatidz"');
+assert(pengasuhGridHtml.includes('data-admin-module="tahfidz-evaluasi"'), 'pengasuh-control-center-grid harus memiliki tombol data-admin-module="tahfidz-evaluasi"');
 console.log('✅ Verifikasi tombol modul Alumni, Wali Santri, Kedisiplinan & Izin Asatidz di admin-control-center-grid & pengasuh-control-center-grid berhasil!');
 
 // Uji coba toggle dinamis realtime lewat matriks (PPDB & Wali Santri)

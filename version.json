@@ -1,11 +1,12 @@
 {
     "version": "2.6.2",
-    "buildTime": "2026-11-10T06:55:00+07:00",
+    "buildTime": "2026-11-10T09:30:00+07:00",
     "title": "Peluncuran Menu Evaluasi Tahfidz & Perbaikan Sistem Cetak Resmi via Isolated iFrame",
     "highlights": [
         "Penambahan modul baru 'Evaluasi Tahfidz' pada grup Akademik & Tahfidz untuk jurnal riwayat setoran & analitik",
+        "Penyediaan tombol Evaluasi Tahfidz pada Pusat Kontrol Admin & Pengasuh Mobile PWA",
+        "Penambahan butir izin granular 'Melihat Evaluasi & Jurnal Tahfidz' dan 'Kelola & Ekspor Evaluasi Tahfidz' pada modal Rincian Detail Izin",
         "Penyediaan Pemilih Periode Data 2 Kolom responsif (Real-time, Kemarin, 7 Hari, 30 Hari, Hari Khusus, Pekan, Bulan, Tahun)",
-        "Solusi cetak dokumen bebas blank page menggunakan Isolated Hidden iFrame Engine ber-Kop Surat Resmi PPTQ Asnawiyyah",
-        "Dukungan cetak resmi Rekapitulasi Tahfidz (Landscape), Kartu Mutaba'ah Santri (Portrait), dan Laporan Evaluasi Berkala (Landscape)"
+        "Solusi cetak dokumen bebas blank page menggunakan Isolated Hidden iFrame Engine ber-Kop Surat Resmi PPTQ Asnawiyyah"
     ]
 }
