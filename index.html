@@ -13780,61 +13780,85 @@
                                     </div>
                                 </div>
 
-                                <!-- Ringkasan Metrik / KPI Cards Periode Ini -->
-                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-fade-in-up stagger-2">
-                                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl shadow-xs border border-slate-100 dark:border-[#253447]">
-                                        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
-                                            <span class="font-medium">Total Setoran</span>
-                                            <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
+                                <!-- Ringkasan Metrik / KPI Cards Periode Ini (Berwarna Vibrant Selaras Dashboard Utama & Keaktifan Asatidz) -->
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3">
+                                    <!-- Stat 1: Total Setoran (Emerald Gradient) -->
+                                    <div class="bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-2 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">TOTAL SETORAN</span>
+                                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                                 <i class="fa-solid fa-book-bookmark"></i>
                                             </div>
                                         </div>
-                                        <div class="mt-2 flex items-baseline gap-2">
-                                            <span id="tahfidz-eval-kpi-total" class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">0</span>
-                                            <span class="text-xs font-semibold text-slate-400">Entri</span>
+                                        <div>
+                                            <div class="flex items-baseline gap-1.5">
+                                                <h4 id="tahfidz-eval-kpi-total" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0</h4>
+                                                <span class="text-xs font-bold text-white/80">Entri</span>
+                                            </div>
                                         </div>
-                                        <div id="tahfidz-eval-kpi-sub-total" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">Dalam periode terpilih</div>
+                                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span id="tahfidz-eval-kpi-sub-total" class="truncate font-normal text-[10px] opacity-90">Periode terpilih</span>
+                                            <span class="px-2 py-0.5 rounded-full bg-white text-emerald-700 font-black shadow-xs shrink-0 text-[9px]">Jurnal</span>
+                                        </div>
                                     </div>
 
-                                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl shadow-xs border border-slate-100 dark:border-[#253447]">
-                                        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
-                                            <span class="font-medium">Volume Hafalan</span>
-                                            <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs">
+                                    <!-- Stat 2: Volume Hafalan (Indigo Gradient) -->
+                                    <div class="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-indigo-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-3 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">VOLUME HAFALAN</span>
+                                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                                 <i class="fa-solid fa-layer-group"></i>
                                             </div>
                                         </div>
-                                        <div class="mt-2 flex items-baseline gap-2">
-                                            <span id="tahfidz-eval-kpi-volume" class="text-xl md:text-2xl font-black text-indigo-600 dark:text-indigo-400">0</span>
-                                            <span class="text-xs font-semibold text-slate-400">Halaman</span>
+                                        <div>
+                                            <div class="flex items-baseline gap-1.5">
+                                                <h4 id="tahfidz-eval-kpi-volume" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0</h4>
+                                                <span class="text-xs font-bold text-white/80">Halaman</span>
+                                            </div>
                                         </div>
-                                        <div id="tahfidz-eval-kpi-sub-volume" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">~ 0 Juz tuntas</div>
+                                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span id="tahfidz-eval-kpi-sub-volume" class="truncate font-normal text-[10px] opacity-90">~ 0.0 Juz disetor</span>
+                                            <span class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Akumulasi</span>
+                                        </div>
                                     </div>
 
-                                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl shadow-xs border border-slate-100 dark:border-[#253447]">
-                                        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
-                                            <span class="font-medium">Kualitas Nilai</span>
-                                            <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs">
+                                    <!-- Stat 3: Kualitas Nilai (Amber Gradient) -->
+                                    <div class="bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-amber-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-4 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">KUALITAS NILAI</span>
+                                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                                 <i class="fa-solid fa-award"></i>
                                             </div>
                                         </div>
-                                        <div class="mt-2 flex items-baseline gap-2">
-                                            <span id="tahfidz-eval-kpi-kualitas" class="text-xl md:text-2xl font-black text-amber-600 dark:text-amber-400">0%</span>
-                                            <span class="text-xs font-semibold text-slate-400">Mumtaz</span>
+                                        <div>
+                                            <div class="flex items-baseline gap-1.5">
+                                                <h4 id="tahfidz-eval-kpi-kualitas" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0%</h4>
+                                                <span class="text-xs font-bold text-white/80">Mumtaz</span>
+                                            </div>
                                         </div>
-                                        <div id="tahfidz-eval-kpi-sub-kualitas" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">Rata-rata kelancaran tajwid</div>
+                                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span id="tahfidz-eval-kpi-sub-kualitas" class="truncate font-normal text-[10px] opacity-90">Rata-rata kelancaran</span>
+                                            <span class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Mutqin</span>
+                                        </div>
                                     </div>
 
-                                    <div class="bg-white dark:bg-[#16222f] p-3.5 rounded-2xl shadow-xs border border-slate-100 dark:border-[#253447]">
-                                        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
-                                            <span class="font-medium">Rasio Ziyadah / Muroja'ah</span>
-                                            <div class="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs">
+                                    <!-- Stat 4: Rasio Ziyadah vs Muroja'ah (Sky Gradient) -->
+                                    <div class="bg-gradient-to-br from-[#0284c7] to-[#0369a1] text-white p-3 md:p-3.5 rounded-2xl shadow-lg shadow-sky-500/20 flex flex-col justify-between space-y-1.5 transition-all duration-300 animate-fade-in-up stagger-5 hover:-translate-y-0.5">
+                                        <div class="flex items-start justify-between">
+                                            <span class="text-[11px] font-medium text-white/90 block truncate drop-shadow-2xs">RASIO SETORAN</span>
+                                            <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] shrink-0 backdrop-blur-xs shadow-2xs">
                                                 <i class="fa-solid fa-chart-pie"></i>
                                             </div>
                                         </div>
-                                        <div class="mt-2 flex items-baseline gap-2">
-                                            <span id="tahfidz-eval-kpi-rasio" class="text-xl md:text-2xl font-black text-sky-600 dark:text-sky-400">0 : 0</span>
+                                        <div>
+                                            <div class="flex items-baseline gap-1.5">
+                                                <h4 id="tahfidz-eval-kpi-rasio" class="text-xl md:text-2xl font-black text-white tracking-tight drop-shadow-2xs">0 Z : 0 M</h4>
+                                            </div>
                                         </div>
-                                        <div id="tahfidz-eval-kpi-sub-rasio" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">Ziyadah vs Muroja'ah</div>
+                                        <div class="flex items-center justify-between text-[10px] text-white/90 pt-1 border-t border-white/10">
+                                            <span id="tahfidz-eval-kpi-sub-rasio" class="truncate font-normal text-[10px] opacity-90">Ziyadah vs Muroja'ah</span>
+                                            <span class="px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-xs shrink-0 text-[9px]">Keseimbangan</span>
+                                        </div>
                                     </div>
                                 </div>
 
