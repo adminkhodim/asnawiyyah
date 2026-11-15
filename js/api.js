@@ -39,6 +39,7 @@
                     const res = await fetch(url, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
                     if (settingKey && rows.length > 0) {
                         return { status: "success", data: rows[0] };
                     }
@@ -137,6 +138,7 @@
                     const res = await fetch(`${sbUrl}/rest/v1/unit_kegiatan?status=eq.Aktif&order=urutan.asc`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
                     return {
                         status: "success",
                         data: rows.map(u => ({
@@ -176,12 +178,14 @@
                     const res = await fetch(`${sbUrl}/rest/v1/roles_permissions?select=*`, { headers });
                     if (!res.ok) return null;
                     const rows = await res.json();
+                    if (!Array.isArray(rows) || rows.length === 0) return null;
                     const permissionsMap = {};
                     rows.forEach(r => {
                         if (r.role_key && Array.isArray(r.active_permissions_json)) {
                             permissionsMap[r.role_key] = r.active_permissions_json;
                         }
                     });
+                    if (Object.keys(permissionsMap).length === 0) return null;
                     return {
                         status: "success",
                         success: true,

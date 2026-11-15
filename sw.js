@@ -14,6 +14,7 @@ const PRECACHE_URLS = [
   '/data-maulid-dibai.js',
   '/data-qasidah-burdah.js',
   '/data-tahlil-yasin.js',
+  '/data-manaqib.js',
   '/js/pwa.js',
   '/js/panduan.js',
   '/js/api.js',
