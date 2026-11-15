@@ -485,10 +485,26 @@
                 </nav>
 
                 <!-- Tombol Aksi Kanan (Rata Kanan Presisi dengan Kartu Beranda) -->
-                <div id="desk-action-menu" class="flex items-center space-x-2.5">
+                <div id="desk-action-menu" class="flex items-center space-x-2">
+                    <!-- Tombol Buka Mobile App PWA (/app) -->
+                    <button onclick="switchTab('beranda', true, '/app')"
+                        class="bg-white/10 hover:bg-white/20 text-emerald-100 hover:text-white px-3 py-2 rounded-xl font-bold text-xs border border-white/10 transition-all duration-200 flex items-center space-x-1.5"
+                        title="Buka Aplikasi Santri, Wali & Asatidz (Mobile PWA)">
+                        <i class="fa-solid fa-mobile-screen-button text-emerald-300"></i>
+                        <span>Buka App</span>
+                    </button>
+
+                    <!-- Tombol Portal Admin (/admin) -->
+                    <button onclick="switchTab('admin', true, '/admin')"
+                        class="bg-white/10 hover:bg-white/20 text-amber-200 hover:text-white px-3 py-2 rounded-xl font-bold text-xs border border-white/10 transition-all duration-200 flex items-center space-x-1.5"
+                        title="Masuk ke Portal Administrator 22 Modul">
+                        <i class="fa-solid fa-shield-halved text-amber-300"></i>
+                        <span>Admin</span>
+                    </button>
+
                     <!-- Tombol Install PWA Desktop (Otomatis tampil jika belum diinstal) -->
                     <button id="desk-btn-install-app" onclick="triggerInstallApp()"
-                        class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm border border-emerald-400/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 items-center space-x-1.5"
+                        class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-sm border border-emerald-400/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 items-center space-x-1.5"
                         title="Pasang Aplikasi PPTQ Asnawiyyah">
                         <i class="fa-solid fa-cloud-arrow-down text-emerald-200"></i>
                         <span>Pasang App</span>
@@ -503,7 +519,7 @@
                             class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow border-2 border-brand-900 leading-none">0</span>
                     </button>
                     <button onclick="switchTab('ppdb')"
-                        class="bg-amber-500 hover:bg-amber-400 text-brand-dark px-4 py-2 rounded-xl font-extrabold text-xs shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5">
+                        class="bg-amber-500 hover:bg-amber-400 text-brand-dark px-3.5 py-2 rounded-xl font-extrabold text-xs shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5">
                         <i class="fa-solid fa-user-plus text-xs"></i>
                         <span>Daftar PPDB</span>
                     </button>
@@ -523,10 +539,22 @@
         </div>
 
         <!-- Tombol Aksi Kanan: Install & Notifikasi -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5">
+            <!-- Tombol Buka App /admin & /app -->
+            <button type="button" onclick="switchTab('beranda', true, '/app')"
+                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-emerald-300 flex items-center justify-center text-xs border border-white/10 shadow-xs transition active:scale-95"
+                title="Buka Mode Mobile App (/app)">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </button>
+            <button type="button" onclick="switchTab('admin', true, '/admin')"
+                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-300 flex items-center justify-center text-xs border border-white/10 shadow-xs transition active:scale-95"
+                title="Portal Admin (/admin)">
+                <i class="fa-solid fa-shield-halved"></i>
+            </button>
+
             <!-- Tombol Install PWA Mobile (Otomatis tampil jika belum diinstal) -->
             <button id="mobile-btn-install-app" onclick="triggerInstallApp()"
-                class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-xl font-bold text-[11px] shadow-sm border border-emerald-400/30 items-center space-x-1 transition active:scale-95"
+                class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1.5 rounded-xl font-bold text-[10px] shadow-sm border border-emerald-400/30 items-center space-x-1 transition active:scale-95"
                 title="Pasang Aplikasi Asnawiyyah">
                 <i class="fa-solid fa-cloud-arrow-down text-emerald-200"></i>
                 <span>Pasang</span>
@@ -8174,13 +8202,22 @@
                             <span id="admin-topbar-latency" class="hidden"></span>
                             <span id="admin-topbar-clock" class="hidden"></span>
 
-                            <!-- Quick Button: Visit Public Web -->
-                            <button type="button" onclick="switchTab('beranda')"
+                            <!-- Quick Button: Visit Public Web (/) -->
+                            <button type="button" onclick="switchTab('beranda', true, '/')"
                                 class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold transition active:scale-95"
-                                title="Lihat Tampilan Website Publik">
+                                title="Lihat Tampilan Website Publik (asnawiyyah.or.id)">
                                 <i
-                                    class="fa-solid fa-arrow-up-right-from-square text-emerald-600 dark:text-emerald-400 text-xs"></i>
+                                    class="fa-solid fa-globe text-emerald-600 dark:text-emerald-400 text-xs"></i>
                                 <span class="hidden xl:inline">Web Publik</span>
+                            </button>
+
+                            <!-- Quick Button: Open Mobile App PWA (/app) -->
+                            <button type="button" onclick="switchTab('beranda', true, '/app')"
+                                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold transition active:scale-95"
+                                title="Buka Mode Aplikasi Mobile PWA (asnawiyyah.or.id/app)">
+                                <i
+                                    class="fa-solid fa-mobile-screen-button text-indigo-500 dark:text-indigo-400 text-xs"></i>
+                                <span class="hidden xl:inline">Mobile App</span>
                             </button>
 
                             <!-- Quick Button: Dark Mode Toggle -->

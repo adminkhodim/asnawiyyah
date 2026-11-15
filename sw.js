@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asnawiyyah-cache-v101';
+const CACHE_NAME = 'asnawiyyah-cache-v102';
 
 const PRECACHE_URLS = [
   '/',
@@ -96,8 +96,14 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
-        // Jika offline, cari di cache
-        return caches.match(event.request);
+        // Jika offline, cari di cache; untuk navigasi halaman kembalikan index.html
+        return caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html') || caches.match('/');
+          }
+          return null;
+        });
       })
   );
 });

@@ -4,6 +4,52 @@
         let notifikasiList = [];
         let _isNotifFetching = false;
 
+        // ==================== ASNAWIYYAH APP MODES ====================
+        // 1. PUBLIC : asnawiyyah.or.id/ (Landing page resmi, profil, berita)
+        // 2. ADMIN  : asnawiyyah.or.id/admin (Portal manajemen 22 modul)
+        // 3. APP    : asnawiyyah.or.id/app (Mobile App PWA terdedikasi santri, wali, asatidz)
+        const ASN_APP_MODES = {
+            PUBLIC: 'PUBLIC',
+            ADMIN: 'ADMIN',
+            APP: 'APP'
+        };
+        let currentAppMode = ASN_APP_MODES.PUBLIC;
+
+        function applyAppModeUI(mode) {
+            currentAppMode = mode || ASN_APP_MODES.PUBLIC;
+            try {
+                if (document.body) document.body.setAttribute('data-app-mode', currentAppMode);
+            } catch (e) { }
+
+            const desktopHeader = document.getElementById('main-desktop-header');
+            const mobileHeader = document.getElementById('main-mobile-header');
+            const publicFooter = document.querySelector('footer');
+            const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+
+            if (currentAppMode === ASN_APP_MODES.ADMIN) {
+                if (desktopHeader) desktopHeader.classList.add('hidden');
+                if (mobileHeader) mobileHeader.classList.add('hidden');
+                if (publicFooter) publicFooter.classList.add('hidden');
+                if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
+            } else if (currentAppMode === ASN_APP_MODES.APP) {
+                if (desktopHeader) desktopHeader.classList.add('hidden');
+                if (publicFooter) publicFooter.classList.add('hidden');
+                if (mobileHeader) mobileHeader.classList.remove('hidden');
+                if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');
+            } else {
+                // Mode PUBLIC
+                if (desktopHeader) desktopHeader.classList.remove('hidden');
+                if (publicFooter) publicFooter.classList.remove('hidden');
+                if (mobileHeader) mobileHeader.classList.remove('hidden');
+                if (mobileBottomNav) {
+                    if (window.innerWidth >= 1024) mobileBottomNav.classList.add('hidden');
+                    else mobileBottomNav.classList.remove('hidden');
+                }
+            }
+        }
+        window.applyAppModeUI = applyAppModeUI;
+        window.ASN_APP_MODES = ASN_APP_MODES;
+
         // ==================== MOBILE SPLASH LOGIC ====================
         let isMobileSplashDone = false;
 
@@ -114,6 +160,50 @@
 
             const path = window.location.pathname.replace(/\/+$/, '') || '/';
 
+            // 1. CEK RUTE PORTAL ADMIN (/admin ATAU /administrator)
+            if (path === '/admin' || path.startsWith('/admin/') || path === '/administrator' || path.startsWith('/administrator/')) {
+                applyAppModeUI(ASN_APP_MODES.ADMIN);
+                if (path === '/administrator' || path === '/administrator/') {
+                    window.history.replaceState({ tab: 'admin' }, '', '/admin');
+                }
+                const hasAdminToken = !!(
+                    (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token') || sessionStorage.getItem('ASN_ADMIN_TOKEN') || sessionStorage.getItem('ASN_ACTIVE_USER'))) ||
+                    (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token') || localStorage.getItem('ASN_ADMIN_TOKEN') || localStorage.getItem('ASN_ACTIVE_USER')))
+                );
+                switchTab('admin', false, '/admin');
+                if (!hasAdminToken && (typeof isAdminLoggedIn === 'undefined' || !isAdminLoggedIn)) {
+                    setTimeout(() => {
+                        if (typeof openAdminAuthModal === 'function') openAdminAuthModal();
+                        else if (typeof openAdminLoginModal === 'function') openAdminLoginModal();
+                    }, 150);
+                }
+                return;
+            }
+
+            // 2. CEK RUTE MOBILE APP PWA (/app)
+            if (path === '/app' || path.startsWith('/app/')) {
+                applyAppModeUI(ASN_APP_MODES.APP);
+                const subTab = params.get('tab') || '';
+                if (subTab === 'ibadah') {
+                    switchTab('ibadah', false, '/app?tab=ibadah');
+                } else if (subTab === 'kabar' || subTab === 'berita') {
+                    switchTab('kabar', false, '/app?tab=berita');
+                } else if (subTab === 'notifikasi') {
+                    switchTab('notifikasi', false, '/app?tab=notifikasi');
+                } else if (subTab === 'tahfidz' || subTab === 'mutabaah') {
+                    if (typeof openTahfidzEvaluasiView === 'function') openTahfidzEvaluasiView();
+                    else switchTab('tahfidz', false, '/app?tab=tahfidz');
+                } else if (subTab === 'pengaturan' || subTab === 'akun') {
+                    switchTab('pengaturan', false, '/app?tab=akun');
+                } else {
+                    switchTab('beranda', false, '/app');
+                }
+                return;
+            }
+
+            // 3. RUTE WEB PUBLIK (Landing page, profil, berita, layanan informasi)
+            applyAppModeUI(ASN_APP_MODES.PUBLIC);
+
             if (path === '/berita') {
                 switchTab('kabar', false);
             } else if (path === '/tentang-kami') {
@@ -143,18 +233,6 @@
                 switchTab('unit-kegiatan', false);
             } else if (path === '/kehidupan-santri/poskestren') {
                 switchTab('poskestren', false);
-            } else if (path === '/administrator') {
-                const isMobile = window.innerWidth < 768;
-                const hasAdminToken = !!(
-                    (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
-                    (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
-                );
-                if (isMobile && !isAdminLoggedIn && !hasAdminToken) {
-                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
-                    switchTab('pengaturan', false);
-                } else {
-                    switchTab('admin', false);
-                }
             } else if (path === '/pengaturan') {
                 const isMobile = window.innerWidth < 768;
                 const isAdmin = (typeof isAdminLoggedIn !== 'undefined' && isAdminLoggedIn) || 
@@ -314,13 +392,16 @@
             } else if (path === '/layanan/portal-ibadah/tutorial-ibadah') {
                 if (typeof openTutorialIbadahPage === 'function') openTutorialIbadahPage(false);
                 else switchTab('tutorial-ibadah-hub', false);
-            } else if (path === '/administrator') {
-                const isMobile = window.innerWidth < 768;
-                if (isMobile) {
-                    window.history.replaceState({ tab: 'pengaturan' }, '', '/');
-                    switchTab('pengaturan', false);
+            } else if (path === '/admin' || path.startsWith('/admin/') || path === '/administrator' || path.startsWith('/administrator/')) {
+                applyAppModeUI(ASN_APP_MODES.ADMIN);
+                switchTab('admin', false, '/admin');
+            } else if (path === '/app' || path.startsWith('/app/')) {
+                applyAppModeUI(ASN_APP_MODES.APP);
+                const subTab = new URLSearchParams(window.location.search).get('tab');
+                if (subTab && typeof switchTab === 'function') {
+                    switchTab(subTab, false, window.location.pathname + window.location.search);
                 } else {
-                    switchTab('admin', false);
+                    switchTab('beranda', false, '/app');
                 }
             } else if (path === '/pengaturan') {
                 const isMobile = window.innerWidth < 768;
@@ -329,12 +410,13 @@
                     window.history.replaceState({ tab: 'pengaturan' }, '', '/');
                     switchTab('pengaturan', false);
                 } else if (isAdmin) {
-                    window.history.replaceState({ tab: 'admin' }, '', '/administrator');
+                    window.history.replaceState({ tab: 'admin' }, '', '/admin');
                     switchTab('admin', false);
                 } else {
                     switchTab('pengaturan', false);
                 }
             } else {
+                applyAppModeUI(ASN_APP_MODES.PUBLIC);
                 switchTab('beranda', false);
             }
         });
@@ -351,6 +433,14 @@
         }
 
         function switchTab(tabId, updateUrl = true, customUrl = null) {
+            if (tabId === 'admin') {
+                applyAppModeUI(ASN_APP_MODES.ADMIN);
+            } else if (currentAppMode === ASN_APP_MODES.APP) {
+                applyAppModeUI(ASN_APP_MODES.APP);
+            } else {
+                applyAppModeUI(ASN_APP_MODES.PUBLIC);
+            }
+
             const hasAdminToken = !!(
                 (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
                 (typeof localStorage !== 'undefined' && (localStorage.getItem('asnawiyyah_admin_token') || localStorage.getItem('asnawiyyah_pengasuh_token')))
@@ -394,7 +484,8 @@
                 else if (tabId === 'jadwal-kegiatan') targetUrl = '/kehidupan-santri/jadwal-kegiatan/';
                 else if (tabId === 'unit-kegiatan') targetUrl = '/kehidupan-santri/unit-kegiatan/';
                 else if (tabId === 'poskestren') targetUrl = '/kehidupan-santri/poskestren/';
-                else if (tabId === 'admin') targetUrl = '/administrator';
+                else if (tabId === 'admin') targetUrl = '/admin';
+                else if (tabId === 'beranda' && currentAppMode === ASN_APP_MODES.APP) targetUrl = '/app';
                 else if (tabId === 'pengaturan') targetUrl = '/pengaturan';
                 else if (tabId === 'notifikasi') targetUrl = '/notifikasi';
                 else if (tabId === 'alumni') targetUrl = '/kehidupan-santri/ikatan-alumni/';
@@ -464,14 +555,14 @@
 
             const isQiblaCompass = (tabId === 'kompas-kiblat');
 
-            if (tabId === 'admin') {
+            if (tabId === 'admin' || currentAppMode === ASN_APP_MODES.ADMIN) {
                 // Sembunyikan header publik saat di dashboard admin
-                if (mainDesktopHeader) mainDesktopHeader.style.display = 'none';
-                if (mainMobileHeader) mainMobileHeader.style.display = 'none';
-                if (deskNavMenu) deskNavMenu.style.display = 'none';
-                if (deskActionMenu) deskActionMenu.style.display = 'none';
-                if (mobileBottomNav) mobileBottomNav.style.display = 'none';
-                if (mainFooter) mainFooter.style.display = 'none';
+                if (mainDesktopHeader && mainDesktopHeader.style) mainDesktopHeader.style.display = 'none';
+                if (mainMobileHeader && mainMobileHeader.style) mainMobileHeader.style.display = 'none';
+                if (deskNavMenu && deskNavMenu.style) deskNavMenu.style.display = 'none';
+                if (deskActionMenu && deskActionMenu.style) deskActionMenu.style.display = 'none';
+                if (mobileBottomNav && mobileBottomNav.style) mobileBottomNav.style.display = 'none';
+                if (mainFooter && mainFooter.style) mainFooter.style.display = 'none';
                 if (mainElem) mainElem.classList.remove('mb-16');
                 const hasAdminToken = !!(
                     (typeof sessionStorage !== 'undefined' && (sessionStorage.getItem('asnawiyyah_admin_token') || sessionStorage.getItem('asnawiyyah_pengasuh_token'))) ||
@@ -486,34 +577,39 @@
                         }
                     }, 100);
                 }
+            } else if (currentAppMode === ASN_APP_MODES.APP) {
+                // Mode Mobile App PWA: Sembunyikan desktop header & footer publik, tampilkan mobile app UI
+                if (mainDesktopHeader && mainDesktopHeader.style) mainDesktopHeader.style.display = 'none';
+                if (mainFooter && mainFooter.style) mainFooter.style.display = 'none';
+                if (mainMobileHeader && mainMobileHeader.style) mainMobileHeader.style.removeProperty('display');
+                if (mobileBottomNav && mobileBottomNav.style) mobileBottomNav.style.removeProperty('display');
+                if (mainElem) mainElem.classList.add('mb-16');
             } else if (isQuranMenu) {
                 // Khusus Menu Qur'an: Sembunyikan mobile bottom navbar dan hapus margin bawah agar halaman mushaf tampil pas 1 layar
-                if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
-                if (mainMobileHeader) mainMobileHeader.style.removeProperty('display');
-                if (deskNavMenu) deskNavMenu.style.removeProperty('display');
-                if (deskActionMenu) deskActionMenu.style.removeProperty('display');
-                if (mobileBottomNav) mobileBottomNav.style.display = 'none';
-                if (mainFooter) mainFooter.style.display = 'none';
+                if (mainDesktopHeader && mainDesktopHeader.style) mainDesktopHeader.style.removeProperty('display');
+                if (mainMobileHeader && mainMobileHeader.style) mainMobileHeader.style.removeProperty('display');
+                if (deskNavMenu && deskNavMenu.style) deskNavMenu.style.removeProperty('display');
+                if (deskActionMenu && deskActionMenu.style) deskActionMenu.style.removeProperty('display');
+                if (mobileBottomNav && mobileBottomNav.style) mobileBottomNav.style.display = 'none';
+                if (mainFooter && mainFooter.style) mainFooter.style.display = 'none';
                 if (mainElem) mainElem.classList.remove('mb-16');
             } else if (isNewsDetail) {
                 // Khusus Detail Berita: Sembunyikan header mobile & bottom navbar, mengadopsi layout membaca imersif NU Online
-                if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
-                if (mainMobileHeader) mainMobileHeader.style.display = 'none';
-                if (deskNavMenu) deskNavMenu.style.removeProperty('display');
-                if (deskActionMenu) deskActionMenu.style.removeProperty('display');
-                if (mobileBottomNav) mobileBottomNav.style.display = 'none';
-                if (mainFooter) mainFooter.style.display = 'none';
+                if (mainDesktopHeader && mainDesktopHeader.style) mainDesktopHeader.style.removeProperty('display');
+                if (mainMobileHeader && mainMobileHeader.style) mainMobileHeader.style.display = 'none';
+                if (deskNavMenu && deskNavMenu.style) deskNavMenu.style.removeProperty('display');
+                if (deskActionMenu && deskActionMenu.style) deskActionMenu.style.removeProperty('display');
+                if (mobileBottomNav && mobileBottomNav.style) mobileBottomNav.style.display = 'none';
+                if (mainFooter && mainFooter.style) mainFooter.style.display = 'none';
                 if (mainElem) mainElem.classList.remove('mb-16');
             } else {
                 // Kembalikan header publik & bottom navbar untuk semua menu selain Qur'an, Detail Berita & Admin
-                // Desktop header: class asli = "hidden md:block ..." (hidden di mobile, tampil di desktop)
-                // Mobile header: class asli = "md:hidden ..." (tampil di mobile, hidden di desktop)
-                if (mainDesktopHeader) mainDesktopHeader.style.removeProperty('display');
-                if (mainMobileHeader) mainMobileHeader.style.removeProperty('display');
-                if (deskNavMenu) deskNavMenu.style.removeProperty('display');
-                if (deskActionMenu) deskActionMenu.style.removeProperty('display');
-                if (mobileBottomNav) mobileBottomNav.style.removeProperty('display');
-                if (mainFooter) mainFooter.style.removeProperty('display');
+                if (mainDesktopHeader && mainDesktopHeader.style) mainDesktopHeader.style.removeProperty('display');
+                if (mainMobileHeader && mainMobileHeader.style) mainMobileHeader.style.removeProperty('display');
+                if (deskNavMenu && deskNavMenu.style) deskNavMenu.style.removeProperty('display');
+                if (deskActionMenu && deskActionMenu.style) deskActionMenu.style.removeProperty('display');
+                if (mobileBottomNav && mobileBottomNav.style) mobileBottomNav.style.removeProperty('display');
+                if (mainFooter && mainFooter.style) mainFooter.style.removeProperty('display');
                 if (mainElem) mainElem.classList.add('mb-16');
             }
 

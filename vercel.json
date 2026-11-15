@@ -1,13 +1,32 @@
 {
   "outputDirectory": ".",
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/administrator",
+      "destination": "/admin",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/berita/:slug",
       "destination": "/api/og?slug=:slug"
     },
     {
-      "source": "/administrator",
+      "source": "/admin",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/:match*",
+      "destination": "/"
+    },
+    {
+      "source": "/app",
+      "destination": "/"
+    },
+    {
+      "source": "/app/:match*",
       "destination": "/"
     },
     {

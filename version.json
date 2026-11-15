@@ -1,12 +1,13 @@
 {
-    "version": "2.6.3",
-    "buildTime": "2026-11-10T09:55:00+07:00",
-    "title": "Penyempurnaan Tampilan Kartu KPI Berwarna & Sinkronisasi Riwayat Setoran Evaluasi Tahfidz",
+    "version": "2.7.0",
+    "buildTime": "2026-11-15T09:35:00+07:00",
+    "title": "Pemisahan Arsitektur Tiga Pilar: Web Publik (/), Portal Admin (/admin), dan Mobile App PWA (/app)",
     "highlights": [
-        "Penyempurnaan 4 Kartu KPI Evaluasi Tahfidz dengan background gradient cerah (Emerald, Indigo, Amber, Sky) dan teks kontras putih",
-        "Normalisasi parser tanggal aman timezone (YYYY-MM-DD) untuk akurasi filter Real-time, Kemarin, 7 Hari, dan 30 Hari",
-        "Pemulihan kelengkapan riwayat entri setoran santri lintas halaqah sehingga data langsung tersaji lengkap pada setiap periode",
-        "Penyempurnaan referensi global window.ASNTahfidz agar tahan dari strict-mode reference error",
-        "Verifikasi penuh 21 automated test suite lolos 100%"
+        "Pemisahan rute titik masuk bersih: Web Publik (asnawiyyah.or.id), Portal Admin (asnawiyyah.or.id/admin), dan Mobile App PWA (asnawiyyah.or.id/app)",
+        "Konfigurasi redirects otomatis dari rute lama /administrator menuju /admin pada Vercel Edge & Client Router",
+        "Implementasi State Mode UI Guard (applyAppModeUI) untuk mengisolasi tata letak navbar publik, sidebar admin, dan mobile app nav",
+        "Pembaruan PWA manifest.json dengan start_url '/app' dan penambahan PWA quick shortcuts (Portal Ibadah, Tahfidz, Admin)",
+        "Pembaruan Service Worker (sw.js v102) dengan offline SPA navigation fallback untuk /admin dan /app",
+        "Penambahan tombol pintas navigasi terpadu antar Web Publik, Admin, dan Mobile App pada desktop dan mobile header"
     ]
 }

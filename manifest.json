@@ -2,14 +2,37 @@
   "name": "PPTQ Asnawiyyah",
   "short_name": "Asnawiyyah",
   "description": "Aplikasi Resmi Pondok Pesantren Tahfidzul Qur'an Asnawiyyah Pilangwetan",
-  "id": "/",
-  "start_url": "/",
+  "id": "/app",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#059669",
   "orientation": "portrait-primary",
   "categories": ["education", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Portal Ibadah",
+      "short_name": "Ibadah",
+      "description": "Al-Qur'an Pojok, Maulid, Burdah, dan Jadwal Sholat",
+      "url": "/app?tab=ibadah",
+      "icons": [{ "src": "/assets/img/logo-asnawiyyah.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tahfidz & Mutaba'ah",
+      "short_name": "Tahfidz",
+      "description": "Jurnal Setoran dan Mutaba'ah Tahfidz",
+      "url": "/app?tab=tahfidz",
+      "icons": [{ "src": "/assets/img/logo-asnawiyyah.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Portal Admin",
+      "short_name": "Admin",
+      "description": "Pusat Kontrol dan Administrasi Pesantren",
+      "url": "/admin",
+      "icons": [{ "src": "/assets/img/logo-asnawiyyah.jpg", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "/assets/img/logo-asnawiyyah.jpg",
