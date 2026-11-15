@@ -220,7 +220,7 @@
     // ==========================================
     // Smart In-App Update Controller (Tahap 1 & 2)
     // ==========================================
-    const CURRENT_CLIENT_VERSION = '2.5.2';
+    const CURRENT_CLIENT_VERSION = '2.7.0';
     const UPDATE_SNOOZE_KEY = 'asnawiyyah_update_snooze';
 
     const SmartUpdateManager = {
@@ -412,13 +412,21 @@
             });
         },
 
+        lastVersionCheck: 0,
+
         /**
          * Cek file version.json di server (Active Version Polling)
          */
-        async checkVersionJson() {
+        async checkVersionJson(force = false) {
             if (this.isPromptVisible) return;
+            const now = Date.now();
+            // Throttle minimal 10 menit agar tidak membebani CDN Vercel
+            if (!force && this.lastVersionCheck && (now - this.lastVersionCheck < 10 * 60 * 1000)) {
+                return;
+            }
+            this.lastVersionCheck = now;
             try {
-                const res = await fetch('/version.json?_t=' + Date.now(), {
+                const res = await fetch('/version.json?_t=' + now, {
                     cache: 'no-store',
                     headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
                 });
